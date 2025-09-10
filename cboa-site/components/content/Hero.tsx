@@ -39,7 +39,7 @@ export default function Hero({
             <div className="mb-8 flex justify-center">
               <div className="w-[150px] h-[150px] rounded-full flex items-center justify-center">
                 <Image 
-                  src="/assets/images/cboa-logo.png" 
+                  src="/images/logos/cboa-logo.png" 
                   alt="CBOA Logo" 
                   width={150} 
                   height={150}
