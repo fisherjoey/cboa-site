@@ -5,12 +5,35 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="robots" content="noindex" />
     <title>CBOA Content Manager</title>
-    <link href="/admin/config.yml" type="text/yaml" rel="cms-config-url">
   </head>
   <body>
     <!-- Include Netlify Identity Widget -->
     <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
     <!-- Include Decap CMS -->
     <script src="https://unpkg.com/decap-cms@^3.1.10/dist/decap-cms.js"></script>
+    <script>
+      // Initialize CMS with config location
+      if (window.DecapCMS) {
+        fetch('/admin/config.yml')
+          .then(response => response.text())
+          .then(config => {
+            window.DecapCMS.init({
+              config: config
+            });
+          })
+          .catch(err => {
+            console.error('Error loading config:', err);
+            // Try alternate path
+            fetch('/config.yml')
+              .then(response => response.text())
+              .then(config => {
+                window.DecapCMS.init({
+                  config: config
+                });
+              })
+              .catch(err2 => console.error('Config not found at any path:', err2));
+          });
+      }
+    </script>
   </body>
 </html>
