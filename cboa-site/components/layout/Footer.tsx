@@ -9,7 +9,7 @@ export default function Footer() {
           <div>
             <div className="flex items-center gap-3 mb-4">
               <Image 
-                src="/assets/images/cboa-logo.png" 
+                src="/images/logos/cboa-logo.png" 
                 alt="CBOA Logo" 
                 width={60} 
                 height={60}
