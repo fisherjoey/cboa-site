@@ -1,7 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Remove 'export' for Netlify deployment
-  // output: 'export',
+  output: 'export',
   images: {
     unoptimized: true,
   },
