@@ -60,6 +60,20 @@ export default function RootLayout({
         <link rel="icon" type="image/png" sizes="16x16" href="/images/icons/favicon-16x16.png" />
         <link rel="manifest" href="/images/icons/site.webmanifest" />
         <link rel="shortcut icon" href="/images/icons/favicon.ico" />
+        <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+        <script dangerouslySetInnerHTML={{
+          __html: `
+            if (window.netlifyIdentity) {
+              window.netlifyIdentity.on("init", user => {
+                if (!user) {
+                  window.netlifyIdentity.on("login", () => {
+                    document.location.href = "/admin/";
+                  });
+                }
+              });
+            }
+          `
+        }} />
       </head>
       <body className="min-h-screen flex flex-col">
         <Header />
