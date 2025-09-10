@@ -1,0 +1,150 @@
+backend:
+  name: git-gateway
+  branch: main
+
+media_folder: "public/uploads"
+public_folder: "/uploads"
+
+# Site configuration
+logo_url: "/images/logos/cboa-logo.png"
+site_url: "https://refalberta.ca"
+display_url: "https://refalberta.ca"
+
+collections:
+  - name: "officials"
+    label: "Officials"
+    folder: "content/officials"
+    create: true
+    slug: "{{slug}}"
+    fields:
+      - { label: "Name", name: "name", widget: "string", required: true }
+      - { label: "Level", name: "level", widget: "number", min: 1, max: 5, required: true }
+      - { label: "Photo", name: "photo", widget: "image", required: false }
+      - { label: "Bio", name: "bio", widget: "text", required: false }
+      - { label: "Years of Experience", name: "experience", widget: "string", required: false }
+      - { label: "Email", name: "email", widget: "string", required: false }
+      - { label: "Availability", name: "availability", widget: "string", required: false }
+      - { label: "Certifications", name: "certifications", widget: "list", required: false }
+      - { label: "Active", name: "active", widget: "boolean", default: true }
+
+  - name: "news"
+    label: "News & Updates"
+    folder: "content/news"
+    create: true
+    slug: "{{year}}-{{month}}-{{day}}-{{slug}}"
+    fields:
+      - { label: "Title", name: "title", widget: "string", required: true }
+      - { label: "Publish Date", name: "date", widget: "datetime", required: true }
+      - { label: "Author", name: "author", widget: "string", required: true }
+      - { label: "Featured Image", name: "image", widget: "image", required: false }
+      - { label: "Excerpt", name: "excerpt", widget: "text", required: true }
+      - { label: "Body", name: "body", widget: "markdown", required: true }
+      - { label: "Featured", name: "featured", widget: "boolean", default: false }
+      - { label: "Tags", name: "tags", widget: "list", required: false }
+
+  - name: "training"
+    label: "Training Events"
+    folder: "content/training"
+    create: true
+    slug: "{{year}}-{{month}}-{{day}}-{{slug}}"
+    fields:
+      - { label: "Title", name: "title", widget: "string", required: true }
+      - { label: "Date", name: "date", widget: "datetime", required: true }
+      - { label: "Start Time", name: "startTime", widget: "string", required: true }
+      - { label: "End Time", name: "endTime", widget: "string", required: true }
+      - { label: "Location", name: "location", widget: "string", required: true }
+      - label: "Event Type"
+        name: "type"
+        widget: "select"
+        options: ["workshop", "certification", "refresher", "meeting"]
+        required: true
+      - { label: "Description", name: "description", widget: "text", required: true }
+      - { label: "Registration Link", name: "registrationLink", widget: "string", required: false }
+      - { label: "Max Participants", name: "maxParticipants", widget: "number", required: false }
+      - { label: "Current Registrations", name: "currentRegistrations", widget: "number", default: 0 }
+      - { label: "Instructor", name: "instructor", widget: "string", required: false }
+      - { label: "Requirements", name: "requirements", widget: "text", required: false }
+
+
+  - name: "resources"
+    label: "Resources"
+    folder: "content/resources"
+    create: true
+    slug: "{{slug}}"
+    fields:
+      - { label: "Title", name: "title", widget: "string", required: true }
+      - label: "Category"
+        name: "category"
+        widget: "select"
+        options: ["Rulebooks", "Forms", "Training Materials", "Policies", "Guides"]
+        required: true
+      - { label: "Description", name: "description", widget: "text", required: true }
+      - { label: "File", name: "file", widget: "file", required: false }
+      - { label: "External Link", name: "externalLink", widget: "string", required: false }
+      - { label: "Last Updated", name: "lastUpdated", widget: "datetime", required: true }
+      - { label: "Access Level", name: "accessLevel", widget: "select", options: ["public", "members", "officials"], default: "public" }
+
+  - name: "pages"
+    label: "Static Pages"
+    files:
+      - label: "About Page"
+        name: "about"
+        file: "content/pages/about.md"
+        fields:
+          - { label: "Title", name: "title", widget: "string" }
+          - { label: "Body", name: "body", widget: "markdown" }
+          
+      - label: "Home Page"
+        name: "home"
+        file: "content/pages/home.md"
+        fields:
+          - { label: "Hero Title", name: "heroTitle", widget: "string" }
+          - { label: "Hero Subtitle", name: "heroSubtitle", widget: "string" }
+          - { label: "Hero Image", name: "heroImage", widget: "image", required: false }
+          - label: "Statistics"
+            name: "stats"
+            widget: "list"
+            fields:
+              - { label: "Label", name: "label", widget: "string" }
+              - { label: "Value", name: "value", widget: "string" }
+          - { label: "About Section", name: "aboutSection", widget: "markdown" }
+
+  - name: "settings"
+    label: "Site Settings"
+    files:
+      - label: "General Settings"
+        name: "general"
+        file: "content/settings/general.yml"
+        fields:
+          - { label: "Site Title", name: "siteTitle", widget: "string" }
+          - { label: "Site Description", name: "siteDescription", widget: "text" }
+          - { label: "Logo", name: "logo", widget: "image", required: false }
+          - { label: "Favicon", name: "favicon", widget: "image", required: false }
+          - label: "Homepage Statistics"
+            name: "statistics"
+            widget: "object"
+            fields:
+              - { label: "Active Officials", name: "activeOfficials", widget: "string", hint: "e.g., 250+" }
+              - { label: "Games Per Season", name: "gamesPerSeason", widget: "string", hint: "e.g., 5,000+" }
+              - { label: "Years of Service", name: "yearsOfService", widget: "string", hint: "e.g., 45" }
+          - label: "Executive Team"
+            name: "executiveTeam"
+            widget: "list"
+            fields:
+              - { label: "Name", name: "name", widget: "string" }
+              - { label: "Position", name: "position", widget: "string" }
+              - { label: "Email", name: "email", widget: "string" }
+          - label: "Social Media"
+            name: "socialMedia"
+            widget: "object"
+            fields:
+              - { label: "Facebook", name: "facebook", widget: "string", required: false }
+              - { label: "Twitter", name: "twitter", widget: "string", required: false }
+              - { label: "Instagram", name: "instagram", widget: "string", required: false }
+              - { label: "YouTube", name: "youtube", widget: "string", required: false }
+          - label: "Contact Info"
+            name: "contact"
+            widget: "object"
+            fields:
+              - { label: "Email", name: "email", widget: "string" }
+              - { label: "Address", name: "address", widget: "text" }
