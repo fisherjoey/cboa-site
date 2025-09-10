@@ -5,9 +5,9 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "postbuild": "echo 'Build completed successfully'",
     "start": "next start",
-    "lint": "next lint",
-    "prebuild": "npm install"
+    "lint": "next lint"
   },
   "keywords": [],
   "author": "",
