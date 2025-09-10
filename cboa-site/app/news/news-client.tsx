@@ -61,7 +61,14 @@ export default function NewsClient({ articles, tags }: NewsClientProps) {
           {/* Featured Article */}
           {featuredArticle && (
             <div className="mb-12">
-              <NewsCard {...featuredArticle} featured />
+              <NewsCard 
+                title={featuredArticle.title || ''}
+                date={featuredArticle.date || ''}
+                excerpt={featuredArticle.excerpt || ''}
+                author={featuredArticle.author}
+                slug={featuredArticle.slug || ''}
+                featured 
+              />
             </div>
           )}
 
@@ -69,7 +76,14 @@ export default function NewsClient({ articles, tags }: NewsClientProps) {
           {regularArticles.length > 0 ? (
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
               {regularArticles.map((article) => (
-                <NewsCard key={article.slug} {...article} />
+                <NewsCard 
+                  key={article.slug} 
+                  title={article.title || ''}
+                  date={article.date || ''}
+                  excerpt={article.excerpt || ''}
+                  author={article.author}
+                  slug={article.slug || ''}
+                />
               ))}
             </div>
           ) : (
