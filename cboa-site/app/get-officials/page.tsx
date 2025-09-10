@@ -53,11 +53,20 @@ export default function GetOfficialsPage() {
     exclusivityAgreed: false,
   })
   
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    // TODO: Handle form submission
-    console.log('Services request submitted:', formData)
-    alert('Thank you for your request! Our scheduling team will contact you shortly.')
+    const form = e.target as HTMLFormElement
+    
+    try {
+      await fetch('/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams(new FormData(form) as any).toString()
+      })
+      alert('Thank you for your request! Our scheduling team will contact you shortly.')
+    } catch (error) {
+      alert('Error submitting form. Please try again.')
+    }
   }
   
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
@@ -199,7 +208,15 @@ export default function GetOfficialsPage() {
           
           <div className="max-w-3xl mx-auto">
             <Card>
-              <form onSubmit={handleSubmit}>
+              <form 
+                name="officials-request"
+                method="POST"
+                data-netlify="true"
+                netlify-honeypot="bot-field"
+                onSubmit={handleSubmit}
+              >
+                <input type="hidden" name="form-name" value="officials-request" />
+                <input type="hidden" name="bot-field" />
                 {/* Organization Information */}
                 <div className="mb-8">
                   <h3 className="text-xl font-bold text-cboa-blue mb-4">Organization Information</h3>

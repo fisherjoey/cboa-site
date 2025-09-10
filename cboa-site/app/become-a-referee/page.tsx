@@ -17,11 +17,30 @@ export default function BecomeARefereePage() {
     howHeardOther: '',
   })
   
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    // TODO: Handle form submission
-    console.log('Form submitted:', formData)
-    alert('Thank you for your application! We will contact you soon.')
+    const form = e.target as HTMLFormElement
+    
+    try {
+      await fetch('/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams(new FormData(form) as any).toString()
+      })
+      alert('Thank you for your application! We will contact you soon.')
+      // Reset form
+      setFormData({
+        firstName: '',
+        lastName: '',
+        email: '',
+        overSeventeen: '',
+        hasExperience: '',
+        howHeard: '',
+        howHeardOther: '',
+      })
+    } catch (error) {
+      alert('Error submitting form. Please try again.')
+    }
   }
   
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
@@ -151,7 +170,15 @@ export default function BecomeARefereePage() {
           </p>
           <div className="max-w-2xl mx-auto">
             <Card>
-              <form onSubmit={handleSubmit}>
+              <form 
+                name="referee-application"
+                method="POST"
+                data-netlify="true"
+                netlify-honeypot="bot-field"
+                onSubmit={handleSubmit}
+              >
+                <input type="hidden" name="form-name" value="referee-application" />
+                <input type="hidden" name="bot-field" />
                 <h3 className="text-xl font-bold text-cboa-blue mb-6">Contact Information</h3>
                 
                 <div className="mb-4">
