@@ -7,6 +7,7 @@ export const metadata: Metadata = {
   title: 'Calgary Basketball Officials Association',
   description: 'Official website of the Calgary Basketball Officials Association (CBOA) - Join our team of certified basketball referees',
   keywords: 'basketball, referee, officials, Calgary, CBOA, officiating, sports',
+  metadataBase: new URL('https://refalberta.ca'),
   icons: {
     icon: [
       {

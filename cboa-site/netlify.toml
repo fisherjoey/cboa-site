@@ -1,14 +1,29 @@
 [build]
-  command = "npm install && npm run build && ls -la out/"
-  publish = "out"
+  command = "npm install && npm run build"
+  publish = ".next"
 
 [build.environment]
   NODE_VERSION = "18"
   NEXT_TELEMETRY_DISABLED = "1"
 
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
+
+[functions]
+  directory = "netlify/functions"
+
+# Enable Netlify Identity
+[context.production]
+  environment = { SITE_URL = "https://refalberta.ca" }
+
 [[redirects]]
   from = "/admin"
   to = "/admin/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/:splat"
   status = 200
 
 [[headers]]
