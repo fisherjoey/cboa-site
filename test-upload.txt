@@ -1,3 +1,0 @@
-This is a test file for the CBOA resource upload system.
-Testing file upload functionality.
-Date: 2025-01-11
