@@ -1,0 +1,37 @@
+/* MDEditor toolbar button size overrides */
+.w-md-editor-toolbar {
+  height: 50px !important;
+  padding: 8px !important;
+}
+
+.w-md-editor-toolbar button {
+  font-size: 18px !important;
+  padding: 8px 12px !important;
+  height: 36px !important;
+  min-width: 36px !important;
+}
+
+.w-md-editor-toolbar svg {
+  width: 20px !important;
+  height: 20px !important;
+}
+
+.w-md-editor-toolbar li > button {
+  font-size: 16px !important;
+}
+
+/* Make the entire editor larger */
+.w-md-editor {
+  font-size: 16px !important;
+}
+
+.w-md-editor-text-pre, 
+.w-md-editor-text-input {
+  font-size: 16px !important;
+  line-height: 1.6 !important;
+}
+
+/* Preview text size */
+.w-md-editor-preview {
+  font-size: 16px !important;
+}
