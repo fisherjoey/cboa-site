@@ -29,9 +29,14 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined)
 function getUserRole(netlifyUser: any): UserRole {
   const roles = netlifyUser?.app_metadata?.roles || []
   
+  // Only grant admin/executive roles if explicitly set in Netlify
   if (roles.includes('admin')) return 'admin'
   if (roles.includes('executive')) return 'executive'
-  return 'official' // Default role for authenticated users
+  if (roles.includes('official')) return 'official'
+  
+  // New users without roles get 'official' by default
+  // But they won't have admin panel access
+  return 'official'
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
