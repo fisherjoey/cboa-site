@@ -1,0 +1,1 @@
+- Always appropriately commit to git without attributing claude code

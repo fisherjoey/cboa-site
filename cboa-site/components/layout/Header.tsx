@@ -4,9 +4,11 @@ import { useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import SearchBox from '../ui/SearchBox'
+import { useAuth } from '@/contexts/AuthContext'
 
 export default function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const { user, isAuthenticated, login, logout } = useAuth()
 
   return (
     <header className="sticky top-0 z-50">
@@ -30,12 +32,37 @@ export default function Header() {
             
             <div className="flex items-center gap-4 text-sm">
               <SearchBox />
-              <Link 
-                href="/become-a-referee" 
-                className="bg-cboa-orange text-white px-4 py-2 rounded-full font-semibold hover:bg-opacity-90 transition-all"
-              >
-                Apply Now
-              </Link>
+              {isAuthenticated ? (
+                <>
+                  <Link 
+                    href="/portal" 
+                    className="text-white hover:text-cboa-orange transition-colors"
+                  >
+                    Portal
+                  </Link>
+                  <button 
+                    onClick={logout}
+                    className="text-white hover:text-cboa-orange transition-colors"
+                  >
+                    Logout
+                  </button>
+                </>
+              ) : (
+                <>
+                  <button 
+                    onClick={login}
+                    className="text-white hover:text-cboa-orange transition-colors"
+                  >
+                    Member Login
+                  </button>
+                  <Link 
+                    href="/become-a-referee" 
+                    className="bg-cboa-orange text-white px-4 py-2 rounded-full font-semibold hover:bg-opacity-90 transition-all"
+                  >
+                    Apply Now
+                  </Link>
+                </>
+              )}
             </div>
           </div>
         </div>
@@ -53,6 +80,9 @@ export default function Header() {
               <li><Link href="/get-officials" className="hover:text-cboa-orange transition-colors px-3 py-2">Request Officials</Link></li>
               <li><Link href="/resources" className="hover:text-cboa-orange transition-colors px-3 py-2">Resources</Link></li>
               <li><Link href="/news" className="hover:text-cboa-orange transition-colors px-3 py-2">News</Link></li>
+              {isAuthenticated && (
+                <li><Link href="/portal" className="hover:text-cboa-orange transition-colors px-3 py-2">Member Portal</Link></li>
+              )}
             </ul>
             
             {/* Mobile Menu Button */}
@@ -80,6 +110,14 @@ export default function Header() {
               <li><Link href="/get-officials" className="block hover:text-cboa-orange transition-colors px-3 py-2">Request Officials</Link></li>
               <li><Link href="/resources" className="block hover:text-cboa-orange transition-colors px-3 py-2">Resources</Link></li>
               <li><Link href="/news" className="block hover:text-cboa-orange transition-colors px-3 py-2">News</Link></li>
+              {isAuthenticated ? (
+                <>
+                  <li><Link href="/portal" className="block hover:text-cboa-orange transition-colors px-3 py-2">Member Portal</Link></li>
+                  <li><button onClick={logout} className="block w-full text-left hover:text-cboa-orange transition-colors px-3 py-2">Logout</button></li>
+                </>
+              ) : (
+                <li><button onClick={login} className="block w-full text-left hover:text-cboa-orange transition-colors px-3 py-2">Member Login</button></li>
+              )}
             </ul>
           )}
         </div>
