@@ -27,12 +27,31 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
 // Map Netlify Identity roles to our app roles
 function getUserRole(netlifyUser: any): UserRole {
-  const roles = netlifyUser?.app_metadata?.roles || []
+  console.log('Netlify User:', netlifyUser)
+  console.log('app_metadata:', netlifyUser?.app_metadata)
+  console.log('user_metadata:', netlifyUser?.user_metadata)
   
-  // Only grant admin/executive roles if explicitly set in Netlify
-  if (roles.includes('admin')) return 'admin'
-  if (roles.includes('executive')) return 'executive'
-  if (roles.includes('official')) return 'official'
+  // Check both app_metadata.roles and user_metadata.roles
+  // Also check if role is stored directly in user_metadata
+  const appRoles = netlifyUser?.app_metadata?.roles || []
+  const userRoles = netlifyUser?.user_metadata?.roles || []
+  const directRole = netlifyUser?.user_metadata?.role
+  const roles = [...appRoles, ...userRoles]
+  
+  console.log('Combined roles:', roles)
+  console.log('Direct role:', directRole)
+  
+  // Check direct role field first
+  if (directRole) {
+    if (directRole === 'admin' || directRole === 'Admin') return 'admin'
+    if (directRole === 'executive' || directRole === 'Executive') return 'executive'
+    if (directRole === 'official' || directRole === 'Official') return 'official'
+  }
+  
+  // Then check roles array
+  if (roles.includes('admin') || roles.includes('Admin')) return 'admin'
+  if (roles.includes('executive') || roles.includes('Executive')) return 'executive'
+  if (roles.includes('official') || roles.includes('Official')) return 'official'
   
   // New users without roles get 'official' by default
   // But they won't have admin panel access
