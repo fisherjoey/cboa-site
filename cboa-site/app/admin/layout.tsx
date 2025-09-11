@@ -1,14 +1,10 @@
 'use client'
 
-import { useAuth } from '@/contexts/AuthContext'
+import { AuthProvider, useAuth } from '@/contexts/AuthContext'
 import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 
-export default function AdminLayout({
-  children,
-}: {
-  children: React.ReactNode
-}) {
+function AdminGuard({ children }: { children: React.ReactNode }) {
   const { user, isAuthenticated, isLoading } = useAuth()
   const router = useRouter()
 
@@ -33,4 +29,16 @@ export default function AdminLayout({
   }
 
   return <>{children}</>
+}
+
+export default function AdminLayout({
+  children,
+}: {
+  children: React.ReactNode
+}) {
+  return (
+    <AuthProvider>
+      <AdminGuard>{children}</AdminGuard>
+    </AuthProvider>
+  )
 }
