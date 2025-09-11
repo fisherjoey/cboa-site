@@ -31,6 +31,12 @@ export default function Header() {
             <div className="flex items-center gap-4 text-sm">
               <SearchBox />
               <Link 
+                href="/portal" 
+                className="text-white hover:text-cboa-orange transition-colors font-medium"
+              >
+                Member Portal
+              </Link>
+              <Link 
                 href="/become-a-referee" 
                 className="bg-cboa-orange text-white px-4 py-2 rounded-full font-semibold hover:bg-opacity-90 transition-all"
               >
@@ -80,6 +86,7 @@ export default function Header() {
               <li><Link href="/get-officials" className="block hover:text-cboa-orange transition-colors px-3 py-2">Request Officials</Link></li>
               <li><Link href="/resources" className="block hover:text-cboa-orange transition-colors px-3 py-2">Resources</Link></li>
               <li><Link href="/news" className="block hover:text-cboa-orange transition-colors px-3 py-2">News</Link></li>
+              <li><Link href="/portal" className="block hover:text-cboa-orange transition-colors px-3 py-2 font-medium">Member Portal</Link></li>
             </ul>
           )}
         </div>
