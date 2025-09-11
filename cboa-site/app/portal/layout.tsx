@@ -1,4 +1,9 @@
-import Link from 'next/link';
+'use client'
+
+import PortalHeader from '@/components/layout/PortalHeader';
+import { AuthProvider } from '@/contexts/AuthContext';
+import { RoleProvider } from '@/contexts/RoleContext';
+import AuthGuard from '@/components/AuthGuard';
 
 export default function PortalLayout({
   children,
@@ -6,39 +11,21 @@ export default function PortalLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Portal Navigation */}
-      <nav className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-16">
-            <div className="flex space-x-8">
-              <Link href="/portal" className="flex items-center text-gray-900 hover:text-orange-600 font-medium">
-                Portal Home
-              </Link>
-              <Link href="/portal/resources" className="flex items-center text-gray-900 hover:text-orange-600">
-                Resources
-              </Link>
-              <Link href="/portal/news" className="flex items-center text-gray-900 hover:text-orange-600">
-                News & Announcements
-              </Link>
-              <Link href="/portal/the-bounce" className="flex items-center text-gray-900 hover:text-orange-600">
-                The Bounce
-              </Link>
-            </div>
+    <AuthProvider>
+      <AuthGuard requireAuth={true}>
+        <RoleProvider>
+          <div className="min-h-screen bg-gray-50">
+            <PortalHeader />
             
-            <div className="flex items-center">
-              <Link href="/" className="text-sm text-gray-600 hover:text-orange-600">
-                ← Back to Main Site
-              </Link>
-            </div>
+            {/* Portal Content */}
+            <main className="container mx-auto px-4 py-6">
+              <div className="max-w-7xl mx-auto">
+                {children}
+              </div>
+            </main>
           </div>
-        </div>
-      </nav>
-
-      {/* Portal Content */}
-      <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-        {children}
-      </main>
-    </div>
+        </RoleProvider>
+      </AuthGuard>
+    </AuthProvider>
   );
 }
