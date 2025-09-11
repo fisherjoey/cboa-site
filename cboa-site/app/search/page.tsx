@@ -55,8 +55,14 @@ const searchableContent: SearchResult[] = [
     category: 'News'
   },
   {
-    title: 'Get Officials',
+    title: 'Book Referees',
     description: 'Request certified basketball officials for your games and tournaments',
+    url: '/get-officials',
+    category: 'Services'
+  },
+  {
+    title: 'Request Officials',
+    description: 'Book CBOA certified referees for basketball games, tournaments, and events',
     url: '/get-officials',
     category: 'Services'
   },
