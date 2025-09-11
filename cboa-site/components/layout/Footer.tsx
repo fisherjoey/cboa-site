@@ -4,43 +4,43 @@ import Image from 'next/image'
 export default function Footer() {
   return (
     <footer className="bg-cboa-dark text-white">
-      <div className="container mx-auto px-4 py-10">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
+      <div className="container mx-auto px-4 py-8 sm:py-10">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8 mb-8">
           <div>
-            <div className="flex items-center gap-3 mb-4">
+            <div className="flex items-center gap-3 mb-3 sm:mb-4">
               <Image 
                 src="/images/logos/cboa-logo.png" 
                 alt="CBOA Logo" 
-                width={60} 
-                height={60}
-                className="rounded invert"
+                width={50} 
+                height={50}
+                className="rounded invert sm:w-[60px] sm:h-[60px]"
               />
             </div>
-            <p className="text-gray-300 font-semibold mb-2">Calgary Basketball Officials Association</p>
-            <p className="text-gray-400 text-sm">Email: info@cboa.ca</p>
+            <p className="text-gray-300 font-semibold text-sm sm:text-base mb-2">Calgary Basketball Officials Association</p>
+            <p className="text-gray-400 text-xs sm:text-sm">Email: info@cboa.ca</p>
           </div>
           
           <div>
-            <h3 className="text-cboa-orange font-bold text-lg mb-4">Quick Links</h3>
-            <ul className="space-y-2">
-              <li><Link href="/become-a-referee" className="text-gray-300 hover:text-cboa-orange transition-colors">Become an Official</Link></li>
-              <li><Link href="/training" className="text-gray-300 hover:text-cboa-orange transition-colors">Training & Certification</Link></li>
-              <li><Link href="/resources" className="text-gray-300 hover:text-cboa-orange transition-colors">Resources</Link></li>
+            <h3 className="text-cboa-orange font-bold text-base sm:text-lg mb-3 sm:mb-4">Quick Links</h3>
+            <ul className="space-y-1.5 sm:space-y-2">
+              <li><Link href="/become-a-referee" className="text-gray-300 hover:text-cboa-orange transition-colors text-sm sm:text-base">Become an Official</Link></li>
+              <li><Link href="/training" className="text-gray-300 hover:text-cboa-orange transition-colors text-sm sm:text-base">Training & Certification</Link></li>
+              <li><Link href="/resources" className="text-gray-300 hover:text-cboa-orange transition-colors text-sm sm:text-base">Resources</Link></li>
             </ul>
           </div>
           
           <div>
-            <h3 className="text-cboa-orange font-bold text-lg mb-4">Affiliations</h3>
-            <ul className="space-y-2">
-              <li><a href="https://basketballalberta.ca" target="_blank" rel="noopener noreferrer" className="text-gray-300 hover:text-cboa-orange transition-colors">Basketball Alberta</a></li>
-              <li><a href="https://basketball.ca" target="_blank" rel="noopener noreferrer" className="text-gray-300 hover:text-cboa-orange transition-colors">Canada Basketball</a></li>
-              <li><a href="https://fiba.basketball" target="_blank" rel="noopener noreferrer" className="text-gray-300 hover:text-cboa-orange transition-colors">FIBA</a></li>
+            <h3 className="text-cboa-orange font-bold text-base sm:text-lg mb-3 sm:mb-4">Affiliations</h3>
+            <ul className="space-y-1.5 sm:space-y-2">
+              <li><a href="https://basketballalberta.ca" target="_blank" rel="noopener noreferrer" className="text-gray-300 hover:text-cboa-orange transition-colors text-sm sm:text-base">Basketball Alberta</a></li>
+              <li><a href="https://basketball.ca" target="_blank" rel="noopener noreferrer" className="text-gray-300 hover:text-cboa-orange transition-colors text-sm sm:text-base">Canada Basketball</a></li>
+              <li><a href="https://fiba.basketball" target="_blank" rel="noopener noreferrer" className="text-gray-300 hover:text-cboa-orange transition-colors text-sm sm:text-base">FIBA</a></li>
             </ul>
           </div>
         </div>
         
-        <div className="border-t border-gray-700 pt-6 text-center text-gray-400">
-          <p>&copy; {new Date().getFullYear()} Calgary Basketball Officials Association. All rights reserved.</p>
+        <div className="border-t border-gray-700 pt-4 sm:pt-6 text-center text-gray-400">
+          <p className="text-xs sm:text-sm">&copy; {new Date().getFullYear()} Calgary Basketball Officials Association. All rights reserved.</p>
         </div>
       </div>
     </footer>

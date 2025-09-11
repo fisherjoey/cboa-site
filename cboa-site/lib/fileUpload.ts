@@ -7,20 +7,37 @@ export async function uploadFile(file: File): Promise<{ url: string; fileName: s
     ? '/.netlify/functions' 
     : 'http://localhost:8888/.netlify/functions'
 
-  const response = await fetch(`${API_BASE}/upload-file`, {
-    method: 'POST',
-    body: formData
-  })
+  try {
+    const response = await fetch(`${API_BASE}/upload-file`, {
+      method: 'POST',
+      body: formData
+    })
 
-  if (!response.ok) {
-    const error = await response.json()
-    throw new Error(error.error || 'File upload failed')
-  }
+    if (!response.ok) {
+      let errorMessage = `Upload failed with status ${response.status}`
+      try {
+        const errorData = await response.json()
+        errorMessage = errorData.error || errorMessage
+      } catch {
+        // If JSON parsing fails, try to get text
+        try {
+          const errorText = await response.text()
+          if (errorText) errorMessage = errorText
+        } catch {
+          // Use default error message
+        }
+      }
+      throw new Error(errorMessage)
+    }
 
-  const result = await response.json()
-  return {
-    url: result.url,
-    fileName: result.fileName,
-    size: result.size
+    const result = await response.json()
+    return {
+      url: result.url,
+      fileName: result.fileName,
+      size: result.size
+    }
+  } catch (error) {
+    console.error('File upload error:', error)
+    throw error instanceof Error ? error : new Error('File upload failed')
   }
 }

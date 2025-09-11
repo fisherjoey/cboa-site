@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { resourcesAPI } from '@/lib/api'
-import { uploadFile } from '@/lib/fileUpload'
+import { uploadFileLocal } from '@/lib/fileUploadLocal'
 import ResourceViewer from '@/components/ResourceViewer'
 import ResourceThumbnail from '@/components/ResourceThumbnail'
 import { useRole } from '@/contexts/RoleContext'
@@ -145,7 +145,7 @@ export default function ResourcesClient() {
         if (uploadedFile) {
           try {
             console.log('Uploading file:', uploadedFile.name)
-            const uploadResult = await uploadFile(uploadedFile)
+            const uploadResult = await uploadFileLocal(uploadedFile)
             fileUrl = uploadResult.url
             console.log('File uploaded successfully:', uploadResult)
           } catch (uploadError) {
@@ -243,15 +243,15 @@ export default function ResourcesClient() {
 
   return (
     <div className="px-4 py-5 sm:p-6">
-      <div className="mb-8 flex justify-between items-center">
+      <div className="mb-6 sm:mb-8 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Resources</h1>
-          <p className="mt-2 text-gray-600">Training materials, forms, and official documents</p>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Resources</h1>
+          <p className="mt-1 sm:mt-2 text-sm sm:text-base text-gray-600">Training materials, forms, and official documents</p>
         </div>
         {canEdit && !isCreating && (
           <button
             onClick={() => setIsCreating(true)}
-            className="bg-orange-500 text-white px-4 py-2 rounded-lg hover:bg-orange-600 flex items-center gap-2"
+            className="bg-orange-500 text-white px-3 py-2 sm:px-4 rounded-lg hover:bg-orange-600 flex items-center gap-2 text-sm sm:text-base"
           >
             <IconPlus className="h-5 w-5" />
             Add Resource
@@ -261,11 +261,11 @@ export default function ResourcesClient() {
 
       {/* Create New Resource Form */}
       {isCreating && (
-        <div className="mb-6 bg-white rounded-lg shadow-lg p-6">
-          <h2 className="text-xl font-semibold mb-4">Add New Resource</h2>
+        <div className="mb-6 bg-white rounded-lg shadow-lg p-4 sm:p-6">
+          <h2 className="text-lg sm:text-xl font-semibold mb-4">Add New Resource</h2>
           
           <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Title *</label>
                 <input
@@ -305,7 +305,7 @@ export default function ResourcesClient() {
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Resource File</label>
                 <div className="space-y-2">
@@ -440,7 +440,7 @@ export default function ResourcesClient() {
               </div>
             </div>
 
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">File Size</label>
                 <input
@@ -525,33 +525,33 @@ export default function ResourcesClient() {
       )}
 
       {/* Search and Category Filter */}
-      <div className="mb-6 bg-white rounded-lg shadow p-4">
-        <div className="flex flex-wrap gap-4">
-          <div className="flex-1 min-w-[200px]">
+      <div className="mb-6 bg-white rounded-lg shadow p-3 sm:p-4">
+        <div className="flex flex-wrap gap-3 sm:gap-4">
+          <div className="flex-1 min-w-0">
             <input
               type="text"
               placeholder="Search resources..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-orange-500 focus:border-orange-500"
+              className="w-full px-3 py-2 text-sm sm:text-base border border-gray-300 rounded-md focus:outline-none focus:ring-orange-500 focus:border-orange-500"
             />
           </div>
         </div>
 
-        <div className="mt-4 flex flex-wrap gap-2">
+        <div className="mt-3 sm:mt-4 flex flex-wrap gap-1.5 sm:gap-2">
           {categories.map(category => {
             const Icon = category.icon
             return (
               <button
                 key={category.value}
                 onClick={() => setSelectedCategory(category.value)}
-                className={`px-3 py-2 rounded-md text-sm flex items-center gap-2 ${
+                className={`px-2 sm:px-3 py-1.5 sm:py-2 rounded-md text-xs sm:text-sm flex items-center gap-1 sm:gap-2 ${
                   selectedCategory === category.value
                     ? 'bg-orange-500 text-white'
                     : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
                 }`}
               >
-                <Icon className="h-4 w-4" />
+                <Icon className="h-3 w-3 sm:h-4 sm:w-4" />
                 {category.label}
               </button>
             )
@@ -562,14 +562,14 @@ export default function ResourcesClient() {
       {/* Featured Resources */}
       {filteredResources.some(r => r.featured) && (
         <div className="mb-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-3">Featured Resources</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <h2 className="text-base sm:text-lg font-semibold text-gray-900 mb-3">Featured Resources</h2>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4">
             {filteredResources.filter(r => r.featured).map(resource => {
               const Icon = getCategoryIcon(resource.category)
               return (
-                <div key={resource.id} className="bg-orange-50 border border-orange-200 rounded-lg p-4">
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-start gap-3">
+                <div key={resource.id} className="bg-orange-50 border border-orange-200 rounded-lg p-3 sm:p-4">
+                  <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+                    <div className="flex items-start gap-2 sm:gap-3 flex-1">
                       <ResourceThumbnail 
                         resource={resource} 
                         size="medium" 
@@ -584,7 +584,7 @@ export default function ResourcesClient() {
                         </div>
                       </div>
                     </div>
-                    <div className="flex gap-2">
+                    <div className="flex items-center gap-2">
                       {(resource.fileUrl || resource.externalLink) && (
                         <button
                           onClick={() => setViewingResource(resource)}
@@ -708,7 +708,7 @@ export default function ResourcesClient() {
                     </div>
                   </div>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex items-center gap-2">
                   {(resource.fileUrl || resource.externalLink) && (
                     <button
                       onClick={() => setViewingResource(resource)}

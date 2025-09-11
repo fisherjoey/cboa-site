@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import './globals.css'
-import MobileHeader from '@/components/layout/MobileHeader'
+import Header from '@/components/layout/Header'
 import Footer from '@/components/layout/Footer'
 
 export const metadata: Metadata = {
@@ -79,7 +79,7 @@ export default function RootLayout({
         }} />
       </head>
       <body className="min-h-screen flex flex-col">
-        <MobileHeader />
+        <Header />
         <main className="flex-grow">
           {children}
         </main>

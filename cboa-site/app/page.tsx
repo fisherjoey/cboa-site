@@ -61,17 +61,39 @@ export default function HomePage() {
       
       <ElevateCTA />
       
-      {/* Latest News */}
-      <section className="py-16">
+      {/* Book Referees CTA */}
+      <section className="py-8 sm:py-12 bg-gradient-to-r from-cboa-blue to-blue-800">
         <div className="container mx-auto px-4">
-          <div className="flex justify-between items-center mb-8">
-            <h2 className="text-3xl font-bold text-cboa-blue">Latest News</h2>
+          <div className="text-center text-white">
+            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-4">Need Officials for Your Games?</h2>
+            <p className="text-lg sm:text-xl mb-6 max-w-2xl mx-auto">
+              Book certified CBOA referees for your basketball games, tournaments, and events. 
+              Professional, experienced, and reliable officials available.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Button href="/get-officials" variant="primary" size="lg" className="bg-cboa-orange hover:bg-orange-600 text-white">
+                Book Referees Now
+              </Button>
+              <Button href="/about#contact" variant="secondary" size="lg" className="bg-white text-cboa-blue hover:bg-gray-100">
+                Contact Us
+              </Button>
+            </div>
+          </div>
+        </div>
+      </section>
+      
+      {/* Latest News */}
+      <section className="py-8 sm:py-12 lg:py-16">
+        <div className="container mx-auto px-4">
+          <div className="flex justify-between items-center mb-6 sm:mb-8">
+            <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-cboa-blue">Latest News</h2>
             <Button href="/news" variant="primary" size="sm">
-              View All News
+              <span className="hidden sm:inline">View All News</span>
+              <span className="sm:hidden">View All</span>
             </Button>
           </div>
           
-          <div className="grid md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
             {latestNews.map((news) => (
               <NewsCard key={news.slug} {...news} />
             ))}
@@ -80,16 +102,17 @@ export default function HomePage() {
       </section>
       
       {/* Upcoming Training */}
-      <section className="py-16 bg-gray-50">
+      <section className="py-8 sm:py-12 lg:py-16 bg-gray-50">
         <div className="container mx-auto px-4">
-          <div className="flex justify-between items-center mb-8">
-            <h2 className="text-3xl font-bold text-cboa-blue">Upcoming Training</h2>
+          <div className="flex justify-between items-center mb-6 sm:mb-8">
+            <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-cboa-blue">Upcoming Training</h2>
             <Button href="/training" variant="primary" size="sm">
-              View All Training
+              <span className="hidden sm:inline">View All Training</span>
+              <span className="sm:hidden">View All</span>
             </Button>
           </div>
           
-          <div className="grid md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
             {upcomingTraining.map((training, index) => (
               <TrainingCard key={index} {...training} />
             ))}

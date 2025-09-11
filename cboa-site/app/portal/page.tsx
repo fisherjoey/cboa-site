@@ -2,20 +2,37 @@
 
 import Link from 'next/link';
 import { useRole } from '@/contexts/RoleContext';
+import { useState, useEffect } from 'react';
 import { 
   IconBooks, 
   IconNews, 
   IconNotebook, 
   IconCalendar,
   IconGavel,
-  IconUsers,
+  IconClipboard,
   IconSettings,
-  IconFileText,
-  IconClipboard
+  IconEye,
+  IconDownload
 } from '@tabler/icons-react';
 
 export default function PortalDashboard() {
   const { user } = useRole();
+  const [latestBounce, setLatestBounce] = useState<any>(null);
+
+  useEffect(() => {
+    // Load the latest Bounce newsletter
+    const newsletters = localStorage.getItem('cboa_newsletters');
+    if (newsletters) {
+      const parsed = JSON.parse(newsletters);
+      if (parsed.length > 0) {
+        // Sort by date and get the latest
+        const sorted = parsed.sort((a: any, b: any) => 
+          new Date(b.date).getTime() - new Date(a.date).getTime()
+        );
+        setLatestBounce(sorted[0]);
+      }
+    }
+  }, []);
 
   // Define sections based on role
   const officialSections = [
@@ -24,7 +41,6 @@ export default function PortalDashboard() {
       title: 'Resources',
       description: 'Access rulebooks, training materials, forms, and official documents',
       icon: IconBooks,
-      color: 'blue',
       badge: null
     },
     {
@@ -32,7 +48,6 @@ export default function PortalDashboard() {
       title: 'News & Announcements',
       description: 'Stay updated with the latest CBOA news, events, and important announcements',
       icon: IconNews,
-      color: 'green',
       badge: null
     },
     {
@@ -40,7 +55,6 @@ export default function PortalDashboard() {
       title: 'The Bounce',
       description: 'Read our monthly newsletter with in-depth articles and officiating insights',
       icon: IconNotebook,
-      color: 'orange',
       badge: null
     },
     {
@@ -48,7 +62,6 @@ export default function PortalDashboard() {
       title: 'Calendar',
       description: 'View upcoming games, training sessions, and important dates',
       icon: IconCalendar,
-      color: 'purple',
       badge: null
     },
     {
@@ -56,7 +69,6 @@ export default function PortalDashboard() {
       title: 'Rule Modifications',
       description: 'Review CBOA-specific rule modifications and interpretations',
       icon: IconGavel,
-      color: 'red',
       badge: null
     }
   ];
@@ -64,19 +76,10 @@ export default function PortalDashboard() {
   const executiveSections = [
     ...officialSections,
     {
-      href: '/portal/officials-management',
-      title: 'Officials Management',
-      description: 'Manage official certifications, levels, and assignments',
-      icon: IconUsers,
-      color: 'indigo',
-      badge: 'EXEC'
-    },
-    {
       href: '/portal/reports',
       title: 'Reports & Analytics',
       description: 'View performance metrics, attendance, and statistical reports',
       icon: IconClipboard,
-      color: 'teal',
       badge: 'EXEC'
     }
   ];
@@ -88,15 +91,6 @@ export default function PortalDashboard() {
       title: 'CMS Admin',
       description: 'Manage website content, news articles, and resources',
       icon: IconSettings,
-      color: 'gray',
-      badge: 'ADMIN'
-    },
-    {
-      href: '/portal/system-settings',
-      title: 'System Settings',
-      description: 'Configure portal settings, user permissions, and system preferences',
-      icon: IconFileText,
-      color: 'slate',
       badge: 'ADMIN'
     }
   ];
@@ -108,26 +102,11 @@ export default function PortalDashboard() {
       ? executiveSections 
       : officialSections;
 
-  const getColorClasses = (color: string) => {
-    const colors: Record<string, { bg: string; text: string; hover: string }> = {
-      blue: { bg: 'bg-blue-100', text: 'text-blue-600', hover: 'text-blue-600' },
-      green: { bg: 'bg-green-100', text: 'text-green-600', hover: 'text-green-600' },
-      orange: { bg: 'bg-orange-100', text: 'text-orange-600', hover: 'text-orange-600' },
-      purple: { bg: 'bg-purple-100', text: 'text-purple-600', hover: 'text-purple-600' },
-      red: { bg: 'bg-red-100', text: 'text-red-600', hover: 'text-red-600' },
-      indigo: { bg: 'bg-indigo-100', text: 'text-indigo-600', hover: 'text-indigo-600' },
-      teal: { bg: 'bg-teal-100', text: 'text-teal-600', hover: 'text-teal-600' },
-      gray: { bg: 'bg-gray-100', text: 'text-gray-600', hover: 'text-gray-600' },
-      slate: { bg: 'bg-slate-100', text: 'text-slate-600', hover: 'text-slate-600' }
-    };
-    return colors[color] || colors.blue;
-  };
-
   return (
     <div className="space-y-6">
       {/* Welcome Section */}
-      <div className="bg-white rounded-lg shadow p-6">
-        <h1 className="text-2xl font-bold text-gray-900 mb-2">
+      <div className="bg-white rounded-lg shadow p-4 sm:p-6">
+        <h1 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">
           Welcome, {user.name}
         </h1>
         <p className="text-gray-600">
@@ -144,7 +123,7 @@ export default function PortalDashboard() {
         )}
         {user.role === 'executive' && (
           <p className="text-sm text-gray-500 mt-2">
-            You have access to executive features including officials management and reports.
+            You have access to executive features including reports and analytics.
           </p>
         )}
         {user.role === 'admin' && (
@@ -154,43 +133,79 @@ export default function PortalDashboard() {
         )}
       </div>
 
+      {/* Latest Bounce Newsletter */}
+      {latestBounce && (
+        <div className="bg-gradient-to-r from-orange-50 to-orange-100 rounded-lg shadow p-4 sm:p-6">
+          <div className="flex items-start justify-between">
+            <div>
+              <h2 className="text-lg font-semibold text-gray-900 mb-2">
+                Latest Newsletter: The Bounce
+              </h2>
+              <h3 className="text-base font-medium text-gray-800 mb-1">
+                {latestBounce.title}
+              </h3>
+              <p className="text-sm text-gray-600">
+                Published: {new Date(latestBounce.date).toLocaleDateString('en-US', { 
+                  year: 'numeric', 
+                  month: 'long', 
+                  day: 'numeric' 
+                })}
+              </p>
+            </div>
+            <div className="flex gap-2">
+              <Link
+                href="/portal/the-bounce"
+                className="text-blue-600 hover:text-blue-800 p-2"
+                title="View Newsletter"
+              >
+                <IconEye className="h-5 w-5" />
+              </Link>
+              {latestBounce.fileUrl && (
+                <a
+                  href={latestBounce.fileUrl}
+                  download
+                  className="text-green-600 hover:text-green-800 p-2"
+                  title="Download PDF"
+                >
+                  <IconDownload className="h-5 w-5" />
+                </a>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Main Portal Sections */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
         {sections.map((section) => {
           const Icon = section.icon;
-          const colors = getColorClasses(section.color);
           
           return (
             <Link key={section.href} href={section.href} className="block">
-              <div className="bg-white overflow-hidden shadow-lg rounded-lg hover:shadow-xl transition-shadow h-full relative">
+              <div className="bg-white overflow-hidden shadow rounded-lg hover:shadow-lg transition-shadow h-full relative border border-gray-200">
                 {section.badge && (
                   <div className="absolute top-2 right-2">
                     <span className={`px-2 py-1 text-xs font-bold rounded ${
-                      section.badge === 'ADMIN' ? 'bg-red-500 text-white' : 
-                      section.badge === 'EXEC' ? 'bg-purple-500 text-white' : 
+                      section.badge === 'ADMIN' ? 'bg-gray-700 text-white' : 
+                      section.badge === 'EXEC' ? 'bg-gray-600 text-white' : 
                       'bg-gray-500 text-white'
                     }`}>
                       {section.badge}
                     </span>
                   </div>
                 )}
-                <div className="p-6">
-                  <div className="flex items-center justify-center mb-4">
-                    <div className={`h-16 w-16 rounded-full ${colors.bg} flex items-center justify-center`}>
-                      <Icon className={`h-8 w-8 ${colors.text}`} />
+                <div className="p-4 sm:p-6">
+                  <div className="flex items-center mb-3">
+                    <div className="h-10 w-10 rounded-lg bg-gray-100 flex items-center justify-center">
+                      <Icon className="h-6 w-6 text-gray-700" />
                     </div>
+                    <h2 className="text-lg font-semibold text-gray-900 ml-3 flex-1">
+                      {section.title}
+                    </h2>
                   </div>
-                  <h2 className="text-xl font-semibold text-gray-900 text-center mb-2">
-                    {section.title}
-                  </h2>
-                  <p className="text-gray-600 text-center text-sm">
+                  <p className="text-gray-600 text-sm">
                     {section.description}
                   </p>
-                  <div className="mt-4 text-center">
-                    <span className={`text-sm font-medium ${colors.hover}`}>
-                      {section.href.startsWith('/admin') ? 'Open Admin →' : 'View →'}
-                    </span>
-                  </div>
                 </div>
               </div>
             </Link>
@@ -198,66 +213,37 @@ export default function PortalDashboard() {
         })}
       </div>
 
-      {/* Quick Stats - Different based on role */}
-      {user.role !== 'official' && (
-        <div className="mt-8 bg-gray-50 rounded-lg p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Quick Stats</h3>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className="bg-white p-4 rounded">
-              <div className="text-2xl font-bold text-blue-600">250+</div>
-              <div className="text-sm text-gray-600">Active Officials</div>
-            </div>
-            <div className="bg-white p-4 rounded">
-              <div className="text-2xl font-bold text-green-600">47</div>
-              <div className="text-sm text-gray-600">Games This Week</div>
-            </div>
-            <div className="bg-white p-4 rounded">
-              <div className="text-2xl font-bold text-orange-600">12</div>
-              <div className="text-sm text-gray-600">Pending Assignments</div>
-            </div>
-            <div className="bg-white p-4 rounded">
-              <div className="text-2xl font-bold text-purple-600">8</div>
-              <div className="text-sm text-gray-600">Upcoming Events</div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Quick Links Section */}
-      <div className="mt-12 bg-gray-50 rounded-lg p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Quick Links</h3>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <a href="/portal/resources#rulebooks" className="text-sm text-blue-600 hover:text-blue-800">
-            • Rulebooks
-          </a>
-          <a href="/portal/resources#forms" className="text-sm text-blue-600 hover:text-blue-800">
-            • Forms & Documents
-          </a>
-          <a href="/portal/resources#training" className="text-sm text-blue-600 hover:text-blue-800">
-            • Training Materials
-          </a>
-          <a href="/portal/news#announcements" className="text-sm text-blue-600 hover:text-blue-800">
-            • Latest Announcements
-          </a>
+      {/* Quick Links Section - Simplified */}
+      <div className="bg-gray-50 rounded-lg p-4 sm:p-6">
+        <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-3 sm:mb-4">Quick Links</h3>
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+          <Link href="/portal/resources#rulebooks" className="text-sm text-gray-700 hover:text-gray-900 hover:underline">
+            → Rulebooks
+          </Link>
+          <Link href="/portal/resources#forms" className="text-sm text-gray-700 hover:text-gray-900 hover:underline">
+            → Forms & Documents
+          </Link>
+          <Link href="/portal/resources#training" className="text-sm text-gray-700 hover:text-gray-900 hover:underline">
+            → Training Materials
+          </Link>
+          <Link href="/portal/news#announcements" className="text-sm text-gray-700 hover:text-gray-900 hover:underline">
+            → Latest Announcements
+          </Link>
+          <Link href="/portal/calendar" className="text-sm text-gray-700 hover:text-gray-900 hover:underline">
+            → Upcoming Events
+          </Link>
+          <Link href="/portal/the-bounce" className="text-sm text-gray-700 hover:text-gray-900 hover:underline">
+            → Newsletter Archive
+          </Link>
           {user.role !== 'official' && (
-            <>
-              <a href="/portal/officials-management" className="text-sm text-purple-600 hover:text-purple-800">
-                • Officials Directory
-              </a>
-              <a href="/portal/reports" className="text-sm text-purple-600 hover:text-purple-800">
-                • Performance Reports
-              </a>
-            </>
+            <Link href="/portal/reports" className="text-sm text-gray-700 hover:text-gray-900 hover:underline">
+              → Performance Reports
+            </Link>
           )}
           {user.role === 'admin' && (
-            <>
-              <a href="/admin" className="text-sm text-red-600 hover:text-red-800">
-                • Content Management
-              </a>
-              <a href="/portal/system-settings" className="text-sm text-red-600 hover:text-red-800">
-                • System Configuration
-              </a>
-            </>
+            <Link href="/admin" className="text-sm text-gray-700 hover:text-gray-900 hover:underline">
+              → Content Management
+            </Link>
           )}
         </div>
       </div>
