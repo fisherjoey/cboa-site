@@ -1,46 +1,57 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
+import { usePathname } from 'next/navigation'
 import SearchBox from '../ui/SearchBox'
 
 export default function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [isLoggedIn, setIsLoggedIn] = useState(false)
+  const pathname = usePathname()
+  
+  // Check if user is logged in (mock for now)
+  useEffect(() => {
+    // In production, this would check actual auth state
+    setIsLoggedIn(false) // Set based on auth state
+  }, [pathname])
+  
+  // Check if we're on portal pages - don't show main header on portal
+  const isPortalPage = pathname?.startsWith('/portal')
+  
+  // Don't render main header on portal pages
+  if (isPortalPage) {
+    return null
+  }
 
   return (
     <header className="sticky top-0 z-50">
       {/* Top Row: Logo + Utility Navigation */}
       <div className="bg-cboa-dark text-white">
         <div className="container mx-auto px-4">
-          <div className="flex flex-col md:flex-row justify-between items-center py-3 gap-4">
-            <Link href="/" className="flex items-center gap-3">
+          <div className="flex flex-col md:flex-row justify-between items-center py-4 gap-4">
+            <Link href="/" className="flex items-center gap-4">
               <Image 
                 src="/images/logos/cboa-logo.png" 
                 alt="CBOA Logo" 
-                width={50} 
-                height={50}
+                width={60} 
+                height={60}
                 className="rounded invert"
               />
               <div>
-                <h2 className="text-xl font-bold">CBOA</h2>
-                <p className="text-xs text-gray-300">Calgary Basketball Officials</p>
+                <h2 className="text-2xl font-bold">CBOA</h2>
+                <p className="text-sm text-gray-300">Calgary Basketball Officials</p>
               </div>
             </Link>
             
-            <div className="flex items-center gap-4 text-sm">
+            <div className="flex items-center gap-6">
               <SearchBox />
               <Link 
                 href="/portal" 
-                className="text-white hover:text-cboa-orange transition-colors font-medium"
+                className="text-white hover:text-cboa-orange transition-colors font-medium text-base px-4 py-2 border border-white/20 rounded hover:border-cboa-orange"
               >
                 Member Portal
-              </Link>
-              <Link 
-                href="/become-a-referee" 
-                className="bg-cboa-orange text-white px-4 py-2 rounded-full font-semibold hover:bg-opacity-90 transition-all"
-              >
-                Apply Now
               </Link>
             </div>
           </div>
@@ -51,15 +62,34 @@ export default function Header() {
       <nav className="bg-cboa-blue text-white">
         <div className="container mx-auto px-4">
           <div className="flex justify-between items-center">
-            <ul className="hidden md:flex gap-6 py-4">
-              <li><Link href="/" className="hover:text-cboa-orange transition-colors px-3 py-2">Home</Link></li>
-              <li><Link href="/about" className="hover:text-cboa-orange transition-colors px-3 py-2">About</Link></li>
-              <li><Link href="/training" className="hover:text-cboa-orange transition-colors px-3 py-2">Training</Link></li>
-              <li><Link href="/become-a-referee" className="hover:text-cboa-orange transition-colors px-3 py-2">Become a Referee</Link></li>
-              <li><Link href="/get-officials" className="hover:text-cboa-orange transition-colors px-3 py-2">Request Officials</Link></li>
-              <li><Link href="/resources" className="hover:text-cboa-orange transition-colors px-3 py-2">Resources</Link></li>
-              <li><Link href="/news" className="hover:text-cboa-orange transition-colors px-3 py-2">News</Link></li>
+            <ul className="hidden md:flex gap-6 py-5">
+              <li><Link href="/" className="hover:text-cboa-orange transition-colors px-3 py-2 text-base font-medium">Home</Link></li>
+              <li><Link href="/about" className="hover:text-cboa-orange transition-colors px-3 py-2 text-base font-medium">About</Link></li>
+              <li><Link href="/training" className="hover:text-cboa-orange transition-colors px-3 py-2 text-base font-medium">Training</Link></li>
+              <li><Link href="/become-a-referee" className="hover:text-cboa-orange transition-colors px-3 py-2 text-base font-medium">Become a Referee</Link></li>
+              <li><Link href="/get-officials" className="hover:text-cboa-orange transition-colors px-3 py-2 text-base font-medium">Request Officials</Link></li>
+              <li><Link href="/resources" className="hover:text-cboa-orange transition-colors px-3 py-2 text-base font-medium">Resources</Link></li>
+              <li><Link href="/news" className="hover:text-cboa-orange transition-colors px-3 py-2 text-base font-medium">News</Link></li>
             </ul>
+            
+            {/* Portal Navigation - Right side when logged in */}
+            {isLoggedIn && (
+              <ul className="hidden md:flex gap-4 py-4 items-center">
+                <li className="text-cboa-orange font-medium">Portal:</li>
+                <li><Link href="/portal" className="hover:text-cboa-orange transition-colors px-2 py-1">Dashboard</Link></li>
+                <li><Link href="/portal/resources" className="hover:text-cboa-orange transition-colors px-2 py-1">Resources</Link></li>
+                <li><Link href="/portal/news" className="hover:text-cboa-orange transition-colors px-2 py-1">News</Link></li>
+                <li><Link href="/portal/the-bounce" className="hover:text-cboa-orange transition-colors px-2 py-1">The Bounce</Link></li>
+                <li>
+                  <button 
+                    className="text-sm hover:text-cboa-orange px-2 py-1 transition-colors"
+                    onClick={() => setIsLoggedIn(false)}
+                  >
+                    Logout
+                  </button>
+                </li>
+              </ul>
+            )}
             
             {/* Mobile Menu Button */}
             <button
