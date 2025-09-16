@@ -1,5 +1,12 @@
-// Local file storage using localStorage (for demo/development)
+// Local file storage using localStorage with size management
 export async function uploadFileLocal(file: File): Promise<{ url: string; fileName: string; size: number }> {
+  // Check file size limit (2MB for localStorage safety)
+  const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2MB
+  
+  if (file.size > MAX_FILE_SIZE) {
+    throw new Error(`File too large. Maximum size is 2MB, your file is ${(file.size / 1024 / 1024).toFixed(2)}MB`);
+  }
+
   return new Promise((resolve, reject) => {
     const reader = new FileReader()
     
@@ -19,11 +26,34 @@ export async function uploadFileLocal(file: File): Promise<{ url: string; fileNa
         }
         
         // Get existing files
-        const existingFiles = JSON.parse(localStorage.getItem('cboa_uploaded_files') || '[]')
+        let existingFiles = []
+        try {
+          existingFiles = JSON.parse(localStorage.getItem('cboa_uploaded_files') || '[]')
+        } catch {
+          existingFiles = []
+        }
+        
+        // Check total storage before adding
+        const totalSize = existingFiles.reduce((sum: number, f: any) => 
+          sum + (f.data ? f.data.length : 0), 0) + base64.length
+        
+        // If exceeding 4MB total, remove oldest files
+        const MAX_TOTAL_SIZE = 4 * 1024 * 1024 // 4MB total
+        while (totalSize > MAX_TOTAL_SIZE && existingFiles.length > 0) {
+          existingFiles.shift() // Remove oldest
+        }
+        
         existingFiles.push(fileData)
         
-        // Store updated files list
-        localStorage.setItem('cboa_uploaded_files', JSON.stringify(existingFiles))
+        // Try to store, if fails, clear and retry
+        try {
+          localStorage.setItem('cboa_uploaded_files', JSON.stringify(existingFiles))
+        } catch (e) {
+          // Clear old files and try again with just this file
+          console.warn('Storage full, clearing old uploads...')
+          localStorage.removeItem('cboa_uploaded_files')
+          localStorage.setItem('cboa_uploaded_files', JSON.stringify([fileData]))
+        }
         
         resolve({
           url: base64, // Return the base64 data URL directly
@@ -42,4 +72,25 @@ export async function uploadFileLocal(file: File): Promise<{ url: string; fileNa
     // Read file as data URL (base64)
     reader.readAsDataURL(file)
   })
+}
+
+// Clear all uploaded files from localStorage
+export function clearUploadedFiles() {
+  localStorage.removeItem('cboa_uploaded_files')
+}
+
+// Get storage info
+export function getStorageInfo() {
+  try {
+    const files = JSON.parse(localStorage.getItem('cboa_uploaded_files') || '[]')
+    const totalSize = files.reduce((sum: number, f: any) => 
+      sum + (f.data ? f.data.length : 0), 0)
+    return {
+      fileCount: files.length,
+      totalSize,
+      totalSizeMB: (totalSize / 1024 / 1024).toFixed(2)
+    }
+  } catch {
+    return { fileCount: 0, totalSize: 0, totalSizeMB: '0' }
+  }
 }

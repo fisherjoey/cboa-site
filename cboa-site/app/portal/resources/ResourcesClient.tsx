@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { resourcesAPI } from '@/lib/api'
-import { uploadFileLocal } from '@/lib/fileUploadLocal'
+import { storage, getStorageInfo } from '@/lib/storage'
 import ResourceViewer from '@/components/ResourceViewer'
 import ResourceThumbnail from '@/components/ResourceThumbnail'
 import { useRole } from '@/contexts/RoleContext'
@@ -145,8 +145,9 @@ export default function ResourcesClient() {
         if (uploadedFile) {
           try {
             console.log('Uploading file:', uploadedFile.name)
-            const uploadResult = await uploadFileLocal(uploadedFile)
-            fileUrl = uploadResult.url
+            console.log('Storage info:', getStorageInfo())
+            const uploadResult = await storage.resources.uploadFile(uploadedFile, 'documents')
+            fileUrl = uploadResult.publicUrl || uploadResult.url
             console.log('File uploaded successfully:', uploadResult)
           } catch (uploadError) {
             console.error('File upload failed:', uploadError)
@@ -241,8 +242,18 @@ export default function ResourcesClient() {
     return cat ? cat.icon : IconFile
   }
 
+  const storageInfo = getStorageInfo()
+
   return (
     <div className="px-4 py-5 sm:p-6">
+      {/* Storage Status Indicator */}
+      {canEdit && (
+        <div className="mb-4 text-xs text-gray-500 flex items-center gap-2">
+          <span className={`inline-block w-2 h-2 rounded-full ${storageInfo.configured ? 'bg-green-500' : 'bg-yellow-500'}`}></span>
+          {storageInfo.message}
+        </div>
+      )}
+      
       <div className="mb-6 sm:mb-8 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Resources</h1>

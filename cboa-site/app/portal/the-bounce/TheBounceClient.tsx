@@ -1,11 +1,12 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import dynamic from 'next/dynamic'
 import { IconNotebook, IconDownload, IconEye, IconCalendar, IconUpload, IconPlus, IconTrash, IconFile } from '@tabler/icons-react'
 import Card from '@/components/ui/Card'
 import { ContentItem } from '@/lib/content'
 import { useRole } from '@/contexts/RoleContext'
+import { storage, getStorageInfo } from '@/lib/storage'
 
 // Dynamically import PDFViewer to avoid SSR issues
 const PDFViewer = dynamic(() => import('./PDFViewer'), {
@@ -82,10 +83,10 @@ export default function TheBounceClient({ newsletters: initialNewsletters }: The
       return
     }
     
-    // Convert file to base64 for localStorage storage
-    const reader = new FileReader()
-    reader.onloadend = () => {
-      const base64 = reader.result as string
+    try {
+      // Upload to storage (Supabase or localStorage)
+      console.log('Uploading newsletter, storage info:', getStorageInfo())
+      const uploadResult = await storage.newsletters.uploadFile(file, `${new Date().getFullYear()}`)
       
       const newNewsletter: Newsletter = {
         id: Date.now().toString(),
@@ -93,7 +94,7 @@ export default function TheBounceClient({ newsletters: initialNewsletters }: The
         date: uploadForm.date,
         description: uploadForm.description,
         featured: uploadForm.featured,
-        pdfFile: base64,
+        pdfFile: uploadResult.publicUrl || uploadResult.url,
         uploadedAt: new Date().toISOString()
       }
       
@@ -115,9 +116,10 @@ export default function TheBounceClient({ newsletters: initialNewsletters }: The
       if (fileInputRef.current) {
         fileInputRef.current.value = ''
       }
+    } catch (error) {
+      console.error('Upload error:', error)
+      alert(`Failed to upload newsletter: ${error instanceof Error ? error.message : 'Unknown error'}`)
     }
-    
-    reader.readAsDataURL(file)
   }
   
   const handleDelete = (id: string) => {
