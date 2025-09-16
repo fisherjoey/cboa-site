@@ -45,7 +45,7 @@ export default function AboutPage() {
     <>
       <Hero
         title="About CBOA"
-        subtitle="Calgary's premier basketball officiating organization since 1978"
+        subtitle="Calgary's premier basketball officiating organization since 1964"
       />
 
       {/* Mission Section */}
@@ -70,7 +70,7 @@ export default function AboutPage() {
             <h2 className="text-3xl font-bold text-cboa-blue mb-8 text-center">Our History</h2>
             <div className="prose prose-lg mx-auto">
               <p className="text-gray-700 mb-4">
-                The Calgary Basketball Officials Association was founded in 1978 by a group of 
+                The Calgary Basketball Officials Association was founded in 1964 by a group of 
                 dedicated basketball enthusiasts who recognized the need for organized, professional 
                 officiating in Calgary's growing basketball community.
               </p>

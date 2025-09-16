@@ -7,7 +7,6 @@ export const metadata: Metadata = {
   title: 'Calgary Basketball Officials Association',
   description: 'Official website of the Calgary Basketball Officials Association (CBOA) - Join our team of certified basketball referees',
   keywords: 'basketball, referee, officials, Calgary, CBOA, officiating, sports',
-  metadataBase: new URL('https://refalberta.ca'),
   icons: {
     icon: [
       {
@@ -56,8 +55,6 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
-        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5" />
-        <meta name="theme-color" content="#ea580c" />
         <link rel="apple-touch-icon" sizes="180x180" href="/images/icons/apple-touch-icon.png" />
         <link rel="icon" type="image/png" sizes="32x32" href="/images/icons/favicon-32x32.png" />
         <link rel="icon" type="image/png" sizes="16x16" href="/images/icons/favicon-16x16.png" />
@@ -70,7 +67,7 @@ export default function RootLayout({
               window.netlifyIdentity.on("init", user => {
                 if (!user) {
                   window.netlifyIdentity.on("login", () => {
-                    document.location.href = "/portal";
+                    document.location.href = "/admin/";
                   });
                 }
               });
