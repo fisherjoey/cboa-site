@@ -4,9 +4,9 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { usePathname } from 'next/navigation'
-import { 
-  IconMenu2, 
-  IconX, 
+import {
+  IconMenu2,
+  IconX,
   IconHome,
   IconInfoCircle,
   IconCalendar,
@@ -15,7 +15,9 @@ import {
   IconPhone,
   IconLogin,
   IconSearch,
-  IconChevronRight
+  IconChevronRight,
+  IconBrandFacebook,
+  IconBrandInstagram
 } from '@tabler/icons-react'
 
 export default function MobileHeader() {
@@ -165,13 +167,24 @@ export default function MobileHeader() {
                 </li>
               ))}
               <li className="ml-auto">
+                {/* Temporarily using Google Sites */}
                 <Link
-                  href="/portal"
+                  href="https://sites.google.com/view/cboa-resource-centre/home?pli=1"
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="flex items-center gap-2 px-4 py-3 bg-cboa-orange hover:bg-orange-600 transition-colors"
                 >
                   <IconLogin className="h-4 w-4" />
                   <span>Member Portal</span>
                 </Link>
+                {/* Original portal link - commented out temporarily */}
+                {/* <Link
+                  href="/portal"
+                  className="flex items-center gap-2 px-4 py-3 bg-cboa-orange hover:bg-orange-600 transition-colors"
+                >
+                  <IconLogin className="h-4 w-4" />
+                  <span>Member Portal</span>
+                </Link> */}
               </li>
             </ul>
           </div>
@@ -216,12 +229,22 @@ export default function MobileHeader() {
                 <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Member Area</h3>
               </div>
               
+              {/* Temporarily using Google Sites */}
               <Link
-                href="/portal"
+                href="https://sites.google.com/view/cboa-resource-centre/home?pli=1"
+                target="_blank"
+                rel="noopener noreferrer"
                 className="flex items-center gap-3 px-4 py-3 mx-4 bg-cboa-orange text-white rounded-lg hover:bg-orange-600 transition-colors"
               >
                 <IconLogin className="h-5 w-5" />
                 <span className="font-medium">Member Portal</span>
+              {/* Original portal link - commented out temporarily */}
+              {/* <Link
+                href="/portal"
+                className="flex items-center gap-3 px-4 py-3 mx-4 bg-cboa-orange text-white rounded-lg hover:bg-orange-600 transition-colors"
+              >
+                <IconLogin className="h-5 w-5" />
+                <span className="font-medium">Member Portal</span> */}
               </Link>
 
               {/* Contact Info */}
