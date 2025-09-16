@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { resourcesAPI } from '@/lib/api'
-import { storage, getStorageInfo } from '@/lib/storage'
 import ResourceViewer from '@/components/ResourceViewer'
 import ResourceThumbnail from '@/components/ResourceThumbnail'
 import { useRole } from '@/contexts/RoleContext'
@@ -145,8 +144,9 @@ export default function ResourcesClient() {
         if (uploadedFile) {
           try {
             console.log('Uploading file:', uploadedFile.name)
-            console.log('Storage info:', getStorageInfo())
-            const uploadResult = await storage.resources.uploadFile(uploadedFile, 'documents')
+            // Storage functionality temporarily disabled
+            // const uploadResult = await storage.resources.uploadFile(uploadedFile, 'documents')
+            const uploadResult = { url: URL.createObjectURL(uploadedFile), error: null }
             fileUrl = uploadResult.publicUrl || uploadResult.url
             console.log('File uploaded successfully:', uploadResult)
           } catch (uploadError) {
@@ -242,7 +242,8 @@ export default function ResourcesClient() {
     return cat ? cat.icon : IconFile
   }
 
-  const storageInfo = getStorageInfo()
+  // Storage functionality temporarily disabled
+  const storageInfo = { configured: false, message: 'Local storage only' }
 
   return (
     <div className="px-4 py-5 sm:p-6">

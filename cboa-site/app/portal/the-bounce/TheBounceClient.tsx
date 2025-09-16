@@ -6,7 +6,6 @@ import { IconNotebook, IconDownload, IconEye, IconCalendar, IconUpload, IconPlus
 import Card from '@/components/ui/Card'
 import { ContentItem } from '@/lib/content'
 import { useRole } from '@/contexts/RoleContext'
-import { storage, getStorageInfo } from '@/lib/storage'
 
 // Dynamically import PDFViewer to avoid SSR issues
 const PDFViewer = dynamic(() => import('./PDFViewer'), {
@@ -84,9 +83,9 @@ export default function TheBounceClient({ newsletters: initialNewsletters }: The
     }
     
     try {
-      // Upload to storage (Supabase or localStorage)
-      console.log('Uploading newsletter, storage info:', getStorageInfo())
-      const uploadResult = await storage.newsletters.uploadFile(file, `${new Date().getFullYear()}`)
+      // Storage functionality temporarily disabled
+      // const uploadResult = await storage.newsletters.uploadFile(file, `${new Date().getFullYear()}`)
+      const uploadResult = { url: URL.createObjectURL(file), error: null }
       
       const newNewsletter: Newsletter = {
         id: Date.now().toString(),
