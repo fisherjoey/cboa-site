@@ -1,11 +1,12 @@
 import Link from 'next/link'
 import Image from 'next/image'
+import { IconBrandFacebook, IconBrandInstagram } from '@tabler/icons-react'
 
 export default function Footer() {
   return (
     <footer className="bg-cboa-dark text-white">
       <div className="container mx-auto px-4 py-8 sm:py-10">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6 sm:gap-8 mb-8">
           <div>
             <div className="flex items-center gap-3 mb-3 sm:mb-4">
               <Image 
@@ -36,6 +37,30 @@ export default function Footer() {
               <li><a href="https://basketball.ca" target="_blank" rel="noopener noreferrer" className="text-gray-300 hover:text-cboa-orange transition-colors text-sm sm:text-base">Canada Basketball</a></li>
               <li><a href="https://fiba.basketball" target="_blank" rel="noopener noreferrer" className="text-gray-300 hover:text-cboa-orange transition-colors text-sm sm:text-base">FIBA</a></li>
             </ul>
+          </div>
+
+          <div>
+            <h3 className="text-cboa-orange font-bold text-base sm:text-lg mb-3 sm:mb-4">Follow Us</h3>
+            <div className="flex gap-4">
+              <a
+                href="https://www.facebook.com/profile.php?id=61580876884629"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-gray-300 hover:text-cboa-orange transition-colors"
+                aria-label="Follow us on Facebook"
+              >
+                <IconBrandFacebook size={28} />
+              </a>
+              <a
+                href="https://www.instagram.com/thecboa/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-gray-300 hover:text-cboa-orange transition-colors"
+                aria-label="Follow us on Instagram"
+              >
+                <IconBrandInstagram size={28} />
+              </a>
+            </div>
           </div>
         </div>
         
