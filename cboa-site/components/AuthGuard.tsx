@@ -11,8 +11,8 @@ interface AuthGuardProps {
   redirectTo?: string
 }
 
-export default function AuthGuard({ 
-  children, 
+export default function AuthGuard({
+  children,
   requireAuth = true,
   redirectTo = '/'
 }: AuthGuardProps) {
@@ -20,12 +20,22 @@ export default function AuthGuard({
   const router = useRouter()
   const pathname = usePathname()
 
+  // Check if authentication should be disabled in development
+  const isDevMode = process.env.NODE_ENV === 'development'
+  const disableAuthInDev = process.env.NEXT_PUBLIC_DISABLE_AUTH_DEV === 'true'
+  const shouldBypassAuth = isDevMode && disableAuthInDev
+
   useEffect(() => {
-    // Store the intended destination
-    if (!isAuthenticated && !isLoading && requireAuth) {
+    // Store the intended destination (only if not bypassing auth)
+    if (!shouldBypassAuth && !isAuthenticated && !isLoading && requireAuth) {
       sessionStorage.setItem('redirectAfterLogin', pathname)
     }
-  }, [isAuthenticated, isLoading, requireAuth, pathname])
+  }, [isAuthenticated, isLoading, requireAuth, pathname, shouldBypassAuth])
+
+  // If auth is bypassed in development, always allow access
+  if (shouldBypassAuth) {
+    return <>{children}</>
+  }
 
   // Show loading state
   if (isLoading) {

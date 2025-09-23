@@ -9,6 +9,7 @@ executiveTeam:
   - name: Natasha Proulx
     position: President
     email: president@cboa.ca
+    image: /images/executive-placeholder.svg
   - name: Justin Weir
     position: Vice President
     email: vicepresident@cboa.ca

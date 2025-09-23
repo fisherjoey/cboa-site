@@ -1,23 +1,47 @@
 'use client'
 
-import { useState } from 'react'
-import { IconGavel, IconCalendar, IconFilter, IconChevronRight, IconChevronDown } from '@tabler/icons-react'
+import { useState, useEffect } from 'react'
+import { IconGavel, IconCalendar, IconFilter, IconChevronRight, IconChevronDown, IconSearch, IconPlus, IconEdit, IconTrash, IconDeviceFloppy, IconX } from '@tabler/icons-react'
 import Card from '@/components/ui/Card'
 import { ContentItem } from '@/lib/content'
+import { useRole } from '@/contexts/RoleContext'
+import { MarkdownEditor, MarkdownViewer } from '@/components/MarkdownEditor'
 
 interface RuleModificationsClientProps {
   modifications: ContentItem[]
   categories: string[]
 }
 
-export default function RuleModificationsClient({ modifications, categories }: RuleModificationsClientProps) {
+export default function RuleModificationsClient({ modifications: initialModifications, categories }: RuleModificationsClientProps) {
+  const { user } = useRole()
+  const [modifications, setModifications] = useState(initialModifications)
   const [selectedCategory, setSelectedCategory] = useState('all')
   const [expandedRules, setExpandedRules] = useState<Set<string>>(new Set())
-  
-  const filteredModifications = selectedCategory === 'all'
-    ? modifications
-    : modifications.filter(mod => mod.category === selectedCategory)
-  
+  const [searchTerm, setSearchTerm] = useState('')
+  const [isCreating, setIsCreating] = useState(false)
+  const [editingId, setEditingId] = useState<string | null>(null)
+  const [newModification, setNewModification] = useState({
+    title: '',
+    category: 'Club Tournament',
+    summary: '',
+    content: '',
+    effectiveDate: new Date().toISOString().split('T')[0],
+    active: true
+  })
+
+  const canEdit = user.role === 'admin' || user.role === 'executive'
+
+  // Filter modifications based on category and search term
+  const filteredModifications = modifications.filter(mod => {
+    const matchesCategory = selectedCategory === 'all' || mod.category === selectedCategory
+    const matchesSearch = searchTerm === '' ||
+      mod.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      mod.summary?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      mod.content?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      mod.body?.toLowerCase().includes(searchTerm.toLowerCase())
+    return matchesCategory && matchesSearch && mod.active !== false
+  })
+
   const toggleExpanded = (slug: string) => {
     const newExpanded = new Set(expandedRules)
     if (newExpanded.has(slug)) {
@@ -27,31 +51,91 @@ export default function RuleModificationsClient({ modifications, categories }: R
     }
     setExpandedRules(newExpanded)
   }
-  
+
   const getCategoryColor = (category: string) => {
     const colors: Record<string, string> = {
-      '3-Person Mechanics': 'bg-blue-100 text-blue-800',
-      '2-Person Mechanics': 'bg-green-100 text-green-800',
-      'Local Rules': 'bg-orange-100 text-orange-800',
-      'Tournament Rules': 'bg-purple-100 text-purple-800',
-      'Clarifications': 'bg-yellow-100 text-yellow-800'
+      'School League': 'bg-blue-100 text-blue-800',
+      'School Tournament': 'bg-purple-100 text-purple-800',
+      'Club League': 'bg-green-100 text-green-800',
+      'Club Tournament': 'bg-orange-100 text-orange-800',
+      'Adult': 'bg-yellow-100 text-yellow-800'
     }
     return colors[category] || 'bg-gray-100 text-gray-800'
   }
-  
+
+  const handleCreate = async () => {
+    if (newModification.title && newModification.content) {
+      // In a real implementation, this would call an API
+      const created = {
+        ...newModification,
+        slug: newModification.title.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+        id: Date.now().toString(),
+        body: newModification.content
+      }
+      setModifications([created, ...modifications])
+      setNewModification({
+        title: '',
+        category: 'Club Tournament',
+        summary: '',
+        content: '',
+        effectiveDate: new Date().toISOString().split('T')[0],
+        active: true
+      })
+      setIsCreating(false)
+    }
+  }
+
+  const handleUpdate = (slug: string, updates: Partial<ContentItem>) => {
+    setModifications(prev => prev.map(mod =>
+      mod.slug === slug ? { ...mod, ...updates } : mod
+    ))
+    setEditingId(null)
+  }
+
+  const handleDelete = (slug: string) => {
+    if (confirm('Are you sure you want to delete this rule modification?')) {
+      setModifications(prev => prev.filter(mod => mod.slug !== slug))
+    }
+  }
+
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="bg-white rounded-lg shadow-sm p-6">
-        <div className="flex items-center gap-3 mb-4">
-          <IconGavel className="h-8 w-8 text-cboa-blue" />
-          <h1 className="text-3xl font-bold text-cboa-blue">Rule Modifications</h1>
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-3">
+            <IconGavel className="h-8 w-8 text-cboa-blue" />
+            <h1 className="text-3xl font-bold text-cboa-blue">Rule Modifications</h1>
+          </div>
+          {canEdit && (
+            <button
+              onClick={() => setIsCreating(true)}
+              className="flex items-center gap-2 px-4 py-2 bg-cboa-blue text-white rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              <IconPlus className="h-5 w-5" />
+              Add New Rule
+            </button>
+          )}
         </div>
         <p className="text-gray-600">
           Official rule modifications and clarifications for CBOA officials. These modifications apply to all games unless otherwise specified.
         </p>
       </div>
-      
+
+      {/* Search Bar */}
+      <div className="bg-white rounded-lg shadow-sm p-4">
+        <div className="relative">
+          <IconSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+          <input
+            type="text"
+            placeholder="Search rule modifications..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cboa-blue"
+          />
+        </div>
+      </div>
+
       {/* Category Filter */}
       <div className="bg-white rounded-lg shadow-sm p-4">
         <div className="flex items-center gap-2 mb-3">
@@ -67,10 +151,10 @@ export default function RuleModificationsClient({ modifications, categories }: R
                 : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
             }`}
           >
-            All Categories ({modifications.length})
+            All Categories ({modifications.filter(m => m.active !== false).length})
           </button>
           {categories.map(category => {
-            const count = modifications.filter(m => m.category === category).length
+            const count = modifications.filter(m => m.category === category && m.active !== false).length
             return (
               <button
                 key={category}
@@ -87,91 +171,247 @@ export default function RuleModificationsClient({ modifications, categories }: R
           })}
         </div>
       </div>
-      
+
+      {/* Create New Rule Form */}
+      {isCreating && canEdit && (
+        <Card className="p-6">
+          <h3 className="text-xl font-bold mb-4">Create New Rule Modification</h3>
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Title</label>
+              <input
+                type="text"
+                value={newModification.title}
+                onChange={(e) => setNewModification({...newModification, title: e.target.value})}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cboa-blue"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
+              <select
+                value={newModification.category}
+                onChange={(e) => setNewModification({...newModification, category: e.target.value})}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cboa-blue"
+              >
+                {categories.map(cat => (
+                  <option key={cat} value={cat}>{cat}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Summary</label>
+              <input
+                type="text"
+                value={newModification.summary}
+                onChange={(e) => setNewModification({...newModification, summary: e.target.value})}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cboa-blue"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Effective Date</label>
+              <input
+                type="date"
+                value={newModification.effectiveDate}
+                onChange={(e) => setNewModification({...newModification, effectiveDate: e.target.value})}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cboa-blue"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Content (Markdown)</label>
+              <MarkdownEditor
+                value={newModification.content}
+                onChange={(value) => setNewModification({...newModification, content: value || ''})}
+              />
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={handleCreate}
+                className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+              >
+                <IconDeviceFloppy className="h-5 w-5" />
+                Save
+              </button>
+              <button
+                onClick={() => setIsCreating(false)}
+                className="flex items-center gap-2 px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
+              >
+                <IconX className="h-5 w-5" />
+                Cancel
+              </button>
+            </div>
+          </div>
+        </Card>
+      )}
+
       {/* Rule Modifications List */}
       {filteredModifications.length > 0 ? (
         <div className="space-y-4">
           {filteredModifications.map((modification) => {
             const isExpanded = expandedRules.has(modification.slug)
-            const effectiveDate = modification.effectiveDate 
+            const isEditing = editingId === modification.slug
+            const effectiveDate = modification.effectiveDate
               ? new Date(modification.effectiveDate).toLocaleDateString('en-CA', {
                   year: 'numeric',
                   month: 'long',
                   day: 'numeric'
                 })
               : null
-            
+
             return (
               <Card key={modification.slug} className="overflow-hidden">
-                <div 
-                  className="cursor-pointer"
-                  onClick={() => toggleExpanded(modification.slug)}
-                >
+                {isEditing ? (
                   <div className="p-6">
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-3 mb-2">
-                          <span className={`px-3 py-1 rounded-full text-xs font-semibold ${getCategoryColor(modification.category)}`}>
-                            {modification.category}
-                          </span>
-                          {effectiveDate && (
-                            <div className="flex items-center gap-1 text-sm text-gray-500">
-                              <IconCalendar className="h-4 w-4" />
-                              <span>Effective: {effectiveDate}</span>
+                    <h3 className="text-xl font-bold mb-4">Edit Rule Modification</h3>
+                    <div className="space-y-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Title</label>
+                        <input
+                          type="text"
+                          value={modification.title}
+                          onChange={(e) => handleUpdate(modification.slug, { title: e.target.value })}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cboa-blue"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
+                        <select
+                          value={modification.category}
+                          onChange={(e) => handleUpdate(modification.slug, { category: e.target.value })}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cboa-blue"
+                        >
+                          {categories.map(cat => (
+                            <option key={cat} value={cat}>{cat}</option>
+                          ))}
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Summary</label>
+                        <input
+                          type="text"
+                          value={modification.summary}
+                          onChange={(e) => handleUpdate(modification.slug, { summary: e.target.value })}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cboa-blue"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Effective Date</label>
+                        <input
+                          type="date"
+                          value={modification.effectiveDate ? new Date(modification.effectiveDate).toISOString().split('T')[0] : ''}
+                          onChange={(e) => handleUpdate(modification.slug, { effectiveDate: e.target.value })}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cboa-blue"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Content (Markdown)</label>
+                        <MarkdownEditor
+                          value={modification.content || modification.body || ''}
+                          onChange={(value) => handleUpdate(modification.slug, { content: value, body: value })}
+                        />
+                      </div>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => setEditingId(null)}
+                          className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                        >
+                          <IconDeviceFloppy className="h-5 w-5" />
+                          Save
+                        </button>
+                        <button
+                          onClick={() => setEditingId(null)}
+                          className="flex items-center gap-2 px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
+                        >
+                          <IconX className="h-5 w-5" />
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    <div
+                      className="cursor-pointer"
+                      onClick={() => toggleExpanded(modification.slug)}
+                    >
+                      <div className="p-6">
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-3 mb-2">
+                              <span className={`px-3 py-1 rounded-full text-xs font-semibold ${getCategoryColor(modification.category)}`}>
+                                {modification.category}
+                              </span>
+                              {effectiveDate && (
+                                <div className="flex items-center gap-1 text-sm text-gray-500">
+                                  <IconCalendar className="h-4 w-4" />
+                                  <span>Effective: {effectiveDate}</span>
+                                </div>
+                              )}
+                              {canEdit && (
+                                <div className="flex items-center gap-2 ml-auto" onClick={(e) => e.stopPropagation()}>
+                                  <button
+                                    onClick={() => setEditingId(modification.slug)}
+                                    className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                                    title="Edit"
+                                  >
+                                    <IconEdit className="h-4 w-4" />
+                                  </button>
+                                  <button
+                                    onClick={() => handleDelete(modification.slug)}
+                                    className="p-1.5 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                    title="Delete"
+                                  >
+                                    <IconTrash className="h-4 w-4" />
+                                  </button>
+                                </div>
+                              )}
+                            </div>
+
+                            <h3 className="text-xl font-bold text-cboa-blue mb-2">
+                              {modification.title}
+                            </h3>
+
+                            {modification.summary && (
+                              <p className="text-gray-600 mb-3">
+                                {modification.summary}
+                              </p>
+                            )}
+                          </div>
+
+                          <div className="ml-4">
+                            {isExpanded ? (
+                              <IconChevronDown className="h-6 w-6 text-gray-400" />
+                            ) : (
+                              <IconChevronRight className="h-6 w-6 text-gray-400" />
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Expanded Content */}
+                    {isExpanded && (
+                      <div className="border-t bg-gray-50">
+                        <div className="p-6">
+                          <div className="prose prose-lg max-w-none">
+                            <MarkdownViewer content={modification.content || modification.body || ''} />
+                          </div>
+
+                          {modification.references && modification.references.length > 0 && (
+                            <div className="mt-6 pt-6 border-t">
+                              <h4 className="font-semibold text-gray-700 mb-2">References:</h4>
+                              <ul className="list-disc list-inside space-y-1">
+                                {modification.references.map((ref: any, index: number) => (
+                                  <li key={index} className="text-gray-600">
+                                    {typeof ref === 'string' ? ref : ref.reference}
+                                  </li>
+                                ))}
+                              </ul>
                             </div>
                           )}
                         </div>
-                        
-                        <h3 className="text-xl font-bold text-cboa-blue mb-2">
-                          {modification.title}
-                        </h3>
-                        
-                        {modification.summary && (
-                          <p className="text-gray-600 mb-3">
-                            {modification.summary}
-                          </p>
-                        )}
-                        
-                        {modification.approvedBy && (
-                          <p className="text-sm text-gray-500">
-                            Approved by: <span className="font-medium">{modification.approvedBy}</span>
-                          </p>
-                        )}
                       </div>
-                      
-                      <div className="ml-4">
-                        {isExpanded ? (
-                          <IconChevronDown className="h-6 w-6 text-gray-400" />
-                        ) : (
-                          <IconChevronRight className="h-6 w-6 text-gray-400" />
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                
-                {/* Expanded Content */}
-                {isExpanded && (
-                  <div className="border-t bg-gray-50">
-                    <div className="p-6">
-                      <div className="prose prose-lg max-w-none">
-                        <div dangerouslySetInnerHTML={{ __html: modification.content || modification.body || '' }} />
-                      </div>
-                      
-                      {modification.references && modification.references.length > 0 && (
-                        <div className="mt-6 pt-6 border-t">
-                          <h4 className="font-semibold text-gray-700 mb-2">References:</h4>
-                          <ul className="list-disc list-inside space-y-1">
-                            {modification.references.map((ref: any, index: number) => (
-                              <li key={index} className="text-gray-600">
-                                {typeof ref === 'string' ? ref : ref.reference}
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                      )}
-                    </div>
-                  </div>
+                    )}
+                  </>
                 )}
               </Card>
             )
@@ -181,12 +421,14 @@ export default function RuleModificationsClient({ modifications, categories }: R
         <Card className="p-12 text-center">
           <IconGavel className="h-16 w-16 text-gray-300 mx-auto mb-4" />
           <h3 className="text-xl font-semibold text-gray-600 mb-2">
-            No Rule Modifications Available
+            No Rule Modifications Found
           </h3>
           <p className="text-gray-500">
-            {selectedCategory === 'all' 
-              ? 'No rule modifications have been posted yet.'
-              : `No rule modifications found for "${selectedCategory}".`}
+            {searchTerm
+              ? `No rule modifications match "${searchTerm}"`
+              : selectedCategory === 'all'
+                ? 'No rule modifications have been posted yet.'
+                : `No rule modifications found for "${selectedCategory}".`}
           </p>
         </Card>
       )}

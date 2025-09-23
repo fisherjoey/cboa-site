@@ -6,6 +6,7 @@ export interface ExecutiveMember {
   name: string
   position: string
   email: string
+  image?: string
 }
 
 export interface SiteSettings {

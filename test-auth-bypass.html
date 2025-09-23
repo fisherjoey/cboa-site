@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Authentication Bypass</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .test-link {
+            display: inline-block;
+            margin: 10px 0;
+            padding: 10px 15px;
+            background-color: #007bff;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+        }
+        .test-link:hover {
+            background-color: #0056b3;
+        }
+        .status {
+            margin: 20px 0;
+            padding: 15px;
+            border-radius: 5px;
+        }
+        .success {
+            background-color: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .info {
+            background-color: #d1ecf1;
+            border: 1px solid #bee5eb;
+            color: #0c5460;
+        }
+    </style>
+</head>
+<body>
+    <h1>CBOA Authentication Bypass Test</h1>
+
+    <div class="status info">
+        <h3>Development Server Running</h3>
+        <p>The Next.js development server is running on <strong>http://localhost:3003</strong></p>
+        <p>Environment variable <strong>NEXT_PUBLIC_DISABLE_AUTH_DEV=true</strong> is set in .env.local</p>
+    </div>
+
+    <h2>Test Links</h2>
+    <p>Click these links to test if authentication bypass is working:</p>
+
+    <div>
+        <a href="http://localhost:3003/" class="test-link" target="_blank">🏠 Home Page (Public)</a>
+        <br>
+        <a href="http://localhost:3003/portal" class="test-link" target="_blank">🔐 Portal (Should be accessible without login)</a>
+        <br>
+        <a href="http://localhost:3003/admin" class="test-link" target="_blank">👑 Admin Panel (Should be accessible as dev admin)</a>
+    </div>
+
+    <div class="status success">
+        <h3>Expected Behavior</h3>
+        <ul>
+            <li><strong>Home Page:</strong> Should load normally</li>
+            <li><strong>Portal:</strong> Should load directly without authentication prompt</li>
+            <li><strong>Admin Panel:</strong> Should load with mock admin user access</li>
+            <li><strong>Console:</strong> Should show "🔓 Authentication bypassed in development mode" messages</li>
+        </ul>
+    </div>
+
+    <div class="status info">
+        <h3>How to Disable the Bypass</h3>
+        <p>To re-enable authentication in development:</p>
+        <ol>
+            <li>Open <code>.env.local</code></li>
+            <li>Change <code>NEXT_PUBLIC_DISABLE_AUTH_DEV=true</code> to <code>NEXT_PUBLIC_DISABLE_AUTH_DEV=false</code></li>
+            <li>Restart the development server</li>
+        </ol>
+    </div>
+
+    <script>
+        // Log the current environment
+        console.log('Testing authentication bypass...');
+        console.log('Current origin:', window.location.origin);
+
+        // Check if we can detect the development environment
+        if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+            console.log('✅ Running in development environment');
+        } else {
+            console.log('⚠️ Not running in development environment');
+        }
+    </script>
+</body>
+</html>

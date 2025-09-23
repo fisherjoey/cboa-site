@@ -1,8 +1,7 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { IconPlus, IconEdit, IconTrash, IconDeviceFloppy, IconX, IconAlertCircle } from '@tabler/icons-react'
-import { announcementsAPI } from '@/lib/api'
+import { useState } from 'react'
+import { IconPlus, IconEdit, IconTrash, IconDeviceFloppy, IconX, IconAlertCircle, IconSearch, IconFilter } from '@tabler/icons-react'
 import { MarkdownEditor, MarkdownViewer } from '@/components/MarkdownEditor'
 import { useRole } from '@/contexts/RoleContext'
 
@@ -10,43 +9,35 @@ interface Announcement {
   id: string
   title: string
   content: string
-  category: 'announcement' | 'news' | 'event' | 'update'
+  category: string
   priority: 'high' | 'normal' | 'low'
   date: string
   author: string
+  audience?: string[]
+  expires?: string
 }
 
-export default function NewsClient() {
+interface NewsClientProps {
+  initialAnnouncements: Announcement[]
+}
+
+export default function NewsClient({ initialAnnouncements }: NewsClientProps) {
   const { user } = useRole()
-  const [announcements, setAnnouncements] = useState<Announcement[]>([])
-  const [filter, setFilter] = useState<'all' | 'announcement' | 'news' | 'event' | 'update'>('all')
+  const [announcements, setAnnouncements] = useState<Announcement[]>(initialAnnouncements)
+  const [filter, setFilter] = useState<'all' | 'general' | 'rules' | 'schedule' | 'training' | 'administrative'>('all')
   const [searchTerm, setSearchTerm] = useState('')
   const [isCreating, setIsCreating] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [newAnnouncement, setNewAnnouncement] = useState<Partial<Announcement>>({
     title: '',
     content: '',
-    category: 'announcement',
+    category: 'general',
     priority: 'normal',
-    author: 'CBOA Executive'
+    author: 'CBOA Executive',
+    date: new Date().toISOString()
   })
 
   const canEdit = user.role === 'admin' || user.role === 'executive'
-
-
-  // Load announcements from API
-  useEffect(() => {
-    loadAnnouncements()
-  }, [])
-
-  const loadAnnouncements = async () => {
-    try {
-      const data = await announcementsAPI.getAll()
-      setAnnouncements(data)
-    } catch (error) {
-      console.error('Failed to load announcements:', error)
-    }
-  }
 
 
   const filteredAnnouncements = announcements.filter(item => {
@@ -57,67 +48,50 @@ export default function NewsClient() {
     return matchesFilter && matchesSearch
   })
 
-  const handleCreate = async () => {
+  const handleCreate = () => {
     if (newAnnouncement.title && newAnnouncement.content) {
-      try {
-        const announcement = {
-          title: newAnnouncement.title,
-          content: newAnnouncement.content,
-          category: newAnnouncement.category as Announcement['category'],
-          priority: newAnnouncement.priority as Announcement['priority'],
-          author: newAnnouncement.author || 'CBOA Executive'
-        }
-        console.log('Creating announcement:', announcement)
-        const created = await announcementsAPI.create(announcement)
-        console.log('Created announcement:', created)
-        setAnnouncements([created, ...announcements])
-        setNewAnnouncement({
-          title: '',
-          content: '',
-          category: 'announcement',
-          priority: 'normal',
-          author: 'CBOA Executive'
-        })
-        setIsCreating(false)
-      } catch (error) {
-        console.error('Failed to create announcement:', error)
-        const errorMessage = error instanceof Error ? error.message : 'Unknown error'
-        alert(`Failed to create announcement: ${errorMessage}. Check console for details.`)
+      const created = {
+        id: Date.now().toString(),
+        title: newAnnouncement.title!,
+        content: newAnnouncement.content!,
+        category: newAnnouncement.category || 'general',
+        priority: newAnnouncement.priority as Announcement['priority'],
+        author: newAnnouncement.author || 'CBOA Executive',
+        date: new Date().toISOString()
       }
+      setAnnouncements([created, ...announcements])
+      setNewAnnouncement({
+        title: '',
+        content: '',
+        category: 'general',
+        priority: 'normal',
+        author: 'CBOA Executive',
+        date: new Date().toISOString()
+      })
+      setIsCreating(false)
     }
   }
 
-  const handleUpdate = async (id: string, updates: Partial<Announcement>) => {
-    try {
-      const updated = await announcementsAPI.update({ id, ...updates })
-      setAnnouncements(prev => prev.map(a => 
-        a.id === id ? updated : a
-      ))
-    } catch (error) {
-      console.error('Failed to update announcement:', error)
-      alert('Failed to update announcement. Please try again.')
-    }
+  const handleUpdate = (id: string, updates: Partial<Announcement>) => {
+    setAnnouncements(prev => prev.map(a =>
+      a.id === id ? { ...a, ...updates } : a
+    ))
     setEditingId(null)
   }
 
-  const handleDelete = async (id: string) => {
+  const handleDelete = (id: string) => {
     if (confirm('Are you sure you want to delete this announcement?')) {
-      try {
-        await announcementsAPI.delete(id)
-        setAnnouncements(prev => prev.filter(a => a.id !== id))
-      } catch (error) {
-        console.error('Failed to delete announcement:', error)
-        alert('Failed to delete announcement. Please try again.')
-      }
+      setAnnouncements(prev => prev.filter(a => a.id !== id))
     }
   }
 
   const getCategoryColor = (category: string) => {
     switch (category) {
-      case 'announcement': return 'bg-red-100 text-red-800'
-      case 'news': return 'bg-blue-100 text-blue-800'
-      case 'event': return 'bg-green-100 text-green-800'
-      case 'update': return 'bg-gray-100 text-gray-800'
+      case 'general': return 'bg-blue-100 text-blue-800'
+      case 'rules': return 'bg-purple-100 text-purple-800'
+      case 'schedule': return 'bg-green-100 text-green-800'
+      case 'training': return 'bg-orange-100 text-orange-800'
+      case 'administrative': return 'bg-red-100 text-red-800'
       default: return 'bg-gray-100 text-gray-800'
     }
   }
@@ -174,10 +148,11 @@ export default function NewsClient() {
                   onChange={(e) => setNewAnnouncement({ ...newAnnouncement, category: e.target.value as any })}
                   className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                 >
-                  <option value="announcement">Announcement</option>
-                  <option value="news">News</option>
-                  <option value="event">Event</option>
-                  <option value="update">Update</option>
+                  <option value="general">General</option>
+                  <option value="rules">Rules</option>
+                  <option value="schedule">Schedule</option>
+                  <option value="training">Training</option>
+                  <option value="administrative">Administrative</option>
                 </select>
               </div>
 
@@ -258,7 +233,7 @@ export default function NewsClient() {
           </div>
           
           <div className="flex gap-2">
-            {(['all', 'announcement', 'news', 'event', 'update'] as const).map(cat => (
+            {(['all', 'general', 'rules', 'schedule', 'training', 'administrative'] as const).map(cat => (
               <button
                 key={cat}
                 onClick={() => setFilter(cat)}

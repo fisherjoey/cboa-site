@@ -62,7 +62,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [isLoading, setIsLoading] = useState(true)
 
+  // Check if authentication should be disabled in development
+  const isDevMode = process.env.NODE_ENV === 'development'
+  const disableAuthInDev = process.env.NEXT_PUBLIC_DISABLE_AUTH_DEV === 'true'
+  const shouldBypassAuth = isDevMode && disableAuthInDev
+
   useEffect(() => {
+    // If authentication is bypassed in development, create a mock user
+    if (shouldBypassAuth) {
+      console.log('🔓 Authentication bypassed in development mode')
+      setUser({
+        id: 'dev-user-admin',
+        email: 'dev@example.com',
+        name: 'Development Admin User',
+        role: 'admin', // Give admin role for testing all features
+        user_metadata: { full_name: 'Development Admin User' },
+        app_metadata: { roles: ['admin'] }
+      })
+      setIsLoading(false)
+      return
+    }
+
     // Initialize Netlify Identity
     netlifyIdentity.init({
       container: 'body', // defaults to document.body
@@ -81,7 +101,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         app_metadata: currentUser.app_metadata
       })
     }
-    
+
     setIsLoading(false)
 
     // Set up event listeners
@@ -105,23 +125,37 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       console.error('Netlify Identity error:', err)
     })
 
-    // Cleanup
+    // Cleanup (only if not bypassing auth)
     return () => {
-      netlifyIdentity.off('login')
-      netlifyIdentity.off('logout')
-      netlifyIdentity.off('error')
+      if (!shouldBypassAuth) {
+        netlifyIdentity.off('login')
+        netlifyIdentity.off('logout')
+        netlifyIdentity.off('error')
+      }
     }
-  }, [])
+  }, [shouldBypassAuth])
 
   const login = () => {
+    if (shouldBypassAuth) {
+      console.log('🔓 Login bypassed in development mode')
+      return
+    }
     netlifyIdentity.open('login')
   }
 
   const logout = () => {
+    if (shouldBypassAuth) {
+      console.log('🔓 Logout bypassed in development mode')
+      return
+    }
     netlifyIdentity.logout()
   }
 
   const signup = () => {
+    if (shouldBypassAuth) {
+      console.log('🔓 Signup bypassed in development mode')
+      return
+    }
     netlifyIdentity.open('signup')
   }
 

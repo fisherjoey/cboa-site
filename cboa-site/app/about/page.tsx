@@ -3,6 +3,7 @@ import Card from '@/components/ui/Card'
 import CTASection from '@/components/ui/CTASection'
 import { getSiteSettings } from '@/lib/settings'
 import { IconStar, IconScale, IconTrendingUp, IconUsers, IconBallBasketball, IconTrophy, IconCheck } from '@tabler/icons-react'
+import Image from 'next/image'
 
 export default function AboutPage() {
   const settings = getSiteSettings()
@@ -170,10 +171,16 @@ export default function AboutPage() {
             {executiveTeam.map((member, index) => (
               <Card key={index}>
                 <div className="text-center">
-                  <div className="w-24 h-24 bg-gray-200 rounded-full mx-auto mb-4 flex items-center justify-center">
-                    <svg className="w-12 h-12 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
-                    </svg>
+                  <div className="w-24 h-24 mx-auto mb-4 relative rounded-full overflow-hidden bg-gray-100 border-2 border-gray-300">
+                    <div className="absolute inset-0 flex items-end justify-center">
+                      <Image
+                        src={member.image || "/images/executive-placeholder.svg"}
+                        alt={`${member.name} - ${member.position}`}
+                        width={120}
+                        height={120}
+                        className="object-cover translate-y-2"
+                      />
+                    </div>
                   </div>
                   <h3 className="font-bold text-lg text-cboa-blue">{member.name}</h3>
                   <p className="text-cboa-orange font-medium mb-2">{member.position}</p>
