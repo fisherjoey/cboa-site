@@ -1,7 +1,10 @@
 import { Handler } from '@netlify/functions'
-import * as fs from 'fs'
-import * as path from 'path'
+import { createClient } from '@supabase/supabase-js'
 import busboy from 'busboy'
+
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
+const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
 export const handler: Handler = async (event) => {
   const headers = {
@@ -79,31 +82,42 @@ export const handler: Handler = async (event) => {
         })
         return
       }
-      
+
       try {
         // Combine buffer chunks
         const fullBuffer = Buffer.concat(fileBuffer)
-        
-        // In production, you would:
-        // 1. Upload to a CDN or storage service
-        // 2. Or commit to git repository via GitHub API
-        // 3. Or save to Netlify Large Media
-        
-        // For local development, we'll save to the public folder
-        const publicPath = path.join(process.cwd(), 'public', 'portal', 'resources')
-        
-        // Ensure directory exists
-        if (!fs.existsSync(publicPath)) {
-          fs.mkdirSync(publicPath, { recursive: true })
+
+        // Determine bucket based on path or default to portal-resources
+        const bucket = filePath && filePath.includes('newsletter')
+          ? 'newsletters'
+          : filePath && filePath.includes('training')
+          ? 'training-materials'
+          : 'portal-resources'
+
+        // Upload to Supabase Storage
+        const { data, error } = await supabase.storage
+          .from(bucket)
+          .upload(fileName, fullBuffer, {
+            contentType: 'application/octet-stream',
+            cacheControl: '3600',
+            upsert: false
+          })
+
+        if (error) {
+          console.error('Supabase upload error:', error)
+          resolve({
+            statusCode: 500,
+            headers,
+            body: JSON.stringify({ error: `Upload failed: ${error.message}` })
+          })
+          return
         }
-        
-        // Save file
-        const fullPath = path.join(publicPath, fileName)
-        fs.writeFileSync(fullPath, fullBuffer)
-        
-        // Return the public URL
-        const publicUrl = `/portal/resources/${fileName}`
-        
+
+        // Get public URL
+        const { data: { publicUrl } } = supabase.storage
+          .from(bucket)
+          .getPublicUrl(data.path)
+
         resolve({
           statusCode: 200,
           headers,
@@ -111,15 +125,18 @@ export const handler: Handler = async (event) => {
             success: true,
             fileName,
             url: publicUrl,
-            size: fileSize
+            publicUrl,
+            size: fileSize,
+            bucket,
+            path: data.path
           })
         })
       } catch (error) {
-        console.error('Error saving file:', error)
+        console.error('Error uploading file:', error)
         resolve({
           statusCode: 500,
           headers,
-          body: JSON.stringify({ error: 'Failed to save file' })
+          body: JSON.stringify({ error: 'Failed to upload file' })
         })
       }
     })
