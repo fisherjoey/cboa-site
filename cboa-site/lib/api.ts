@@ -155,6 +155,93 @@ export const newslettersAPI = {
   }
 }
 
+// Members API
+export const membersAPI = {
+  async getAll() {
+    const res = await fetch(`${API_BASE}/members`)
+    if (!res.ok) throw new Error('Failed to fetch members')
+    return res.json()
+  },
+
+  async getByNetlifyId(netlifyUserId: string) {
+    const res = await fetch(`${API_BASE}/members?netlify_user_id=${netlifyUserId}`)
+    if (!res.ok) throw new Error('Failed to fetch member')
+    return res.json()
+  },
+
+  async getById(id: string) {
+    const res = await fetch(`${API_BASE}/members?id=${id}`)
+    if (!res.ok) throw new Error('Failed to fetch member')
+    return res.json()
+  },
+
+  async create(member: any) {
+    const res = await fetch(`${API_BASE}/members`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(member)
+    })
+    if (!res.ok) throw new Error('Failed to create member')
+    return res.json()
+  },
+
+  async update(member: any) {
+    const res = await fetch(`${API_BASE}/members`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(member)
+    })
+    if (!res.ok) throw new Error('Failed to update member')
+    return res.json()
+  },
+
+  async delete(id: string) {
+    const res = await fetch(`${API_BASE}/members?id=${id}`, {
+      method: 'DELETE'
+    })
+    if (!res.ok) throw new Error('Failed to delete member')
+  }
+}
+
+// Member Activities API
+export const memberActivitiesAPI = {
+  async getAll(memberId?: string) {
+    const url = memberId
+      ? `${API_BASE}/member-activities?member_id=${memberId}`
+      : `${API_BASE}/member-activities`
+    const res = await fetch(url)
+    if (!res.ok) throw new Error('Failed to fetch activities')
+    return res.json()
+  },
+
+  async create(activity: any) {
+    const res = await fetch(`${API_BASE}/member-activities`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(activity)
+    })
+    if (!res.ok) throw new Error('Failed to create activity')
+    return res.json()
+  },
+
+  async update(activity: any) {
+    const res = await fetch(`${API_BASE}/member-activities`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(activity)
+    })
+    if (!res.ok) throw new Error('Failed to update activity')
+    return res.json()
+  },
+
+  async delete(id: string) {
+    const res = await fetch(`${API_BASE}/member-activities?id=${id}`, {
+      method: 'DELETE'
+    })
+    if (!res.ok) throw new Error('Failed to delete activity')
+  }
+}
+
 // Resources API
 export const resourcesAPI = {
   async getAll(featured?: boolean) {

@@ -34,6 +34,8 @@ async function loadFunctions() {
   const { handler: ruleModificationsHandler } = require('../netlify/functions/rule-modifications.ts')
   const { handler: uploadFileHandler } = require('../netlify/functions/upload-file.ts')
   const { handler: listResourceFilesHandler } = require('../netlify/functions/list-resource-files.ts')
+  const { handler: membersHandler } = require('../netlify/functions/members.ts')
+  const { handler: memberActivitiesHandler } = require('../netlify/functions/member-activities.ts')
 
   // Helper to convert Express req to Netlify event
   const createEvent = (req) => ({
@@ -251,6 +253,30 @@ async function loadFunctions() {
     }
   })
 
+  // Members endpoint
+  app.all('/.netlify/functions/members', async (req, res) => {
+    try {
+      const event = createEvent(req)
+      const response = await membersHandler(event, mockContext)
+      sendResponse(res, response)
+    } catch (error) {
+      console.error('Members error:', error)
+      res.status(500).json({ error: 'Internal server error' })
+    }
+  })
+
+  // Member Activities endpoint
+  app.all('/.netlify/functions/member-activities', async (req, res) => {
+    try {
+      const event = createEvent(req)
+      const response = await memberActivitiesHandler(event, mockContext)
+      sendResponse(res, response)
+    } catch (error) {
+      console.error('Member Activities error:', error)
+      res.status(500).json({ error: 'Internal server error' })
+    }
+  })
+
   // Health check
   app.get('/health', (req, res) => {
     res.json({ status: 'ok', message: 'Local functions server running' })
@@ -266,6 +292,8 @@ async function loadFunctions() {
     console.log(`   - http://localhost:${PORT}/.netlify/functions/rule-modifications`)
     console.log(`   - http://localhost:${PORT}/.netlify/functions/upload-file`)
     console.log(`   - http://localhost:${PORT}/.netlify/functions/list-resource-files`)
+    console.log(`   - http://localhost:${PORT}/.netlify/functions/members`)
+    console.log(`   - http://localhost:${PORT}/.netlify/functions/member-activities`)
     console.log(`\n✨ Ready for testing!\n`)
   })
 }

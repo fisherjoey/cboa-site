@@ -241,8 +241,8 @@ export default function ResourcesClient() {
     return cat ? cat.icon : IconFile
   }
 
-  // Storage functionality temporarily disabled
-  const storageInfo = { configured: false, message: 'Local storage only' }
+  // Storage configured with Supabase
+  const storageInfo = { configured: true, message: 'Supabase Storage configured' }
 
   return (
     <div className="px-4 py-5 sm:p-6">
