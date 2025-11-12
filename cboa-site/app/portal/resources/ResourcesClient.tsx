@@ -91,8 +91,8 @@ export default function ResourcesClient() {
         title: r.title,
         description: r.description || '',
         category: r.category,
-        fileUrl: r.file_url,
-        externalLink: r.url,
+        fileUrl: r.file_name === 'external-link' ? '' : r.file_url,
+        externalLink: r.file_name === 'external-link' ? r.file_url : undefined,
         lastUpdated: r.updated_at || r.created_at,
         featured: r.is_featured,
         accessLevel: r.access_level || 'all'
@@ -140,7 +140,8 @@ export default function ResourcesClient() {
       try {
         setIsUploading(true)
         let fileUrl = newResource.fileUrl
-        
+        let externalLink = newResource.externalLink
+
         // Handle file upload if a file was selected
         if (uploadedFile) {
           try {
@@ -155,13 +156,13 @@ export default function ResourcesClient() {
             return
           }
         }
-        
+
         const apiData = {
           title: newResource.title,
           description: newResource.description,
           category: newResource.category,
-          file_url: fileUrl,
-          file_name: uploadedFile?.name,
+          file_url: fileUrl || externalLink || '',
+          file_name: uploadedFile?.name || 'external-link',
           is_featured: newResource.featured || false,
           access_level: newResource.accessLevel || 'all'
         }
@@ -171,8 +172,8 @@ export default function ResourcesClient() {
           title: created.title,
           description: created.description,
           category: created.category,
-          fileUrl: created.file_url,
-          externalLink: created.url,
+          fileUrl: created.file_name === 'external-link' ? '' : created.file_url,
+          externalLink: created.file_name === 'external-link' ? created.file_url : undefined,
           fileSize: newResource.fileSize,
           lastUpdated: created.created_at,
           featured: created.is_featured,
@@ -241,19 +242,8 @@ export default function ResourcesClient() {
     return cat ? cat.icon : IconFile
   }
 
-  // Storage configured with Supabase
-  const storageInfo = { configured: true, message: 'Supabase Storage configured' }
-
   return (
     <div className="px-4 py-5 sm:p-6">
-      {/* Storage Status Indicator */}
-      {canEdit && (
-        <div className="mb-4 text-xs text-gray-500 flex items-center gap-2">
-          <span className={`inline-block w-2 h-2 rounded-full ${storageInfo.configured ? 'bg-green-500' : 'bg-yellow-500'}`}></span>
-          {storageInfo.message}
-        </div>
-      )}
-      
       <div className="mb-6 sm:mb-8 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Resources</h1>
@@ -364,78 +354,6 @@ export default function ResourcesClient() {
                     )}
                   </div>
 
-                  {/* OR divider */}
-                  <div className="flex items-center gap-2">
-                    <div className="flex-1 h-px bg-gray-300"></div>
-                    <span className="text-xs text-gray-500 uppercase">or</span>
-                    <div className="flex-1 h-px bg-gray-300"></div>
-                  </div>
-
-                  {/* Select existing file dropdown */}
-                  <div className="relative">
-                    <input
-                      type="text"
-                      value={fileSearchTerm}
-                      onChange={(e) => {
-                        setFileSearchTerm(e.target.value)
-                        setShowFileDropdown(true)
-                      }}
-                      onFocus={() => setShowFileDropdown(true)}
-                      placeholder={`Search existing files (${existingFiles.length} available)...`}
-                      className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
-                      disabled={!!uploadedFile}
-                    />
-                    {showFileDropdown && !uploadedFile && (
-                      <div className="absolute z-10 w-full mt-1 bg-white border rounded-lg shadow-lg max-h-60 overflow-y-auto">
-                        {existingFiles
-                          .filter(file => 
-                            file.name.toLowerCase().includes(fileSearchTerm.toLowerCase())
-                          )
-                          .slice(0, 10) // Show max 10 results
-                          .map(file => (
-                            <button
-                              key={file.name}
-                              type="button"
-                              onClick={() => {
-                                setNewResource({ 
-                                  ...newResource, 
-                                  fileUrl: file.url,
-                                  fileSize: file.size
-                                })
-                                setUploadedFile(null)
-                                setFileSearchTerm(file.name)
-                                setShowFileDropdown(false)
-                                if (fileInputRef.current) fileInputRef.current.value = ''
-                              }}
-                              className="w-full px-3 py-2 text-left hover:bg-gray-100 flex justify-between items-center"
-                            >
-                              <span className="truncate">{file.name}</span>
-                              <span className="text-xs text-gray-500 ml-2">{file.size}</span>
-                            </button>
-                          ))}
-                        {existingFiles.filter(f => f.name.toLowerCase().includes(fileSearchTerm.toLowerCase())).length === 0 && (
-                          <div className="px-3 py-2 text-gray-500 text-sm">No files found</div>
-                        )}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Display selected file info */}
-                  {newResource.fileUrl && !uploadedFile && (
-                    <div className="p-2 bg-green-50 rounded-lg text-sm text-green-700 flex justify-between items-center">
-                      <span>Selected: {newResource.fileUrl.split('/').pop()}</span>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setNewResource({ ...newResource, fileUrl: '', fileSize: '' })
-                          setFileSearchTerm('')
-                        }}
-                        className="text-red-600 hover:text-red-700"
-                      >
-                        <IconX className="h-4 w-4" />
-                      </button>
-                    </div>
-                  )}
                 </div>
               </div>
 
