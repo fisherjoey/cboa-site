@@ -5,6 +5,15 @@ import { IconPlus, IconEdit, IconTrash, IconDeviceFloppy, IconX, IconAlertCircle
 import { MarkdownEditor, MarkdownViewer } from '@/components/MarkdownEditor'
 import { useRole } from '@/contexts/RoleContext'
 import { announcementsAPI } from '@/lib/api'
+import { useToast } from '@/hooks/useToast'
+import { ToastContainer } from '@/components/Toast'
+import {
+  validateAnnouncementForm,
+  getFieldError,
+  hasErrors,
+  formatValidationErrors
+} from '@/lib/portalValidation'
+import { parseAPIError, sanitize, ValidationError } from '@/lib/errorHandling'
 
 interface Announcement {
   id: string
@@ -38,6 +47,8 @@ export default function NewsClient({ initialAnnouncements }: NewsClientProps) {
     author: 'CBOA Executive',
     date: new Date().toISOString()
   })
+  const toast = useToast()
+  const [validationErrors, setValidationErrors] = useState<ValidationError[]>([])
 
   const canEdit = user.role === 'admin' || user.role === 'executive'
 
@@ -51,7 +62,8 @@ export default function NewsClient({ initialAnnouncements }: NewsClientProps) {
       const data = await announcementsAPI.getAll()
       setAnnouncements(data)
     } catch (error) {
-      console.error('Failed to load announcements:', error)
+      const errorMessage = parseAPIError(error)
+      toast.error(`Failed to load announcements: ${errorMessage}`)
     } finally {
       setIsLoading(false)
     }
@@ -67,43 +79,63 @@ export default function NewsClient({ initialAnnouncements }: NewsClientProps) {
   })
 
   const handleCreate = async () => {
-    if (newAnnouncement.title && newAnnouncement.content) {
-      try {
-        const created = await announcementsAPI.create({
-          title: newAnnouncement.title,
-          content: newAnnouncement.content,
-          category: newAnnouncement.category || 'general',
-          priority: newAnnouncement.priority || 'normal',
-          author: newAnnouncement.author || 'CBOA Executive',
-          date: new Date().toISOString()
-        })
-        setAnnouncements([created, ...announcements])
-        setNewAnnouncement({
-          title: '',
-          content: '',
-          category: 'general',
-          priority: 'normal',
-          author: 'CBOA Executive',
-          date: new Date().toISOString()
-        })
-        setIsCreating(false)
-      } catch (error) {
-        console.error('Failed to create announcement:', error)
-        alert('Failed to create announcement. Please try again.')
+    // Validate form
+    const errors = validateAnnouncementForm(newAnnouncement)
+    if (hasErrors(errors)) {
+      setValidationErrors(errors)
+      toast.error('Please fix the validation errors before submitting')
+      return
+    }
+
+    try {
+      // Sanitize inputs
+      const sanitizedData = {
+        title: sanitize.text(newAnnouncement.title || ''),
+        content: sanitize.text(newAnnouncement.content || ''),
+        category: newAnnouncement.category || 'general',
+        priority: newAnnouncement.priority || 'normal',
+        author: sanitize.text(newAnnouncement.author || 'CBOA Executive'),
+        date: new Date().toISOString()
       }
+
+      const created = await announcementsAPI.create(sanitizedData)
+      setAnnouncements([created, ...announcements])
+      setNewAnnouncement({
+        title: '',
+        content: '',
+        category: 'general',
+        priority: 'normal',
+        author: 'CBOA Executive',
+        date: new Date().toISOString()
+      })
+      setValidationErrors([])
+      setIsCreating(false)
+      toast.success('Announcement created successfully')
+    } catch (error) {
+      const errorMessage = parseAPIError(error)
+      toast.error(`Failed to create announcement: ${errorMessage}`)
     }
   }
 
   const handleUpdate = async (id: string, updates: Partial<Announcement>) => {
     try {
-      const updated = await announcementsAPI.update({ id, ...updates })
+      // Sanitize updates
+      const sanitizedUpdates = {
+        ...updates,
+        title: updates.title ? sanitize.text(updates.title) : undefined,
+        content: updates.content ? sanitize.text(updates.content) : undefined,
+        author: updates.author ? sanitize.text(updates.author) : undefined
+      }
+
+      const updated = await announcementsAPI.update({ id, ...sanitizedUpdates })
       setAnnouncements(prev => prev.map(a =>
         a.id === id ? updated : a
       ))
       setEditingId(null)
+      toast.success('Announcement updated successfully')
     } catch (error) {
-      console.error('Failed to update announcement:', error)
-      alert('Failed to update announcement. Please try again.')
+      const errorMessage = parseAPIError(error)
+      toast.error(`Failed to update announcement: ${errorMessage}`)
     }
   }
 
@@ -112,9 +144,10 @@ export default function NewsClient({ initialAnnouncements }: NewsClientProps) {
       try {
         await announcementsAPI.delete(id)
         setAnnouncements(prev => prev.filter(a => a.id !== id))
+        toast.success('Announcement deleted successfully')
       } catch (error) {
-        console.error('Failed to delete announcement:', error)
-        alert('Failed to delete announcement. Please try again.')
+        const errorMessage = parseAPIError(error)
+        toast.error(`Failed to delete announcement: ${errorMessage}`)
       }
     }
   }
@@ -141,6 +174,7 @@ export default function NewsClient({ initialAnnouncements }: NewsClientProps) {
 
   return (
     <div className="px-4 py-5 sm:p-6">
+      <ToastContainer toasts={toast.toasts} onDismiss={toast.dismissToast} />
       <div className="mb-8 flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">News & Announcements</h1>
@@ -169,9 +203,14 @@ export default function NewsClient({ initialAnnouncements }: NewsClientProps) {
                 type="text"
                 value={newAnnouncement.title}
                 onChange={(e) => setNewAnnouncement({ ...newAnnouncement, title: e.target.value })}
-                className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 ${
+                  getFieldError(validationErrors, 'title') ? 'border-red-500' : ''
+                }`}
                 placeholder="Enter announcement title..."
               />
+              {getFieldError(validationErrors, 'title') && (
+                <p className="mt-1 text-sm text-red-600">{getFieldError(validationErrors, 'title')}</p>
+              )}
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -216,12 +255,17 @@ export default function NewsClient({ initialAnnouncements }: NewsClientProps) {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Content (Markdown supported)</label>
-              <MarkdownEditor
-                value={newAnnouncement.content}
-                onChange={(val) => setNewAnnouncement({ ...newAnnouncement, content: val })}
-                height={400}
-                placeholder="Enter announcement content..."
-              />
+              <div className={getFieldError(validationErrors, 'content') ? 'border-2 border-red-500 rounded-lg' : ''}>
+                <MarkdownEditor
+                  value={newAnnouncement.content}
+                  onChange={(val) => setNewAnnouncement({ ...newAnnouncement, content: val })}
+                  height={400}
+                  placeholder="Enter announcement content..."
+                />
+              </div>
+              {getFieldError(validationErrors, 'content') && (
+                <p className="mt-1 text-sm text-red-600">{getFieldError(validationErrors, 'content')}</p>
+              )}
             </div>
 
             <div className="flex gap-2">

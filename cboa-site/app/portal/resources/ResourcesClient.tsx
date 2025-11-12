@@ -6,11 +6,20 @@ import { uploadFile } from '@/lib/fileUpload'
 import ResourceViewer from '@/components/ResourceViewer'
 import ResourceThumbnail from '@/components/ResourceThumbnail'
 import { useRole } from '@/contexts/RoleContext'
-import { 
-  IconPlus, 
-  IconEdit, 
-  IconTrash, 
-  IconDownload, 
+import { useToast } from '@/hooks/useToast'
+import { ToastContainer } from '@/components/Toast'
+import {
+  validateResourceForm,
+  getFieldError,
+  hasErrors,
+  formatValidationErrors
+} from '@/lib/portalValidation'
+import { parseAPIError, sanitize, ValidationError } from '@/lib/errorHandling'
+import {
+  IconPlus,
+  IconEdit,
+  IconTrash,
+  IconDownload,
   IconExternalLink,
   IconFile,
   IconBook,
@@ -39,6 +48,7 @@ interface Resource {
 
 export default function ResourcesClient() {
   const { user } = useRole()
+  const toast = useToast()
   const [resources, setResources] = useState<Resource[]>([])
   const [selectedCategory, setSelectedCategory] = useState<string>('all')
   const [searchTerm, setSearchTerm] = useState('')
@@ -56,6 +66,7 @@ export default function ResourcesClient() {
   const [existingFiles, setExistingFiles] = useState<Array<{name: string, url: string, size: string}>>([])
   const [fileSearchTerm, setFileSearchTerm] = useState('')
   const [showFileDropdown, setShowFileDropdown] = useState(false)
+  const [validationErrors, setValidationErrors] = useState<ValidationError[]>([])
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const canEdit = user.role === 'admin' || user.role === 'executive'
@@ -99,21 +110,8 @@ export default function ResourcesClient() {
       }))
       setResources(mapped)
     } catch (error) {
-      console.error('Failed to load resources:', error)
-      // Fallback to sample resources if API fails
-      setResources([
-        {
-          id: '1',
-          title: 'FIBA Official Rules 2024',
-          description: 'Complete FIBA basketball rules and interpretations for the 2024 season',
-          category: 'rulebooks',
-          fileUrl: '/portal/resources/fiba-rules-2024.pdf',
-          fileSize: '4.2 MB',
-          lastUpdated: '2024-01-15',
-          featured: true,
-          accessLevel: 'all'
-        }
-      ])
+      toast.error('Failed to Load Resources', parseAPIError(error))
+      setResources([])
     }
   }
 
@@ -136,104 +134,139 @@ export default function ResourcesClient() {
   })
 
   const handleCreate = async () => {
-    if (newResource.title && newResource.description) {
-      try {
-        setIsUploading(true)
-        let fileUrl = newResource.fileUrl
-        let externalLink = newResource.externalLink
+    // Clear previous validation errors
+    setValidationErrors([])
 
-        // Handle file upload if a file was selected
-        if (uploadedFile) {
-          try {
-            console.log('Uploading file:', uploadedFile.name)
-            const uploadResult = await uploadFile(uploadedFile)
-            fileUrl = uploadResult.url
-            console.log('File uploaded successfully:', uploadResult)
-          } catch (uploadError) {
-            console.error('File upload failed:', uploadError)
-            alert(`Failed to upload file: ${uploadError instanceof Error ? uploadError.message : 'Unknown error'}`)
-            setIsUploading(false)
-            return
-          }
-        }
+    // Validate form data
+    const errors = validateResourceForm({
+      title: newResource.title,
+      description: newResource.description,
+      category: newResource.category,
+      file: uploadedFile,
+      fileUrl: newResource.fileUrl,
+      externalLink: newResource.externalLink,
+      accessLevel: newResource.accessLevel
+    })
 
-        const apiData = {
-          title: newResource.title,
-          description: newResource.description,
-          category: newResource.category,
-          file_url: fileUrl || externalLink || '',
-          file_name: uploadedFile?.name || 'external-link',
-          is_featured: newResource.featured || false,
-          access_level: newResource.accessLevel || 'all'
+    if (hasErrors(errors)) {
+      setValidationErrors(errors)
+      toast.error('Validation Failed', formatValidationErrors(errors))
+      return
+    }
+
+    // Sanitize inputs
+    const sanitizedData = {
+      title: sanitize.text(newResource.title || ''),
+      description: sanitize.text(newResource.description || ''),
+      category: newResource.category,
+      externalLink: newResource.externalLink ? sanitize.url(newResource.externalLink) : undefined,
+      accessLevel: newResource.accessLevel || 'all',
+      featured: newResource.featured || false
+    }
+
+    try {
+      setIsUploading(true)
+      let fileUrl = newResource.fileUrl
+      let fileName: string | undefined
+
+      // Handle file upload with automatic validation
+      if (uploadedFile) {
+        try {
+          const uploadResult = await uploadFile(uploadedFile)
+          fileUrl = uploadResult.url
+          fileName = uploadResult.fileName
+          toast.success('File Uploaded', `${uploadResult.fileName} uploaded successfully`)
+        } catch (uploadError) {
+          toast.error('Upload Failed', parseAPIError(uploadError))
+          setIsUploading(false)
+          return
         }
-        const created = await resourcesAPI.create(apiData)
-        const mappedResource: Resource = {
-          id: created.id,
-          title: created.title,
-          description: created.description,
-          category: created.category,
-          fileUrl: created.file_name === 'external-link' ? '' : created.file_url,
-          externalLink: created.file_name === 'external-link' ? created.file_url : undefined,
-          fileSize: newResource.fileSize,
-          lastUpdated: created.created_at,
-          featured: created.is_featured,
-          accessLevel: created.access_level
-        }
-        setResources([...resources, mappedResource])
-        setNewResource({
-          title: '',
-          description: '',
-          category: 'rulebooks',
-          accessLevel: 'all'
-        })
-        setUploadedFile(null)
-        setFileSearchTerm('')
-        setShowFileDropdown(false)
-        if (fileInputRef.current) fileInputRef.current.value = ''
-        setIsCreating(false)
-      } catch (error) {
-        console.error('Failed to create resource:', error)
-        alert('Failed to create resource. Please try again.')
-      } finally {
-        setIsUploading(false)
       }
+
+      const apiData = {
+        title: sanitizedData.title,
+        description: sanitizedData.description,
+        category: sanitizedData.category,
+        file_url: fileUrl || sanitizedData.externalLink || '',
+        file_name: fileName || 'external-link',
+        is_featured: sanitizedData.featured,
+        access_level: sanitizedData.accessLevel
+      }
+
+      const created = await resourcesAPI.create(apiData)
+      const mappedResource: Resource = {
+        id: created.id,
+        title: created.title,
+        description: created.description,
+        category: created.category,
+        fileUrl: created.file_name === 'external-link' ? '' : created.file_url,
+        externalLink: created.file_name === 'external-link' ? created.file_url : undefined,
+        fileSize: newResource.fileSize,
+        lastUpdated: created.created_at,
+        featured: created.is_featured,
+        accessLevel: created.access_level
+      }
+
+      setResources([...resources, mappedResource])
+      toast.success('Resource Created', 'The resource was successfully added to the library.')
+
+      // Reset form
+      setNewResource({
+        title: '',
+        description: '',
+        category: 'rulebooks',
+        accessLevel: 'all'
+      })
+      setUploadedFile(null)
+      setFileSearchTerm('')
+      setShowFileDropdown(false)
+      setValidationErrors([])
+      if (fileInputRef.current) fileInputRef.current.value = ''
+      setIsCreating(false)
+    } catch (error) {
+      toast.error('Failed to Create Resource', parseAPIError(error))
+    } finally {
+      setIsUploading(false)
     }
   }
 
   const handleUpdate = async (id: string, updates: Partial<Resource>) => {
     try {
-      const apiData: any = { id }
-      if (updates.title !== undefined) apiData.title = updates.title
-      if (updates.description !== undefined) apiData.description = updates.description
-      if (updates.category !== undefined) apiData.category = updates.category
-      if (updates.fileUrl !== undefined) apiData.file_url = updates.fileUrl
-      if (updates.externalLink !== undefined) apiData.url = updates.externalLink
-      if (updates.featured !== undefined) apiData.is_featured = updates.featured
-      if (updates.accessLevel !== undefined) apiData.access_level = updates.accessLevel
-      
-      const updated = await resourcesAPI.update(apiData)
-      setResources(prev => prev.map(r => 
+      // Sanitize updates
+      const sanitizedUpdates: any = { id }
+      if (updates.title !== undefined) sanitizedUpdates.title = sanitize.text(updates.title)
+      if (updates.description !== undefined) sanitizedUpdates.description = sanitize.text(updates.description)
+      if (updates.category !== undefined) sanitizedUpdates.category = updates.category
+      if (updates.fileUrl !== undefined) sanitizedUpdates.file_url = updates.fileUrl
+      if (updates.externalLink !== undefined) {
+        sanitizedUpdates.url = updates.externalLink ? sanitize.url(updates.externalLink) : null
+      }
+      if (updates.featured !== undefined) sanitizedUpdates.is_featured = updates.featured
+      if (updates.accessLevel !== undefined) sanitizedUpdates.access_level = updates.accessLevel
+
+      const updated = await resourcesAPI.update(sanitizedUpdates)
+      setResources(prev => prev.map(r =>
         r.id === id ? {
           ...r,
           ...updates,
           lastUpdated: updated.updated_at
         } : r
       ))
+      toast.success('Resource Updated', 'Changes saved successfully.')
     } catch (error) {
-      console.error('Failed to update resource:', error)
-      alert('Failed to update resource. Please try again.')
+      toast.error('Update Failed', parseAPIError(error))
     }
   }
 
   const handleDelete = async (id: string) => {
-    if (confirm('Are you sure you want to delete this resource?')) {
-      try {
-        await resourcesAPI.delete(id)
-        setResources(prev => prev.filter(r => r.id !== id))
-      } catch (error) {
-        console.error('Failed to delete resource:', error)
-        alert('Failed to delete resource. Please try again.')
-      }
+    if (!confirm('Are you sure you want to delete this resource?')) return
+
+    try {
+      await resourcesAPI.delete(id)
+      setResources(prev => prev.filter(r => r.id !== id))
+      toast.success('Resource Deleted', 'The resource has been removed.')
+    } catch (error) {
+      toast.error('Delete Failed', parseAPIError(error))
     }
   }
 
@@ -244,6 +277,8 @@ export default function ResourcesClient() {
 
   return (
     <div className="px-4 py-5 sm:p-6">
+      <ToastContainer toasts={toast.toasts} onDismiss={toast.dismissToast} />
+
       <div className="mb-6 sm:mb-8 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Resources</h1>
@@ -273,9 +308,18 @@ export default function ResourcesClient() {
                   type="text"
                   value={newResource.title}
                   onChange={(e) => setNewResource({ ...newResource, title: e.target.value })}
-                  className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                  className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 ${
+                    getFieldError(validationErrors, 'title')
+                      ? 'border-red-500 focus:ring-red-500'
+                      : 'border-gray-300 focus:ring-orange-500'
+                  }`}
                   placeholder="Resource title..."
                 />
+                {getFieldError(validationErrors, 'title') && (
+                  <p className="mt-1 text-sm text-red-600">
+                    {getFieldError(validationErrors, 'title')}
+                  </p>
+                )}
               </div>
 
               <div>
@@ -300,10 +344,19 @@ export default function ResourcesClient() {
               <textarea
                 value={newResource.description}
                 onChange={(e) => setNewResource({ ...newResource, description: e.target.value })}
-                className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 ${
+                  getFieldError(validationErrors, 'description')
+                    ? 'border-red-500 focus:ring-red-500'
+                    : 'border-gray-300 focus:ring-orange-500'
+                }`}
                 rows={3}
                 placeholder="Brief description of the resource..."
               />
+              {getFieldError(validationErrors, 'description') && (
+                <p className="mt-1 text-sm text-red-600">
+                  {getFieldError(validationErrors, 'description')}
+                </p>
+              )}
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

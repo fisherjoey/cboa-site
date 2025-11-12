@@ -7,6 +7,10 @@ import { ContentItem } from '@/lib/content'
 import { useRole } from '@/contexts/RoleContext'
 import { MarkdownEditor, MarkdownViewer } from '@/components/MarkdownEditor'
 import { ruleModificationsAPI } from '@/lib/api'
+import { useToast } from '@/hooks/useToast'
+import { ToastContainer } from '@/components/Toast'
+import { parseAPIError, sanitize, ValidationError } from '@/lib/errorHandling'
+import { getFieldError } from '@/lib/portalValidation'
 
 interface RuleModificationsClientProps {
   modifications: ContentItem[]
@@ -15,6 +19,7 @@ interface RuleModificationsClientProps {
 
 export default function RuleModificationsClient({ modifications: initialModifications, categories }: RuleModificationsClientProps) {
   const { user } = useRole()
+  const toast = useToast()
   const [modifications, setModifications] = useState<any[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [selectedCategory, setSelectedCategory] = useState('all')
@@ -30,6 +35,7 @@ export default function RuleModificationsClient({ modifications: initialModifica
     effectiveDate: new Date().toISOString().split('T')[0],
     active: true
   })
+  const [validationErrors, setValidationErrors] = useState<ValidationError[]>([])
 
   const canEdit = user.role === 'admin' || user.role === 'executive'
 
@@ -43,7 +49,8 @@ export default function RuleModificationsClient({ modifications: initialModifica
       const data = await ruleModificationsAPI.getAll()
       setModifications(data)
     } catch (error) {
-      console.error('Failed to load rule modifications:', error)
+      const errorMessage = parseAPIError(error)
+      toast.error(`Failed to load rule modifications: ${errorMessage}`)
     } finally {
       setIsLoading(false)
     }
@@ -82,43 +89,64 @@ export default function RuleModificationsClient({ modifications: initialModifica
   }
 
   const handleCreate = async () => {
-    if (newModification.title && newModification.content) {
-      try {
-        const created = await ruleModificationsAPI.create({
-          title: newModification.title,
-          category: newModification.category,
-          summary: newModification.summary,
-          content: newModification.content,
-          effective_date: newModification.effectiveDate,
-          active: newModification.active
-        })
-        setModifications([created, ...modifications])
-        setNewModification({
-          title: '',
-          category: 'Club Tournament',
-          summary: '',
-          content: '',
-          effectiveDate: new Date().toISOString().split('T')[0],
-          active: true
-        })
-        setIsCreating(false)
-      } catch (error) {
-        console.error('Failed to create rule modification:', error)
-        alert('Failed to create rule modification. Please try again.')
-      }
+    if (!newModification.title || !newModification.content) {
+      toast.error('Please fill in all required fields (title and content)')
+      return
+    }
+
+    // Sanitize text inputs
+    const sanitizedTitle = sanitize.text(newModification.title)
+    const sanitizedSummary = sanitize.text(newModification.summary)
+    const sanitizedContent = sanitize.text(newModification.content)
+
+    try {
+      const created = await ruleModificationsAPI.create({
+        title: sanitizedTitle,
+        category: newModification.category,
+        summary: sanitizedSummary,
+        content: sanitizedContent,
+        effective_date: newModification.effectiveDate,
+        active: newModification.active
+      })
+      setModifications([created, ...modifications])
+      setNewModification({
+        title: '',
+        category: 'Club Tournament',
+        summary: '',
+        content: '',
+        effectiveDate: new Date().toISOString().split('T')[0],
+        active: true
+      })
+      setIsCreating(false)
+      toast.success('Rule modification created successfully!')
+    } catch (error) {
+      const errorMessage = parseAPIError(error)
+      toast.error(`Failed to create rule modification: ${errorMessage}`)
     }
   }
 
   const handleUpdate = async (id: string, updates: any) => {
+    // Sanitize text inputs if they exist in updates
+    const sanitizedUpdates = { ...updates }
+    if (updates.title) {
+      sanitizedUpdates.title = sanitize.text(updates.title)
+    }
+    if (updates.summary) {
+      sanitizedUpdates.summary = sanitize.text(updates.summary)
+    }
+    if (updates.content) {
+      sanitizedUpdates.content = sanitize.text(updates.content)
+    }
+
     try {
-      const updated = await ruleModificationsAPI.update({ id, ...updates })
+      const updated = await ruleModificationsAPI.update({ id, ...sanitizedUpdates })
       setModifications(prev => prev.map(mod =>
         mod.id === id ? updated : mod
       ))
-      setEditingId(null)
+      toast.success('Rule modification updated successfully!')
     } catch (error) {
-      console.error('Failed to update rule modification:', error)
-      alert('Failed to update rule modification. Please try again.')
+      const errorMessage = parseAPIError(error)
+      toast.error(`Failed to update rule modification: ${errorMessage}`)
     }
   }
 
@@ -127,9 +155,10 @@ export default function RuleModificationsClient({ modifications: initialModifica
       try {
         await ruleModificationsAPI.delete(id)
         setModifications(prev => prev.filter(mod => mod.id !== id))
+        toast.success('Rule modification deleted successfully!')
       } catch (error) {
-        console.error('Failed to delete rule modification:', error)
-        alert('Failed to delete rule modification. Please try again.')
+        const errorMessage = parseAPIError(error)
+        toast.error(`Failed to delete rule modification: ${errorMessage}`)
       }
     }
   }
@@ -219,8 +248,13 @@ export default function RuleModificationsClient({ modifications: initialModifica
                 type="text"
                 value={newModification.title}
                 onChange={(e) => setNewModification({...newModification, title: e.target.value})}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cboa-blue"
+                className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-cboa-blue ${
+                  getFieldError('title', validationErrors) ? 'border-red-500' : 'border-gray-300'
+                }`}
               />
+              {getFieldError('title', validationErrors) && (
+                <p className="mt-1 text-sm text-red-600">{getFieldError('title', validationErrors)}</p>
+              )}
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
@@ -258,6 +292,9 @@ export default function RuleModificationsClient({ modifications: initialModifica
                 value={newModification.content}
                 onChange={(value) => setNewModification({...newModification, content: value || ''})}
               />
+              {getFieldError('content', validationErrors) && (
+                <p className="mt-1 text-sm text-red-600">{getFieldError('content', validationErrors)}</p>
+              )}
             </div>
             <div className="flex gap-2">
               <button
@@ -305,8 +342,13 @@ export default function RuleModificationsClient({ modifications: initialModifica
                           type="text"
                           value={modification.title}
                           onChange={(e) => handleUpdate(modification.id, { title: e.target.value })}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cboa-blue"
+                          className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-cboa-blue ${
+                            getFieldError('title', validationErrors) ? 'border-red-500' : 'border-gray-300'
+                          }`}
                         />
+                        {getFieldError('title', validationErrors) && (
+                          <p className="mt-1 text-sm text-red-600">{getFieldError('title', validationErrors)}</p>
+                        )}
                       </div>
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
@@ -344,6 +386,9 @@ export default function RuleModificationsClient({ modifications: initialModifica
                           value={modification.content || modification.body || ''}
                           onChange={(value) => handleUpdate(modification.id, { content: value })}
                         />
+                        {getFieldError('content', validationErrors) && (
+                          <p className="mt-1 text-sm text-red-600">{getFieldError('content', validationErrors)}</p>
+                        )}
                       </div>
                       <div className="flex gap-2">
                         <button
@@ -468,6 +513,8 @@ export default function RuleModificationsClient({ modifications: initialModifica
           </p>
         </Card>
       )}
+
+      <ToastContainer />
     </div>
   )
 }

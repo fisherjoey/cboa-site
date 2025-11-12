@@ -4,6 +4,16 @@ import { useState, useEffect } from 'react'
 import { useRole } from '@/contexts/RoleContext'
 import { membersAPI, memberActivitiesAPI } from '@/lib/api'
 import { IconUser, IconSearch, IconPlus, IconEdit, IconTrash, IconCalendar, IconX, IconCheck, IconFilter } from '@tabler/icons-react'
+import { useToast } from '@/hooks/useToast'
+import { ToastContainer } from '@/components/Toast'
+import {
+  validateMemberForm,
+  validateActivityForm,
+  getFieldError,
+  hasErrors,
+  formatValidationErrors
+} from '@/lib/portalValidation'
+import { parseAPIError, sanitize, ValidationError } from '@/lib/errorHandling'
 
 interface Member {
   id?: string
@@ -63,6 +73,9 @@ export default function MembersPage() {
     activity_date: new Date().toISOString().split('T')[0],
     notes: ''
   })
+  const toast = useToast()
+  const [validationErrors, setValidationErrors] = useState<ValidationError[]>([])
+  const [activityValidationErrors, setActivityValidationErrors] = useState<ValidationError[]>([])
 
   // Check if user has admin/executive access
   const hasAccess = user.role === 'admin' || user.role === 'executive'
@@ -83,7 +96,8 @@ export default function MembersPage() {
       const data = await membersAPI.getAll()
       setMembers(data)
     } catch (error) {
-      console.error('Error loading members:', error)
+      const errorMessage = parseAPIError(error)
+      toast.error(errorMessage)
     } finally {
       setIsLoading(false)
     }
@@ -149,24 +163,51 @@ export default function MembersPage() {
   const handleSaveMember = async () => {
     try {
       setIsSaving(true)
+      setValidationErrors([])
+
+      // Validate form
+      const errors = validateMemberForm(editForm)
+      if (hasErrors(errors)) {
+        setValidationErrors(errors)
+        toast.error(formatValidationErrors(errors))
+        return
+      }
+
+      // Sanitize text inputs
+      const sanitizedForm = {
+        ...editForm,
+        name: sanitize(editForm.name),
+        email: sanitize(editForm.email),
+        phone: editForm.phone ? sanitize(editForm.phone) : undefined,
+        address: editForm.address ? sanitize(editForm.address) : undefined,
+        city: editForm.city ? sanitize(editForm.city) : undefined,
+        province: editForm.province ? sanitize(editForm.province) : undefined,
+        postal_code: editForm.postal_code ? sanitize(editForm.postal_code) : undefined,
+        emergency_contact_name: editForm.emergency_contact_name ? sanitize(editForm.emergency_contact_name) : undefined,
+        emergency_contact_phone: editForm.emergency_contact_phone ? sanitize(editForm.emergency_contact_phone) : undefined,
+        notes: editForm.notes ? sanitize(editForm.notes) : undefined
+      }
 
       if (selectedMember?.id) {
         // Update existing member
         await membersAPI.update({
           id: selectedMember.id,
-          ...editForm
+          ...sanitizedForm
         })
+        toast.success('Member updated successfully')
       } else {
         // Create new member
-        await membersAPI.create(editForm)
+        await membersAPI.create(sanitizedForm)
+        toast.success('Member created successfully')
       }
 
       await loadMembers()
       setShowMemberModal(false)
       setIsEditing(false)
+      setValidationErrors([])
     } catch (error) {
-      console.error('Error saving member:', error)
-      alert('Failed to save member. Please try again.')
+      const errorMessage = parseAPIError(error)
+      toast.error(errorMessage)
     } finally {
       setIsSaving(false)
     }
@@ -179,11 +220,12 @@ export default function MembersPage() {
 
     try {
       await membersAPI.delete(memberId)
+      toast.success('Member deleted successfully')
       await loadMembers()
       setShowMemberModal(false)
     } catch (error) {
-      console.error('Error deleting member:', error)
-      alert('Failed to delete member. Please try again.')
+      const errorMessage = parseAPIError(error)
+      toast.error(errorMessage)
     }
   }
 
@@ -202,7 +244,18 @@ export default function MembersPage() {
   const handleSaveActivity = async () => {
     try {
       setIsSaving(true)
+      setActivityValidationErrors([])
+
+      // Validate form
+      const errors = validateActivityForm(activityForm)
+      if (hasErrors(errors)) {
+        setActivityValidationErrors(errors)
+        toast.error(formatValidationErrors(errors))
+        return
+      }
+
       await memberActivitiesAPI.create(activityForm)
+      toast.success('Activity added successfully')
 
       // Reload activities
       if (selectedMember?.id) {
@@ -211,9 +264,10 @@ export default function MembersPage() {
       }
 
       setShowActivityModal(false)
+      setActivityValidationErrors([])
     } catch (error) {
-      console.error('Error saving activity:', error)
-      alert('Failed to save activity. Please try again.')
+      const errorMessage = parseAPIError(error)
+      toast.error(errorMessage)
     } finally {
       setIsSaving(false)
     }
@@ -226,6 +280,7 @@ export default function MembersPage() {
 
     try {
       await memberActivitiesAPI.delete(activityId)
+      toast.success('Activity deleted successfully')
 
       // Reload activities
       if (selectedMember?.id) {
@@ -233,8 +288,8 @@ export default function MembersPage() {
         setMemberActivities(activities)
       }
     } catch (error) {
-      console.error('Error deleting activity:', error)
-      alert('Failed to delete activity. Please try again.')
+      const errorMessage = parseAPIError(error)
+      toast.error(errorMessage)
     }
   }
 
@@ -261,6 +316,7 @@ export default function MembersPage() {
 
   return (
     <div className="max-w-7xl mx-auto p-6">
+      <ToastContainer toasts={toast.toasts} onDismiss={toast.dismissToast} />
       <div className="mb-6">
         <div className="flex items-center justify-between mb-4">
           <h1 className="text-3xl font-bold text-gray-900">Members Directory</h1>
@@ -421,13 +477,24 @@ export default function MembersPage() {
                   <div>
                     <label className="text-sm font-medium text-gray-700 mb-1 block">Name *</label>
                     {isEditing ? (
-                      <input
-                        type="text"
-                        value={editForm.name}
-                        onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                        required
-                      />
+                      <>
+                        <input
+                          type="text"
+                          value={editForm.name}
+                          onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+                          className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 ${
+                            getFieldError(validationErrors, 'name')
+                              ? 'border-red-500'
+                              : 'border-gray-300'
+                          }`}
+                          required
+                        />
+                        {getFieldError(validationErrors, 'name') && (
+                          <p className="mt-1 text-sm text-red-600">
+                            {getFieldError(validationErrors, 'name')}
+                          </p>
+                        )}
+                      </>
                     ) : (
                       <p className="text-gray-900">{selectedMember?.name}</p>
                     )}
@@ -436,13 +503,24 @@ export default function MembersPage() {
                   <div>
                     <label className="text-sm font-medium text-gray-700 mb-1 block">Email *</label>
                     {isEditing ? (
-                      <input
-                        type="email"
-                        value={editForm.email}
-                        onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                        required
-                      />
+                      <>
+                        <input
+                          type="email"
+                          value={editForm.email}
+                          onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
+                          className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 ${
+                            getFieldError(validationErrors, 'email')
+                              ? 'border-red-500'
+                              : 'border-gray-300'
+                          }`}
+                          required
+                        />
+                        {getFieldError(validationErrors, 'email') && (
+                          <p className="mt-1 text-sm text-red-600">
+                            {getFieldError(validationErrors, 'email')}
+                          </p>
+                        )}
+                      </>
                     ) : (
                       <p className="text-gray-900">{selectedMember?.email}</p>
                     )}
