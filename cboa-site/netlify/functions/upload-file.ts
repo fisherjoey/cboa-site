@@ -38,10 +38,15 @@ export const handler: Handler = async (event) => {
     let fileBuffer: Buffer[] = []
     let fileSize = 0
     
+    let originalFileName = ''
+    let detectedMimeType = ''
+
     bb.on('file', (name, file, info) => {
       const { filename, mimeType } = info
+      originalFileName = filename
+      detectedMimeType = mimeType
       console.log(`Receiving file: ${filename}, type: ${mimeType}`)
-      
+
       // Generate safe filename with timestamp
       const timestamp = Date.now()
       const safeFilename = filename.replace(/[^a-zA-Z0-9.-]/g, '_')
@@ -94,11 +99,30 @@ export const handler: Handler = async (event) => {
           ? 'training-materials'
           : 'portal-resources'
 
+        // Determine content type from file extension
+        const getContentType = (filename: string) => {
+          const ext = filename.split('.').pop()?.toLowerCase()
+          const types: Record<string, string> = {
+            'pdf': 'application/pdf',
+            'jpg': 'image/jpeg',
+            'jpeg': 'image/jpeg',
+            'png': 'image/png',
+            'gif': 'image/gif',
+            'doc': 'application/msword',
+            'docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            'xls': 'application/vnd.ms-excel',
+            'xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'ppt': 'application/vnd.ms-powerpoint',
+            'pptx': 'application/vnd.openxmlformats-officedocument.presentationml.presentation'
+          }
+          return types[ext || ''] || 'application/octet-stream'
+        }
+
         // Upload to Supabase Storage
         const { data, error } = await supabase.storage
           .from(bucket)
           .upload(fileName, fullBuffer, {
-            contentType: 'application/octet-stream',
+            contentType: getContentType(originalFileName),
             cacheControl: '3600',
             upsert: false
           })

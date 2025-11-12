@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { resourcesAPI } from '@/lib/api'
+import { uploadFile } from '@/lib/fileUpload'
 import ResourceViewer from '@/components/ResourceViewer'
 import ResourceThumbnail from '@/components/ResourceThumbnail'
 import { useRole } from '@/contexts/RoleContext'
@@ -67,10 +68,10 @@ export default function ResourcesClient() {
 
   const loadExistingFiles = async () => {
     try {
-      const API_BASE = process.env.NODE_ENV === 'production' 
-        ? '/.netlify/functions' 
-        : 'http://localhost:8888/.netlify/functions'
-      
+      const API_BASE = process.env.NODE_ENV === 'production'
+        ? '/.netlify/functions'
+        : 'http://localhost:9000/.netlify/functions'
+
       const response = await fetch(`${API_BASE}/list-resource-files`)
       if (response.ok) {
         const data = await response.json()
@@ -144,14 +145,13 @@ export default function ResourcesClient() {
         if (uploadedFile) {
           try {
             console.log('Uploading file:', uploadedFile.name)
-            // Storage functionality temporarily disabled
-            // const uploadResult = await storage.resources.uploadFile(uploadedFile, 'documents')
-            const uploadResult = { url: URL.createObjectURL(uploadedFile), error: null }
-            fileUrl = uploadResult.publicUrl || uploadResult.url
+            const uploadResult = await uploadFile(uploadedFile)
+            fileUrl = uploadResult.url
             console.log('File uploaded successfully:', uploadResult)
           } catch (uploadError) {
             console.error('File upload failed:', uploadError)
             alert(`Failed to upload file: ${uploadError instanceof Error ? uploadError.message : 'Unknown error'}`)
+            setIsUploading(false)
             return
           }
         }
@@ -161,8 +161,7 @@ export default function ResourcesClient() {
           description: newResource.description,
           category: newResource.category,
           file_url: fileUrl,
-          url: newResource.externalLink,
-          type: fileUrl ? 'file' : 'link',
+          file_name: uploadedFile?.name,
           is_featured: newResource.featured || false,
           access_level: newResource.accessLevel || 'all'
         }
@@ -494,11 +493,11 @@ export default function ResourcesClient() {
               </div>
             </div>
 
-            <div className="flex gap-2">
+            <div className="flex flex-col sm:flex-row gap-2">
               <button
                 onClick={handleCreate}
                 disabled={isUploading}
-                className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isUploading ? (
                   <>
@@ -526,7 +525,7 @@ export default function ResourcesClient() {
                   setShowFileDropdown(false)
                   if (fileInputRef.current) fileInputRef.current.value = ''
                 }}
-                className="bg-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-400 flex items-center gap-2"
+                className="bg-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-400 flex items-center justify-center gap-2"
               >
                 <IconX className="h-5 w-5" />
                 Cancel
@@ -699,17 +698,17 @@ export default function ResourcesClient() {
 
           return (
             <div key={resource.id} className="bg-white rounded-lg shadow hover:shadow-md transition-shadow p-4">
-              <div className="flex items-start justify-between">
-                <div className="flex items-start gap-3">
-                  <ResourceThumbnail 
-                    resource={resource} 
-                    size="medium" 
+              <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+                <div className="flex items-start gap-3 flex-1 min-w-0">
+                  <ResourceThumbnail
+                    resource={resource}
+                    size="medium"
                     onClick={() => setViewingResource(resource)}
                   />
-                  <div className="flex-1">
-                    <h3 className="font-semibold text-gray-900">{resource.title}</h3>
-                    <p className="text-sm text-gray-600 mt-1">{resource.description}</p>
-                    <div className="mt-2 flex items-center gap-4 text-xs text-gray-500">
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-semibold text-gray-900 break-words">{resource.title}</h3>
+                    <p className="text-sm text-gray-600 mt-1 line-clamp-2">{resource.description}</p>
+                    <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-gray-500">
                       <span>Updated: {resource.lastUpdated}</span>
                       {resource.fileSize && <span>{resource.fileSize}</span>}
                       {resource.accessLevel && resource.accessLevel !== 'all' && (
@@ -720,7 +719,7 @@ export default function ResourcesClient() {
                     </div>
                   </div>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 flex-shrink-0 sm:ml-2">
                   {(resource.fileUrl || resource.externalLink) && (
                     <button
                       onClick={() => setViewingResource(resource)}

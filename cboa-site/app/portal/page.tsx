@@ -3,10 +3,10 @@
 import Link from 'next/link';
 import { useRole } from '@/contexts/RoleContext';
 import { useState, useEffect } from 'react';
-import { 
-  IconBooks, 
-  IconNews, 
-  IconNotebook, 
+import {
+  IconBooks,
+  IconNews,
+  IconNotebook,
   IconCalendar,
   IconGavel,
   IconClipboard,
@@ -14,6 +14,7 @@ import {
   IconEye,
   IconDownload
 } from '@tabler/icons-react';
+import AnnouncementsBanner from '@/components/AnnouncementsBanner';
 
 export default function PortalDashboard() {
   const { user } = useRole();
@@ -132,6 +133,9 @@ export default function PortalDashboard() {
           </p>
         )}
       </div>
+
+      {/* Important Announcements */}
+      <AnnouncementsBanner />
 
       {/* Latest Bounce Newsletter */}
       {latestBounce && (

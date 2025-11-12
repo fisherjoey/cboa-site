@@ -1,9 +1,10 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { IconPlus, IconEdit, IconTrash, IconDeviceFloppy, IconX, IconAlertCircle, IconSearch, IconFilter } from '@tabler/icons-react'
 import { MarkdownEditor, MarkdownViewer } from '@/components/MarkdownEditor'
 import { useRole } from '@/contexts/RoleContext'
+import { announcementsAPI } from '@/lib/api'
 
 interface Announcement {
   id: string
@@ -23,7 +24,8 @@ interface NewsClientProps {
 
 export default function NewsClient({ initialAnnouncements }: NewsClientProps) {
   const { user } = useRole()
-  const [announcements, setAnnouncements] = useState<Announcement[]>(initialAnnouncements)
+  const [announcements, setAnnouncements] = useState<Announcement[]>([])
+  const [isLoading, setIsLoading] = useState(true)
   const [filter, setFilter] = useState<'all' | 'general' | 'rules' | 'schedule' | 'training' | 'administrative'>('all')
   const [searchTerm, setSearchTerm] = useState('')
   const [isCreating, setIsCreating] = useState(false)
@@ -39,6 +41,22 @@ export default function NewsClient({ initialAnnouncements }: NewsClientProps) {
 
   const canEdit = user.role === 'admin' || user.role === 'executive'
 
+  // Load announcements from API
+  useEffect(() => {
+    loadAnnouncements()
+  }, [])
+
+  const loadAnnouncements = async () => {
+    try {
+      const data = await announcementsAPI.getAll()
+      setAnnouncements(data)
+    } catch (error) {
+      console.error('Failed to load announcements:', error)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
 
   const filteredAnnouncements = announcements.filter(item => {
     const matchesFilter = filter === 'all' || item.category === filter
@@ -48,40 +66,56 @@ export default function NewsClient({ initialAnnouncements }: NewsClientProps) {
     return matchesFilter && matchesSearch
   })
 
-  const handleCreate = () => {
+  const handleCreate = async () => {
     if (newAnnouncement.title && newAnnouncement.content) {
-      const created = {
-        id: Date.now().toString(),
-        title: newAnnouncement.title!,
-        content: newAnnouncement.content!,
-        category: newAnnouncement.category || 'general',
-        priority: newAnnouncement.priority as Announcement['priority'],
-        author: newAnnouncement.author || 'CBOA Executive',
-        date: new Date().toISOString()
+      try {
+        const created = await announcementsAPI.create({
+          title: newAnnouncement.title,
+          content: newAnnouncement.content,
+          category: newAnnouncement.category || 'general',
+          priority: newAnnouncement.priority || 'normal',
+          author: newAnnouncement.author || 'CBOA Executive',
+          date: new Date().toISOString()
+        })
+        setAnnouncements([created, ...announcements])
+        setNewAnnouncement({
+          title: '',
+          content: '',
+          category: 'general',
+          priority: 'normal',
+          author: 'CBOA Executive',
+          date: new Date().toISOString()
+        })
+        setIsCreating(false)
+      } catch (error) {
+        console.error('Failed to create announcement:', error)
+        alert('Failed to create announcement. Please try again.')
       }
-      setAnnouncements([created, ...announcements])
-      setNewAnnouncement({
-        title: '',
-        content: '',
-        category: 'general',
-        priority: 'normal',
-        author: 'CBOA Executive',
-        date: new Date().toISOString()
-      })
-      setIsCreating(false)
     }
   }
 
-  const handleUpdate = (id: string, updates: Partial<Announcement>) => {
-    setAnnouncements(prev => prev.map(a =>
-      a.id === id ? { ...a, ...updates } : a
-    ))
-    setEditingId(null)
+  const handleUpdate = async (id: string, updates: Partial<Announcement>) => {
+    try {
+      const updated = await announcementsAPI.update({ id, ...updates })
+      setAnnouncements(prev => prev.map(a =>
+        a.id === id ? updated : a
+      ))
+      setEditingId(null)
+    } catch (error) {
+      console.error('Failed to update announcement:', error)
+      alert('Failed to update announcement. Please try again.')
+    }
   }
 
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string) => {
     if (confirm('Are you sure you want to delete this announcement?')) {
-      setAnnouncements(prev => prev.filter(a => a.id !== id))
+      try {
+        await announcementsAPI.delete(id)
+        setAnnouncements(prev => prev.filter(a => a.id !== id))
+      } catch (error) {
+        console.error('Failed to delete announcement:', error)
+        alert('Failed to delete announcement. Please try again.')
+      }
     }
   }
 
@@ -140,7 +174,7 @@ export default function NewsClient({ initialAnnouncements }: NewsClientProps) {
               />
             </div>
 
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
                 <select
@@ -221,8 +255,8 @@ export default function NewsClient({ initialAnnouncements }: NewsClientProps) {
 
       {/* Search and Filters */}
       <div className="mb-6 bg-white rounded-lg shadow p-4">
-        <div className="flex flex-wrap gap-4">
-          <div className="flex-1 min-w-[200px]">
+        <div className="flex flex-col sm:flex-row gap-4">
+          <div className="flex-1 min-w-0">
             <input
               type="text"
               placeholder="Search announcements..."
@@ -231,15 +265,15 @@ export default function NewsClient({ initialAnnouncements }: NewsClientProps) {
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-orange-500 focus:border-orange-500"
             />
           </div>
-          
-          <div className="flex gap-2">
+
+          <div className="flex flex-wrap gap-2">
             {(['all', 'general', 'rules', 'schedule', 'training', 'administrative'] as const).map(cat => (
               <button
                 key={cat}
                 onClick={() => setFilter(cat)}
                 className={`px-3 py-2 rounded-md capitalize text-sm ${
-                  filter === cat 
-                    ? 'bg-orange-500 text-white' 
+                  filter === cat
+                    ? 'bg-orange-500 text-white'
                     : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
                 }`}
               >
@@ -280,7 +314,7 @@ export default function NewsClient({ initialAnnouncements }: NewsClientProps) {
                     className="w-full text-lg font-semibold px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                   />
                   
-                  <div className="grid grid-cols-3 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                     <select
                       value={announcement.category}
                       onChange={(e) => handleUpdate(announcement.id, { category: e.target.value as any })}
@@ -336,9 +370,9 @@ export default function NewsClient({ initialAnnouncements }: NewsClientProps) {
             ) : (
               // View Mode
               <div className="p-6 overflow-hidden">
-                <div className="flex items-start justify-between">
+                <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
                   <div className="flex-1 min-w-0 overflow-hidden">
-                    <div className="flex items-center gap-2 mb-2">
+                    <div className="flex flex-wrap items-center gap-2 mb-2">
                       <span className={`px-2 py-1 text-xs font-semibold rounded-full ${getCategoryColor(announcement.category)}`}>
                         {announcement.category}
                       </span>
@@ -352,23 +386,23 @@ export default function NewsClient({ initialAnnouncements }: NewsClientProps) {
                       {announcement.title}
                     </h3>
                     <div className="text-gray-600 mb-3 overflow-hidden">
-                      <MarkdownViewer 
-                        content={announcement.content} 
+                      <MarkdownViewer
+                        content={announcement.content}
                         className="break-words"
                       />
                     </div>
-                    <div className="flex items-center text-sm text-gray-500">
-                      <span>{new Date(announcement.date).toLocaleDateString('en-US', { 
-                        year: 'numeric', 
-                        month: 'long', 
-                        day: 'numeric' 
+                    <div className="flex flex-wrap items-center gap-2 text-sm text-gray-500">
+                      <span>{new Date(announcement.date).toLocaleDateString('en-US', {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric'
                       })}</span>
-                      <span className="mx-2">•</span>
+                      <span className="hidden sm:inline">•</span>
                       <span>Posted by {announcement.author}</span>
                     </div>
                   </div>
                   {canEdit && (
-                    <div className="flex gap-2 ml-4">
+                    <div className="flex gap-2 sm:ml-4">
                       <button
                         onClick={() => setEditingId(announcement.id)}
                         className="text-blue-600 hover:text-blue-800"

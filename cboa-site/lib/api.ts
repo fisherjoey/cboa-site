@@ -1,8 +1,9 @@
 // API helper functions for portal data
 
-const API_BASE = process.env.NODE_ENV === 'production' 
-  ? '/.netlify/functions' 
-  : 'http://localhost:8888/.netlify/functions'
+// Use local functions server for development
+const API_BASE = process.env.NODE_ENV === 'production'
+  ? '/.netlify/functions'
+  : 'http://localhost:9000/.netlify/functions'
 
 // Calendar Events API
 export const calendarAPI = {
@@ -79,6 +80,78 @@ export const announcementsAPI = {
       method: 'DELETE'
     })
     if (!res.ok) throw new Error('Failed to delete announcement')
+  }
+}
+
+// Rule Modifications API
+export const ruleModificationsAPI = {
+  async getAll() {
+    const res = await fetch(`${API_BASE}/rule-modifications`)
+    if (!res.ok) throw new Error('Failed to fetch rule modifications')
+    return res.json()
+  },
+
+  async create(modification: any) {
+    const res = await fetch(`${API_BASE}/rule-modifications`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(modification)
+    })
+    if (!res.ok) throw new Error('Failed to create rule modification')
+    return res.json()
+  },
+
+  async update(modification: any) {
+    const res = await fetch(`${API_BASE}/rule-modifications`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(modification)
+    })
+    if (!res.ok) throw new Error('Failed to update rule modification')
+    return res.json()
+  },
+
+  async delete(id: string) {
+    const res = await fetch(`${API_BASE}/rule-modifications?id=${id}`, {
+      method: 'DELETE'
+    })
+    if (!res.ok) throw new Error('Failed to delete rule modification')
+  }
+}
+
+// Newsletters API
+export const newslettersAPI = {
+  async getAll() {
+    const res = await fetch(`${API_BASE}/newsletters`)
+    if (!res.ok) throw new Error('Failed to fetch newsletters')
+    return res.json()
+  },
+
+  async create(newsletter: any) {
+    const res = await fetch(`${API_BASE}/newsletters`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(newsletter)
+    })
+    if (!res.ok) throw new Error('Failed to create newsletter')
+    return res.json()
+  },
+
+  async update(newsletter: any) {
+    const res = await fetch(`${API_BASE}/newsletters`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(newsletter)
+    })
+    if (!res.ok) throw new Error('Failed to update newsletter')
+    return res.json()
+  },
+
+  async delete(id: string) {
+    const res = await fetch(`${API_BASE}/newsletters?id=${id}`, {
+      method: 'DELETE'
+    })
+    if (!res.ok) throw new Error('Failed to delete newsletter')
   }
 }
 

@@ -16,7 +16,13 @@ interface ResourceViewerProps {
 
 export default function ResourceViewer({ resource, onClose }: ResourceViewerProps) {
   const [isFullscreen, setIsFullscreen] = useState(false)
-  
+  const [iframeError, setIframeError] = useState(false)
+
+  // Debug logging
+  console.log('ResourceViewer - resource:', resource)
+  console.log('ResourceViewer - fileUrl:', resource.fileUrl)
+  console.log('ResourceViewer - externalLink:', resource.externalLink)
+
   const getFileType = (url: string) => {
     const extension = url.split('.').pop()?.toLowerCase()
     
@@ -77,12 +83,46 @@ export default function ResourceViewer({ resource, onClose }: ResourceViewerProp
     
     switch (fileType) {
       case 'pdf':
+        if (iframeError) {
+          return (
+            <div className="flex flex-col items-center justify-center h-full gap-4">
+              <p className="text-gray-600">Unable to preview PDF in browser</p>
+              <div className="flex gap-3">
+                <a
+                  href={resource.fileUrl}
+                  download
+                  className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center gap-2"
+                >
+                  <IconDownload className="h-5 w-5" />
+                  Download PDF
+                </a>
+                <a
+                  href={resource.fileUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 flex items-center gap-2"
+                >
+                  <IconExternalLink className="h-5 w-5" />
+                  Open in New Tab
+                </a>
+              </div>
+            </div>
+          )
+        }
         return (
-          <iframe
-            src={resource.fileUrl}
-            className="w-full h-full"
-            title={resource.title}
-          />
+          <div className="w-full h-full">
+            <object
+              data={resource.fileUrl}
+              type="application/pdf"
+              className="w-full h-full"
+            >
+              <iframe
+                src={`${resource.fileUrl}#view=FitH`}
+                className="w-full h-full"
+                title={resource.title}
+              />
+            </object>
+          </div>
         )
         
       case 'image':
@@ -155,14 +195,14 @@ export default function ResourceViewer({ resource, onClose }: ResourceViewerProp
     <div className="fixed inset-0 z-50 bg-black bg-opacity-50 flex items-center justify-center p-4">
       <div className={`bg-white rounded-lg shadow-xl ${isFullscreen ? 'w-full h-full' : 'w-full max-w-6xl h-[80vh]'} flex flex-col`}>
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b">
-          <div>
-            <h2 className="text-xl font-semibold">{resource.title}</h2>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4 border-b">
+          <div className="flex-1 min-w-0">
+            <h2 className="text-lg sm:text-xl font-semibold truncate">{resource.title}</h2>
             {resource.description && (
-              <p className="text-sm text-gray-600 mt-1">{resource.description}</p>
+              <p className="text-xs sm:text-sm text-gray-600 mt-1 line-clamp-2">{resource.description}</p>
             )}
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-shrink-0">
             <button
               onClick={() => setIsFullscreen(!isFullscreen)}
               className="p-2 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded"

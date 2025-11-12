@@ -6,6 +6,7 @@ import Card from '@/components/ui/Card'
 import { ContentItem } from '@/lib/content'
 import { useRole } from '@/contexts/RoleContext'
 import { MarkdownEditor, MarkdownViewer } from '@/components/MarkdownEditor'
+import { ruleModificationsAPI } from '@/lib/api'
 
 interface RuleModificationsClientProps {
   modifications: ContentItem[]
@@ -14,7 +15,8 @@ interface RuleModificationsClientProps {
 
 export default function RuleModificationsClient({ modifications: initialModifications, categories }: RuleModificationsClientProps) {
   const { user } = useRole()
-  const [modifications, setModifications] = useState(initialModifications)
+  const [modifications, setModifications] = useState<any[]>([])
+  const [isLoading, setIsLoading] = useState(true)
   const [selectedCategory, setSelectedCategory] = useState('all')
   const [expandedRules, setExpandedRules] = useState<Set<string>>(new Set())
   const [searchTerm, setSearchTerm] = useState('')
@@ -30,6 +32,22 @@ export default function RuleModificationsClient({ modifications: initialModifica
   })
 
   const canEdit = user.role === 'admin' || user.role === 'executive'
+
+  // Load rule modifications from API
+  useEffect(() => {
+    loadModifications()
+  }, [])
+
+  const loadModifications = async () => {
+    try {
+      const data = await ruleModificationsAPI.getAll()
+      setModifications(data)
+    } catch (error) {
+      console.error('Failed to load rule modifications:', error)
+    } finally {
+      setIsLoading(false)
+    }
+  }
 
   // Filter modifications based on category and search term
   const filteredModifications = modifications.filter(mod => {
@@ -65,36 +83,54 @@ export default function RuleModificationsClient({ modifications: initialModifica
 
   const handleCreate = async () => {
     if (newModification.title && newModification.content) {
-      // In a real implementation, this would call an API
-      const created = {
-        ...newModification,
-        slug: newModification.title.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
-        id: Date.now().toString(),
-        body: newModification.content
+      try {
+        const created = await ruleModificationsAPI.create({
+          title: newModification.title,
+          category: newModification.category,
+          summary: newModification.summary,
+          content: newModification.content,
+          effective_date: newModification.effectiveDate,
+          active: newModification.active
+        })
+        setModifications([created, ...modifications])
+        setNewModification({
+          title: '',
+          category: 'Club Tournament',
+          summary: '',
+          content: '',
+          effectiveDate: new Date().toISOString().split('T')[0],
+          active: true
+        })
+        setIsCreating(false)
+      } catch (error) {
+        console.error('Failed to create rule modification:', error)
+        alert('Failed to create rule modification. Please try again.')
       }
-      setModifications([created, ...modifications])
-      setNewModification({
-        title: '',
-        category: 'Club Tournament',
-        summary: '',
-        content: '',
-        effectiveDate: new Date().toISOString().split('T')[0],
-        active: true
-      })
-      setIsCreating(false)
     }
   }
 
-  const handleUpdate = (slug: string, updates: Partial<ContentItem>) => {
-    setModifications(prev => prev.map(mod =>
-      mod.slug === slug ? { ...mod, ...updates } : mod
-    ))
-    setEditingId(null)
+  const handleUpdate = async (id: string, updates: any) => {
+    try {
+      const updated = await ruleModificationsAPI.update({ id, ...updates })
+      setModifications(prev => prev.map(mod =>
+        mod.id === id ? updated : mod
+      ))
+      setEditingId(null)
+    } catch (error) {
+      console.error('Failed to update rule modification:', error)
+      alert('Failed to update rule modification. Please try again.')
+    }
   }
 
-  const handleDelete = (slug: string) => {
+  const handleDelete = async (id: string) => {
     if (confirm('Are you sure you want to delete this rule modification?')) {
-      setModifications(prev => prev.filter(mod => mod.slug !== slug))
+      try {
+        await ruleModificationsAPI.delete(id)
+        setModifications(prev => prev.filter(mod => mod.id !== id))
+      } catch (error) {
+        console.error('Failed to delete rule modification:', error)
+        alert('Failed to delete rule modification. Please try again.')
+      }
     }
   }
 
@@ -247,8 +283,8 @@ export default function RuleModificationsClient({ modifications: initialModifica
       {filteredModifications.length > 0 ? (
         <div className="space-y-4">
           {filteredModifications.map((modification) => {
-            const isExpanded = expandedRules.has(modification.slug)
-            const isEditing = editingId === modification.slug
+            const isExpanded = expandedRules.has(modification.id)
+            const isEditing = editingId === modification.id
             const effectiveDate = modification.effectiveDate
               ? new Date(modification.effectiveDate).toLocaleDateString('en-CA', {
                   year: 'numeric',
@@ -258,7 +294,7 @@ export default function RuleModificationsClient({ modifications: initialModifica
               : null
 
             return (
-              <Card key={modification.slug} className="overflow-hidden">
+              <Card key={modification.id} className="overflow-hidden">
                 {isEditing ? (
                   <div className="p-6">
                     <h3 className="text-xl font-bold mb-4">Edit Rule Modification</h3>
@@ -268,7 +304,7 @@ export default function RuleModificationsClient({ modifications: initialModifica
                         <input
                           type="text"
                           value={modification.title}
-                          onChange={(e) => handleUpdate(modification.slug, { title: e.target.value })}
+                          onChange={(e) => handleUpdate(modification.id, { title: e.target.value })}
                           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cboa-blue"
                         />
                       </div>
@@ -276,7 +312,7 @@ export default function RuleModificationsClient({ modifications: initialModifica
                         <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
                         <select
                           value={modification.category}
-                          onChange={(e) => handleUpdate(modification.slug, { category: e.target.value })}
+                          onChange={(e) => handleUpdate(modification.id, { category: e.target.value })}
                           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cboa-blue"
                         >
                           {categories.map(cat => (
@@ -289,7 +325,7 @@ export default function RuleModificationsClient({ modifications: initialModifica
                         <input
                           type="text"
                           value={modification.summary}
-                          onChange={(e) => handleUpdate(modification.slug, { summary: e.target.value })}
+                          onChange={(e) => handleUpdate(modification.id, { summary: e.target.value })}
                           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cboa-blue"
                         />
                       </div>
@@ -298,7 +334,7 @@ export default function RuleModificationsClient({ modifications: initialModifica
                         <input
                           type="date"
                           value={modification.effectiveDate ? new Date(modification.effectiveDate).toISOString().split('T')[0] : ''}
-                          onChange={(e) => handleUpdate(modification.slug, { effectiveDate: e.target.value })}
+                          onChange={(e) => handleUpdate(modification.id, { effectiveDate: e.target.value })}
                           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cboa-blue"
                         />
                       </div>
@@ -306,7 +342,7 @@ export default function RuleModificationsClient({ modifications: initialModifica
                         <label className="block text-sm font-medium text-gray-700 mb-1">Content (Markdown)</label>
                         <MarkdownEditor
                           value={modification.content || modification.body || ''}
-                          onChange={(value) => handleUpdate(modification.slug, { content: value, body: value })}
+                          onChange={(value) => handleUpdate(modification.id, { content: value })}
                         />
                       </div>
                       <div className="flex gap-2">
@@ -331,7 +367,7 @@ export default function RuleModificationsClient({ modifications: initialModifica
                   <>
                     <div
                       className="cursor-pointer"
-                      onClick={() => toggleExpanded(modification.slug)}
+                      onClick={() => toggleExpanded(modification.id)}
                     >
                       <div className="p-6">
                         <div className="flex items-start justify-between">
@@ -349,14 +385,14 @@ export default function RuleModificationsClient({ modifications: initialModifica
                               {canEdit && (
                                 <div className="flex items-center gap-2 ml-auto" onClick={(e) => e.stopPropagation()}>
                                   <button
-                                    onClick={() => setEditingId(modification.slug)}
+                                    onClick={() => setEditingId(modification.id)}
                                     className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
                                     title="Edit"
                                   >
                                     <IconEdit className="h-4 w-4" />
                                   </button>
                                   <button
-                                    onClick={() => handleDelete(modification.slug)}
+                                    onClick={() => handleDelete(modification.id)}
                                     className="p-1.5 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                                     title="Delete"
                                   >

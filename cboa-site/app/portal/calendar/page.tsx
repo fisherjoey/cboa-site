@@ -106,8 +106,15 @@ export default function CalendarPage() {
 
   const handleSaveEvent = async (eventData: CBOAEvent) => {
     try {
+      // Extract only the fields we want to send to the API
       const apiData = {
-        ...eventData,
+        title: eventData.title,
+        type: eventData.type,
+        description: eventData.description,
+        location: eventData.location,
+        instructor: eventData.instructor,
+        max_participants: eventData.maxParticipants,
+        registration_link: eventData.registrationLink,
         start_date: eventData.start.toISOString(),
         end_date: eventData.end.toISOString(),
         created_by: 'CBOA Executive' // In production, get from auth

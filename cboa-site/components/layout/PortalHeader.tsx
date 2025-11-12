@@ -60,16 +60,19 @@ export default function PortalHeader() {
     <header className="sticky top-0 z-50">
       {/* Portal Indicator Bar */}
       <div className="bg-orange-500 text-white text-xs py-1">
-        <div className="container mx-auto px-4 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <IconLock className="h-4 w-4" />
-            <span className="font-semibold">Secure Member Portal</span>
-            <span className={`px-2 py-0.5 rounded text-xs ${getRoleBadgeColor(user.role)}`}>
+        <div className="container mx-auto px-4 flex items-center justify-between gap-2">
+          <div className="flex items-center gap-1 sm:gap-2 flex-1 min-w-0">
+            <IconLock className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
+            <span className="font-semibold truncate">Secure Member Portal</span>
+            <span className={`px-1.5 sm:px-2 py-0.5 rounded text-xs flex-shrink-0 ${getRoleBadgeColor(user.role)}`}>
               {getRoleLabel(user.role)}
             </span>
           </div>
-          <Link href="/" className="hover:underline">
+          <Link href="/" className="hover:underline flex-shrink-0 hidden sm:inline">
             ← Back to Public Site
+          </Link>
+          <Link href="/" className="hover:underline flex-shrink-0 sm:hidden">
+            ← Public
           </Link>
         </div>
       </div>
@@ -77,19 +80,19 @@ export default function PortalHeader() {
       {/* Main Portal Header */}
       <div className="bg-slate-900 text-white">
         <div className="container mx-auto px-4">
-          <div className="flex justify-between items-center py-4">
+          <div className="flex justify-between items-center py-3 sm:py-4">
             {/* Logo and Portal Name */}
-            <Link href="/portal" className="flex items-center gap-3">
-              <Image 
-                src="/images/logos/cboa-logo.png" 
-                alt="CBOA Logo" 
-                width={40} 
-                height={40}
-                className="rounded invert"
+            <Link href="/portal" className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
+              <Image
+                src="/images/logos/cboa-logo.png"
+                alt="CBOA Logo"
+                width={32}
+                height={32}
+                className="rounded invert sm:w-10 sm:h-10"
               />
-              <div>
-                <h1 className="text-lg font-bold">CBOA Member Portal</h1>
-                <p className="text-xs text-gray-400">Calgary Basketball Officials</p>
+              <div className="min-w-0">
+                <h1 className="text-sm sm:text-lg font-bold truncate">CBOA Member Portal</h1>
+                <p className="text-xs text-gray-400 hidden sm:block">Calgary Basketball Officials</p>
               </div>
             </Link>
 

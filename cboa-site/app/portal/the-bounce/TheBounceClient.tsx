@@ -6,6 +6,8 @@ import { IconNotebook, IconDownload, IconEye, IconCalendar, IconUpload, IconPlus
 import Card from '@/components/ui/Card'
 import { ContentItem } from '@/lib/content'
 import { useRole } from '@/contexts/RoleContext'
+import { newslettersAPI } from '@/lib/api'
+import { uploadFile } from '@/lib/fileUpload'
 
 // Dynamically import PDFViewer to avoid SSR issues
 const PDFViewer = dynamic(() => import('./PDFViewer'), {
@@ -29,16 +31,8 @@ interface Newsletter {
 
 export default function TheBounceClient({ newsletters: initialNewsletters }: TheBounceClientProps) {
   const { user } = useRole()
-  const [newsletters, setNewsletters] = useState<Newsletter[]>(() => {
-    // Load newsletters from localStorage on mount
-    if (typeof window !== 'undefined') {
-      const stored = localStorage.getItem('cboa-newsletters')
-      if (stored) {
-        return JSON.parse(stored)
-      }
-    }
-    return []
-  })
+  const [newsletters, setNewsletters] = useState<Newsletter[]>([])
+  const [isLoading, setIsLoading] = useState(true)
   const [selectedNewsletter, setSelectedNewsletter] = useState<Newsletter | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
@@ -50,7 +44,33 @@ export default function TheBounceClient({ newsletters: initialNewsletters }: The
     featured: false
   })
   const fileInputRef = useRef<HTMLInputElement>(null)
-  
+
+  // Load newsletters from API
+  useEffect(() => {
+    loadNewsletters()
+  }, [])
+
+  const loadNewsletters = async () => {
+    try {
+      const data = await newslettersAPI.getAll()
+      // Map API data to frontend format
+      const mapped = data.map((n: any) => ({
+        id: n.id,
+        title: n.title,
+        date: n.date,
+        description: n.description || '',
+        pdfFile: n.file_url,
+        featured: n.is_featured,
+        uploadedAt: n.created_at
+      }))
+      setNewsletters(mapped)
+    } catch (error) {
+      console.error('Failed to load newsletters:', error)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
   // Filter newsletters based on search
   const filteredNewsletters = newsletters.filter(newsletter => 
     searchTerm === '' ||
@@ -81,28 +101,37 @@ export default function TheBounceClient({ newsletters: initialNewsletters }: The
       alert('Please select a PDF file')
       return
     }
-    
+
     try {
-      // Storage functionality temporarily disabled
-      // const uploadResult = await storage.newsletters.uploadFile(file, `${new Date().getFullYear()}`)
-      const uploadResult = { url: URL.createObjectURL(file), error: null }
-      
-      const newNewsletter: Newsletter = {
-        id: Date.now().toString(),
+      // Upload file to Supabase Storage (newsletters bucket)
+      const uploadResult = await uploadFile(file, '/newsletter/')
+
+      // Create newsletter in database
+      const apiData = {
         title: uploadForm.title || `The Bounce - ${new Date(uploadForm.date).toLocaleDateString('en-CA', { month: 'long', year: 'numeric' })}`,
         date: uploadForm.date,
         description: uploadForm.description,
-        featured: uploadForm.featured,
-        pdfFile: uploadResult.publicUrl || uploadResult.url,
-        uploadedAt: new Date().toISOString()
+        file_name: file.name,
+        file_url: uploadResult.url,
+        file_size: uploadResult.size,
+        is_featured: uploadForm.featured
       }
-      
-      const updatedNewsletters = [newNewsletter, ...newsletters]
-      setNewsletters(updatedNewsletters)
-      
-      // Save to localStorage
-      localStorage.setItem('cboa-newsletters', JSON.stringify(updatedNewsletters))
-      
+
+      const created = await newslettersAPI.create(apiData)
+
+      // Add to local state
+      const newNewsletter: Newsletter = {
+        id: created.id,
+        title: created.title,
+        date: created.date,
+        description: created.description || '',
+        pdfFile: created.file_url,
+        featured: created.is_featured,
+        uploadedAt: created.created_at
+      }
+
+      setNewsletters([newNewsletter, ...newsletters])
+
       // Reset form
       setUploadForm({
         title: '',
@@ -111,7 +140,7 @@ export default function TheBounceClient({ newsletters: initialNewsletters }: The
         featured: false
       })
       setShowUploadForm(false)
-      
+
       if (fileInputRef.current) {
         fileInputRef.current.value = ''
       }
@@ -121,35 +150,39 @@ export default function TheBounceClient({ newsletters: initialNewsletters }: The
     }
   }
   
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string) => {
     if (confirm('Are you sure you want to delete this newsletter?')) {
-      const updatedNewsletters = newsletters.filter(n => n.id !== id)
-      setNewsletters(updatedNewsletters)
-      localStorage.setItem('cboa-newsletters', JSON.stringify(updatedNewsletters))
+      try {
+        await newslettersAPI.delete(id)
+        setNewsletters(prev => prev.filter(n => n.id !== id))
+      } catch (error) {
+        console.error('Failed to delete newsletter:', error)
+        alert('Failed to delete newsletter. Please try again.')
+      }
     }
   }
   
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="bg-white rounded-lg shadow-sm p-6">
-        <div className="flex items-center justify-between">
+      <div className="bg-white rounded-lg shadow-sm p-4 sm:p-6">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <div className="flex items-center gap-3 mb-4">
-              <IconNotebook className="h-8 w-8 text-cboa-blue" />
-              <h1 className="text-3xl font-bold text-cboa-blue">The Bounce Newsletter</h1>
+            <div className="flex items-center gap-2 sm:gap-3 mb-2 sm:mb-4">
+              <IconNotebook className="h-6 w-6 sm:h-8 sm:w-8 text-cboa-blue" />
+              <h1 className="text-2xl sm:text-3xl font-bold text-cboa-blue">The Bounce Newsletter</h1>
             </div>
-            <p className="text-gray-600">
+            <p className="text-sm sm:text-base text-gray-600">
               Your monthly source for CBOA news, officiating tips, and member updates
             </p>
           </div>
           {(user.role === 'admin' || user.role === 'executive') && (
             <button
               onClick={() => setShowUploadForm(!showUploadForm)}
-              className="bg-cboa-orange text-white px-4 py-2 rounded-md font-medium hover:bg-orange-600 transition-colors flex items-center gap-2"
+              className="bg-cboa-orange text-white px-4 py-2 rounded-md font-medium hover:bg-orange-600 transition-colors flex items-center gap-2 justify-center sm:justify-start"
             >
               <IconPlus className="h-5 w-5" />
-              Upload Newsletter
+              <span>Upload Newsletter</span>
             </button>
           )}
         </div>
@@ -239,30 +272,28 @@ export default function TheBounceClient({ newsletters: initialNewsletters }: The
       
       {/* Featured Issue */}
       {featuredNewsletter && (
-        <div className="bg-gradient-to-r from-cboa-orange to-orange-600 rounded-lg shadow-lg text-white p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <span className="text-sm font-medium opacity-90">Latest Issue</span>
-              <h2 className="text-2xl font-bold mt-1">{featuredNewsletter.title}</h2>
-              {featuredNewsletter.description && (
-                <p className="mt-2 opacity-90">{featuredNewsletter.description}</p>
-              )}
-              <div className="mt-4 flex gap-4">
-                <button
-                  onClick={() => handleView(featuredNewsletter)}
-                  className="bg-white text-cboa-orange px-4 py-2 rounded-md font-medium hover:bg-orange-50 transition-colors"
-                >
-                  <IconEye className="inline h-4 w-4 mr-2" />
-                  Read Now
-                </button>
-                <button
-                  onClick={() => handleDownload(featuredNewsletter)}
-                  className="border border-white text-white px-4 py-2 rounded-md font-medium hover:bg-white hover:text-cboa-orange transition-colors"
-                >
-                  <IconDownload className="inline h-4 w-4 mr-2" />
-                  Download PDF
-                </button>
-              </div>
+        <div className="bg-gradient-to-r from-cboa-orange to-orange-600 rounded-lg shadow-lg text-white p-4 sm:p-6">
+          <div>
+            <span className="text-sm font-medium opacity-90">Latest Issue</span>
+            <h2 className="text-xl sm:text-2xl font-bold mt-1">{featuredNewsletter.title}</h2>
+            {featuredNewsletter.description && (
+              <p className="mt-2 text-sm sm:text-base opacity-90">{featuredNewsletter.description}</p>
+            )}
+            <div className="mt-4 flex flex-col sm:flex-row gap-3 sm:gap-4">
+              <button
+                onClick={() => handleView(featuredNewsletter)}
+                className="bg-white text-cboa-orange px-4 py-2 rounded-md font-medium hover:bg-orange-50 transition-colors text-center"
+              >
+                <IconEye className="inline h-4 w-4 mr-2" />
+                Read Now
+              </button>
+              <button
+                onClick={() => handleDownload(featuredNewsletter)}
+                className="border border-white text-white px-4 py-2 rounded-md font-medium hover:bg-white hover:text-cboa-orange transition-colors text-center"
+              >
+                <IconDownload className="inline h-4 w-4 mr-2" />
+                Download PDF
+              </button>
             </div>
           </div>
         </div>
@@ -322,9 +353,9 @@ export default function TheBounceClient({ newsletters: initialNewsletters }: The
       ) : (
         <div>
           {viewMode === 'grid' ? (
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {filteredNewsletters.map((newsletter) => (
-                <Card key={newsletter.slug} className="hover:shadow-lg transition-shadow">
+                <Card key={newsletter.id} className="hover:shadow-lg transition-shadow">
                   <div className="p-6">
                     <div className="flex items-center gap-2 text-sm text-gray-500 mb-3">
                       <IconCalendar className="h-4 w-4" />
@@ -378,14 +409,14 @@ export default function TheBounceClient({ newsletters: initialNewsletters }: The
             <Card className="overflow-hidden">
               <ul className="divide-y divide-gray-200">
                 {filteredNewsletters.map((newsletter) => (
-                  <li key={newsletter.slug} className="hover:bg-gray-50 p-6">
-                    <div className="flex items-center justify-between">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-3 mb-1">
-                          <h3 className="text-lg font-medium text-cboa-blue">
+                  <li key={newsletter.id} className="hover:bg-gray-50 p-4 sm:p-6">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 mb-1">
+                          <h3 className="text-base sm:text-lg font-medium text-cboa-blue truncate">
                             {newsletter.title}
                           </h3>
-                          <span className="text-sm text-gray-500">
+                          <span className="text-xs sm:text-sm text-gray-500">
                             {new Date(newsletter.date).toLocaleDateString('en-CA', {
                               year: 'numeric',
                               month: 'long',
@@ -394,23 +425,23 @@ export default function TheBounceClient({ newsletters: initialNewsletters }: The
                           </span>
                         </div>
                         {newsletter.description && (
-                          <p className="text-gray-600 text-sm">
+                          <p className="text-gray-600 text-sm line-clamp-2">
                             {newsletter.description}
                           </p>
                         )}
                       </div>
-                      
-                      <div className="ml-4 flex items-center gap-3">
+
+                      <div className="flex items-center gap-3 sm:ml-4">
                         <button
                           onClick={() => handleView(newsletter)}
-                          className="text-cboa-orange hover:text-orange-700 font-medium"
+                          className="text-cboa-orange hover:text-orange-700 font-medium text-sm"
                         >
                           View
                         </button>
                         <span className="text-gray-300">|</span>
                         <button
                           onClick={() => handleDownload(newsletter)}
-                          className="text-gray-600 hover:text-gray-700 font-medium"
+                          className="text-gray-600 hover:text-gray-700 font-medium text-sm"
                         >
                           Download
                         </button>
