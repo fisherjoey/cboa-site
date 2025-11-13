@@ -384,3 +384,229 @@ export const resourcesAPI = {
     })
   }
 }
+
+// ============================================================================
+// Public Content Management APIs
+// ============================================================================
+
+import type {
+  PublicNewsItem,
+  PublicTrainingEvent,
+  PublicResource,
+  PublicPage,
+  Official
+} from '@/types/publicContent'
+
+// Public News API
+export const publicNewsAPI = {
+  async getAll(): Promise<PublicNewsItem[]> {
+    return retryAsync(async () => {
+      const res = await apiFetch(`${API_BASE}/public-news`)
+      return res.json()
+    })
+  },
+
+  async getActive(): Promise<PublicNewsItem[]> {
+    const all = await this.getAll()
+    return all.filter(item => item.active)
+  },
+
+  async getBySlug(slug: string): Promise<PublicNewsItem> {
+    return retryAsync(async () => {
+      const res = await apiFetch(`${API_BASE}/public-news?slug=${slug}`)
+      return res.json()
+    })
+  },
+
+  async create(item: Partial<PublicNewsItem>): Promise<PublicNewsItem> {
+    const res = await apiFetch(`${API_BASE}/public-news`, {
+      method: 'POST',
+      body: JSON.stringify(item)
+    })
+    return res.json()
+  },
+
+  async update(item: Partial<PublicNewsItem>): Promise<PublicNewsItem> {
+    const res = await apiFetch(`${API_BASE}/public-news`, {
+      method: 'PUT',
+      body: JSON.stringify(item)
+    })
+    return res.json()
+  },
+
+  async delete(id: string): Promise<void> {
+    await apiFetch(`${API_BASE}/public-news?id=${id}`, {
+      method: 'DELETE'
+    })
+  }
+}
+
+// Public Training Events API
+export const publicTrainingAPI = {
+  async getAll(): Promise<PublicTrainingEvent[]> {
+    return retryAsync(async () => {
+      const res = await apiFetch(`${API_BASE}/public-training`)
+      return res.json()
+    })
+  },
+
+  async getActive(): Promise<PublicTrainingEvent[]> {
+    const all = await this.getAll()
+    return all.filter(item => item.active)
+  },
+
+  async getUpcoming(): Promise<PublicTrainingEvent[]> {
+    const active = await this.getActive()
+    const now = new Date()
+    return active.filter(item => new Date(item.event_date) >= now)
+  },
+
+  async getBySlug(slug: string): Promise<PublicTrainingEvent> {
+    return retryAsync(async () => {
+      const res = await apiFetch(`${API_BASE}/public-training?slug=${slug}`)
+      return res.json()
+    })
+  },
+
+  async create(item: Partial<PublicTrainingEvent>): Promise<PublicTrainingEvent> {
+    const res = await apiFetch(`${API_BASE}/public-training`, {
+      method: 'POST',
+      body: JSON.stringify(item)
+    })
+    return res.json()
+  },
+
+  async update(item: Partial<PublicTrainingEvent>): Promise<PublicTrainingEvent> {
+    const res = await apiFetch(`${API_BASE}/public-training`, {
+      method: 'PUT',
+      body: JSON.stringify(item)
+    })
+    return res.json()
+  },
+
+  async delete(id: string): Promise<void> {
+    await apiFetch(`${API_BASE}/public-training?id=${id}`, {
+      method: 'DELETE'
+    })
+  }
+}
+
+// Public Resources API
+export const publicResourcesAPI = {
+  async getAll(): Promise<PublicResource[]> {
+    return retryAsync(async () => {
+      const res = await apiFetch(`${API_BASE}/public-resources`)
+      return res.json()
+    })
+  },
+
+  async getActive(): Promise<PublicResource[]> {
+    const all = await this.getAll()
+    return all.filter(item => item.active)
+  },
+
+  async getByCategory(category: string): Promise<PublicResource[]> {
+    return retryAsync(async () => {
+      const res = await apiFetch(`${API_BASE}/public-resources?category=${category}`)
+      return res.json()
+    })
+  },
+
+  async getBySlug(slug: string): Promise<PublicResource> {
+    return retryAsync(async () => {
+      const res = await apiFetch(`${API_BASE}/public-resources?slug=${slug}`)
+      return res.json()
+    })
+  },
+
+  async create(item: Partial<PublicResource>): Promise<PublicResource> {
+    const res = await apiFetch(`${API_BASE}/public-resources`, {
+      method: 'POST',
+      body: JSON.stringify(item)
+    })
+    return res.json()
+  },
+
+  async update(item: Partial<PublicResource>): Promise<PublicResource> {
+    const res = await apiFetch(`${API_BASE}/public-resources`, {
+      method: 'PUT',
+      body: JSON.stringify(item)
+    })
+    return res.json()
+  },
+
+  async delete(id: string): Promise<void> {
+    await apiFetch(`${API_BASE}/public-resources?id=${id}`, {
+      method: 'DELETE'
+    })
+  }
+}
+
+// Public Pages API
+export const publicPagesAPI = {
+  async getAll(): Promise<PublicPage[]> {
+    return retryAsync(async () => {
+      const res = await apiFetch(`${API_BASE}/public-pages`)
+      return res.json()
+    })
+  },
+
+  async getByName(pageName: string): Promise<PublicPage> {
+    return retryAsync(async () => {
+      const res = await apiFetch(`${API_BASE}/public-pages?page_name=${pageName}`)
+      return res.json()
+    })
+  },
+
+  async update(page: Partial<PublicPage>): Promise<PublicPage> {
+    const res = await apiFetch(`${API_BASE}/public-pages`, {
+      method: 'PUT',
+      body: JSON.stringify(page)
+    })
+    return res.json()
+  }
+}
+
+// Officials API
+export const officialsAPI = {
+  async getAll(): Promise<Official[]> {
+    return retryAsync(async () => {
+      const res = await apiFetch(`${API_BASE}/officials`)
+      return res.json()
+    })
+  },
+
+  async getActive(): Promise<Official[]> {
+    const all = await this.getAll()
+    return all.filter(item => item.active)
+  },
+
+  async getByLevel(level: number): Promise<Official[]> {
+    return retryAsync(async () => {
+      const res = await apiFetch(`${API_BASE}/officials?level=${level}`)
+      return res.json()
+    })
+  },
+
+  async create(item: Partial<Official>): Promise<Official> {
+    const res = await apiFetch(`${API_BASE}/officials`, {
+      method: 'POST',
+      body: JSON.stringify(item)
+    })
+    return res.json()
+  },
+
+  async update(item: Partial<Official>): Promise<Official> {
+    const res = await apiFetch(`${API_BASE}/officials`, {
+      method: 'PUT',
+      body: JSON.stringify(item)
+    })
+    return res.json()
+  },
+
+  async delete(id: string): Promise<void> {
+    await apiFetch(`${API_BASE}/officials?id=${id}`, {
+      method: 'DELETE'
+    })
+  }
+}
