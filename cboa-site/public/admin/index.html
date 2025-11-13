@@ -184,35 +184,14 @@
     <!-- Include React (required for Decap CMS widgets) -->
     <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-    <!-- Include Decap CMS -->
-    <script src="https://unpkg.com/decap-cms@^3.1.10/dist/decap-cms.js"></script>
     <!-- Make React globally available for widgets -->
     <script>
       window.h = window.React.createElement;
       window.Component = window.React.Component;
-
-      // Initialize CMS with explicit config path
-      window.CMS_MANUAL_INIT = true;
     </script>
     <!-- Include TinyMCE Widget -->
     <script src="/admin/tinymce-widget.js"></script>
-    <script>
-      // Initialize CMS after widgets are loaded
-      window.initCMS = function() {
-        window.CMS.init({
-          config: {
-            load_config_file: true,
-            config_url: '/admin/config.yml'
-          }
-        });
-      };
-
-      // Wait for CMS to be ready
-      if (window.CMS) {
-        initCMS();
-      } else {
-        window.addEventListener('load', initCMS);
-      }
-    </script>
+    <!-- Include Decap CMS -->
+    <script src="https://unpkg.com/decap-cms@^3.1.10/dist/decap-cms.js"></script>
   </body>
 </html>
