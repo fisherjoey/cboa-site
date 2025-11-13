@@ -123,20 +123,7 @@
     </script>
     <!-- Include TinyMCE Widget -->
     <script src="/admin/tinymce-widget.js"></script>
-    <!-- Include Decap CMS -->
-    <script src="https://unpkg.com/decap-cms@^3.1.10/dist/decap-cms.js"></script>
-    <script>
-      // Use local config for development
-      window.CMS_MANUAL_INIT = true;
-
-      window.addEventListener('load', function() {
-        window.CMS.init({
-          config: {
-            load_config_file: true,
-            config_url: '/config-local.yml'
-          }
-        });
-      });
-    </script>
+    <!-- Include Decap CMS with config attribute -->
+    <script src="https://unpkg.com/decap-cms@^3.1.10/dist/decap-cms.js" config="/config-local.yml"></script>
   </body>
 </html>

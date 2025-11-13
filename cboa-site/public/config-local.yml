@@ -1,7 +1,5 @@
 backend:
-  name: proxy
-  proxy_url: http://localhost:8081/api/v1
-  branch: main
+  name: test-repo
 
 media_folder: "public/uploads"
 public_folder: "/uploads"
