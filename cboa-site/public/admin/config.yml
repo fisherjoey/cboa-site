@@ -1,6 +1,5 @@
 backend:
-  name: git-gateway
-  branch: main
+  name: test-repo
 
 media_folder: "public/uploads"
 public_folder: "/uploads"
@@ -38,7 +37,7 @@ collections:
       - { label: "Author", name: "author", widget: "string", required: true }
       - { label: "Featured Image", name: "image", widget: "image", required: false }
       - { label: "Excerpt", name: "excerpt", widget: "text", required: true }
-      - { label: "Body", name: "body", widget: "tinymce", required: true }
+      - { label: "Body", name: "body", widget: "markdown", required: true }
       - { label: "Featured", name: "featured", widget: "boolean", default: false }
       - { label: "Tags", name: "tags", widget: "list", required: false }
 
@@ -92,8 +91,8 @@ collections:
         file: "content/pages/about.md"
         fields:
           - { label: "Title", name: "title", widget: "string" }
-          - { label: "Body", name: "body", widget: "tinymce" }
-          
+          - { label: "Body", name: "body", widget: "markdown" }
+
       - label: "Home Page"
         name: "home"
         file: "content/pages/home.md"
@@ -107,7 +106,7 @@ collections:
             fields:
               - { label: "Label", name: "label", widget: "string" }
               - { label: "Value", name: "value", widget: "string" }
-          - { label: "About Section", name: "aboutSection", widget: "tinymce" }
+          - { label: "About Section", name: "aboutSection", widget: "markdown" }
 
   - name: "settings"
     label: "Site Settings"
@@ -148,92 +147,3 @@ collections:
             fields:
               - { label: "Email", name: "email", widget: "string" }
               - { label: "Address", name: "address", widget: "text" }
-
-  # Portal Content Collections
-  - name: "portal_announcements"
-    label: "Portal Announcements"
-    folder: "content/portal/announcements"
-    create: true
-    slug: "{{year}}-{{month}}-{{day}}-{{slug}}"
-    summary: "{{title}} - {{date}}"
-    fields:
-      - { label: "Title", name: "title", widget: "string", required: true }
-      - { label: "Date", name: "date", widget: "datetime", required: true }
-      - { label: "Author", name: "author", widget: "string", required: true }
-      - { label: "Content", name: "body", widget: "tinymce", required: true }
-      - { label: "Urgent", name: "urgent", widget: "boolean", default: false, hint: "Mark as urgent to highlight in portal" }
-      - { label: "Category", name: "category", widget: "select", options: ["general", "rules", "schedule", "training", "administrative"], default: "general" }
-      - { label: "Target Audience", name: "audience", widget: "select", multiple: true, options: ["all", "officials", "executives", "level1", "level2", "level3", "level4", "level5"], default: ["all"] }
-      - { label: "Expires", name: "expires", widget: "datetime", required: false, hint: "Optional expiration date for time-sensitive announcements" }
-
-  - name: "the_bounce"
-    label: "The Bounce Newsletter"
-    folder: "content/newsletters"
-    create: true
-    slug: "{{year}}-{{month}}-{{day}}-{{slug}}"
-    summary: "{{title}} - {{date}}"
-    fields:
-      - { label: "Title", name: "title", widget: "string", required: true, hint: "e.g., The Bounce - January 2025" }
-      - { label: "Date", name: "date", widget: "datetime", required: true }
-      - { label: "PDF File", name: "pdfFile", widget: "file", required: true, allow_multiple: false, choose_url: false }
-      - { label: "Description", name: "description", widget: "text", required: false, hint: "Brief description of this issue's content" }
-      - { label: "Featured", name: "featured", widget: "boolean", default: false, hint: "Feature this issue on the homepage" }
-
-  - name: "portal_resources"
-    label: "Portal Resources"
-    folder: "content/portal/resources"
-    create: true
-    slug: "{{slug}}"
-    fields:
-      - { label: "Title", name: "title", widget: "string", required: true }
-      - { label: "Category", name: "category", widget: "select", options: ["rulebooks", "forms", "training", "policies", "guides", "videos"], required: true }
-      - { label: "Sub-category", name: "subcategory", widget: "string", required: false }
-      - { label: "Description", name: "description", widget: "text", required: true }
-      - { label: "File", name: "file", widget: "file", required: false }
-      - { label: "External Link", name: "externalLink", widget: "string", required: false }
-      - { label: "Access Level", name: "accessLevel", widget: "select", options: ["official", "executive", "admin"], default: "official" }
-      - { label: "Certification Level Required", name: "certLevel", widget: "select", options: ["none", "1", "2", "3", "4", "5"], default: "none" }
-      - { label: "Last Updated", name: "lastUpdated", widget: "datetime", required: true }
-      - { label: "Featured", name: "featured", widget: "boolean", default: false }
-      - { label: "Order", name: "order", widget: "number", default: 0, hint: "Lower numbers appear first" }
-
-  - name: "game_assignments"
-    label: "Game Assignments"
-    folder: "content/portal/assignments"
-    create: true
-    slug: "{{year}}-{{month}}-{{day}}-{{fields.venue}}"
-    summary: "{{date}} - {{venue}} ({{level}})"
-    fields:
-      - { label: "Date", name: "date", widget: "datetime", required: true }
-      - { label: "Venue", name: "venue", widget: "string", required: true }
-      - { label: "Address", name: "address", widget: "string", required: true }
-      - { label: "Game Level", name: "level", widget: "select", options: ["Elementary", "Junior High", "Junior Varsity", "Senior Varsity", "Adult League", "Tournament"], required: true }
-      - { label: "Start Time", name: "startTime", widget: "string", required: true }
-      - { label: "End Time", name: "endTime", widget: "string", required: false }
-      - { label: "Home Team", name: "homeTeam", widget: "string", required: true }
-      - { label: "Away Team", name: "awayTeam", widget: "string", required: true }
-      - label: "Officials Assigned"
-        name: "officials"
-        widget: "list"
-        fields:
-          - { label: "Name", name: "name", widget: "string" }
-          - { label: "Role", name: "role", widget: "select", options: ["Head Referee", "Referee", "Umpire", "Scorer", "Timer"] }
-      - { label: "Pay Rate", name: "payRate", widget: "string", required: false }
-      - { label: "Notes", name: "notes", widget: "text", required: false }
-      - { label: "Status", name: "status", widget: "select", options: ["scheduled", "confirmed", "completed", "cancelled"], default: "scheduled" }
-
-  - name: "rule_modifications"
-    label: "Rule Modifications"
-    folder: "content/portal/rule-modifications"
-    create: true
-    slug: "{{year}}-{{month}}-{{day}}-{{slug}}"
-    summary: "{{title}} - {{category}}"
-    fields:
-      - { label: "Title", name: "title", widget: "string", required: true }
-      - { label: "Category", name: "category", widget: "select", options: ["League Rules", "Tournament Rules", "3x3 Rules", "Junior High Rules", "School Division Rules"], required: true }
-      - { label: "Effective Date", name: "effectiveDate", widget: "datetime", required: true }
-      - { label: "Summary", name: "summary", widget: "text", required: true, hint: "Brief description of the rule modification" }
-      - { label: "Body", name: "body", widget: "tinymce", required: true }
-      - { label: "Approved By", name: "approvedBy", widget: "string", required: true }
-      - { label: "References", name: "references", widget: "list", required: false, field: {label: "Reference", name: "reference", widget: "string"} }
-      - { label: "Active", name: "active", widget: "boolean", default: true }
