@@ -286,7 +286,17 @@ export default function ResourcesClient() {
         </div>
         {canEdit && !isCreating && (
           <button
-            onClick={() => setIsCreating(true)}
+            onClick={() => {
+              setIsCreating(true)
+              // Pre-select the category based on the current tab
+              const category = selectedCategory === 'all' ? 'rulebooks' : selectedCategory
+              setNewResource({
+                title: '',
+                description: '',
+                category: category as Resource['category'],
+                accessLevel: 'all'
+              })
+            }}
             className="bg-orange-500 text-white px-3 py-2 sm:px-4 rounded-lg hover:bg-orange-600 flex items-center gap-2 text-sm sm:text-base"
           >
             <IconPlus className="h-5 w-5" />

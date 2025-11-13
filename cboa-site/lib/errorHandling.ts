@@ -120,6 +120,13 @@ export const sanitize = {
       .replace(/'/g, '&#039;')
   },
 
+  // For HTML content from TinyMCE - don't escape, just pass through
+  // TinyMCE already sanitizes on the client side
+  html: (value: string): string => {
+    if (!value) return ''
+    return value
+  },
+
   // For URLs - ensure they start with http:// or https://
   url: (value: string): string | null => {
     if (!value) return null

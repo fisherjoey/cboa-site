@@ -1,4 +1,4 @@
-import { getContentBySlug, getAllContent, markdownToHtml } from '@/lib/content'
+import { getContentBySlug, getAllContent } from '@/lib/content'
 import { notFound } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
@@ -40,7 +40,7 @@ export default async function NewsArticlePage({ params }: { params: Promise<{ sl
     notFound()
   }
 
-  const htmlContent = await markdownToHtml(article.content || article.body || '')
+  const htmlContent = article.content || article.body || ''
   
   const formattedDate = new Date(article.date).toLocaleDateString('en-CA', {
     year: 'numeric',
@@ -116,10 +116,13 @@ export default async function NewsArticlePage({ params }: { params: Promise<{ sl
               </div>
             )}
             
-            <div 
-              className="article-content"
-              dangerouslySetInnerHTML={{ __html: htmlContent }}
-            />
+            <div className="tinymce-content">
+              {htmlContent ? (
+                <div dangerouslySetInnerHTML={{ __html: htmlContent }} />
+              ) : (
+                <div dangerouslySetInnerHTML={{ __html: article.content || article.body || '' }} />
+              )}
+            </div>
           </div>
 
           {/* Related Articles Section */}

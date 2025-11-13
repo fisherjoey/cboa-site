@@ -2,7 +2,7 @@ import Hero from '@/components/content/Hero'
 import Card from '@/components/ui/Card'
 import CTASection from '@/components/ui/CTASection'
 import { getSiteSettings } from '@/lib/settings'
-import { getContentBySlug, markdownToHtml } from '@/lib/content'
+import { getContentBySlug } from '@/lib/content'
 import { IconStar, IconScale, IconTrendingUp, IconUsers, IconBallBasketball, IconTrophy, IconCheck } from '@tabler/icons-react'
 import Image from 'next/image'
 
@@ -12,7 +12,7 @@ export default async function AboutPage() {
 
   // Get the about page content from CMS
   const aboutContent = getContentBySlug('pages', 'about')
-  const htmlContent = aboutContent ? await markdownToHtml(aboutContent.content || '') : null
+  const htmlContent = aboutContent?.content || aboutContent?.body || null
   
   const values = [
     {
@@ -74,10 +74,13 @@ export default async function AboutPage() {
         <section className="py-16 bg-gray-50">
           <div className="container mx-auto px-4">
             <div className="max-w-4xl mx-auto">
-              <div
-                className="prose prose-lg mx-auto"
-                dangerouslySetInnerHTML={{ __html: htmlContent }}
-              />
+              <div className="tinymce-content">
+                {htmlContent ? (
+                  <div dangerouslySetInnerHTML={{ __html: htmlContent }} />
+                ) : (
+                  <div dangerouslySetInnerHTML={{ __html: aboutContent?.content || aboutContent?.body || '' }} />
+                )}
+              </div>
             </div>
           </div>
         </section>

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { IconPlus, IconEdit, IconTrash, IconDeviceFloppy, IconX, IconAlertCircle, IconSearch, IconFilter } from '@tabler/icons-react'
-import { MarkdownEditor, MarkdownViewer } from '@/components/MarkdownEditor'
+import { TinyMCEEditor, HTMLViewer } from '@/components/TinyMCEEditor'
 import { useRole } from '@/contexts/RoleContext'
 import { announcementsAPI } from '@/lib/api'
 import { useToast } from '@/hooks/useToast'
@@ -39,6 +39,7 @@ export default function NewsClient({ initialAnnouncements }: NewsClientProps) {
   const [searchTerm, setSearchTerm] = useState('')
   const [isCreating, setIsCreating] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
+  const [editingData, setEditingData] = useState<Partial<Announcement>>({}) // Buffer for editing
   const [newAnnouncement, setNewAnnouncement] = useState<Partial<Announcement>>({
     title: '',
     content: '',
@@ -47,6 +48,8 @@ export default function NewsClient({ initialAnnouncements }: NewsClientProps) {
     author: 'CBOA Executive',
     date: new Date().toISOString()
   })
+  const [sendAsEmail, setSendAsEmail] = useState(false)
+  const [emailRecipients, setEmailRecipients] = useState<string[]>(['all-members'])
   const { toasts, dismissToast, success, error, warning, info } = useToast()
   const [validationErrors, setValidationErrors] = useState<ValidationError[]>([])
 
@@ -91,7 +94,7 @@ export default function NewsClient({ initialAnnouncements }: NewsClientProps) {
       // Sanitize inputs
       const sanitizedData = {
         title: sanitize.text(newAnnouncement.title || ''),
-        content: sanitize.text(newAnnouncement.content || ''),
+        content: sanitize.html(newAnnouncement.content || ''), // HTML from TinyMCE
         category: newAnnouncement.category || 'general',
         priority: newAnnouncement.priority || 'normal',
         author: sanitize.text(newAnnouncement.author || 'CBOA Executive'),
@@ -100,6 +103,19 @@ export default function NewsClient({ initialAnnouncements }: NewsClientProps) {
 
       const created = await announcementsAPI.create(sanitizedData)
       setAnnouncements([created, ...announcements])
+
+      // Send as email if checkbox is selected
+      if (sendAsEmail) {
+        try {
+          await sendAnnouncementAsEmail(sanitizedData.title, sanitizedData.content)
+          success('Announcement created and email sent successfully')
+        } catch (emailError) {
+          warning('Announcement created but email failed to send')
+        }
+      } else {
+        success('Announcement created successfully')
+      }
+
       setNewAnnouncement({
         title: '',
         content: '',
@@ -110,21 +126,58 @@ export default function NewsClient({ initialAnnouncements }: NewsClientProps) {
       })
       setValidationErrors([])
       setIsCreating(false)
-      success('Announcement created successfully')
+      setSendAsEmail(false)
+      setEmailRecipients(['all-members'])
     } catch (error) {
       const errorMessage = parseAPIError(error)
       error(`Failed to create announcement: ${errorMessage}`)
     }
   }
 
-  const handleUpdate = async (id: string, updates: Partial<Announcement>) => {
+  const sendAnnouncementAsEmail = async (subject: string, htmlContent: string) => {
+    const API_BASE = process.env.NODE_ENV === 'production'
+      ? '/.netlify/functions'
+      : 'http://localhost:9000/.netlify/functions'
+
+    const { generateCBOAEmailTemplate } = await import('@/lib/emailTemplate')
+    const emailHtml = generateCBOAEmailTemplate({
+      subject,
+      content: htmlContent, // Already HTML
+      previewText: subject
+    })
+
+    const response = await fetch(`${API_BASE}/send-email`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        to: emailRecipients,
+        subject,
+        html: emailHtml
+      })
+    })
+
+    if (!response.ok) {
+      throw new Error('Failed to send email')
+    }
+  }
+
+  const startEditing = (announcement: Announcement) => {
+    setEditingId(announcement.id)
+    setEditingData({ ...announcement }) // Copy data to buffer
+  }
+
+  const handleEditChange = (field: keyof Announcement, value: any) => {
+    setEditingData(prev => ({ ...prev, [field]: value }))
+  }
+
+  const saveEdit = async (id: string) => {
     try {
       // Sanitize updates
       const sanitizedUpdates = {
-        ...updates,
-        title: updates.title ? sanitize.text(updates.title) : undefined,
-        content: updates.content ? sanitize.text(updates.content) : undefined,
-        author: updates.author ? sanitize.text(updates.author) : undefined
+        ...editingData,
+        title: editingData.title ? sanitize.text(editingData.title) : undefined,
+        content: editingData.content ? sanitize.html(editingData.content) : undefined, // HTML from TinyMCE
+        author: editingData.author ? sanitize.text(editingData.author) : undefined
       }
 
       const updated = await announcementsAPI.update({ id, ...sanitizedUpdates })
@@ -132,11 +185,17 @@ export default function NewsClient({ initialAnnouncements }: NewsClientProps) {
         a.id === id ? updated : a
       ))
       setEditingId(null)
+      setEditingData({})
       success('Announcement updated successfully')
     } catch (error) {
       const errorMessage = parseAPIError(error)
       error(`Failed to update announcement: ${errorMessage}`)
     }
+  }
+
+  const cancelEdit = () => {
+    setEditingId(null)
+    setEditingData({})
   }
 
   const handleDelete = async (id: string) => {
@@ -175,15 +234,31 @@ export default function NewsClient({ initialAnnouncements }: NewsClientProps) {
   return (
     <div className="px-4 py-5 sm:p-6">
       <ToastContainer toasts={toasts} onDismiss={dismissToast} />
-      <div className="mb-8 flex justify-between items-center">
+
+      {/* Header */}
+      <div className="mb-6 sm:mb-8 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">News & Announcements</h1>
-          <p className="mt-2 text-gray-600">Stay informed with the latest CBOA updates</p>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">News & Announcements</h1>
+          <p className="mt-1 sm:mt-2 text-sm sm:text-base text-gray-600">
+            Stay informed with the latest CBOA updates
+          </p>
         </div>
         {canEdit && !isCreating && (
           <button
-            onClick={() => setIsCreating(true)}
-            className="bg-orange-500 text-white px-4 py-2 rounded-lg hover:bg-orange-600 flex items-center gap-2"
+            onClick={() => {
+              setIsCreating(true)
+              // Pre-select the category based on the current filter
+              const category = filter === 'all' ? 'general' : filter
+              setNewAnnouncement({
+                title: '',
+                content: '',
+                category: category,
+                priority: 'normal',
+                author: 'CBOA Executive',
+                date: new Date().toISOString()
+              })
+            }}
+            className="bg-orange-500 text-white px-3 py-2 sm:px-4 rounded-lg hover:bg-orange-600 flex items-center gap-2 text-sm sm:text-base"
           >
             <IconPlus className="h-5 w-5" />
             New Announcement
@@ -254,9 +329,9 @@ export default function NewsClient({ initialAnnouncements }: NewsClientProps) {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Content (Markdown supported)</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Content</label>
               <div className={getFieldError(validationErrors, 'content') ? 'border-2 border-red-500 rounded-lg' : ''}>
-                <MarkdownEditor
+                <TinyMCEEditor
                   value={newAnnouncement.content}
                   onChange={(val) => setNewAnnouncement({ ...newAnnouncement, content: val })}
                   height={400}
@@ -265,6 +340,29 @@ export default function NewsClient({ initialAnnouncements }: NewsClientProps) {
               </div>
               {getFieldError(validationErrors, 'content') && (
                 <p className="mt-1 text-sm text-red-600">{getFieldError(validationErrors, 'content')}</p>
+              )}
+            </div>
+
+            {/* Send as Email Checkbox */}
+            <div className="border-t pt-4">
+              <label className="flex items-center gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={sendAsEmail}
+                  onChange={(e) => setSendAsEmail(e.target.checked)}
+                  className="h-5 w-5 text-orange-600 border-gray-300 rounded focus:ring-orange-500"
+                />
+                <div>
+                  <div className="font-medium text-gray-900">Also send as email</div>
+                  <div className="text-sm text-gray-600">Send this announcement to all members via email</div>
+                </div>
+              </label>
+
+              {sendAsEmail && (
+                <div className="mt-3 ml-8 p-3 bg-gray-50 rounded-lg">
+                  <p className="text-sm text-gray-700 mb-2">Recipients: <span className="font-medium">All Members</span></p>
+                  <p className="text-xs text-gray-500">The announcement will be formatted in an email template and sent to all registered members.</p>
+                </div>
               )}
             </div>
 
@@ -353,26 +451,27 @@ export default function NewsClient({ initialAnnouncements }: NewsClientProps) {
                 <div className="space-y-4">
                   <input
                     type="text"
-                    value={announcement.title}
-                    onChange={(e) => handleUpdate(announcement.id, { title: e.target.value })}
+                    value={editingData.title || ''}
+                    onChange={(e) => handleEditChange('title', e.target.value)}
                     className="w-full text-lg font-semibold px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                   />
-                  
+
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                     <select
-                      value={announcement.category}
-                      onChange={(e) => handleUpdate(announcement.id, { category: e.target.value as any })}
+                      value={editingData.category || 'general'}
+                      onChange={(e) => handleEditChange('category', e.target.value)}
                       className="px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                     >
-                      <option value="announcement">Announcement</option>
-                      <option value="news">News</option>
-                      <option value="event">Event</option>
-                      <option value="update">Update</option>
+                      <option value="general">General</option>
+                      <option value="rules">Rules</option>
+                      <option value="schedule">Schedule</option>
+                      <option value="training">Training</option>
+                      <option value="administrative">Administrative</option>
                     </select>
 
                     <select
-                      value={announcement.priority}
-                      onChange={(e) => handleUpdate(announcement.id, { priority: e.target.value as any })}
+                      value={editingData.priority || 'normal'}
+                      onChange={(e) => handleEditChange('priority', e.target.value)}
                       className="px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                     >
                       <option value="high">High Priority</option>
@@ -382,28 +481,28 @@ export default function NewsClient({ initialAnnouncements }: NewsClientProps) {
 
                     <input
                       type="text"
-                      value={announcement.author}
-                      onChange={(e) => handleUpdate(announcement.id, { author: e.target.value })}
+                      value={editingData.author || ''}
+                      onChange={(e) => handleEditChange('author', e.target.value)}
                       className="px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                     />
                   </div>
 
-                  <MarkdownEditor
-                    value={announcement.content}
-                    onChange={(val) => handleUpdate(announcement.id, { content: val })}
+                  <TinyMCEEditor
+                    value={editingData.content || ''}
+                    onChange={(val) => handleEditChange('content', val)}
                     height={400}
                   />
 
                   <div className="flex gap-2">
                     <button
-                      onClick={() => setEditingId(null)}
+                      onClick={() => saveEdit(announcement.id)}
                       className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 flex items-center gap-2"
                     >
                       <IconDeviceFloppy className="h-5 w-5" />
                       Save Changes
                     </button>
                     <button
-                      onClick={() => setEditingId(null)}
+                      onClick={cancelEdit}
                       className="bg-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-400"
                     >
                       Cancel
@@ -430,7 +529,7 @@ export default function NewsClient({ initialAnnouncements }: NewsClientProps) {
                       {announcement.title}
                     </h3>
                     <div className="text-gray-600 mb-3 overflow-hidden">
-                      <MarkdownViewer
+                      <HTMLViewer
                         content={announcement.content}
                         className="break-words"
                       />
@@ -448,7 +547,7 @@ export default function NewsClient({ initialAnnouncements }: NewsClientProps) {
                   {canEdit && (
                     <div className="flex gap-2 sm:ml-4">
                       <button
-                        onClick={() => setEditingId(announcement.id)}
+                        onClick={() => startEditing(announcement)}
                         className="text-blue-600 hover:text-blue-800"
                       >
                         <IconEdit className="h-5 w-5" />

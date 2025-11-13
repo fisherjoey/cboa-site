@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { IconBell, IconChevronRight, IconAlertCircle } from '@tabler/icons-react'
 import { announcementsAPI } from '@/lib/api'
-import { MarkdownViewer } from '@/components/MarkdownEditor'
+import { HTMLViewer } from '@/components/TinyMCEEditor'
 
 interface Announcement {
   id: string
@@ -128,7 +128,7 @@ export default function LatestAnnouncementWidget() {
           </h3>
 
           <div className="text-sm text-gray-600 line-clamp-3">
-            <MarkdownViewer content={announcement.content} className="prose-sm" />
+            <HTMLViewer content={announcement.content} className="prose-sm" />
           </div>
 
           <div className="mt-2 text-xs text-gray-500">

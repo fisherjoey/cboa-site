@@ -5,7 +5,7 @@ import { IconGavel, IconCalendar, IconFilter, IconChevronRight, IconChevronDown,
 import Card from '@/components/ui/Card'
 import { ContentItem } from '@/lib/content'
 import { useRole } from '@/contexts/RoleContext'
-import { MarkdownEditor, MarkdownViewer } from '@/components/MarkdownEditor'
+import { TinyMCEEditor, HTMLViewer } from '@/components/TinyMCEEditor'
 import { ruleModificationsAPI } from '@/lib/api'
 import { useToast } from '@/hooks/useToast'
 import { ToastContainer } from '@/components/Toast'
@@ -97,7 +97,7 @@ export default function RuleModificationsClient({ modifications: initialModifica
     // Sanitize text inputs
     const sanitizedTitle = sanitize.text(newModification.title)
     const sanitizedSummary = sanitize.text(newModification.summary)
-    const sanitizedContent = sanitize.text(newModification.content)
+    const sanitizedContent = sanitize.html(newModification.content) // HTML from TinyMCE
 
     try {
       const created = await ruleModificationsAPI.create({
@@ -135,7 +135,7 @@ export default function RuleModificationsClient({ modifications: initialModifica
       sanitizedUpdates.summary = sanitize.text(updates.summary)
     }
     if (updates.content) {
-      sanitizedUpdates.content = sanitize.text(updates.content)
+      sanitizedUpdates.content = sanitize.html(updates.content) // HTML from TinyMCE
     }
 
     try {
@@ -164,161 +164,192 @@ export default function RuleModificationsClient({ modifications: initialModifica
   }
 
   return (
-    <div className="space-y-6">
+    <div className="py-5 sm:py-6">
+      <ToastContainer toasts={toasts} onDismiss={dismissToast} />
+
       {/* Header */}
-      <div className="bg-white rounded-lg shadow-sm p-6">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-3">
-            <IconGavel className="h-8 w-8 text-cboa-blue" />
-            <h1 className="text-3xl font-bold text-cboa-blue">Rule Modifications</h1>
-          </div>
-          {canEdit && (
-            <button
-              onClick={() => setIsCreating(true)}
-              className="flex items-center gap-2 px-4 py-2 bg-cboa-blue text-white rounded-lg hover:bg-blue-700 transition-colors"
-            >
-              <IconPlus className="h-5 w-5" />
-              Add New Rule
-            </button>
-          )}
+      <div className="mb-6 sm:mb-8 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Rule Modifications</h1>
+          <p className="mt-1 sm:mt-2 text-sm sm:text-base text-gray-600">
+            Official rule modifications and clarifications for CBOA officials
+          </p>
         </div>
-        <p className="text-gray-600">
-          Official rule modifications and clarifications for CBOA officials. These modifications apply to all games unless otherwise specified.
-        </p>
+        {canEdit && !isCreating && (
+          <button
+            onClick={() => {
+              setIsCreating(true)
+              // Pre-select the category based on the current tab
+              const category = selectedCategory === 'all' ? 'Club Tournament' : selectedCategory
+              setNewModification({
+                title: '',
+                category: category,
+                summary: '',
+                content: '',
+                effectiveDate: new Date().toISOString().split('T')[0],
+                active: true
+              })
+            }}
+            className="bg-orange-500 text-white px-3 py-2 sm:px-4 rounded-lg hover:bg-orange-600 flex items-center gap-2 text-sm sm:text-base"
+          >
+            <IconPlus className="h-5 w-5" />
+            Add Rule Modification
+          </button>
+        )}
       </div>
 
-      {/* Search Bar */}
-      <div className="bg-white rounded-lg shadow-sm p-4">
-        <div className="relative">
-          <IconSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+      {/* Search and Category Filter */}
+      <div className="mb-6 bg-white rounded-lg shadow p-3 sm:p-4">
+        <div className="flex-1 min-w-0">
           <input
             type="text"
             placeholder="Search rule modifications..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cboa-blue"
+            className="w-full px-3 py-2 text-sm sm:text-base border border-gray-300 rounded-md focus:outline-none focus:ring-orange-500 focus:border-orange-500"
           />
         </div>
-      </div>
 
-      {/* Category Filter */}
-      <div className="bg-white rounded-lg shadow-sm p-4">
-        <div className="flex items-center gap-2 mb-3">
-          <IconFilter className="h-5 w-5 text-gray-500" />
-          <span className="font-semibold text-gray-700">Filter by Category:</span>
-        </div>
-        <div className="flex flex-wrap gap-2">
+        <div className="mt-3 sm:mt-4 flex flex-wrap gap-1.5 sm:gap-2">
           <button
             onClick={() => setSelectedCategory('all')}
-            className={`px-4 py-2 rounded-full font-medium transition-all ${
+            className={`px-2 sm:px-3 py-1.5 sm:py-2 rounded-md text-xs sm:text-sm flex items-center gap-1 sm:gap-2 ${
               selectedCategory === 'all'
-                ? 'bg-cboa-orange text-white'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                ? 'bg-orange-500 text-white'
+                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
             }`}
           >
-            All Categories ({modifications.filter(m => m.active !== false).length})
+            <IconGavel className="h-3 w-3 sm:h-4 sm:w-4" />
+            All Categories
           </button>
-          {categories.map(category => {
-            const count = modifications.filter(m => m.category === category && m.active !== false).length
-            return (
-              <button
-                key={category}
-                onClick={() => setSelectedCategory(category)}
-                className={`px-4 py-2 rounded-full font-medium transition-all ${
-                  selectedCategory === category
-                    ? 'bg-cboa-orange text-white'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                }`}
-              >
-                {category} ({count})
-              </button>
-            )
-          })}
+          {categories.map(category => (
+            <button
+              key={category}
+              onClick={() => setSelectedCategory(category)}
+              className={`px-2 sm:px-3 py-1.5 sm:py-2 rounded-md text-xs sm:text-sm ${
+                selectedCategory === category
+                  ? 'bg-orange-500 text-white'
+                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+              }`}
+            >
+              {category}
+            </button>
+          ))}
         </div>
       </div>
 
       {/* Create New Rule Form */}
-      {isCreating && canEdit && (
-        <Card className="p-6">
-          <h3 className="text-xl font-bold mb-4">Create New Rule Modification</h3>
+      {isCreating && (
+        <div className="mb-6 bg-white rounded-lg shadow-lg p-4 sm:p-6">
+          <h2 className="text-lg sm:text-xl font-semibold mb-4">Add New Rule Modification</h2>
+
           <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Title</label>
-              <input
-                type="text"
-                value={newModification.title}
-                onChange={(e) => setNewModification({...newModification, title: e.target.value})}
-                className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-cboa-blue ${
-                  getFieldError(validationErrors, 'title') ? 'border-red-500' : 'border-gray-300'
-                }`}
-              />
-              {getFieldError(validationErrors, 'title') && (
-                <p className="mt-1 text-sm text-red-600">{getFieldError(validationErrors, 'title')}</p>
-              )}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Title *</label>
+                <input
+                  type="text"
+                  value={newModification.title}
+                  onChange={(e) => setNewModification({...newModification, title: e.target.value})}
+                  className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 ${
+                    getFieldError(validationErrors, 'title')
+                      ? 'border-red-500 focus:ring-red-500'
+                      : 'border-gray-300 focus:ring-orange-500'
+                  }`}
+                  placeholder="Rule title..."
+                />
+                {getFieldError(validationErrors, 'title') && (
+                  <p className="mt-1 text-sm text-red-600">
+                    {getFieldError(validationErrors, 'title')}
+                  </p>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Category *</label>
+                <select
+                  value={newModification.category}
+                  onChange={(e) => setNewModification({...newModification, category: e.target.value})}
+                  className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                >
+                  {categories.map(cat => (
+                    <option key={cat} value={cat}>{cat}</option>
+                  ))}
+                </select>
+              </div>
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
-              <select
-                value={newModification.category}
-                onChange={(e) => setNewModification({...newModification, category: e.target.value})}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cboa-blue"
-              >
-                {categories.map(cat => (
-                  <option key={cat} value={cat}>{cat}</option>
-                ))}
-              </select>
-            </div>
+
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Summary</label>
               <input
                 type="text"
                 value={newModification.summary}
                 onChange={(e) => setNewModification({...newModification, summary: e.target.value})}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cboa-blue"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                placeholder="Brief summary..."
               />
             </div>
+
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Effective Date</label>
               <input
                 type="date"
                 value={newModification.effectiveDate}
                 onChange={(e) => setNewModification({...newModification, effectiveDate: e.target.value})}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cboa-blue"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
               />
             </div>
+
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Content (Markdown)</label>
-              <MarkdownEditor
+              <label className="block text-sm font-medium text-gray-700 mb-1">Content *</label>
+              <TinyMCEEditor
                 value={newModification.content}
                 onChange={(value) => setNewModification({...newModification, content: value || ''})}
               />
               {getFieldError(validationErrors, 'content') && (
-                <p className="mt-1 text-sm text-red-600">{getFieldError(validationErrors, 'content')}</p>
+                <p className="mt-1 text-sm text-red-600">
+                  {getFieldError(validationErrors, 'content')}
+                </p>
               )}
             </div>
-            <div className="flex gap-2">
+
+            <div className="flex flex-col sm:flex-row gap-2">
               <button
                 onClick={handleCreate}
-                className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 flex items-center justify-center gap-2"
               >
                 <IconDeviceFloppy className="h-5 w-5" />
-                Save
+                Save Rule Modification
               </button>
               <button
-                onClick={() => setIsCreating(false)}
-                className="flex items-center gap-2 px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
+                onClick={() => {
+                  setIsCreating(false)
+                  setNewModification({
+                    title: '',
+                    category: 'Club Tournament',
+                    summary: '',
+                    content: '',
+                    effectiveDate: new Date().toISOString().split('T')[0],
+                    active: true
+                  })
+                }}
+                className="bg-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-400 flex items-center justify-center gap-2"
               >
                 <IconX className="h-5 w-5" />
                 Cancel
               </button>
             </div>
           </div>
-        </Card>
+        </div>
       )}
 
       {/* Rule Modifications List */}
       {filteredModifications.length > 0 ? (
-        <div className="space-y-4">
+        <div className="space-y-3 sm:space-y-4">
+          <h2 className="text-lg font-semibold text-gray-900">
+            {selectedCategory === 'all' ? 'All Rule Modifications' : `${selectedCategory} Rules`}
+          </h2>
+
           {filteredModifications.map((modification) => {
             const isExpanded = expandedRules.has(modification.id)
             const isEditing = editingId === modification.id
@@ -330,32 +361,34 @@ export default function RuleModificationsClient({ modifications: initialModifica
                 })
               : null
 
-            return (
-              <Card key={modification.id} className="overflow-hidden">
-                {isEditing ? (
-                  <div className="p-6">
-                    <h3 className="text-xl font-bold mb-4">Edit Rule Modification</h3>
-                    <div className="space-y-4">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Title</label>
-                        <input
-                          type="text"
-                          value={modification.title}
-                          onChange={(e) => handleUpdate(modification.id, { title: e.target.value })}
-                          className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-cboa-blue ${
-                            getFieldError(validationErrors, 'title') ? 'border-red-500' : 'border-gray-300'
-                          }`}
-                        />
-                        {getFieldError(validationErrors, 'title') && (
-                          <p className="mt-1 text-sm text-red-600">{getFieldError(validationErrors, 'title')}</p>
-                        )}
-                      </div>
+            if (isEditing) {
+              return (
+                <div key={modification.id} className="bg-white rounded-lg shadow p-4 sm:p-6">
+                  <h3 className="text-lg sm:text-xl font-semibold mb-4">Edit Rule Modification</h3>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Title</label>
+                      <input
+                        type="text"
+                        value={modification.title}
+                        onChange={(e) => handleUpdate(modification.id, { title: e.target.value })}
+                        className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 ${
+                          getFieldError(validationErrors, 'title')
+                            ? 'border-red-500 focus:ring-red-500'
+                            : 'border-gray-300 focus:ring-orange-500'
+                        }`}
+                      />
+                      {getFieldError(validationErrors, 'title') && (
+                        <p className="mt-1 text-sm text-red-600">{getFieldError(validationErrors, 'title')}</p>
+                      )}
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
                         <select
                           value={modification.category}
                           onChange={(e) => handleUpdate(modification.id, { category: e.target.value })}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cboa-blue"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                         >
                           {categories.map(cat => (
                             <option key={cat} value={cat}>{cat}</option>
@@ -363,158 +396,152 @@ export default function RuleModificationsClient({ modifications: initialModifica
                         </select>
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Summary</label>
-                        <input
-                          type="text"
-                          value={modification.summary}
-                          onChange={(e) => handleUpdate(modification.id, { summary: e.target.value })}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cboa-blue"
-                        />
-                      </div>
-                      <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Effective Date</label>
                         <input
                           type="date"
                           value={modification.effectiveDate ? new Date(modification.effectiveDate).toISOString().split('T')[0] : ''}
                           onChange={(e) => handleUpdate(modification.id, { effectiveDate: e.target.value })}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cboa-blue"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                         />
                       </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Content (Markdown)</label>
-                        <MarkdownEditor
-                          value={modification.content || modification.body || ''}
-                          onChange={(value) => handleUpdate(modification.id, { content: value })}
-                        />
-                        {getFieldError(validationErrors, 'content') && (
-                          <p className="mt-1 text-sm text-red-600">{getFieldError(validationErrors, 'content')}</p>
-                        )}
-                      </div>
-                      <div className="flex gap-2">
-                        <button
-                          onClick={() => setEditingId(null)}
-                          className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
-                        >
-                          <IconDeviceFloppy className="h-5 w-5" />
-                          Save
-                        </button>
-                        <button
-                          onClick={() => setEditingId(null)}
-                          className="flex items-center gap-2 px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
-                        >
-                          <IconX className="h-5 w-5" />
-                          Cancel
-                        </button>
-                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Summary</label>
+                      <input
+                        type="text"
+                        value={modification.summary}
+                        onChange={(e) => handleUpdate(modification.id, { summary: e.target.value })}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Content</label>
+                      <TinyMCEEditor
+                        value={modification.content || modification.body || ''}
+                        onChange={(value) => handleUpdate(modification.id, { content: value })}
+                      />
+                      {getFieldError(validationErrors, 'content') && (
+                        <p className="mt-1 text-sm text-red-600">{getFieldError(validationErrors, 'content')}</p>
+                      )}
+                    </div>
+                    <div className="flex flex-col sm:flex-row gap-2">
+                      <button
+                        onClick={() => setEditingId(null)}
+                        className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 flex items-center justify-center gap-2"
+                      >
+                        <IconDeviceFloppy className="h-5 w-5" />
+                        Save Changes
+                      </button>
+                      <button
+                        onClick={() => setEditingId(null)}
+                        className="bg-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-400 flex items-center justify-center gap-2"
+                      >
+                        <IconX className="h-5 w-5" />
+                        Cancel
+                      </button>
                     </div>
                   </div>
-                ) : (
-                  <>
-                    <div
-                      className="cursor-pointer"
-                      onClick={() => toggleExpanded(modification.id)}
-                    >
-                      <div className="p-6">
-                        <div className="flex items-start justify-between">
-                          <div className="flex-1">
-                            <div className="flex items-center gap-3 mb-2">
-                              <span className={`px-3 py-1 rounded-full text-xs font-semibold ${getCategoryColor(modification.category)}`}>
-                                {modification.category}
-                              </span>
-                              {effectiveDate && (
-                                <div className="flex items-center gap-1 text-sm text-gray-500">
-                                  <IconCalendar className="h-4 w-4" />
-                                  <span>Effective: {effectiveDate}</span>
-                                </div>
-                              )}
-                              {canEdit && (
-                                <div className="flex items-center gap-2 ml-auto" onClick={(e) => e.stopPropagation()}>
-                                  <button
-                                    onClick={() => setEditingId(modification.id)}
-                                    className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                                    title="Edit"
-                                  >
-                                    <IconEdit className="h-4 w-4" />
-                                  </button>
-                                  <button
-                                    onClick={() => handleDelete(modification.id)}
-                                    className="p-1.5 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                                    title="Delete"
-                                  >
-                                    <IconTrash className="h-4 w-4" />
-                                  </button>
-                                </div>
-                              )}
-                            </div>
+                </div>
+              )
+            }
 
-                            <h3 className="text-xl font-bold text-cboa-blue mb-2">
-                              {modification.title}
-                            </h3>
+            return (
+              <div
+                key={modification.id}
+                className="bg-white border border-gray-200 rounded-lg hover:border-gray-300 transition-colors"
+              >
+                {/* Accordion Header */}
+                <div className="flex items-center gap-3 py-3 pr-4">
+                  {/* Chevron Icon - clickable area */}
+                  <button
+                    onClick={() => toggleExpanded(modification.id)}
+                    className="pl-3 pr-0 focus:outline-none focus:ring-2 focus:ring-orange-500 rounded"
+                    aria-label="Toggle details"
+                  >
+                    <IconChevronRight className={`h-4 w-4 text-gray-400 flex-shrink-0 transition-transform duration-200 ${isExpanded ? 'rotate-90' : ''}`} />
+                  </button>
 
-                            {modification.summary && (
-                              <p className="text-gray-600 mb-3">
-                                {modification.summary}
-                              </p>
-                            )}
-                          </div>
-
-                          <div className="ml-4">
-                            {isExpanded ? (
-                              <IconChevronDown className="h-6 w-6 text-gray-400" />
-                            ) : (
-                              <IconChevronRight className="h-6 w-6 text-gray-400" />
-                            )}
-                          </div>
-                        </div>
-                      </div>
+                  {/* Content - clickable area */}
+                  <div
+                    onClick={() => toggleExpanded(modification.id)}
+                    className="flex-1 min-w-0 cursor-pointer"
+                  >
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className={`px-2 py-0.5 rounded text-xs font-medium ${getCategoryColor(modification.category)}`}>
+                        {modification.category}
+                      </span>
+                      <h3 className="font-semibold text-gray-900 text-sm sm:text-base">
+                        {modification.title}
+                      </h3>
                     </div>
-
-                    {/* Expanded Content */}
-                    {isExpanded && (
-                      <div className="border-t bg-gray-50">
-                        <div className="p-6">
-                          <div className="prose prose-lg max-w-none">
-                            <MarkdownViewer content={modification.content || modification.body || ''} />
-                          </div>
-
-                          {modification.references && modification.references.length > 0 && (
-                            <div className="mt-6 pt-6 border-t">
-                              <h4 className="font-semibold text-gray-700 mb-2">References:</h4>
-                              <ul className="list-disc list-inside space-y-1">
-                                {modification.references.map((ref: any, index: number) => (
-                                  <li key={index} className="text-gray-600">
-                                    {typeof ref === 'string' ? ref : ref.reference}
-                                  </li>
-                                ))}
-                              </ul>
-                            </div>
-                          )}
-                        </div>
-                      </div>
+                    {modification.summary && (
+                      <p className="text-sm text-gray-600 mt-1 line-clamp-1">
+                        {modification.summary}
+                      </p>
                     )}
-                  </>
+                  </div>
+
+                  {/* Action buttons */}
+                  {canEdit && (
+                    <div className="flex gap-1 flex-shrink-0">
+                      <button
+                        onClick={() => setEditingId(modification.id)}
+                        className="p-1.5 text-gray-600 hover:bg-gray-100 rounded transition-colors"
+                        title="Edit"
+                      >
+                        <IconEdit className="h-4 w-4" />
+                      </button>
+                      <button
+                        onClick={() => handleDelete(modification.id)}
+                        className="p-1.5 text-red-600 hover:bg-red-50 rounded transition-colors"
+                        title="Delete"
+                      >
+                        <IconTrash className="h-4 w-4" />
+                      </button>
+                    </div>
+                  )}
+                </div>
+
+                {/* Expanded Content */}
+                {isExpanded && (
+                  <div className="border-t border-gray-200">
+                    <div className="py-3 pr-4 pl-10">
+                      <div className="prose prose-sm max-w-none">
+                        <HTMLViewer content={modification.content || modification.body || ''} />
+                      </div>
+
+                      {modification.references && modification.references.length > 0 && (
+                        <div className="mt-4 pt-4 border-t border-gray-200">
+                          <h4 className="font-semibold text-gray-900 text-sm mb-2">References:</h4>
+                          <ul className="list-disc list-inside space-y-1">
+                            {modification.references.map((ref: any, index: number) => (
+                              <li key={index} className="text-sm text-gray-600">
+                                {typeof ref === 'string' ? ref : ref.reference}
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 )}
-              </Card>
+              </div>
             )
           })}
         </div>
       ) : (
-        <Card className="p-12 text-center">
-          <IconGavel className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-          <h3 className="text-xl font-semibold text-gray-600 mb-2">
-            No Rule Modifications Found
-          </h3>
-          <p className="text-gray-500">
+        <div className="text-center py-12 bg-white rounded-lg shadow">
+          <IconGavel className="mx-auto h-12 w-12 text-gray-400" />
+          <h3 className="mt-2 text-sm font-medium text-gray-900">No rule modifications found</h3>
+          <p className="mt-1 text-sm text-gray-500">
             {searchTerm
               ? `No rule modifications match "${searchTerm}"`
               : selectedCategory === 'all'
-                ? 'No rule modifications have been posted yet.'
+                ? canEdit ? 'Click "Add Rule Modification" to add your first rule.' : 'Rule modifications will appear here once added by administrators.'
                 : `No rule modifications found for "${selectedCategory}".`}
           </p>
-        </Card>
+        </div>
       )}
-
-      <ToastContainer toasts={toasts} onDismiss={dismissToast} />
     </div>
   )
 }

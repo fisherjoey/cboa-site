@@ -38,7 +38,7 @@ collections:
       - { label: "Author", name: "author", widget: "string", required: true }
       - { label: "Featured Image", name: "image", widget: "image", required: false }
       - { label: "Excerpt", name: "excerpt", widget: "text", required: true }
-      - { label: "Body", name: "body", widget: "markdown", required: true, buttons: ["bold", "italic", "code", "link", "heading-two", "heading-three", "heading-four", "quote", "bulleted-list", "numbered-list"], editor_components: ["image", "code-block"], minimal: false }
+      - { label: "Body", name: "body", widget: "tinymce", required: true }
       - { label: "Featured", name: "featured", widget: "boolean", default: false }
       - { label: "Tags", name: "tags", widget: "list", required: false }
 
@@ -92,7 +92,7 @@ collections:
         file: "content/pages/about.md"
         fields:
           - { label: "Title", name: "title", widget: "string" }
-          - { label: "Body", name: "body", widget: "markdown", buttons: ["bold", "italic", "code", "link", "heading-two", "heading-three", "quote", "bulleted-list", "numbered-list"], editor_components: ["image"], minimal: false }
+          - { label: "Body", name: "body", widget: "tinymce" }
           
       - label: "Home Page"
         name: "home"
@@ -107,7 +107,7 @@ collections:
             fields:
               - { label: "Label", name: "label", widget: "string" }
               - { label: "Value", name: "value", widget: "string" }
-          - { label: "About Section", name: "aboutSection", widget: "markdown", buttons: ["bold", "italic", "link", "heading-two", "heading-three", "bulleted-list", "numbered-list"], minimal: false }
+          - { label: "About Section", name: "aboutSection", widget: "tinymce" }
 
   - name: "settings"
     label: "Site Settings"
@@ -160,7 +160,7 @@ collections:
       - { label: "Title", name: "title", widget: "string", required: true }
       - { label: "Date", name: "date", widget: "datetime", required: true }
       - { label: "Author", name: "author", widget: "string", required: true }
-      - { label: "Content", name: "body", widget: "markdown", required: true, buttons: ["bold", "italic", "code", "link", "heading-two", "heading-three", "quote", "bulleted-list", "numbered-list"], editor_components: ["image"], minimal: false }
+      - { label: "Content", name: "body", widget: "tinymce", required: true }
       - { label: "Urgent", name: "urgent", widget: "boolean", default: false, hint: "Mark as urgent to highlight in portal" }
       - { label: "Category", name: "category", widget: "select", options: ["general", "rules", "schedule", "training", "administrative"], default: "general" }
       - { label: "Target Audience", name: "audience", widget: "select", multiple: true, options: ["all", "officials", "executives", "level1", "level2", "level3", "level4", "level5"], default: ["all"] }
@@ -233,7 +233,7 @@ collections:
       - { label: "Category", name: "category", widget: "select", options: ["League Rules", "Tournament Rules", "3x3 Rules", "Junior High Rules", "School Division Rules"], required: true }
       - { label: "Effective Date", name: "effectiveDate", widget: "datetime", required: true }
       - { label: "Summary", name: "summary", widget: "text", required: true, hint: "Brief description of the rule modification" }
-      - { label: "Body", name: "body", widget: "markdown", required: true, buttons: ["bold", "italic", "code", "link", "heading-two", "heading-three", "heading-four", "quote", "bulleted-list", "numbered-list"], editor_components: ["image", "code-block"], minimal: false }
+      - { label: "Body", name: "body", widget: "tinymce", required: true }
       - { label: "Approved By", name: "approvedBy", widget: "string", required: true }
       - { label: "References", name: "references", widget: "list", required: false, field: {label: "Reference", name: "reference", widget: "string"} }
       - { label: "Active", name: "active", widget: "boolean", default: true }

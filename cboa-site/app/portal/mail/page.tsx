@@ -5,9 +5,8 @@ import { useAuth } from '@/contexts/AuthContext'
 import { useRouter } from 'next/navigation'
 import { IconSend, IconUsers, IconMail, IconCheck, IconAlertCircle, IconEye, IconX } from '@tabler/icons-react'
 import { useToast } from '@/contexts/ToastContext'
-import { MarkdownEditor } from '@/components/MarkdownEditor'
+import { TinyMCEEditor } from '@/components/TinyMCEEditor'
 import { generateCBOAEmailTemplate } from '@/lib/emailTemplate'
-import { marked } from 'marked'
 
 export default function MailPage() {
   const { user } = useAuth()
@@ -24,12 +23,13 @@ export default function MailPage() {
   const [emailSearch, setEmailSearch] = useState('')
   const [allMembers, setAllMembers] = useState<Array<{email: string, name: string}>>([])
   const [showEmailDropdown, setShowEmailDropdown] = useState(false)
+  const [saveAsAnnouncement, setSaveAsAnnouncement] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
 
-  // Generate live preview HTML
+  // Generate live preview HTML - content is now HTML from TinyMCE
   const previewHtml = content ? generateCBOAEmailTemplate({
     subject: subject || 'Email Subject',
-    content: marked(content) as string,
+    content: content, // TinyMCE already provides HTML
     previewText: subject
   }) : ''
 
@@ -148,8 +148,8 @@ export default function MailPage() {
     setIsSending(true)
 
     try {
-      // Convert markdown to HTML
-      const htmlContent = marked(content) as string
+      // Content is already HTML from TinyMCE
+      const htmlContent = content
 
       const API_BASE = process.env.NODE_ENV === 'production'
         ? '/.netlify/functions'
@@ -177,12 +177,24 @@ export default function MailPage() {
 
       addToast(`Email sent successfully to ${data.recipientCount} recipients!`, 'success')
 
+      // Save as announcement if checkbox is selected
+      if (saveAsAnnouncement) {
+        try {
+          await saveEmailAsAnnouncement(subject, content)
+          addToast('Email sent and saved as announcement!', 'success')
+        } catch (announcementError) {
+          console.error('Failed to save announcement:', announcementError)
+          addToast('Email sent but failed to save as announcement', 'warning')
+        }
+      }
+
       // Reset form
       setSubject('')
       setRecipients([])
       setCustomEmails([])
       setContent('')
       setRankFilter('')
+      setSaveAsAnnouncement(false)
     } catch (error: any) {
       console.error('Error sending email:', error)
       addToast(error.message || 'Failed to send email', 'error')
@@ -191,25 +203,41 @@ export default function MailPage() {
     }
   }
 
+  const saveEmailAsAnnouncement = async (title: string, htmlContent: string) => {
+    const API_BASE = process.env.NODE_ENV === 'production'
+      ? '/.netlify/functions'
+      : 'http://localhost:9000/.netlify/functions'
+
+    const response = await fetch(`${API_BASE}/announcements`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        title,
+        content: htmlContent, // Already HTML, no template wrapping needed
+        category: 'general',
+        priority: 'normal',
+        author: 'CBOA Executive',
+        date: new Date().toISOString()
+      })
+    })
+
+    if (!response.ok) {
+      throw new Error('Failed to save announcement')
+    }
+  }
+
   if (!user || (user.role !== 'admin' && user.role !== 'executive')) {
     return null
   }
 
   return (
-    <div className="space-y-6">
+    <div className="px-4 py-5 sm:p-6">
       {/* Header */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        <div className="flex items-center gap-3">
-          <div className="p-3 bg-red-50 rounded-lg">
-            <IconMail className="h-6 w-6 text-red-600" />
-          </div>
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">Send Email</h1>
-            <p className="text-sm text-gray-600 mt-1">
-              Send announcements and updates to members via email
-            </p>
-          </div>
-        </div>
+      <div className="mb-6 sm:mb-8">
+        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">The Bounce</h1>
+        <p className="mt-1 sm:mt-2 text-sm sm:text-base text-gray-600">
+          Send announcements and updates to members via email
+        </p>
       </div>
 
       {/* Email Composer */}
@@ -225,7 +253,7 @@ export default function MailPage() {
             value={subject}
             onChange={(e) => setSubject(e.target.value)}
             placeholder="Enter email subject..."
-            className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+            className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
           />
         </div>
 
@@ -249,7 +277,7 @@ export default function MailPage() {
                       onClick={() => toggleRecipientGroup(group.id)}
                       className={`p-4 border-2 rounded-lg text-left transition-all ${
                         recipients.includes(group.id)
-                          ? 'border-red-600 bg-red-50'
+                          ? 'border-orange-600 bg-orange-50'
                           : 'border-gray-200 hover:border-gray-300'
                       }`}
                     >
@@ -263,7 +291,7 @@ export default function MailPage() {
                           </div>
                         </div>
                         {recipients.includes(group.id) && (
-                          <IconCheck className="h-5 w-5 text-red-600 flex-shrink-0 ml-2" />
+                          <IconCheck className="h-5 w-5 text-orange-600 flex-shrink-0 ml-2" />
                         )}
                       </div>
                     </button>
@@ -282,7 +310,7 @@ export default function MailPage() {
           <select
             value={rankFilter}
             onChange={(e) => setRankFilter(e.target.value)}
-            className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+            className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
           >
             <option value="">No rank filter</option>
             <option value="150+">Rank 150+</option>
@@ -313,7 +341,7 @@ export default function MailPage() {
               }}
               onFocus={() => setShowEmailDropdown(true)}
               placeholder="Search members or enter email..."
-              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
             />
 
             {/* Dropdown */}
@@ -330,7 +358,7 @@ export default function MailPage() {
                         type="checkbox"
                         checked={customEmails.includes(member.email)}
                         onChange={() => {}}
-                        className="h-4 w-4 text-red-600 rounded border-gray-300 focus:ring-red-500"
+                        className="h-4 w-4 text-orange-600 rounded border-gray-300 focus:ring-orange-500"
                       />
                       <div className="flex-1">
                         <div className="text-sm font-medium text-gray-900">{member.email}</div>
@@ -365,13 +393,13 @@ export default function MailPage() {
                 {customEmails.map(email => (
                   <div
                     key={email}
-                    className="inline-flex items-center gap-2 px-3 py-1.5 bg-red-50 border border-red-200 rounded-lg text-sm"
+                    className="inline-flex items-center gap-2 px-3 py-1.5 bg-orange-50 border border-orange-200 rounded-lg text-sm"
                   >
                     <span className="text-gray-900">{email}</span>
                     <button
                       type="button"
                       onClick={() => removeCustomEmail(email)}
-                      className="text-red-600 hover:text-red-800 transition-colors"
+                      className="text-orange-600 hover:text-orange-800 transition-colors"
                     >
                       <IconX className="h-4 w-4" />
                     </button>
@@ -406,7 +434,7 @@ export default function MailPage() {
           <div className="flex flex-col gap-4">
             {/* Editor */}
             <div className="border border-gray-300 rounded-lg overflow-hidden">
-              <MarkdownEditor
+              <TinyMCEEditor
                 value={content}
                 onChange={setContent}
                 placeholder="Write your email content here using Markdown..."
@@ -444,10 +472,38 @@ export default function MailPage() {
           </div>
         </div>
 
+        {/* Save as Announcement Checkbox */}
+        <div className="border-t pt-4">
+          <label className="flex items-center gap-3 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={saveAsAnnouncement}
+              onChange={(e) => setSaveAsAnnouncement(e.target.checked)}
+              className="h-5 w-5 text-orange-600 border-gray-300 rounded focus:ring-orange-500"
+            />
+            <div>
+              <div className="font-medium text-gray-900">Also save as announcement</div>
+              <div className="text-sm text-gray-600">Post this email content to News & Announcements</div>
+            </div>
+          </label>
+
+          {saveAsAnnouncement && (
+            <div className="mt-3 ml-8 p-3 bg-gray-50 rounded-lg">
+              <p className="text-sm text-gray-700 mb-1">This will be saved as:</p>
+              <ul className="text-xs text-gray-600 space-y-1 list-disc list-inside">
+                <li>Title: <span className="font-medium">{subject || '(Email Subject)'}</span></li>
+                <li>Category: <span className="font-medium">General</span></li>
+                <li>Priority: <span className="font-medium">Normal</span></li>
+              </ul>
+              <p className="text-xs text-gray-500 mt-2">The content will be saved without the email template styling.</p>
+            </div>
+          )}
+        </div>
+
         {/* Info Banner */}
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 flex gap-3">
-          <IconAlertCircle className="h-5 w-5 text-blue-600 flex-shrink-0 mt-0.5" />
-          <div className="text-sm text-blue-800">
+        <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 flex gap-3">
+          <IconAlertCircle className="h-5 w-5 text-orange-600 flex-shrink-0 mt-0.5" />
+          <div className="text-sm text-orange-800">
             <p className="font-semibold mb-1">Email Sending Notes:</p>
             <ul className="list-disc list-inside space-y-1">
               <li>Emails will be sent from: announcements@cboa.ca</li>
@@ -459,19 +515,20 @@ export default function MailPage() {
         </div>
 
         {/* Send Button */}
-        <div className="flex justify-end gap-3 pt-4 border-t">
+        <div className="flex flex-col sm:flex-row justify-end gap-2 pt-4 border-t">
           <button
             type="button"
             onClick={() => router.push('/portal')}
-            className="px-6 py-2.5 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+            className="bg-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-400 flex items-center justify-center gap-2"
           >
+            <IconX className="h-5 w-5" />
             Cancel
           </button>
           <button
             type="button"
             onClick={handleSend}
             disabled={isSending}
-            className="px-6 py-2.5 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center gap-2"
+            className="bg-orange-500 text-white px-4 py-2 rounded-lg hover:bg-orange-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
           >
             {isSending ? (
               <>

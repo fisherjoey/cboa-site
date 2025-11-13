@@ -75,8 +75,8 @@ export default function AnnouncementsBanner() {
                     {announcement.title}
                   </h3>
                   <p className="text-sm text-orange-800 mt-1 line-clamp-2">
-                    {announcement.content.replace(/[#*`]/g, '').substring(0, 150)}
-                    {announcement.content.length > 150 ? '...' : ''}
+                    {announcement.content.replace(/<[^>]*>/g, '').substring(0, 150)}
+                    {announcement.content.replace(/<[^>]*>/g, '').length > 150 ? '...' : ''}
                   </p>
                   <p className="text-xs text-orange-600 mt-2">
                     {new Date(announcement.date).toLocaleDateString('en-US', {
