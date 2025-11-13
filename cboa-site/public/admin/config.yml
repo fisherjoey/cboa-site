@@ -2,6 +2,9 @@ backend:
   name: git-gateway
   branch: main
 
+# Enable local backend for development
+local_backend: true
+
 media_folder: "public/uploads"
 public_folder: "/uploads"
 
