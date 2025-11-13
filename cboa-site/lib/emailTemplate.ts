@@ -36,28 +36,32 @@ export function generateCBOAEmailTemplate(options: EmailTemplateOptions): string
       background-color: #ffffff;
     }
     .header {
-      background: linear-gradient(135deg, #003DA5 0%, #0055D4 100%);
-      padding: 40px 20px;
-      text-align: center;
-      border-bottom: 4px solid #F97316;
+      background-color: #1f2937;
+      padding: 20px 30px;
+      border-bottom: 3px solid #F97316;
+    }
+    .header table {
+      width: 100%;
     }
     .header img {
-      max-width: 180px;
+      max-width: 80px;
       height: auto;
-      margin-bottom: 20px;
+      display: block;
     }
     .header h1 {
       color: #ffffff;
-      margin: 15px 0 8px 0;
-      font-size: 26px;
+      margin: 0 0 4px 0;
+      font-size: 20px;
       font-weight: 700;
       letter-spacing: -0.5px;
+      line-height: 1.2;
     }
     .header p {
-      color: #FED7AA;
+      color: #ffffff;
       margin: 0;
-      font-size: 15px;
+      font-size: 13px;
       font-weight: 500;
+      opacity: 0.95;
     }
     .content {
       padding: 40px 30px;
@@ -136,17 +140,16 @@ export function generateCBOAEmailTemplate(options: EmailTemplateOptions): string
     .button {
       display: inline-block;
       padding: 16px 36px;
-      background: linear-gradient(135deg, #F97316 0%, #EA580C 100%);
+      background-color: #F97316;
       color: #ffffff !important;
       text-decoration: none;
       border-radius: 8px;
       font-weight: 600;
       margin: 20px 0;
       box-shadow: 0 4px 6px rgba(249, 115, 22, 0.3);
-      transition: all 0.3s;
     }
     .button:hover {
-      background: linear-gradient(135deg, #EA580C 0%, #C2410C 100%);
+      background-color: #EA580C;
       box-shadow: 0 6px 8px rgba(249, 115, 22, 0.4);
     }
     .footer {
@@ -178,7 +181,7 @@ export function generateCBOAEmailTemplate(options: EmailTemplateOptions): string
       display: inline-block;
     }
     .footer-links a:hover {
-      background-color: #374151;
+      background-color: #1f2937;
       color: #F97316;
     }
     .social-links {
@@ -217,9 +220,17 @@ export function generateCBOAEmailTemplate(options: EmailTemplateOptions): string
           <!-- Header -->
           <tr>
             <td class="header">
-              <img src="https://i.imgur.com/dHrkQoM.png" alt="CBOA Logo" style="max-width: 180px; height: auto; margin-bottom: 20px;">
-              <h1 style="color: #ffffff; margin: 15px 0 8px 0; font-size: 26px; font-weight: 700; letter-spacing: -0.5px;">Calgary Basketball Officials Association</h1>
-              <p style="color: #FED7AA; margin: 0; font-size: 15px; font-weight: 500;">Excellence in Basketball Officiating</p>
+              <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                <tr>
+                  <td style="width: 80px; vertical-align: middle; padding-right: 20px;">
+                    <img src="https://i.imgur.com/BQe360J.png" alt="CBOA Logo" style="max-width: 80px; height: auto; display: block;">
+                  </td>
+                  <td style="vertical-align: middle;">
+                    <h1 style="color: #ffffff; margin: 0 0 4px 0; font-size: 20px; font-weight: 700; letter-spacing: -0.5px; line-height: 1.2;">Calgary Basketball Officials Association</h1>
+                    <p style="color: #ffffff; margin: 0; font-size: 13px; font-weight: 500; opacity: 0.95;">Excellence in Basketball Officiating</p>
+                  </td>
+                </tr>
+              </table>
             </td>
           </tr>
 

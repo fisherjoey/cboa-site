@@ -1,13 +1,16 @@
 // TinyMCE Widget for Decap CMS
-CMS.registerWidget('tinymce', {
-  // Called when the widget is used in the CMS
-  controlComponent: CMS.createClass({
-    getInitialState: function() {
-      return {};
-    },
+(function() {
+  const { h, Component } = window;
 
-    componentDidMount: function() {
-      const self = this;
+  // Control component for editing
+  class TinyMCEControl extends Component {
+    constructor(props) {
+      super(props);
+      this.editorId = 'tinymce-editor-' + props.forID;
+      this.editorInstance = null;
+    }
+
+    componentDidMount() {
       const currentValue = this.props.value || '';
 
       // TinyMCE is already loaded in index.html
@@ -16,13 +19,13 @@ CMS.registerWidget('tinymce', {
       } else {
         console.error('TinyMCE not loaded');
       }
-    },
+    }
 
-    initTinyMCE: function(initialValue) {
+    initTinyMCE(initialValue) {
       const self = this;
 
       window.tinymce.init({
-        target: document.getElementById('tinymce-editor-' + this.props.forID),
+        target: document.getElementById(this.editorId),
         height: 500,
         menubar: true,
         plugins: [
@@ -59,7 +62,11 @@ CMS.registerWidget('tinymce', {
         `,
         branding: false,
         promotion: false,
+        statusbar: false,
+        toolbar_mode: 'sliding',
         setup: function(editor) {
+          self.editorInstance = editor;
+
           editor.on('init', function() {
             editor.setContent(initialValue);
           });
@@ -79,32 +86,39 @@ CMS.registerWidget('tinymce', {
           '#3B82F6', 'Blue',
         ],
       });
-    },
+    }
 
-    componentWillUnmount: function() {
-      if (window.tinymce) {
-        window.tinymce.remove('#tinymce-editor-' + this.props.forID);
+    componentWillUnmount() {
+      if (this.editorInstance) {
+        this.editorInstance.remove();
       }
-    },
+    }
 
-    render: function() {
-      return CMS.h('div', {},
-        CMS.h('label', { htmlFor: this.props.forID }, this.props.field.get('label')),
-        CMS.h('textarea', {
-          id: 'tinymce-editor-' + this.props.forID,
+    render() {
+      const { field, forID } = this.props;
+
+      return h('div', {},
+        h('label', { htmlFor: forID }, field.get('label')),
+        h('textarea', {
+          id: this.editorId,
           style: { width: '100%', height: '500px' }
         })
       );
     }
-  }),
+  }
 
   // Preview component
-  previewComponent: CMS.createClass({
-    render: function() {
-      return CMS.h('div', {
+  class TinyMCEPreview extends Component {
+    render() {
+      return h('div', {
         className: 'tinymce-content',
         dangerouslySetInnerHTML: { __html: this.props.value }
       });
     }
-  })
-});
+  }
+
+  // Register the widget
+  if (window.CMS) {
+    CMS.registerWidget('tinymce', TinyMCEControl, TinyMCEPreview);
+  }
+})();

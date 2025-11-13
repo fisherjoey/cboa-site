@@ -181,8 +181,16 @@
   <body>
     <!-- Include Netlify Identity Widget -->
     <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+    <!-- Include React (required for Decap CMS widgets) -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <!-- Include Decap CMS -->
     <script src="https://unpkg.com/decap-cms@^3.1.10/dist/decap-cms.js"></script>
+    <!-- Make React globally available for widgets -->
+    <script>
+      window.h = window.React.createElement;
+      window.Component = window.React.Component;
+    </script>
     <!-- Include TinyMCE Widget -->
     <script src="/admin/tinymce-widget.js"></script>
   </body>

@@ -145,44 +145,6 @@ export default function PortalDashboard() {
       {/* Latest Newsletter - Full Width */}
       <LatestNewsletterWidget />
 
-      {/* Main Portal Sections */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-        {sections.map((section) => {
-          const Icon = section.icon;
-          
-          return (
-            <Link key={section.href} href={section.href} className="block">
-              <div className="bg-white overflow-hidden shadow rounded-lg hover:shadow-lg transition-shadow h-full relative border border-gray-200">
-                {section.badge && (
-                  <div className="absolute top-2 right-2">
-                    <span className={`px-2 py-1 text-xs font-bold rounded ${
-                      section.badge === 'ADMIN' ? 'bg-gray-700 text-white' : 
-                      section.badge === 'EXEC' ? 'bg-gray-600 text-white' : 
-                      'bg-gray-500 text-white'
-                    }`}>
-                      {section.badge}
-                    </span>
-                  </div>
-                )}
-                <div className="p-4 sm:p-6">
-                  <div className="flex items-center mb-3">
-                    <div className="h-10 w-10 rounded-lg bg-gray-100 flex items-center justify-center">
-                      <Icon className="h-6 w-6 text-gray-700" />
-                    </div>
-                    <h2 className="text-lg font-semibold text-gray-900 ml-3 flex-1">
-                      {section.title}
-                    </h2>
-                  </div>
-                  <p className="text-gray-600 text-sm">
-                    {section.description}
-                  </p>
-                </div>
-              </div>
-            </Link>
-          );
-        })}
-      </div>
-
       {/* Quick Links Section */}
       <div className="bg-gray-50 rounded-lg shadow p-4 sm:p-6">
         <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-4">Quick Links</h3>

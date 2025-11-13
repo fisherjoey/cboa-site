@@ -65,6 +65,9 @@ export function TinyMCEEditor({
         placeholder: placeholder,
         branding: false,
         promotion: false,
+        toolbar_mode: 'sliding',
+        statusbar: false,
+        onboarding: false,
         // Image upload handling - convert to base64
         images_upload_handler: async (blobInfo, progress) => {
           return new Promise((resolve, reject) => {
