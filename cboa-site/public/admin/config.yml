@@ -2,10 +2,6 @@ backend:
   name: git-gateway
   branch: main
 
-# Enable local backend for development
-local_backend:
-  url: http://localhost:8081/api/v1
-
 media_folder: "public/uploads"
 public_folder: "/uploads"
 
