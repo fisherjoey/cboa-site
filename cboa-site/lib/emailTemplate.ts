@@ -36,25 +36,28 @@ export function generateCBOAEmailTemplate(options: EmailTemplateOptions): string
       background-color: #ffffff;
     }
     .header {
-      background: linear-gradient(to bottom right, #2c3e50, #3498db);
-      padding: 30px 20px;
+      background: linear-gradient(135deg, #003DA5 0%, #0055D4 100%);
+      padding: 40px 20px;
       text-align: center;
+      border-bottom: 4px solid #F97316;
     }
     .header img {
-      max-width: 150px;
+      max-width: 180px;
       height: auto;
-      filter: invert(1) brightness(1.2);
+      margin-bottom: 20px;
     }
     .header h1 {
       color: #ffffff;
-      margin: 15px 0 5px 0;
-      font-size: 24px;
+      margin: 15px 0 8px 0;
+      font-size: 26px;
       font-weight: 700;
+      letter-spacing: -0.5px;
     }
     .header p {
-      color: #ecf0f1;
+      color: #FED7AA;
       margin: 0;
-      font-size: 14px;
+      font-size: 15px;
+      font-weight: 500;
     }
     .content {
       padding: 40px 30px;
@@ -63,22 +66,28 @@ export function generateCBOAEmailTemplate(options: EmailTemplateOptions): string
       line-height: 1.6;
     }
     .content h1 {
-      color: #ff6b35;
-      font-size: 24px;
+      color: #003DA5;
+      font-size: 28px;
       margin-top: 0;
       margin-bottom: 20px;
+      font-weight: 700;
+      line-height: 1.3;
     }
     .content h2 {
-      color: #306c98;
-      font-size: 20px;
-      margin-top: 25px;
+      color: #003DA5;
+      font-size: 22px;
+      margin-top: 30px;
       margin-bottom: 15px;
+      font-weight: 600;
+      border-bottom: 2px solid #F97316;
+      padding-bottom: 8px;
     }
     .content h3 {
       color: #1f2937;
-      font-size: 18px;
+      font-size: 19px;
       margin-top: 20px;
       margin-bottom: 12px;
+      font-weight: 600;
     }
     .content p {
       margin: 0 0 15px 0;
@@ -91,38 +100,86 @@ export function generateCBOAEmailTemplate(options: EmailTemplateOptions): string
       margin-bottom: 8px;
     }
     .content a {
-      color: #ff6b35;
+      color: #F97316;
       text-decoration: underline;
+    }
+    .content a:hover {
+      color: #003DA5;
+    }
+    .content strong {
+      color: #003DA5;
+      font-weight: 600;
+    }
+    .content table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 20px 0;
+    }
+    .content th {
+      background-color: #003DA5;
+      color: #ffffff;
+      padding: 12px;
+      text-align: left;
+      font-weight: 600;
+    }
+    .content td {
+      padding: 10px 12px;
+      border: 1px solid #E5E7EB;
+    }
+    .content blockquote {
+      border-left: 4px solid #F97316;
+      background-color: #FFF7ED;
+      padding: 15px 20px;
+      margin: 20px 0;
+      font-style: italic;
     }
     .button {
       display: inline-block;
-      padding: 14px 30px;
-      background-color: #ff6b35;
+      padding: 16px 36px;
+      background: linear-gradient(135deg, #F97316 0%, #EA580C 100%);
       color: #ffffff !important;
       text-decoration: none;
-      border-radius: 6px;
+      border-radius: 8px;
       font-weight: 600;
-      margin: 15px 0;
+      margin: 20px 0;
+      box-shadow: 0 4px 6px rgba(249, 115, 22, 0.3);
+      transition: all 0.3s;
+    }
+    .button:hover {
+      background: linear-gradient(135deg, #EA580C 0%, #C2410C 100%);
+      box-shadow: 0 6px 8px rgba(249, 115, 22, 0.4);
     }
     .footer {
-      background-color: #1f2937;
-      color: #9ca3af;
-      padding: 30px;
+      background-color: #1F2937;
+      color: #D1D5DB;
+      padding: 35px 30px;
       text-align: center;
       font-size: 14px;
-      line-height: 1.6;
+      line-height: 1.7;
+      border-top: 3px solid #F97316;
     }
     .footer a {
-      color: #ff6b35;
+      color: #F97316;
       text-decoration: none;
+      transition: color 0.2s;
+    }
+    .footer a:hover {
+      color: #FED7AA;
     }
     .footer-links {
-      margin: 15px 0;
+      margin: 20px 0;
     }
     .footer-links a {
-      color: #9ca3af;
-      text-decoration: underline;
-      margin: 0 10px;
+      color: #D1D5DB;
+      text-decoration: none;
+      margin: 0 12px;
+      padding: 8px 12px;
+      border-radius: 4px;
+      display: inline-block;
+    }
+    .footer-links a:hover {
+      background-color: #374151;
+      color: #F97316;
     }
     .social-links {
       margin: 20px 0;
@@ -160,9 +217,9 @@ export function generateCBOAEmailTemplate(options: EmailTemplateOptions): string
           <!-- Header -->
           <tr>
             <td class="header">
-              <img src="https://i.imgur.com/dHrkQoM.png" alt="CBOA Logo" style="max-width: 150px; height: auto; filter: invert(1) brightness(1.2);">
-              <h1 style="color: #ffffff; margin: 15px 0 5px 0; font-size: 24px; font-weight: 700;">Calgary Basketball Officials Association</h1>
-              <p style="color: #fee2e2; margin: 0; font-size: 14px;">Excellence in Basketball Officiating</p>
+              <img src="https://i.imgur.com/dHrkQoM.png" alt="CBOA Logo" style="max-width: 180px; height: auto; margin-bottom: 20px;">
+              <h1 style="color: #ffffff; margin: 15px 0 8px 0; font-size: 26px; font-weight: 700; letter-spacing: -0.5px;">Calgary Basketball Officials Association</h1>
+              <p style="color: #FED7AA; margin: 0; font-size: 15px; font-weight: 500;">Excellence in Basketball Officiating</p>
             </td>
           </tr>
 
