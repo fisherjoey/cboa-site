@@ -5,10 +5,10 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { usePathname } from 'next/navigation'
 import { useRole } from '@/contexts/RoleContext'
-import { 
-  IconHome, 
-  IconBooks, 
-  IconNews, 
+import {
+  IconHome,
+  IconBooks,
+  IconNews,
   IconNotebook,
   IconLock,
   IconExternalLink,
@@ -19,7 +19,8 @@ import {
   IconGavel,
   IconUserCircle,
   IconShield,
-  IconUsers
+  IconUsers,
+  IconMail
 } from '@tabler/icons-react'
 
 import { useAuth } from '@/contexts/AuthContext'
@@ -57,6 +58,9 @@ export default function PortalHeader() {
     { href: '/portal/news', label: 'News & Announcements', icon: IconNews },
     { href: '/portal/rule-modifications', label: 'Rule Modifications', icon: IconGavel },
     { href: '/portal/the-bounce', label: 'The Bounce', icon: IconNotebook },
+    ...(user.role === 'admin' || user.role === 'executive'
+      ? [{ href: '/portal/mail', label: 'Send Email', icon: IconMail }]
+      : []),
   ]
 
   return (

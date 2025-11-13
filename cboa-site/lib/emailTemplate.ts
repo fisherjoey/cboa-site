@@ -1,0 +1,346 @@
+// CBOA Email Template
+// Creates a professional, branded HTML email wrapper
+
+export interface EmailTemplateOptions {
+  subject: string
+  content: string
+  previewText?: string
+}
+
+export function generateCBOAEmailTemplate(options: EmailTemplateOptions): string {
+  const { subject, content, previewText } = options
+
+  return `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <title>${subject}</title>
+  <!--[if mso]>
+  <style type="text/css">
+    body, table, td { font-family: Arial, Helvetica, sans-serif !important; }
+  </style>
+  <![endif]-->
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background-color: #f5f5f5;
+    }
+    .email-container {
+      max-width: 600px;
+      margin: 0 auto;
+      background-color: #ffffff;
+    }
+    .header {
+      background: linear-gradient(to bottom right, #2c3e50, #3498db);
+      padding: 30px 20px;
+      text-align: center;
+    }
+    .header img {
+      max-width: 150px;
+      height: auto;
+      filter: invert(1) brightness(1.2);
+    }
+    .header h1 {
+      color: #ffffff;
+      margin: 15px 0 5px 0;
+      font-size: 24px;
+      font-weight: 700;
+    }
+    .header p {
+      color: #ecf0f1;
+      margin: 0;
+      font-size: 14px;
+    }
+    .content {
+      padding: 40px 30px;
+      color: #333333;
+      font-size: 16px;
+      line-height: 1.6;
+    }
+    .content h1 {
+      color: #ff6b35;
+      font-size: 24px;
+      margin-top: 0;
+      margin-bottom: 20px;
+    }
+    .content h2 {
+      color: #306c98;
+      font-size: 20px;
+      margin-top: 25px;
+      margin-bottom: 15px;
+    }
+    .content h3 {
+      color: #1f2937;
+      font-size: 18px;
+      margin-top: 20px;
+      margin-bottom: 12px;
+    }
+    .content p {
+      margin: 0 0 15px 0;
+    }
+    .content ul, .content ol {
+      margin: 0 0 15px 0;
+      padding-left: 25px;
+    }
+    .content li {
+      margin-bottom: 8px;
+    }
+    .content a {
+      color: #ff6b35;
+      text-decoration: underline;
+    }
+    .button {
+      display: inline-block;
+      padding: 14px 30px;
+      background-color: #ff6b35;
+      color: #ffffff !important;
+      text-decoration: none;
+      border-radius: 6px;
+      font-weight: 600;
+      margin: 15px 0;
+    }
+    .footer {
+      background-color: #1f2937;
+      color: #9ca3af;
+      padding: 30px;
+      text-align: center;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+    .footer a {
+      color: #ff6b35;
+      text-decoration: none;
+    }
+    .footer-links {
+      margin: 15px 0;
+    }
+    .footer-links a {
+      color: #9ca3af;
+      text-decoration: underline;
+      margin: 0 10px;
+    }
+    .social-links {
+      margin: 20px 0;
+    }
+    .social-links a {
+      display: inline-block;
+      margin: 0 8px;
+      color: #9ca3af;
+      text-decoration: none;
+    }
+    @media only screen and (max-width: 600px) {
+      .content {
+        padding: 25px 20px;
+      }
+      .header h1 {
+        font-size: 20px;
+      }
+      .content h1 {
+        font-size: 20px;
+      }
+      .content h2 {
+        font-size: 18px;
+      }
+    }
+  </style>
+</head>
+<body>
+  ${previewText ? `<div style="display:none;font-size:1px;color:#ffffff;line-height:1px;max-height:0px;max-width:0px;opacity:0;overflow:hidden;">${previewText}</div>` : ''}
+
+  <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: #f5f5f5;">
+    <tr>
+      <td style="padding: 20px 0;">
+        <table role="presentation" class="email-container" cellspacing="0" cellpadding="0" border="0" width="600" align="center">
+
+          <!-- Header -->
+          <tr>
+            <td class="header">
+              <img src="https://i.imgur.com/dHrkQoM.png" alt="CBOA Logo" style="max-width: 150px; height: auto; filter: invert(1) brightness(1.2);">
+              <h1 style="color: #ffffff; margin: 15px 0 5px 0; font-size: 24px; font-weight: 700;">Calgary Basketball Officials Association</h1>
+              <p style="color: #fee2e2; margin: 0; font-size: 14px;">Excellence in Basketball Officiating</p>
+            </td>
+          </tr>
+
+          <!-- Main Content -->
+          <tr>
+            <td class="content">
+              ${content}
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td class="footer">
+              <p style="margin: 0 0 10px 0; font-weight: 600; color: #ffffff;">Calgary Basketball Officials Association</p>
+              <p style="margin: 0 0 15px 0;">Calgary, Alberta, Canada</p>
+
+              <div class="footer-links">
+                <a href="https://refalberta.ca">Website</a>
+                <a href="https://refalberta.ca/portal">Member Portal</a>
+                <a href="https://refalberta.ca/contact">Contact Us</a>
+              </div>
+
+              <p style="margin: 20px 0 10px 0; font-size: 12px; color: #6b7280;">
+                You are receiving this email because you are a member of the Calgary Basketball Officials Association.
+              </p>
+
+              <p style="margin: 0; font-size: 12px; color: #6b7280;">
+                © ${new Date().getFullYear()} Calgary Basketball Officials Association. All rights reserved.
+              </p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+  `.trim()
+}
+
+// Sample usage examples
+export const sampleEmails = {
+  announcement: generateCBOAEmailTemplate({
+    subject: 'Important Update: New Training Session',
+    previewText: 'Join us for an upcoming Level 3 certification clinic...',
+    content: `
+      <h1>New Training Session Announced</h1>
+
+      <p>Dear CBOA Members,</p>
+
+      <p>We're excited to announce a new <strong>Level 3 Certification Clinic</strong> scheduled for next month.</p>
+
+      <h2>Event Details</h2>
+      <ul>
+        <li><strong>Date:</strong> Saturday, December 14, 2025</li>
+        <li><strong>Time:</strong> 9:00 AM - 4:00 PM</li>
+        <li><strong>Location:</strong> Talisman Centre, Calgary</li>
+        <li><strong>Cost:</strong> $75 (includes materials and lunch)</li>
+      </ul>
+
+      <h2>What You'll Learn</h2>
+      <p>This comprehensive clinic will cover:</p>
+      <ul>
+        <li>Advanced positioning and mechanics</li>
+        <li>Three-person officiating systems</li>
+        <li>Game management and communication</li>
+        <li>Rule interpretations and case plays</li>
+      </ul>
+
+      <p style="text-align: center;">
+        <a href="https://refalberta.ca/portal/calendar" class="button">Register Now</a>
+      </p>
+
+      <p>Space is limited to 30 participants, so please register early to secure your spot.</p>
+
+      <p>If you have any questions, please don't hesitate to reach out.</p>
+
+      <p>Best regards,<br>
+      <strong>CBOA Executive Board</strong></p>
+    `
+  }),
+
+  newsletter: generateCBOAEmailTemplate({
+    subject: 'The Bounce - November 2025',
+    previewText: 'Your monthly update from CBOA...',
+    content: `
+      <h1>The Bounce - November 2025</h1>
+
+      <p>Welcome to this month's edition of The Bounce, your source for all things CBOA!</p>
+
+      <h2>📢 What's New</h2>
+      <ul>
+        <li><strong>New Officials:</strong> Welcome to our 5 new members who joined this month!</li>
+        <li><strong>Season Kickoff:</strong> Winter league starts December 1st</li>
+        <li><strong>Rule Changes:</strong> Review the latest FIBA rule modifications in the portal</li>
+      </ul>
+
+      <h2>📅 Upcoming Events</h2>
+      <p><strong>Rules Refresher Workshop</strong><br>
+      November 25, 2025 | 7:00 PM | Virtual<br>
+      Mandatory for all Level 1 & 2 officials</p>
+
+      <p><strong>Holiday Social</strong><br>
+      December 15, 2025 | 6:00 PM | Boston Pizza Crowfoot<br>
+      Bring the family!</p>
+
+      <h2>🏆 Official of the Month</h2>
+      <p>Congratulations to <strong>Sarah Johnson</strong> for her outstanding performance and professionalism during the tournament season. Sarah has been recognized by multiple coaches for her excellent communication and game management skills.</p>
+
+      <h2>📚 Resources</h2>
+      <p>Don't forget to check out the updated resources in the member portal:</p>
+      <ul>
+        <li>2025-26 FIBA Rulebook</li>
+        <li>Pre-game checklist</li>
+        <li>Mechanics manual (updated)</li>
+      </ul>
+
+      <p style="text-align: center;">
+        <a href="https://refalberta.ca/portal" class="button">Visit Portal</a>
+      </p>
+
+      <p>Stay safe and see you on the court!</p>
+
+      <p>Best regards,<br>
+      <strong>CBOA Communications Team</strong></p>
+    `
+  }),
+
+  reminder: generateCBOAEmailTemplate({
+    subject: 'Reminder: Game Assignment Tomorrow',
+    previewText: 'You have a game assignment tomorrow at 7:00 PM...',
+    content: `
+      <h1>Game Assignment Reminder</h1>
+
+      <p>Hi there,</p>
+
+      <p>This is a friendly reminder about your upcoming game assignment:</p>
+
+      <table style="width: 100%; border-collapse: collapse; margin: 20px 0; background-color: #f9fafb; border: 2px solid #e5e7eb;">
+        <tr>
+          <td style="padding: 12px; border-bottom: 1px solid #e5e7eb; font-weight: 600;">Date:</td>
+          <td style="padding: 12px; border-bottom: 1px solid #e5e7eb;">Saturday, November 16, 2025</td>
+        </tr>
+        <tr>
+          <td style="padding: 12px; border-bottom: 1px solid #e5e7eb; font-weight: 600;">Time:</td>
+          <td style="padding: 12px; border-bottom: 1px solid #e5e7eb;">7:00 PM</td>
+        </tr>
+        <tr>
+          <td style="padding: 12px; border-bottom: 1px solid #e5e7eb; font-weight: 600;">Venue:</td>
+          <td style="padding: 12px; border-bottom: 1px solid #e5e7eb;">Shouldice Athletic Park</td>
+        </tr>
+        <tr>
+          <td style="padding: 12px; border-bottom: 1px solid #e5e7eb; font-weight: 600;">Address:</td>
+          <td style="padding: 12px; border-bottom: 1px solid #e5e7eb;">1515 Home Rd NW, Calgary</td>
+        </tr>
+        <tr>
+          <td style="padding: 12px; border-bottom: 1px solid #e5e7eb; font-weight: 600;">Teams:</td>
+          <td style="padding: 12px; border-bottom: 1px solid #e5e7eb;">Central vs. Western</td>
+        </tr>
+        <tr>
+          <td style="padding: 12px; font-weight: 600;">Level:</td>
+          <td style="padding: 12px;">Senior Varsity</td>
+        </tr>
+      </table>
+
+      <p><strong>Please arrive 30 minutes early for pre-game preparation.</strong></p>
+
+      <p>If you have any conflicts or questions, please contact the assignor immediately at <a href="mailto:assignor@cboa.ca">assignor@cboa.ca</a>.</p>
+
+      <p style="text-align: center;">
+        <a href="https://refalberta.ca/portal/calendar" class="button">View Full Schedule</a>
+      </p>
+
+      <p>Good luck!</p>
+
+      <p>Best regards,<br>
+      <strong>CBOA Scheduling</strong></p>
+    `
+  })
+}

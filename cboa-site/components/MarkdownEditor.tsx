@@ -77,25 +77,24 @@ export function MarkdownEditor({
           border-color: #dc2626 !important;
           box-shadow: 0 0 0 4px rgba(220, 38, 38, 0.15) !important;
         }
+        /* Fix cursor misalignment - unset font properties that cause drift */
+        .w-md-editor .title {
+          line-height: unset !important;
+          font-size: unset !important;
+          font-weight: unset !important;
+        }
         /* Remove all text formatting overrides to use vanilla editor defaults */
         .w-md-editor-text-pre .token.title {
           color: #1e40af !important;
-          font-weight: 900 !important;
         }
         .w-md-editor-text-pre .token.bold {
           color: #000000 !important;
-          font-weight: 900 !important;
         }
         .w-md-editor-text-pre .token.code {
           color: #dc2626 !important;
-          background-color: #fee2e2 !important;
-          padding: 3px 6px !important;
-          border-radius: 4px !important;
-          font-weight: 600 !important;
         }
         .w-md-editor-text-pre .token.list {
           color: #059669 !important;
-          font-weight: 600 !important;
         }
         .w-md-editor-preview {
           background-color: #ffffff !important;
