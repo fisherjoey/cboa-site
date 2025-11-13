@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useMemo } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
 import { useRouter } from 'next/navigation'
 import { IconSend, IconUsers, IconMail, IconCheck, IconAlertCircle, IconEye, IconX } from '@tabler/icons-react'
@@ -25,13 +25,25 @@ export default function MailPage() {
   const [showEmailDropdown, setShowEmailDropdown] = useState(false)
   const [saveAsAnnouncement, setSaveAsAnnouncement] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
+  const [debouncedContent, setDebouncedContent] = useState(content)
 
-  // Generate live preview HTML - content is now HTML from TinyMCE
-  const previewHtml = content ? generateCBOAEmailTemplate({
-    subject: subject || 'Email Subject',
-    content: content, // TinyMCE already provides HTML
-    previewText: subject
-  }) : ''
+  // Debounce content updates to reduce preview reloads
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedContent(content)
+    }, 500) // Wait 500ms after user stops typing
+
+    return () => clearTimeout(timer)
+  }, [content])
+
+  // Generate live preview HTML - memoized to prevent unnecessary regeneration
+  const previewHtml = useMemo(() => {
+    return debouncedContent ? generateCBOAEmailTemplate({
+      subject: subject || 'Email Subject',
+      content: debouncedContent,
+      previewText: subject
+    }) : ''
+  }, [debouncedContent, subject])
 
   // Redirect non-executives
   useEffect(() => {
