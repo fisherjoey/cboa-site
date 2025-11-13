@@ -35,4 +35,4 @@ yarn-error.log*
 next-env.d.ts
 
 # decap cms - config needs to be tracked
-# /public/admin
+# /public/admin.env*
