@@ -65,7 +65,7 @@ export function TinyMCEEditor({
         placeholder: placeholder,
         branding: false,
         promotion: false,
-        // Image upload handling
+        // Image upload handling - convert to base64
         images_upload_handler: async (blobInfo, progress) => {
           return new Promise((resolve, reject) => {
             const reader = new FileReader()
@@ -76,6 +76,12 @@ export function TinyMCEEditor({
             reader.readAsDataURL(blobInfo.blob())
           })
         },
+        // Disable automatic uploads on paste
+        automatic_uploads: false,
+        // Cache images in browser
+        images_reuse_filename: true,
+        // Prevent image proxy
+        images_file_types: 'jpg,jpeg,png,gif,svg,webp',
         // Color picker with CBOA brand colors
         color_map: [
           '#003DA5', 'CBOA Blue',
