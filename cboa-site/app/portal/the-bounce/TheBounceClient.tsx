@@ -12,6 +12,7 @@ import { useToast } from '@/hooks/useToast'
 import { ToastContainer } from '@/components/Toast'
 import { validateNewsletterForm, getFieldError, hasErrors, formatValidationErrors } from '@/lib/portalValidation'
 import { parseAPIError, sanitize, ValidationError } from '@/lib/errorHandling'
+import FileUpload from '@/components/FileUpload'
 
 // Dynamically import PDFViewer to avoid SSR issues
 const PDFViewer = dynamic(() => import('./PDFViewer'), {
@@ -35,7 +36,7 @@ interface Newsletter {
 
 export default function TheBounceClient({ newsletters: initialNewsletters }: TheBounceClientProps) {
   const { user } = useRole()
-  const toast = useToast()
+  const { toasts, dismissToast, success, error, warning, info } = useToast()
   const [newsletters, setNewsletters] = useState<Newsletter[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [selectedNewsletter, setSelectedNewsletter] = useState<Newsletter | null>(null)
@@ -48,6 +49,7 @@ export default function TheBounceClient({ newsletters: initialNewsletters }: The
     description: '',
     featured: false
   })
+  const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [validationErrors, setValidationErrors] = useState<ValidationError[]>([])
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -72,7 +74,7 @@ export default function TheBounceClient({ newsletters: initialNewsletters }: The
       setNewsletters(mapped)
     } catch (error) {
       const errorMessage = parseAPIError(error)
-      toast.error(`Failed to load newsletters: ${errorMessage}`)
+      error(`Failed to load newsletters: ${errorMessage}`)
     } finally {
       setIsLoading(false)
     }
@@ -102,10 +104,14 @@ export default function TheBounceClient({ newsletters: initialNewsletters }: The
     }
   }
   
-  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0]
-    if (!file || file.type !== 'application/pdf') {
-      toast.error('Please select a PDF file')
+  const handleUpload = async () => {
+    if (!selectedFile) {
+      error('Please select a PDF file')
+      return
+    }
+
+    if (selectedFile.type !== 'application/pdf') {
+      error('Please select a PDF file')
       return
     }
 
@@ -113,18 +119,24 @@ export default function TheBounceClient({ newsletters: initialNewsletters }: The
     const sanitizedTitle = sanitize.text(uploadForm.title)
     const sanitizedDescription = sanitize.text(uploadForm.description)
 
+    // Extract month and year from date for validation
+    const dateObj = new Date(uploadForm.date)
+    const month = dateObj.toLocaleDateString('en-CA', { month: 'long' })
+    const year = dateObj.getFullYear()
+
     // Validate form data
     const formData = {
-      title: sanitizedTitle || `The Bounce - ${new Date(uploadForm.date).toLocaleDateString('en-CA', { month: 'long', year: 'numeric' })}`,
-      date: uploadForm.date,
+      title: sanitizedTitle || `The Bounce - ${month} ${year}`,
+      month: month,
+      year: year,
       description: sanitizedDescription,
-      file: file
+      file: selectedFile
     }
 
     const errors = validateNewsletterForm(formData)
     if (hasErrors(errors)) {
       setValidationErrors(errors)
-      toast.error(formatValidationErrors(errors))
+      error(formatValidationErrors(errors))
       return
     }
 
@@ -132,14 +144,14 @@ export default function TheBounceClient({ newsletters: initialNewsletters }: The
 
     try {
       // Upload file to Supabase Storage (newsletters bucket)
-      const uploadResult = await uploadFile(file, '/newsletter/')
+      const uploadResult = await uploadFile(selectedFile, '/newsletter/')
 
       // Create newsletter in database
       const apiData = {
         title: formData.title,
         date: formData.date,
         description: formData.description,
-        file_name: file.name,
+        file_name: selectedFile.name,
         file_url: uploadResult.url,
         file_size: uploadResult.size,
         is_featured: uploadForm.featured
@@ -167,16 +179,13 @@ export default function TheBounceClient({ newsletters: initialNewsletters }: The
         description: '',
         featured: false
       })
+      setSelectedFile(null)
       setShowUploadForm(false)
 
-      if (fileInputRef.current) {
-        fileInputRef.current.value = ''
-      }
-
-      toast.success('Newsletter uploaded successfully!')
-    } catch (error) {
-      const errorMessage = parseAPIError(error)
-      toast.error(`Failed to upload newsletter: ${errorMessage}`)
+      success('Newsletter uploaded successfully!')
+    } catch (err) {
+      const errorMessage = parseAPIError(err)
+      error(`Failed to upload newsletter: ${errorMessage}`)
     }
   }
   
@@ -185,10 +194,10 @@ export default function TheBounceClient({ newsletters: initialNewsletters }: The
       try {
         await newslettersAPI.delete(id)
         setNewsletters(prev => prev.filter(n => n.id !== id))
-        toast.success('Newsletter deleted successfully!')
+        success('Newsletter deleted successfully!')
       } catch (error) {
         const errorMessage = parseAPIError(error)
-        toast.error(`Failed to delete newsletter: ${errorMessage}`)
+        error(`Failed to delete newsletter: ${errorMessage}`)
       }
     }
   }
@@ -234,11 +243,11 @@ export default function TheBounceClient({ newsletters: initialNewsletters }: The
                 onChange={(e) => setUploadForm({ ...uploadForm, title: e.target.value })}
                 placeholder="e.g., The Bounce - January 2025"
                 className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-cboa-orange focus:border-cboa-orange ${
-                  getFieldError('title', validationErrors) ? 'border-red-500' : 'border-gray-300'
+                  getFieldError(validationErrors, 'title') ? 'border-red-500' : 'border-gray-300'
                 }`}
               />
-              {getFieldError('title', validationErrors) && (
-                <p className="mt-1 text-sm text-red-600">{getFieldError('title', validationErrors)}</p>
+              {getFieldError(validationErrors, 'title') && (
+                <p className="mt-1 text-sm text-red-600">{getFieldError(validationErrors, 'title')}</p>
               )}
             </div>
             
@@ -251,11 +260,11 @@ export default function TheBounceClient({ newsletters: initialNewsletters }: The
                 value={uploadForm.date}
                 onChange={(e) => setUploadForm({ ...uploadForm, date: e.target.value })}
                 className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-cboa-orange focus:border-cboa-orange ${
-                  getFieldError('date', validationErrors) ? 'border-red-500' : 'border-gray-300'
+                  getFieldError(validationErrors, 'date') ? 'border-red-500' : 'border-gray-300'
                 }`}
               />
-              {getFieldError('date', validationErrors) && (
-                <p className="mt-1 text-sm text-red-600">{getFieldError('date', validationErrors)}</p>
+              {getFieldError(validationErrors, 'date') && (
+                <p className="mt-1 text-sm text-red-600">{getFieldError(validationErrors, 'date')}</p>
               )}
             </div>
             
@@ -269,11 +278,11 @@ export default function TheBounceClient({ newsletters: initialNewsletters }: The
                 placeholder="Brief description of this issue's content"
                 rows={2}
                 className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-cboa-orange focus:border-cboa-orange ${
-                  getFieldError('description', validationErrors) ? 'border-red-500' : 'border-gray-300'
+                  getFieldError(validationErrors, 'description') ? 'border-red-500' : 'border-gray-300'
                 }`}
               />
-              {getFieldError('description', validationErrors) && (
-                <p className="mt-1 text-sm text-red-600">{getFieldError('description', validationErrors)}</p>
+              {getFieldError(validationErrors, 'description') && (
+                <p className="mt-1 text-sm text-red-600">{getFieldError(validationErrors, 'description')}</p>
               )}
             </div>
             
@@ -294,23 +303,35 @@ export default function TheBounceClient({ newsletters: initialNewsletters }: The
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 PDF File
               </label>
-              <div className="flex items-center gap-3">
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept=".pdf"
-                  onChange={handleFileUpload}
-                  className="flex-1"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowUploadForm(false)}
-                  className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
-                >
-                  Cancel
-                </button>
-              </div>
-              <p className="mt-1 text-xs text-gray-500">Upload a PDF file (max 10MB)</p>
+              <FileUpload
+                onFileSelect={setSelectedFile}
+                selectedFile={selectedFile}
+                accept=".pdf"
+                maxSize={10}
+                buttonText="Choose PDF File"
+              />
+            </div>
+
+            <div className="flex gap-3 pt-2">
+              <button
+                type="button"
+                onClick={handleUpload}
+                disabled={!selectedFile}
+                className="flex-1 bg-cboa-orange text-white px-4 py-2 rounded-md hover:bg-orange-600 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed font-medium"
+              >
+                Upload Newsletter
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowUploadForm(false)
+                  setSelectedFile(null)
+                  setValidationErrors([])
+                }}
+                className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+              >
+                Cancel
+              </button>
             </div>
           </div>
         </Card>
@@ -528,7 +549,7 @@ export default function TheBounceClient({ newsletters: initialNewsletters }: The
         </p>
       </div>
 
-      <ToastContainer />
+      <ToastContainer toasts={toasts} onDismiss={dismissToast} />
     </div>
   )
 }

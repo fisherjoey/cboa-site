@@ -48,7 +48,7 @@ interface Resource {
 
 export default function ResourcesClient() {
   const { user } = useRole()
-  const toast = useToast()
+  const { toasts, dismissToast, success, error, warning, info } = useToast()
   const [resources, setResources] = useState<Resource[]>([])
   const [selectedCategory, setSelectedCategory] = useState<string>('all')
   const [searchTerm, setSearchTerm] = useState('')
@@ -110,7 +110,7 @@ export default function ResourcesClient() {
       }))
       setResources(mapped)
     } catch (error) {
-      toast.error('Failed to Load Resources', parseAPIError(error))
+      error('Failed to Load Resources', parseAPIError(error))
       setResources([])
     }
   }
@@ -150,7 +150,7 @@ export default function ResourcesClient() {
 
     if (hasErrors(errors)) {
       setValidationErrors(errors)
-      toast.error('Validation Failed', formatValidationErrors(errors))
+      error('Validation Failed', formatValidationErrors(errors))
       return
     }
 
@@ -175,9 +175,9 @@ export default function ResourcesClient() {
           const uploadResult = await uploadFile(uploadedFile)
           fileUrl = uploadResult.url
           fileName = uploadResult.fileName
-          toast.success('File Uploaded', `${uploadResult.fileName} uploaded successfully`)
+          success('File Uploaded', `${uploadResult.fileName} uploaded successfully`)
         } catch (uploadError) {
-          toast.error('Upload Failed', parseAPIError(uploadError))
+          error('Upload Failed', parseAPIError(uploadError))
           setIsUploading(false)
           return
         }
@@ -208,7 +208,7 @@ export default function ResourcesClient() {
       }
 
       setResources([...resources, mappedResource])
-      toast.success('Resource Created', 'The resource was successfully added to the library.')
+      success('Resource Created', 'The resource was successfully added to the library.')
 
       // Reset form
       setNewResource({
@@ -224,7 +224,7 @@ export default function ResourcesClient() {
       if (fileInputRef.current) fileInputRef.current.value = ''
       setIsCreating(false)
     } catch (error) {
-      toast.error('Failed to Create Resource', parseAPIError(error))
+      error('Failed to Create Resource', parseAPIError(error))
     } finally {
       setIsUploading(false)
     }
@@ -252,9 +252,9 @@ export default function ResourcesClient() {
           lastUpdated: updated.updated_at
         } : r
       ))
-      toast.success('Resource Updated', 'Changes saved successfully.')
+      success('Resource Updated', 'Changes saved successfully.')
     } catch (error) {
-      toast.error('Update Failed', parseAPIError(error))
+      error('Update Failed', parseAPIError(error))
     }
   }
 
@@ -264,9 +264,9 @@ export default function ResourcesClient() {
     try {
       await resourcesAPI.delete(id)
       setResources(prev => prev.filter(r => r.id !== id))
-      toast.success('Resource Deleted', 'The resource has been removed.')
+      success('Resource Deleted', 'The resource has been removed.')
     } catch (error) {
-      toast.error('Delete Failed', parseAPIError(error))
+      error('Delete Failed', parseAPIError(error))
     }
   }
 
@@ -277,7 +277,7 @@ export default function ResourcesClient() {
 
   return (
     <div className="px-4 py-5 sm:p-6">
-      <ToastContainer toasts={toast.toasts} onDismiss={toast.dismissToast} />
+      <ToastContainer toasts={toasts} onDismiss={dismissToast} />
 
       <div className="mb-6 sm:mb-8 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
         <div>

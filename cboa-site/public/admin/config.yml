@@ -2,7 +2,7 @@ backend:
   name: git-gateway
   branch: main
 
-media_folder: "cboa-site/public/uploads"
+media_folder: "public/uploads"
 public_folder: "/uploads"
 
 # Site configuration
@@ -13,7 +13,7 @@ display_url: "https://refalberta.ca"
 collections:
   - name: "officials"
     label: "Officials"
-    folder: "cboa-site/content/officials"
+    folder: "content/officials"
     create: true
     slug: "{{slug}}"
     fields:
@@ -29,7 +29,7 @@ collections:
 
   - name: "news"
     label: "News & Updates"
-    folder: "cboa-site/content/news"
+    folder: "content/news"
     create: true
     slug: "{{year}}-{{month}}-{{day}}-{{slug}}"
     fields:
@@ -44,7 +44,7 @@ collections:
 
   - name: "training"
     label: "Training Events"
-    folder: "cboa-site/content/training"
+    folder: "content/training"
     create: true
     slug: "{{year}}-{{month}}-{{day}}-{{slug}}"
     fields:
@@ -68,7 +68,7 @@ collections:
 
   - name: "resources"
     label: "Resources"
-    folder: "cboa-site/content/resources"
+    folder: "content/resources"
     create: true
     slug: "{{slug}}"
     fields:
@@ -89,14 +89,14 @@ collections:
     files:
       - label: "About Page"
         name: "about"
-        file: "cboa-site/content/pages/about.md"
+        file: "content/pages/about.md"
         fields:
           - { label: "Title", name: "title", widget: "string" }
           - { label: "Body", name: "body", widget: "markdown", buttons: ["bold", "italic", "code", "link", "heading-two", "heading-three", "quote", "bulleted-list", "numbered-list"], editor_components: ["image"], minimal: false }
           
       - label: "Home Page"
         name: "home"
-        file: "cboa-site/content/pages/home.md"
+        file: "content/pages/home.md"
         fields:
           - { label: "Hero Title", name: "heroTitle", widget: "string" }
           - { label: "Hero Subtitle", name: "heroSubtitle", widget: "string" }
@@ -114,7 +114,7 @@ collections:
     files:
       - label: "General Settings"
         name: "general"
-        file: "cboa-site/content/settings/general.yml"
+        file: "content/settings/general.yml"
         fields:
           - { label: "Site Title", name: "siteTitle", widget: "string" }
           - { label: "Site Description", name: "siteDescription", widget: "text" }
@@ -152,7 +152,7 @@ collections:
   # Portal Content Collections
   - name: "portal_announcements"
     label: "Portal Announcements"
-    folder: "cboa-site/content/portal/announcements"
+    folder: "content/portal/announcements"
     create: true
     slug: "{{year}}-{{month}}-{{day}}-{{slug}}"
     summary: "{{title}} - {{date}}"
@@ -168,7 +168,7 @@ collections:
 
   - name: "the_bounce"
     label: "The Bounce Newsletter"
-    folder: "cboa-site/content/newsletters"
+    folder: "content/newsletters"
     create: true
     slug: "{{year}}-{{month}}-{{day}}-{{slug}}"
     summary: "{{title}} - {{date}}"
@@ -181,7 +181,7 @@ collections:
 
   - name: "portal_resources"
     label: "Portal Resources"
-    folder: "cboa-site/content/portal/resources"
+    folder: "content/portal/resources"
     create: true
     slug: "{{slug}}"
     fields:
@@ -199,7 +199,7 @@ collections:
 
   - name: "game_assignments"
     label: "Game Assignments"
-    folder: "cboa-site/content/portal/assignments"
+    folder: "content/portal/assignments"
     create: true
     slug: "{{year}}-{{month}}-{{day}}-{{fields.venue}}"
     summary: "{{date}} - {{venue}} ({{level}})"
@@ -224,7 +224,7 @@ collections:
 
   - name: "rule_modifications"
     label: "Rule Modifications"
-    folder: "cboa-site/content/portal/rule-modifications"
+    folder: "content/portal/rule-modifications"
     create: true
     slug: "{{year}}-{{month}}-{{day}}-{{slug}}"
     summary: "{{title}} - {{category}}"

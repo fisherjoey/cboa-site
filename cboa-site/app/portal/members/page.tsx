@@ -73,7 +73,7 @@ export default function MembersPage() {
     activity_date: new Date().toISOString().split('T')[0],
     notes: ''
   })
-  const toast = useToast()
+  const { toasts, dismissToast, success, error, warning, info } = useToast()
   const [validationErrors, setValidationErrors] = useState<ValidationError[]>([])
   const [activityValidationErrors, setActivityValidationErrors] = useState<ValidationError[]>([])
 
@@ -97,7 +97,7 @@ export default function MembersPage() {
       setMembers(data)
     } catch (error) {
       const errorMessage = parseAPIError(error)
-      toast.error(errorMessage)
+      error(errorMessage)
     } finally {
       setIsLoading(false)
     }
@@ -169,7 +169,7 @@ export default function MembersPage() {
       const errors = validateMemberForm(editForm)
       if (hasErrors(errors)) {
         setValidationErrors(errors)
-        toast.error(formatValidationErrors(errors))
+        error(formatValidationErrors(errors))
         return
       }
 
@@ -194,11 +194,11 @@ export default function MembersPage() {
           id: selectedMember.id,
           ...sanitizedForm
         })
-        toast.success('Member updated successfully')
+        success('Member updated successfully')
       } else {
         // Create new member
         await membersAPI.create(sanitizedForm)
-        toast.success('Member created successfully')
+        success('Member created successfully')
       }
 
       await loadMembers()
@@ -207,7 +207,7 @@ export default function MembersPage() {
       setValidationErrors([])
     } catch (error) {
       const errorMessage = parseAPIError(error)
-      toast.error(errorMessage)
+      error(errorMessage)
     } finally {
       setIsSaving(false)
     }
@@ -220,12 +220,12 @@ export default function MembersPage() {
 
     try {
       await membersAPI.delete(memberId)
-      toast.success('Member deleted successfully')
+      success('Member deleted successfully')
       await loadMembers()
       setShowMemberModal(false)
     } catch (error) {
       const errorMessage = parseAPIError(error)
-      toast.error(errorMessage)
+      error(errorMessage)
     }
   }
 
@@ -250,12 +250,12 @@ export default function MembersPage() {
       const errors = validateActivityForm(activityForm)
       if (hasErrors(errors)) {
         setActivityValidationErrors(errors)
-        toast.error(formatValidationErrors(errors))
+        error(formatValidationErrors(errors))
         return
       }
 
       await memberActivitiesAPI.create(activityForm)
-      toast.success('Activity added successfully')
+      success('Activity added successfully')
 
       // Reload activities
       if (selectedMember?.id) {
@@ -267,7 +267,7 @@ export default function MembersPage() {
       setActivityValidationErrors([])
     } catch (error) {
       const errorMessage = parseAPIError(error)
-      toast.error(errorMessage)
+      error(errorMessage)
     } finally {
       setIsSaving(false)
     }
@@ -280,7 +280,7 @@ export default function MembersPage() {
 
     try {
       await memberActivitiesAPI.delete(activityId)
-      toast.success('Activity deleted successfully')
+      success('Activity deleted successfully')
 
       // Reload activities
       if (selectedMember?.id) {
@@ -289,7 +289,7 @@ export default function MembersPage() {
       }
     } catch (error) {
       const errorMessage = parseAPIError(error)
-      toast.error(errorMessage)
+      error(errorMessage)
     }
   }
 
@@ -316,7 +316,7 @@ export default function MembersPage() {
 
   return (
     <div className="max-w-7xl mx-auto p-6">
-      <ToastContainer toasts={toast.toasts} onDismiss={toast.dismissToast} />
+      <ToastContainer toasts={toasts} onDismiss={dismissToast} />
       <div className="mb-6">
         <div className="flex items-center justify-between mb-4">
           <h1 className="text-3xl font-bold text-gray-900">Members Directory</h1>

@@ -125,8 +125,7 @@ export default function MobileHeader() {
             <div className="pb-4 -mt-2 animate-slideDown">
               <form className="relative" onSubmit={(e) => {
                 e.preventDefault()
-                // Handle search
-                console.log('Search:', searchQuery)
+                // Handle search submission
               }}>
                 <input
                   type="text"

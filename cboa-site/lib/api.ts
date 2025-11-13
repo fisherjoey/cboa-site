@@ -1,12 +1,25 @@
 // API helper functions for portal data
 import { retryAsync, parseAPIError, AppError } from './errorHandling'
+import {
+  mockMembers,
+  mockActivities,
+  getMemberByNetlifyId,
+  getMemberById,
+  getActivitiesByMemberId,
+  createMockMember,
+  updateMockMember,
+  deleteMockMember
+} from './mockData/members'
 
 // Use local functions server for development
 const API_BASE = process.env.NODE_ENV === 'production'
   ? '/.netlify/functions'
   : 'http://localhost:9000/.netlify/functions'
 
-// Enhanced fetch with better error handling
+// Flag to enable mock data when functions aren't available
+const USE_MOCK_DATA = process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true' || process.env.NODE_ENV === 'development'
+
+// Enhanced fetch with better error handling and mock data fallback
 async function apiFetch(url: string, options?: RequestInit): Promise<Response> {
   try {
     const response = await fetch(url, {
@@ -184,70 +197,142 @@ export const newslettersAPI = {
   }
 }
 
-// Members API
+// Members API with mock data fallback
 export const membersAPI = {
   async getAll() {
-    return retryAsync(async () => {
-      const res = await apiFetch(`${API_BASE}/members`)
-      return res.json()
-    })
+    try {
+      return await retryAsync(async () => {
+        const res = await apiFetch(`${API_BASE}/members`)
+        return res.json()
+      })
+    } catch (error) {
+      if (USE_MOCK_DATA) {
+        console.warn('Using mock data for members (functions not available)')
+        return mockMembers
+      }
+      throw error
+    }
   },
 
   async getByNetlifyId(netlifyUserId: string) {
-    return retryAsync(async () => {
-      const res = await apiFetch(`${API_BASE}/members?netlify_user_id=${netlifyUserId}`)
-      return res.json()
-    })
+    try {
+      return await retryAsync(async () => {
+        const res = await apiFetch(`${API_BASE}/members?netlify_user_id=${netlifyUserId}`)
+        return res.json()
+      })
+    } catch (error) {
+      if (USE_MOCK_DATA) {
+        console.warn(`Using mock data for member with netlify_user_id: ${netlifyUserId}`)
+        return getMemberByNetlifyId(netlifyUserId)
+      }
+      throw error
+    }
   },
 
   async getById(id: string) {
-    return retryAsync(async () => {
-      const res = await apiFetch(`${API_BASE}/members?id=${id}`)
-      return res.json()
-    })
+    try {
+      return await retryAsync(async () => {
+        const res = await apiFetch(`${API_BASE}/members?id=${id}`)
+        return res.json()
+      })
+    } catch (error) {
+      if (USE_MOCK_DATA) {
+        console.warn(`Using mock data for member with id: ${id}`)
+        return getMemberById(id)
+      }
+      throw error
+    }
   },
 
   async create(member: any) {
-    const res = await apiFetch(`${API_BASE}/members`, {
-      method: 'POST',
-      body: JSON.stringify(member)
-    })
-    return res.json()
+    try {
+      const res = await apiFetch(`${API_BASE}/members`, {
+        method: 'POST',
+        body: JSON.stringify(member)
+      })
+      return res.json()
+    } catch (error) {
+      if (USE_MOCK_DATA) {
+        console.warn('Using mock data to create member')
+        return createMockMember(member)
+      }
+      throw error
+    }
   },
 
   async update(member: any) {
-    const res = await apiFetch(`${API_BASE}/members`, {
-      method: 'PUT',
-      body: JSON.stringify(member)
-    })
-    return res.json()
+    try {
+      const res = await apiFetch(`${API_BASE}/members`, {
+        method: 'PUT',
+        body: JSON.stringify(member)
+      })
+      return res.json()
+    } catch (error) {
+      if (USE_MOCK_DATA) {
+        console.warn(`Using mock data to update member: ${member.id}`)
+        return updateMockMember(member.id, member)
+      }
+      throw error
+    }
   },
 
   async delete(id: string) {
-    await apiFetch(`${API_BASE}/members?id=${id}`, {
-      method: 'DELETE'
-    })
+    try {
+      await apiFetch(`${API_BASE}/members?id=${id}`, {
+        method: 'DELETE'
+      })
+    } catch (error) {
+      if (USE_MOCK_DATA) {
+        console.warn(`Using mock data to delete member: ${id}`)
+        deleteMockMember(id)
+        return
+      }
+      throw error
+    }
   }
 }
 
-// Member Activities API
+// Member Activities API with mock data fallback
 export const memberActivitiesAPI = {
   async getAll(memberId?: string) {
-    return retryAsync(async () => {
-      const url = memberId
-        ? `${API_BASE}/member-activities?member_id=${memberId}`
-        : `${API_BASE}/member-activities`
-      const res = await apiFetch(url)
-      return res.json()
-    })
+    try {
+      return await retryAsync(async () => {
+        const url = memberId
+          ? `${API_BASE}/member-activities?member_id=${memberId}`
+          : `${API_BASE}/member-activities`
+        const res = await apiFetch(url)
+        return res.json()
+      })
+    } catch (error) {
+      if (USE_MOCK_DATA) {
+        console.warn(`Using mock data for activities${memberId ? ` for member: ${memberId}` : ''}`)
+        return memberId ? getActivitiesByMemberId(memberId) : mockActivities
+      }
+      throw error
+    }
   },
 
   async create(activity: any) {
-    const res = await apiFetch(`${API_BASE}/member-activities`, {
-      method: 'POST',
-      body: JSON.stringify(activity)
-    })
-    return res.json()
+    try {
+      const res = await apiFetch(`${API_BASE}/member-activities`, {
+        method: 'POST',
+        body: JSON.stringify(activity)
+      })
+      return res.json()
+    } catch (error) {
+      if (USE_MOCK_DATA) {
+        console.warn('Using mock data to create activity (not persisted)')
+        // Create a mock activity that won't persist
+        const newActivity = {
+          id: `mock-activity-${Date.now()}`,
+          ...activity,
+          created_at: new Date().toISOString()
+        }
+        mockActivities.push(newActivity)
+        return newActivity
+      }
+      throw error
+    }
   },
 
   async update(activity: any) {

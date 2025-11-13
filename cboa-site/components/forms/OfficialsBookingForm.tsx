@@ -72,8 +72,6 @@ export default function OfficialsBookingForm() {
     e.preventDefault()
 
     // Here you would normally send the data to your API
-    console.log('Form submitted:', formData)
-
     // For now, just show success
     setIsSubmitted(true)
 

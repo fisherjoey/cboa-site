@@ -18,11 +18,6 @@ export default function ResourceViewer({ resource, onClose }: ResourceViewerProp
   const [isFullscreen, setIsFullscreen] = useState(false)
   const [iframeError, setIframeError] = useState(false)
 
-  // Debug logging
-  console.log('ResourceViewer - resource:', resource)
-  console.log('ResourceViewer - fileUrl:', resource.fileUrl)
-  console.log('ResourceViewer - externalLink:', resource.externalLink)
-
   const getFileType = (url: string) => {
     const extension = url.split('.').pop()?.toLowerCase()
     

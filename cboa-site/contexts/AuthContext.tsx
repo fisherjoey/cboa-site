@@ -27,19 +27,12 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
 // Map Netlify Identity roles to our app roles
 function getUserRole(netlifyUser: any): UserRole {
-  console.log('Netlify User:', netlifyUser)
-  console.log('app_metadata:', netlifyUser?.app_metadata)
-  console.log('user_metadata:', netlifyUser?.user_metadata)
-  
   // Check both app_metadata.roles and user_metadata.roles
   // Also check if role is stored directly in user_metadata
   const appRoles = netlifyUser?.app_metadata?.roles || []
   const userRoles = netlifyUser?.user_metadata?.roles || []
   const directRole = netlifyUser?.user_metadata?.role
   const roles = [...appRoles, ...userRoles]
-  
-  console.log('Combined roles:', roles)
-  console.log('Direct role:', directRole)
   
   // Check direct role field first
   if (directRole) {
@@ -61,24 +54,45 @@ function getUserRole(netlifyUser: any): UserRole {
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [devRoleIndex, setDevRoleIndex] = useState(0)
 
   // Check if authentication should be disabled in development
   const isDevMode = process.env.NODE_ENV === 'development'
   const disableAuthInDev = process.env.NEXT_PUBLIC_DISABLE_AUTH_DEV === 'true'
   const shouldBypassAuth = isDevMode && disableAuthInDev
 
+  // Dev users for cycling through different roles
+  const devUsers = [
+    {
+      id: 'dev-user-admin',
+      email: 'admin@example.com',
+      name: 'Dev Admin User',
+      role: 'admin' as UserRole,
+      user_metadata: { full_name: 'Dev Admin User' },
+      app_metadata: { roles: ['admin'] }
+    },
+    {
+      id: 'dev-user-executive',
+      email: 'executive@example.com',
+      name: 'Dev Executive User',
+      role: 'executive' as UserRole,
+      user_metadata: { full_name: 'Dev Executive User' },
+      app_metadata: { roles: ['executive'] }
+    },
+    {
+      id: 'dev-user-official',
+      email: 'official@example.com',
+      name: 'Dev Official User',
+      role: 'official' as UserRole,
+      user_metadata: { full_name: 'Dev Official User' },
+      app_metadata: { roles: ['official'] }
+    }
+  ]
+
   useEffect(() => {
     // If authentication is bypassed in development, create a mock user
     if (shouldBypassAuth) {
-      console.log('🔓 Authentication bypassed in development mode')
-      setUser({
-        id: 'dev-user-admin',
-        email: 'dev@example.com',
-        name: 'Development Admin User',
-        role: 'admin', // Give admin role for testing all features
-        user_metadata: { full_name: 'Development Admin User' },
-        app_metadata: { roles: ['admin'] }
-      })
+      setUser(devUsers[devRoleIndex])
       setIsLoading(false)
       return
     }
@@ -133,11 +147,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         netlifyIdentity.off('error')
       }
     }
-  }, [shouldBypassAuth])
+  }, [shouldBypassAuth, devRoleIndex])
 
   const login = () => {
     if (shouldBypassAuth) {
-      console.log('🔓 Login bypassed in development mode')
       return
     }
     netlifyIdentity.open('login')
@@ -145,7 +158,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = () => {
     if (shouldBypassAuth) {
-      console.log('🔓 Logout bypassed in development mode')
+      // Cycle to next dev user role
+      const nextIndex = (devRoleIndex + 1) % devUsers.length
+      setDevRoleIndex(nextIndex)
+      setUser(devUsers[nextIndex])
       return
     }
     netlifyIdentity.logout()
@@ -153,7 +169,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signup = () => {
     if (shouldBypassAuth) {
-      console.log('🔓 Signup bypassed in development mode')
       return
     }
     netlifyIdentity.open('signup')

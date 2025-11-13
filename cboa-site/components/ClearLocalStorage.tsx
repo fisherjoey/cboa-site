@@ -8,7 +8,6 @@ export default function ClearLocalStorage() {
     if (typeof window !== 'undefined') {
       const keys = Object.keys(localStorage).filter(key => key.startsWith('cboa_'))
       keys.forEach(key => localStorage.removeItem(key))
-      console.log('Cleared localStorage:', keys)
     }
   }, [])
 

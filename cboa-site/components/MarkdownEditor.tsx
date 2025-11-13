@@ -77,15 +77,7 @@ export function MarkdownEditor({
           border-color: #dc2626 !important;
           box-shadow: 0 0 0 4px rgba(220, 38, 38, 0.15) !important;
         }
-        .w-md-editor-text-pre, 
-        .w-md-editor-text-input, 
-        .w-md-editor-text {
-          font-size: 16px !important;
-          line-height: 1.8 !important;
-          color: #000000 !important;
-          font-weight: 500 !important;
-          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif !important;
-        }
+        /* Remove all text formatting overrides to use vanilla editor defaults */
         .w-md-editor-text-pre .token.title {
           color: #1e40af !important;
           font-weight: 900 !important;
@@ -128,12 +120,7 @@ export function MarkdownEditor({
         data-color-mode="light"
         hideToolbar={readOnly}
         textareaProps={{
-          placeholder: placeholder,
-          style: {
-            fontSize: '16px',
-            color: '#000000',
-            fontWeight: '500'
-          }
+          placeholder: placeholder
         }}
         previewOptions={{
           components: {

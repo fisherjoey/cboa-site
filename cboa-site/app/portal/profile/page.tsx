@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useRole } from '@/contexts/RoleContext'
+import { useAuth } from '@/contexts/AuthContext'
 import { membersAPI, memberActivitiesAPI } from '@/lib/api'
 import { IconUser, IconMail, IconPhone, IconMapPin, IconCalendar, IconEdit, IconCheck, IconX } from '@tabler/icons-react'
 
@@ -38,7 +38,7 @@ interface Activity {
 }
 
 export default function ProfilePage() {
-  const { user } = useRole()
+  const { user, isLoading: authLoading } = useAuth()
   const [member, setMember] = useState<Member | null>(null)
   const [activities, setActivities] = useState<Activity[]>([])
   const [isEditing, setIsEditing] = useState(false)
@@ -59,13 +59,16 @@ export default function ProfilePage() {
   })
 
   useEffect(() => {
-    if (user) {
+    if (user && !authLoading) {
       loadMemberProfile()
     }
-  }, [user])
+  }, [user, authLoading])
 
   const loadMemberProfile = async () => {
-    if (!user?.id) return
+    if (!user?.id) {
+      setIsLoading(false)
+      return
+    }
 
     try {
       setIsLoading(true)
@@ -85,10 +88,10 @@ export default function ProfilePage() {
         // Member doesn't exist, create new record
         const newMember = {
           netlify_user_id: user.id,
-          name: user.user_metadata?.full_name || user.email?.split('@')[0] || 'New Member',
+          name: user.user_metadata?.full_name || user.name || user.email?.split('@')[0] || 'New Member',
           email: user.email || '',
           status: 'active',
-          role: 'official'
+          role: user.role || 'official'
         }
 
         const created = await membersAPI.create(newMember)
@@ -139,7 +142,7 @@ export default function ProfilePage() {
     }))
   }
 
-  if (isLoading) {
+  if (authLoading || isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
@@ -150,11 +153,21 @@ export default function ProfilePage() {
     )
   }
 
+  if (!user) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <p className="text-gray-600">Please log in to view your profile.</p>
+        </div>
+      </div>
+    )
+  }
+
   if (!member) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
-          <p className="text-gray-600">Unable to load profile. Please try again.</p>
+          <p className="text-gray-600">Unable to load profile. Please try refreshing the page.</p>
         </div>
       </div>
     )

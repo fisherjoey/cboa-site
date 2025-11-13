@@ -31,6 +31,9 @@ export default function PortalHeader() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const pathname = usePathname()
 
+  // Check if in dev mode
+  const isDevMode = process.env.NODE_ENV === 'development' && process.env.NEXT_PUBLIC_DISABLE_AUTH_DEV === 'true'
+
   const getRoleBadgeColor = (role: string) => {
     switch(role) {
       case 'admin': return 'bg-red-500'
@@ -113,11 +116,11 @@ export default function PortalHeader() {
                 {/* Profile Dropdown */}
                 {profileMenuOpen && (
                   <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50">
-                    <button 
+                    <button
                       onClick={logout}
                       className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100"
                     >
-                      Logout
+                      {isDevMode ? 'Switch Role' : 'Logout'}
                     </button>
                   </div>
                 )}
@@ -231,12 +234,12 @@ export default function PortalHeader() {
               ))}
               
               <hr className="border-slate-700" />
-              
-              <button 
+
+              <button
                 onClick={logout}
                 className="block w-full text-left px-4 py-2 text-red-400 hover:bg-slate-700"
               >
-                Logout
+                {isDevMode ? 'Switch Role (Dev)' : 'Logout'}
               </button>
             </div>
           )}

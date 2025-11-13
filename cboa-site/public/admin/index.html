@@ -44,12 +44,87 @@
       }
       
       /* Editor pane styling */
-      [class*="ControlContainer"] textarea,
-      [class*="EditorContainer"] {
+      [class*="ControlContainer"] textarea {
         font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
         font-size: 16px !important;
-        line-height: 1.8 !important;
         padding: 20px !important;
+      }
+
+      [class*="EditorContainer"] {
+        padding: 20px !important;
+      }
+
+      /* Fix cursor alignment in markdown editor */
+      [class*="ControlContainer"] textarea {
+        line-height: normal !important;
+        box-sizing: border-box !important;
+        vertical-align: top !important;
+      }
+
+      /* Ensure proper rendering in the editor iframe/content area */
+      .tox-edit-area__iframe,
+      .tox-edit-area iframe {
+        line-height: 1.5 !important;
+      }
+
+      /* Remove any inherited line-height that might cause cursor drift */
+      [class*="nc-controlPane-control"] textarea,
+      .nc-controlPane-control textarea,
+      [data-slate-editor="true"] {
+        line-height: normal !important;
+      }
+
+      /* Ensure consistent rendering for content editable areas */
+      [contenteditable="true"] {
+        line-height: normal !important;
+      }
+
+      /* Fix Decap CMS Slate editor specifically */
+      [data-slate-editor="true"],
+      [data-slate-node="element"],
+      [data-slate-string="true"] {
+        line-height: 1.4 !important;
+        letter-spacing: normal !important;
+        word-spacing: normal !important;
+      }
+
+      /* Reset all Slate editor content to prevent cursor drift */
+      [role="textbox"] {
+        line-height: 1.4 !important;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+        font-size: 16px !important;
+        padding: 12px !important;
+        letter-spacing: 0 !important;
+        word-spacing: 0 !important;
+      }
+
+      /* Ensure spans within editor don't cause drift */
+      [data-slate-editor="true"] span,
+      [role="textbox"] span {
+        line-height: inherit !important;
+        letter-spacing: inherit !important;
+      }
+
+      /* Reset paragraphs in editor */
+      [data-slate-editor="true"] p,
+      [role="textbox"] p {
+        margin: 0 !important;
+        line-height: 1.4 !important;
+      }
+
+      /* Comprehensive reset for all Decap CMS editor elements */
+      .nc-controlPane-widget,
+      .nc-widgetMarkdown-wrapper,
+      .css-v7duua {
+        line-height: 1.4 !important;
+      }
+
+      /* Remove any transform that might cause misalignment */
+      [data-slate-editor="true"] *,
+      [role="textbox"] * {
+        transform: none !important;
+        letter-spacing: 0 !important;
+        word-spacing: 0 !important;
       }
       
       /* Preview pane styling */

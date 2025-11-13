@@ -19,7 +19,7 @@ interface RuleModificationsClientProps {
 
 export default function RuleModificationsClient({ modifications: initialModifications, categories }: RuleModificationsClientProps) {
   const { user } = useRole()
-  const toast = useToast()
+  const { toasts, dismissToast, success, error, warning, info } = useToast()
   const [modifications, setModifications] = useState<any[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [selectedCategory, setSelectedCategory] = useState('all')
@@ -48,9 +48,9 @@ export default function RuleModificationsClient({ modifications: initialModifica
     try {
       const data = await ruleModificationsAPI.getAll()
       setModifications(data)
-    } catch (error) {
-      const errorMessage = parseAPIError(error)
-      toast.error(`Failed to load rule modifications: ${errorMessage}`)
+    } catch (err) {
+      const errorMessage = parseAPIError(err)
+      error(`Failed to load rule modifications: ${errorMessage}`)
     } finally {
       setIsLoading(false)
     }
@@ -90,7 +90,7 @@ export default function RuleModificationsClient({ modifications: initialModifica
 
   const handleCreate = async () => {
     if (!newModification.title || !newModification.content) {
-      toast.error('Please fill in all required fields (title and content)')
+      error('Please fill in all required fields (title and content)')
       return
     }
 
@@ -118,10 +118,10 @@ export default function RuleModificationsClient({ modifications: initialModifica
         active: true
       })
       setIsCreating(false)
-      toast.success('Rule modification created successfully!')
-    } catch (error) {
-      const errorMessage = parseAPIError(error)
-      toast.error(`Failed to create rule modification: ${errorMessage}`)
+      success('Rule modification created successfully!')
+    } catch (err) {
+      const errorMessage = parseAPIError(err)
+      error(`Failed to create rule modification: ${errorMessage}`)
     }
   }
 
@@ -143,10 +143,10 @@ export default function RuleModificationsClient({ modifications: initialModifica
       setModifications(prev => prev.map(mod =>
         mod.id === id ? updated : mod
       ))
-      toast.success('Rule modification updated successfully!')
-    } catch (error) {
-      const errorMessage = parseAPIError(error)
-      toast.error(`Failed to update rule modification: ${errorMessage}`)
+      success('Rule modification updated successfully!')
+    } catch (err) {
+      const errorMessage = parseAPIError(err)
+      error(`Failed to update rule modification: ${errorMessage}`)
     }
   }
 
@@ -155,10 +155,10 @@ export default function RuleModificationsClient({ modifications: initialModifica
       try {
         await ruleModificationsAPI.delete(id)
         setModifications(prev => prev.filter(mod => mod.id !== id))
-        toast.success('Rule modification deleted successfully!')
-      } catch (error) {
-        const errorMessage = parseAPIError(error)
-        toast.error(`Failed to delete rule modification: ${errorMessage}`)
+        success('Rule modification deleted successfully!')
+      } catch (err) {
+        const errorMessage = parseAPIError(err)
+        error(`Failed to delete rule modification: ${errorMessage}`)
       }
     }
   }
@@ -249,11 +249,11 @@ export default function RuleModificationsClient({ modifications: initialModifica
                 value={newModification.title}
                 onChange={(e) => setNewModification({...newModification, title: e.target.value})}
                 className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-cboa-blue ${
-                  getFieldError('title', validationErrors) ? 'border-red-500' : 'border-gray-300'
+                  getFieldError(validationErrors, 'title') ? 'border-red-500' : 'border-gray-300'
                 }`}
               />
-              {getFieldError('title', validationErrors) && (
-                <p className="mt-1 text-sm text-red-600">{getFieldError('title', validationErrors)}</p>
+              {getFieldError(validationErrors, 'title') && (
+                <p className="mt-1 text-sm text-red-600">{getFieldError(validationErrors, 'title')}</p>
               )}
             </div>
             <div>
@@ -292,8 +292,8 @@ export default function RuleModificationsClient({ modifications: initialModifica
                 value={newModification.content}
                 onChange={(value) => setNewModification({...newModification, content: value || ''})}
               />
-              {getFieldError('content', validationErrors) && (
-                <p className="mt-1 text-sm text-red-600">{getFieldError('content', validationErrors)}</p>
+              {getFieldError(validationErrors, 'content') && (
+                <p className="mt-1 text-sm text-red-600">{getFieldError(validationErrors, 'content')}</p>
               )}
             </div>
             <div className="flex gap-2">
@@ -343,11 +343,11 @@ export default function RuleModificationsClient({ modifications: initialModifica
                           value={modification.title}
                           onChange={(e) => handleUpdate(modification.id, { title: e.target.value })}
                           className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-cboa-blue ${
-                            getFieldError('title', validationErrors) ? 'border-red-500' : 'border-gray-300'
+                            getFieldError(validationErrors, 'title') ? 'border-red-500' : 'border-gray-300'
                           }`}
                         />
-                        {getFieldError('title', validationErrors) && (
-                          <p className="mt-1 text-sm text-red-600">{getFieldError('title', validationErrors)}</p>
+                        {getFieldError(validationErrors, 'title') && (
+                          <p className="mt-1 text-sm text-red-600">{getFieldError(validationErrors, 'title')}</p>
                         )}
                       </div>
                       <div>
@@ -386,8 +386,8 @@ export default function RuleModificationsClient({ modifications: initialModifica
                           value={modification.content || modification.body || ''}
                           onChange={(value) => handleUpdate(modification.id, { content: value })}
                         />
-                        {getFieldError('content', validationErrors) && (
-                          <p className="mt-1 text-sm text-red-600">{getFieldError('content', validationErrors)}</p>
+                        {getFieldError(validationErrors, 'content') && (
+                          <p className="mt-1 text-sm text-red-600">{getFieldError(validationErrors, 'content')}</p>
                         )}
                       </div>
                       <div className="flex gap-2">
@@ -514,7 +514,7 @@ export default function RuleModificationsClient({ modifications: initialModifica
         </Card>
       )}
 
-      <ToastContainer />
+      <ToastContainer toasts={toasts} onDismiss={dismissToast} />
     </div>
   )
 }

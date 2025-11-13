@@ -47,7 +47,7 @@ export default function NewsClient({ initialAnnouncements }: NewsClientProps) {
     author: 'CBOA Executive',
     date: new Date().toISOString()
   })
-  const toast = useToast()
+  const { toasts, dismissToast, success, error, warning, info } = useToast()
   const [validationErrors, setValidationErrors] = useState<ValidationError[]>([])
 
   const canEdit = user.role === 'admin' || user.role === 'executive'
@@ -63,7 +63,7 @@ export default function NewsClient({ initialAnnouncements }: NewsClientProps) {
       setAnnouncements(data)
     } catch (error) {
       const errorMessage = parseAPIError(error)
-      toast.error(`Failed to load announcements: ${errorMessage}`)
+      error(`Failed to load announcements: ${errorMessage}`)
     } finally {
       setIsLoading(false)
     }
@@ -83,7 +83,7 @@ export default function NewsClient({ initialAnnouncements }: NewsClientProps) {
     const errors = validateAnnouncementForm(newAnnouncement)
     if (hasErrors(errors)) {
       setValidationErrors(errors)
-      toast.error('Please fix the validation errors before submitting')
+      error('Please fix the validation errors before submitting')
       return
     }
 
@@ -110,10 +110,10 @@ export default function NewsClient({ initialAnnouncements }: NewsClientProps) {
       })
       setValidationErrors([])
       setIsCreating(false)
-      toast.success('Announcement created successfully')
+      success('Announcement created successfully')
     } catch (error) {
       const errorMessage = parseAPIError(error)
-      toast.error(`Failed to create announcement: ${errorMessage}`)
+      error(`Failed to create announcement: ${errorMessage}`)
     }
   }
 
@@ -132,10 +132,10 @@ export default function NewsClient({ initialAnnouncements }: NewsClientProps) {
         a.id === id ? updated : a
       ))
       setEditingId(null)
-      toast.success('Announcement updated successfully')
+      success('Announcement updated successfully')
     } catch (error) {
       const errorMessage = parseAPIError(error)
-      toast.error(`Failed to update announcement: ${errorMessage}`)
+      error(`Failed to update announcement: ${errorMessage}`)
     }
   }
 
@@ -144,10 +144,10 @@ export default function NewsClient({ initialAnnouncements }: NewsClientProps) {
       try {
         await announcementsAPI.delete(id)
         setAnnouncements(prev => prev.filter(a => a.id !== id))
-        toast.success('Announcement deleted successfully')
+        success('Announcement deleted successfully')
       } catch (error) {
         const errorMessage = parseAPIError(error)
-        toast.error(`Failed to delete announcement: ${errorMessage}`)
+        error(`Failed to delete announcement: ${errorMessage}`)
       }
     }
   }
@@ -174,7 +174,7 @@ export default function NewsClient({ initialAnnouncements }: NewsClientProps) {
 
   return (
     <div className="px-4 py-5 sm:p-6">
-      <ToastContainer toasts={toast.toasts} onDismiss={toast.dismissToast} />
+      <ToastContainer toasts={toasts} onDismiss={dismissToast} />
       <div className="mb-8 flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">News & Announcements</h1>

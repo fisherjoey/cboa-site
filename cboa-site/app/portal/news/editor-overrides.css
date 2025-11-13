@@ -20,18 +20,4 @@
   font-size: 16px !important;
 }
 
-/* Make the entire editor larger */
-.w-md-editor {
-  font-size: 16px !important;
-}
-
-.w-md-editor-text-pre, 
-.w-md-editor-text-input {
-  font-size: 16px !important;
-  line-height: 1.6 !important;
-}
-
-/* Preview text size */
-.w-md-editor-preview {
-  font-size: 16px !important;
-}
+/* All text formatting overrides removed to use vanilla editor defaults */
