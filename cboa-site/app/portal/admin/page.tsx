@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react'
 import Link from 'next/link'
-import { 
+import {
   IconFileText,
   IconSpeakerphone,
   IconNews,
@@ -11,7 +11,13 @@ import {
   IconUsers,
   IconRocket,
   IconPlus,
-  IconUpload
+  IconUpload,
+  IconWorld,
+  IconArticle,
+  IconCalendarEvent,
+  IconFileDescription,
+  IconUserCheck,
+  IconLayoutDashboard
 } from '@tabler/icons-react'
 
 export default function PortalAdmin() {
@@ -78,6 +84,18 @@ export default function PortalAdmin() {
       links: [
         { label: 'View Members', href: '/portal/admin/users' },
         { label: 'Pending Applications', href: '/portal/admin/applications' },
+      ]
+    },
+    {
+      title: 'Public Website Content',
+      description: 'Manage all public-facing website content',
+      icon: IconWorld,
+      links: [
+        { label: 'News Articles', href: '/portal/admin/public-content/news', icon: IconArticle },
+        { label: 'Training Events', href: '/portal/admin/public-content/training', icon: IconCalendarEvent },
+        { label: 'Resources', href: '/portal/admin/public-content/resources', icon: IconFileDescription },
+        { label: 'Officials Profiles', href: '/portal/admin/public-content/officials', icon: IconUserCheck },
+        { label: 'Page Content (Home/About)', href: '/portal/admin/public-content/pages', icon: IconLayoutDashboard },
       ]
     },
   ]
