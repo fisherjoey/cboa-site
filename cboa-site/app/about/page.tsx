@@ -2,23 +2,14 @@ import Hero from '@/components/content/Hero'
 import Card from '@/components/ui/Card'
 import CTASection from '@/components/ui/CTASection'
 import { getSiteSettings } from '@/lib/settings'
-import { publicPagesAPI } from '@/lib/api'
+import AboutContent from './about-content'
 import { IconStar, IconScale, IconTrendingUp, IconUsers, IconBallBasketball, IconTrophy, IconCheck } from '@tabler/icons-react'
 import Image from 'next/image'
 
-export default async function AboutPage() {
+export default function AboutPage() {
   const settings = getSiteSettings()
   const executiveTeam = settings.executiveTeam || []
 
-  // Get the about page content from database
-  let htmlContent: string | null = null
-  try {
-    const aboutPage = await publicPagesAPI.getByName('about')
-    htmlContent = aboutPage?.content || null
-  } catch (error) {
-    console.error('Failed to load about page content:', error)
-  }
-  
   const values = [
     {
       title: 'Excellence',
@@ -74,52 +65,8 @@ export default async function AboutPage() {
         </div>
       </section>
 
-      {/* CMS Content Section */}
-      {htmlContent && (
-        <section className="py-16 bg-gray-50">
-          <div className="container mx-auto px-4">
-            <div className="max-w-4xl mx-auto">
-              <div className="tinymce-content">
-                {htmlContent ? (
-                  <div dangerouslySetInnerHTML={{ __html: htmlContent }} />
-                ) : (
-                  <div dangerouslySetInnerHTML={{ __html: aboutContent?.content || aboutContent?.body || '' }} />
-                )}
-              </div>
-            </div>
-          </div>
-        </section>
-      )}
-
-      {/* History Section - Fallback if no CMS content */}
-      {!htmlContent && (
-        <section className="py-16 bg-gray-50">
-          <div className="container mx-auto px-4">
-            <div className="max-w-4xl mx-auto">
-              <h2 className="text-3xl font-bold text-cboa-blue mb-8 text-center">Our History</h2>
-              <div className="prose prose-lg mx-auto">
-                <p className="text-gray-700 mb-4">
-                  The Calgary Basketball Officials Association was founded in 1964 by a group of
-                  dedicated basketball enthusiasts who recognized the need for organized, professional
-                  officiating in Calgary's growing basketball community.
-                </p>
-                <p className="text-gray-700 mb-4">
-                  Starting with just 25 members, CBOA has grown to over 250 active officials,
-                  making us one of the largest basketball officiating organizations in Western Canada.
-                  Our officials work games ranging from youth recreational leagues to high-level
-                  provincial championships.
-                </p>
-                <p className="text-gray-700">
-                  Over the past 45 years, CBOA has been instrumental in developing officiating
-                  standards, training programs, and mentorship initiatives that have produced some
-                  of Canada's finest basketball officials, including several who have gone on to
-                  officiate at national and international levels.
-                </p>
-              </div>
-            </div>
-          </div>
-        </section>
-      )}
+      {/* CMS Content Section - Fetched client-side */}
+      <AboutContent />
 
       {/* Values Section */}
       <section className="py-16">

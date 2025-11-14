@@ -1,17 +1,58 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Hero from '@/components/content/Hero'
 import Card from '@/components/ui/Card'
 import { ContentItem } from '@/lib/content'
+import { publicResourcesAPI } from '@/lib/api'
 
 interface ResourcesClientProps {
-  resources: ContentItem[]
+  resources?: ContentItem[]
 }
 
-export default function ResourcesClient({ resources }: ResourcesClientProps) {
+export default function ResourcesClient({ resources: initialResources }: ResourcesClientProps) {
+  const [resources, setResources] = useState<ContentItem[]>(initialResources || [])
+  const [loading, setLoading] = useState(!initialResources)
   const [filterCategory, setFilterCategory] = useState('all')
   const [searchTerm, setSearchTerm] = useState('')
+
+  useEffect(() => {
+    // If we already have initial data, don't fetch
+    if (initialResources && initialResources.length > 0) return
+
+    async function fetchResources() {
+      try {
+        setLoading(true)
+        const dbResources = await publicResourcesAPI.getActive()
+
+        const sorted = dbResources.sort((a, b) => {
+          if (a.priority !== b.priority) {
+            return b.priority - a.priority
+          }
+          return a.title.localeCompare(b.title)
+        })
+
+        const formatted = sorted.map(resource => ({
+          title: resource.title,
+          slug: resource.slug,
+          category: resource.category,
+          description: resource.description || '',
+          fileType: resource.file_type,
+          downloadLink: resource.file_url,
+          accessLevel: 'public' as const,
+          lastUpdated: resource.updated_at
+        }))
+
+        setResources(formatted)
+      } catch (error) {
+        console.error('Failed to load resources:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchResources()
+  }, [initialResources])
   
   const categories = ['All', ...new Set(resources.map(r => r.category))].sort()
   

@@ -1,9 +1,10 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Hero from '@/components/content/Hero'
 import Card from '@/components/ui/Card'
 import Button from '@/components/ui/Button'
+import { publicTrainingAPI } from '@/lib/api'
 import { IconUserPlus, IconBooks, IconBallBasketball, IconBook, IconTrendingUp, IconUsers, IconRun, IconChecklist, IconUsersGroup, IconPencil, IconCheck, IconVideo, IconFileText, IconSchool } from '@tabler/icons-react'
 
 interface TrainingEvent {
@@ -23,11 +24,49 @@ interface TrainingEvent {
 }
 
 interface TrainingClientProps {
-  trainingEvents: TrainingEvent[]
+  trainingEvents?: TrainingEvent[]
 }
 
-export default function TrainingClient({ trainingEvents }: TrainingClientProps) {
+export default function TrainingClient({ trainingEvents: initialEvents }: TrainingClientProps) {
   const [activeTab, setActiveTab] = useState('overview')
+  const [trainingEvents, setTrainingEvents] = useState<TrainingEvent[]>(initialEvents || [])
+  const [loading, setLoading] = useState(!initialEvents)
+
+  useEffect(() => {
+    // If we already have initial data, don't fetch
+    if (initialEvents && initialEvents.length > 0) return
+
+    async function fetchEvents() {
+      try {
+        setLoading(true)
+        const events = await publicTrainingAPI.getUpcoming()
+
+        const formatted = events.map(event => ({
+          title: event.title,
+          date: event.event_date,
+          startTime: event.event_time || '9:00 AM',
+          endTime: event.event_time ? (
+            new Date(new Date(`2000-01-01 ${event.event_time}`).getTime() + 2 * 60 * 60 * 1000)
+              .toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })
+          ) : '11:00 AM',
+          location: event.location || 'TBD',
+          type: 'workshop' as const,
+          description: event.description,
+          registrationLink: event.registration_url,
+          instructor: event.instructor,
+          slug: event.slug
+        }))
+
+        setTrainingEvents(formatted)
+      } catch (error) {
+        console.error('Failed to load training events:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchEvents()
+  }, [initialEvents])
   
   const certificationLevels = [
     {

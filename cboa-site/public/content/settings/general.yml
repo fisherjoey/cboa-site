@@ -1,0 +1,59 @@
+siteTitle: Calgary Basketball Officials Association
+siteDescription: Calgary's premier basketball officiating organization providing
+  trained and certified referees for all levels of basketball competition.
+statistics:
+  activeOfficials: 250+
+  gamesPerSeason: 5,000+
+  yearsOfService: "45"
+executiveTeam:
+  - name: Natasha Proulx
+    position: President
+    email: president@cboa.ca
+    image: /images/executive-placeholder.svg
+  - name: Justin Weir
+    position: Vice President
+    email: vicepresident@cboa.ca
+  - name: Ian Pollard
+    position: Past President
+    email: pastpresident@cboa.ca
+  - name: Cole Andrew
+    position: Treasurer
+    email: treasurer@cboa.ca
+  - name: Shane Ross
+    position: Secretary
+    email: secretary@cboa.ca
+  - name: Cam Broadhead
+    position: Performance and Assessment
+    email: performance@cboa.ca
+  - name: David Falkenberg
+    position: Member Services
+    email: memberservices@cboa.ca
+  - name: Doran Davidson
+    position: Referee Development
+    email: education@cboa.ca
+  - name: Ryler Kerrison
+    position: Assignor
+    email: assignor@cboa.ca
+  - name: Jerome Bohaychuk
+    position: Scheduler
+    email: jerome@cboa.ca
+  - name: Joe Lam
+    position: Scheduler
+    email: joe.lam@cboa.ca
+  - name: Joey Fisher
+    position: Webmaster
+    email: webmaster@cboa.ca
+  - name: Chris Gauvin
+    position: Officiating Coordinator
+    email: officiating@cboa.ca
+  - name: Candy (Kayla) Brown
+    position: Recruiting Coordinator
+    email: recruiting@cboa.ca
+socialMedia:
+  facebook: ""
+  twitter: ""
+  instagram: ""
+  youtube: ""
+contact:
+  email: info@cboa.ca
+  address: Calgary, Alberta, Canada
