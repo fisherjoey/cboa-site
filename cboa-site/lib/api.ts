@@ -11,10 +11,8 @@ import {
   deleteMockMember
 } from './mockData/members'
 
-// Use local functions server for development
-const API_BASE = process.env.NODE_ENV === 'production'
-  ? '/.netlify/functions'
-  : 'http://localhost:8889/.netlify/functions'
+// Use relative URL for both dev and production so Netlify Dev proxy works
+const API_BASE = '/.netlify/functions'
 
 // Flag to enable mock data when functions aren't available
 const USE_MOCK_DATA = process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true' || process.env.NODE_ENV === 'development'
