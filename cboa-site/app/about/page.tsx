@@ -2,17 +2,24 @@ import Hero from '@/components/content/Hero'
 import Card from '@/components/ui/Card'
 import CTASection from '@/components/ui/CTASection'
 import { getSiteSettings } from '@/lib/settings'
-import { getContentBySlug } from '@/lib/content'
+import { publicPagesAPI } from '@/lib/api'
 import { IconStar, IconScale, IconTrendingUp, IconUsers, IconBallBasketball, IconTrophy, IconCheck } from '@tabler/icons-react'
 import Image from 'next/image'
+
+export const dynamic = 'force-dynamic'
 
 export default async function AboutPage() {
   const settings = getSiteSettings()
   const executiveTeam = settings.executiveTeam || []
 
-  // Get the about page content from CMS
-  const aboutContent = getContentBySlug('pages', 'about')
-  const htmlContent = aboutContent?.content || aboutContent?.body || null
+  // Get the about page content from database
+  let htmlContent: string | null = null
+  try {
+    const aboutPage = await publicPagesAPI.getByName('about')
+    htmlContent = aboutPage?.content || null
+  } catch (error) {
+    console.error('Failed to load about page content:', error)
+  }
   
   const values = [
     {
