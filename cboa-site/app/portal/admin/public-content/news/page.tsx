@@ -1,0 +1,668 @@
+'use client'
+
+import { useState, useEffect } from 'react'
+import { IconArticle, IconCalendar, IconSearch, IconPlus, IconEdit, IconTrash, IconDeviceFloppy, IconX, IconStar, IconEye, IconEyeOff } from '@tabler/icons-react'
+import { useRole } from '@/contexts/RoleContext'
+import { TinyMCEEditor, HTMLViewer } from '@/components/TinyMCEEditor'
+import { publicNewsAPI } from '@/lib/api'
+import { useToast } from '@/hooks/useToast'
+import { ToastContainer } from '@/components/Toast'
+import { parseAPIError, sanitize, ValidationError } from '@/lib/errorHandling'
+import { getFieldError } from '@/lib/portalValidation'
+import type { PublicNewsItem } from '@/types/publicContent'
+
+export default function PublicNewsAdmin() {
+  const { user } = useRole()
+  const { toasts, dismissToast, success, error, warning, info } = useToast()
+  const [newsItems, setNewsItems] = useState<PublicNewsItem[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [searchTerm, setSearchTerm] = useState('')
+  const [isCreating, setIsCreating] = useState(false)
+  const [editingId, setEditingId] = useState<string | null>(null)
+  const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set())
+  const [newArticle, setNewArticle] = useState({
+    title: '',
+    slug: '',
+    published_date: new Date().toISOString().split('T')[0],
+    author: user?.name || '',
+    image_url: '',
+    excerpt: '',
+    body: '',
+    featured: false,
+    tags: '',
+    active: true,
+    priority: 0
+  })
+  const [validationErrors, setValidationErrors] = useState<ValidationError[]>([])
+
+  const canEdit = user.role === 'admin' || user.role === 'executive'
+
+  // Load news items from API
+  useEffect(() => {
+    loadNews()
+  }, [])
+
+  const loadNews = async () => {
+    try {
+      const data = await publicNewsAPI.getAll()
+      setNewsItems(data)
+    } catch (err) {
+      const errorMessage = parseAPIError(err)
+      error(`Failed to load news articles: ${errorMessage}`)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  // Filter news based on search term
+  const filteredNews = newsItems.filter(item => {
+    const matchesSearch = searchTerm === '' ||
+      item.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      item.excerpt?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      item.body?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      item.author?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      item.tags?.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()))
+    return matchesSearch
+  })
+
+  // Auto-generate slug from title
+  const generateSlug = (title: string) => {
+    return title
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/(^-|-$)/g, '')
+  }
+
+  const toggleExpanded = (id: string) => {
+    const newExpanded = new Set(expandedItems)
+    if (newExpanded.has(id)) {
+      newExpanded.delete(id)
+    } else {
+      newExpanded.add(id)
+    }
+    setExpandedItems(newExpanded)
+  }
+
+  const handleCreate = async () => {
+    if (!newArticle.title || !newArticle.excerpt || !newArticle.body) {
+      error('Please fill in all required fields (title, excerpt, and body)')
+      return
+    }
+
+    // Sanitize inputs
+    const sanitizedTitle = sanitize.text(newArticle.title)
+    const sanitizedSlug = newArticle.slug || generateSlug(newArticle.title)
+    const sanitizedAuthor = sanitize.text(newArticle.author)
+    const sanitizedExcerpt = sanitize.text(newArticle.excerpt)
+    const sanitizedBody = sanitize.html(newArticle.body)
+    const sanitizedImageUrl = sanitize.text(newArticle.image_url)
+
+    try {
+      const created = await publicNewsAPI.create({
+        title: sanitizedTitle,
+        slug: sanitizedSlug,
+        published_date: newArticle.published_date,
+        author: sanitizedAuthor,
+        image_url: sanitizedImageUrl || undefined,
+        excerpt: sanitizedExcerpt,
+        body: sanitizedBody,
+        featured: newArticle.featured,
+        tags: newArticle.tags ? newArticle.tags.split(',').map(t => t.trim()) : [],
+        active: newArticle.active,
+        priority: newArticle.priority
+      })
+      setNewsItems([created, ...newsItems])
+      setNewArticle({
+        title: '',
+        slug: '',
+        published_date: new Date().toISOString().split('T')[0],
+        author: user?.name || '',
+        image_url: '',
+        excerpt: '',
+        body: '',
+        featured: false,
+        tags: '',
+        active: true,
+        priority: 0
+      })
+      setIsCreating(false)
+      success('News article created successfully!')
+    } catch (err) {
+      const errorMessage = parseAPIError(err)
+      error(`Failed to create news article: ${errorMessage}`)
+    }
+  }
+
+  const handleUpdate = async (id: string, updates: any) => {
+    // Sanitize inputs
+    const sanitizedUpdates = { ...updates }
+    if (updates.title) {
+      sanitizedUpdates.title = sanitize.text(updates.title)
+    }
+    if (updates.author) {
+      sanitizedUpdates.author = sanitize.text(updates.author)
+    }
+    if (updates.excerpt) {
+      sanitizedUpdates.excerpt = sanitize.text(updates.excerpt)
+    }
+    if (updates.body) {
+      sanitizedUpdates.body = sanitize.html(updates.body)
+    }
+    if (updates.image_url) {
+      sanitizedUpdates.image_url = sanitize.text(updates.image_url)
+    }
+    if (updates.tags && typeof updates.tags === 'string') {
+      sanitizedUpdates.tags = updates.tags.split(',').map((t: string) => t.trim())
+    }
+
+    try {
+      const updated = await publicNewsAPI.update({ id, ...sanitizedUpdates })
+      setNewsItems(prev => prev.map(item =>
+        item.id === id ? updated : item
+      ))
+      success('News article updated successfully!')
+    } catch (err) {
+      const errorMessage = parseAPIError(err)
+      error(`Failed to update news article: ${errorMessage}`)
+    }
+  }
+
+  const handleDelete = async (id: string) => {
+    if (confirm('Are you sure you want to delete this news article?')) {
+      try {
+        await publicNewsAPI.delete(id)
+        setNewsItems(prev => prev.filter(item => item.id !== id))
+        success('News article deleted successfully!')
+      } catch (err) {
+        const errorMessage = parseAPIError(err)
+        error(`Failed to delete news article: ${errorMessage}`)
+      }
+    }
+  }
+
+  return (
+    <div className="py-5 sm:py-6">
+      <ToastContainer toasts={toasts} onDismiss={dismissToast} />
+
+      {/* Header */}
+      <div className="mb-6 sm:mb-8 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Public News Articles</h1>
+          <p className="mt-1 sm:mt-2 text-sm sm:text-base text-gray-600">
+            Manage news articles displayed on the public website
+          </p>
+        </div>
+        {canEdit && !isCreating && (
+          <button
+            onClick={() => {
+              setIsCreating(true)
+              setNewArticle({
+                title: '',
+                slug: '',
+                published_date: new Date().toISOString().split('T')[0],
+                author: user?.name || '',
+                image_url: '',
+                excerpt: '',
+                body: '',
+                featured: false,
+                tags: '',
+                active: true,
+                priority: 0
+              })
+            }}
+            className="bg-orange-500 text-white px-3 py-2 sm:px-4 rounded-lg hover:bg-orange-600 flex items-center gap-2 text-sm sm:text-base"
+          >
+            <IconPlus className="h-5 w-5" />
+            Add News Article
+          </button>
+        )}
+      </div>
+
+      {/* Search */}
+      <div className="mb-6 bg-white rounded-lg shadow p-3 sm:p-4">
+        <div className="flex-1 min-w-0">
+          <input
+            type="text"
+            placeholder="Search news articles..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full px-3 py-2 text-sm sm:text-base border border-gray-300 rounded-md focus:outline-none focus:ring-orange-500 focus:border-orange-500"
+          />
+        </div>
+      </div>
+
+      {/* Create New Article Form */}
+      {isCreating && (
+        <div className="mb-6 bg-white rounded-lg shadow-lg p-4 sm:p-6">
+          <h2 className="text-lg sm:text-xl font-semibold mb-4">Add New News Article</h2>
+
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Title *</label>
+                <input
+                  type="text"
+                  value={newArticle.title}
+                  onChange={(e) => {
+                    setNewArticle({...newArticle, title: e.target.value, slug: generateSlug(e.target.value)})
+                  }}
+                  className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 ${
+                    getFieldError(validationErrors, 'title')
+                      ? 'border-red-500 focus:ring-red-500'
+                      : 'border-gray-300 focus:ring-orange-500'
+                  }`}
+                  placeholder="Article title..."
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Slug (URL-friendly)</label>
+                <input
+                  type="text"
+                  value={newArticle.slug}
+                  onChange={(e) => setNewArticle({...newArticle, slug: e.target.value})}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                  placeholder="auto-generated-from-title"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Author *</label>
+                <input
+                  type="text"
+                  value={newArticle.author}
+                  onChange={(e) => setNewArticle({...newArticle, author: e.target.value})}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                  placeholder="Author name..."
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Published Date *</label>
+                <input
+                  type="date"
+                  value={newArticle.published_date}
+                  onChange={(e) => setNewArticle({...newArticle, published_date: e.target.value})}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Image URL</label>
+              <input
+                type="text"
+                value={newArticle.image_url}
+                onChange={(e) => setNewArticle({...newArticle, image_url: e.target.value})}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                placeholder="https://example.com/image.jpg"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Excerpt (Summary) *</label>
+              <textarea
+                value={newArticle.excerpt}
+                onChange={(e) => setNewArticle({...newArticle, excerpt: e.target.value})}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                rows={3}
+                placeholder="Brief summary of the article..."
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Body Content *</label>
+              <TinyMCEEditor
+                value={newArticle.body}
+                onChange={(value) => setNewArticle({...newArticle, body: value || ''})}
+              />
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Tags (comma-separated)</label>
+                <input
+                  type="text"
+                  value={newArticle.tags}
+                  onChange={(e) => setNewArticle({...newArticle, tags: e.target.value})}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                  placeholder="news, basketball, training"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Priority</label>
+                <input
+                  type="number"
+                  value={newArticle.priority}
+                  onChange={(e) => setNewArticle({...newArticle, priority: parseInt(e.target.value)})}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                  placeholder="0"
+                />
+              </div>
+            </div>
+
+            <div className="flex gap-4">
+              <label className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  checked={newArticle.featured}
+                  onChange={(e) => setNewArticle({...newArticle, featured: e.target.checked})}
+                  className="rounded border-gray-300 text-orange-500 focus:ring-orange-500"
+                />
+                <span className="text-sm font-medium text-gray-700">Featured Article</span>
+              </label>
+
+              <label className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  checked={newArticle.active}
+                  onChange={(e) => setNewArticle({...newArticle, active: e.target.checked})}
+                  className="rounded border-gray-300 text-orange-500 focus:ring-orange-500"
+                />
+                <span className="text-sm font-medium text-gray-700">Active (Visible)</span>
+              </label>
+            </div>
+
+            <div className="flex flex-col sm:flex-row gap-2">
+              <button
+                onClick={handleCreate}
+                className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 flex items-center justify-center gap-2"
+              >
+                <IconDeviceFloppy className="h-5 w-5" />
+                Save Article
+              </button>
+              <button
+                onClick={() => {
+                  setIsCreating(false)
+                  setNewArticle({
+                    title: '',
+                    slug: '',
+                    published_date: new Date().toISOString().split('T')[0],
+                    author: user?.name || '',
+                    image_url: '',
+                    excerpt: '',
+                    body: '',
+                    featured: false,
+                    tags: '',
+                    active: true,
+                    priority: 0
+                  })
+                }}
+                className="bg-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-400 flex items-center justify-center gap-2"
+              >
+                <IconX className="h-5 w-5" />
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* News Articles List */}
+      {filteredNews.length > 0 ? (
+        <div className="space-y-3 sm:space-y-4">
+          <h2 className="text-lg font-semibold text-gray-900">
+            {newsItems.length} Article{newsItems.length !== 1 ? 's' : ''}
+          </h2>
+
+          {filteredNews.map((article) => {
+            const isExpanded = expandedItems.has(article.id)
+            const isEditing = editingId === article.id
+            const publishedDate = new Date(article.published_date).toLocaleDateString('en-US', {
+              year: 'numeric',
+              month: 'long',
+              day: 'numeric'
+            })
+
+            if (isEditing) {
+              return (
+                <div key={article.id} className="bg-white rounded-lg shadow p-4 sm:p-6">
+                  <h3 className="text-lg sm:text-xl font-semibold mb-4">Edit News Article</h3>
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Title</label>
+                        <input
+                          type="text"
+                          value={article.title}
+                          onChange={(e) => handleUpdate(article.id, { title: e.target.value })}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Slug</label>
+                        <input
+                          type="text"
+                          value={article.slug}
+                          onChange={(e) => handleUpdate(article.id, { slug: e.target.value })}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Author</label>
+                        <input
+                          type="text"
+                          value={article.author}
+                          onChange={(e) => handleUpdate(article.id, { author: e.target.value })}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Published Date</label>
+                        <input
+                          type="date"
+                          value={article.published_date ? new Date(article.published_date).toISOString().split('T')[0] : ''}
+                          onChange={(e) => handleUpdate(article.id, { published_date: e.target.value })}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Image URL</label>
+                      <input
+                        type="text"
+                        value={article.image_url || ''}
+                        onChange={(e) => handleUpdate(article.id, { image_url: e.target.value })}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Excerpt</label>
+                      <textarea
+                        value={article.excerpt}
+                        onChange={(e) => handleUpdate(article.id, { excerpt: e.target.value })}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                        rows={3}
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Body Content</label>
+                      <TinyMCEEditor
+                        value={article.body}
+                        onChange={(value) => handleUpdate(article.id, { body: value })}
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Tags (comma-separated)</label>
+                        <input
+                          type="text"
+                          value={article.tags?.join(', ') || ''}
+                          onChange={(e) => handleUpdate(article.id, { tags: e.target.value })}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Priority</label>
+                        <input
+                          type="number"
+                          value={article.priority}
+                          onChange={(e) => handleUpdate(article.id, { priority: parseInt(e.target.value) })}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="flex gap-4">
+                      <label className="flex items-center gap-2">
+                        <input
+                          type="checkbox"
+                          checked={article.featured}
+                          onChange={(e) => handleUpdate(article.id, { featured: e.target.checked })}
+                          className="rounded border-gray-300 text-orange-500 focus:ring-orange-500"
+                        />
+                        <span className="text-sm font-medium text-gray-700">Featured</span>
+                      </label>
+                      <label className="flex items-center gap-2">
+                        <input
+                          type="checkbox"
+                          checked={article.active}
+                          onChange={(e) => handleUpdate(article.id, { active: e.target.checked })}
+                          className="rounded border-gray-300 text-orange-500 focus:ring-orange-500"
+                        />
+                        <span className="text-sm font-medium text-gray-700">Active</span>
+                      </label>
+                    </div>
+
+                    <div className="flex flex-col sm:flex-row gap-2">
+                      <button
+                        onClick={() => setEditingId(null)}
+                        className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 flex items-center justify-center gap-2"
+                      >
+                        <IconDeviceFloppy className="h-5 w-5" />
+                        Save Changes
+                      </button>
+                      <button
+                        onClick={() => setEditingId(null)}
+                        className="bg-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-400 flex items-center justify-center gap-2"
+                      >
+                        <IconX className="h-5 w-5" />
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )
+            }
+
+            return (
+              <div
+                key={article.id}
+                className="bg-white border border-gray-200 rounded-lg hover:border-gray-300 transition-colors"
+              >
+                {/* Article Header */}
+                <div className="p-4">
+                  <div className="flex items-start gap-3">
+                    {article.image_url && (
+                      <img
+                        src={article.image_url}
+                        alt={article.title}
+                        className="w-20 h-20 object-cover rounded"
+                      />
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap mb-1">
+                            {article.featured && (
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium bg-yellow-100 text-yellow-800">
+                                <IconStar className="h-3 w-3" />
+                                Featured
+                              </span>
+                            )}
+                            {!article.active && (
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-800">
+                                <IconEyeOff className="h-3 w-3" />
+                                Hidden
+                              </span>
+                            )}
+                          </div>
+                          <h3 className="font-semibold text-gray-900 text-base sm:text-lg">
+                            {article.title}
+                          </h3>
+                          <p className="text-sm text-gray-600 mt-1">
+                            By {article.author} on {publishedDate}
+                          </p>
+                          {article.tags && article.tags.length > 0 && (
+                            <div className="flex flex-wrap gap-1 mt-2">
+                              {article.tags.map((tag, idx) => (
+                                <span key={idx} className="px-2 py-0.5 bg-blue-100 text-blue-700 rounded text-xs">
+                                  {tag}
+                                </span>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+
+                        {canEdit && (
+                          <div className="flex gap-1 flex-shrink-0">
+                            <button
+                              onClick={() => setEditingId(article.id)}
+                              className="p-1.5 text-gray-600 hover:bg-gray-100 rounded transition-colors"
+                              title="Edit"
+                            >
+                              <IconEdit className="h-4 w-4" />
+                            </button>
+                            <button
+                              onClick={() => handleDelete(article.id)}
+                              className="p-1.5 text-red-600 hover:bg-red-50 rounded transition-colors"
+                              title="Delete"
+                            >
+                              <IconTrash className="h-4 w-4" />
+                            </button>
+                          </div>
+                        )}
+                      </div>
+
+                      <p className="text-sm text-gray-600 mt-2">
+                        {article.excerpt}
+                      </p>
+
+                      <button
+                        onClick={() => toggleExpanded(article.id)}
+                        className="mt-2 text-sm text-orange-600 hover:text-orange-700 font-medium"
+                      >
+                        {isExpanded ? 'Hide' : 'Show'} full article
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Expanded Content */}
+                  {isExpanded && (
+                    <div className="mt-4 pt-4 border-t border-gray-200">
+                      <div className="prose prose-sm max-w-none">
+                        <HTMLViewer content={article.body} />
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      ) : (
+        <div className="text-center py-12 bg-white rounded-lg shadow">
+          <IconArticle className="mx-auto h-12 w-12 text-gray-400" />
+          <h3 className="mt-2 text-sm font-medium text-gray-900">No news articles found</h3>
+          <p className="mt-1 text-sm text-gray-500">
+            {searchTerm
+              ? `No articles match "${searchTerm}"`
+              : canEdit
+                ? 'Click "Add News Article" to create your first article.'
+                : 'News articles will appear here once added by administrators.'}
+          </p>
+        </div>
+      )}
+    </div>
+  )
+}
