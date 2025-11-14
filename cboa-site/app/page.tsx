@@ -5,9 +5,11 @@ import TrainingCard from '@/components/content/TrainingCard'
 import Button from '@/components/ui/Button'
 import ElevateCTA from '@/components/ui/ElevateCTA'
 import { getSiteSettings } from '@/lib/settings'
-import { getAllContent } from '@/lib/content'
+import { publicNewsAPI, publicTrainingAPI } from '@/lib/api'
 
-export default function HomePage() {
+export const dynamic = 'force-dynamic'
+
+export default async function HomePage() {
   // Get statistics from CMS settings
   const settings = getSiteSettings()
   const stats = [
@@ -15,39 +17,52 @@ export default function HomePage() {
     { label: 'Games Per Season', value: settings.statistics.gamesPerSeason },
     { label: 'Years of Service', value: settings.statistics.yearsOfService },
   ]
-  
-  // Get news from CMS
-  const allNews = getAllContent('news')
-  const latestNews = allNews
-    .sort((a, b) => new Date(b.date || '').getTime() - new Date(a.date || '').getTime())
-    .slice(0, 3)
-    .map(news => ({
-      title: news.title || '',
-      date: news.date || '',
-      excerpt: news.excerpt || '',
-      author: news.author || 'CBOA Admin',
-      slug: news.slug || '',
-    }))
-  
-  // Get training events from CMS
-  const allTraining = getAllContent('training')
-  const currentDate = new Date()
-  currentDate.setHours(0, 0, 0, 0)
-  
-  const upcomingTraining = allTraining
-    .filter(event => new Date(event.date || '') >= currentDate)
-    .sort((a, b) => new Date(a.date || '').getTime() - new Date(b.date || '').getTime())
-    .slice(0, 2)
-    .map(training => ({
-      title: training.title || '',
-      date: training.date || '',
-      time: `${training.startTime || ''} - ${training.endTime || ''}`,
-      location: training.location || '',
-      type: (training.type || 'workshop') as 'workshop' | 'certification' | 'refresher' | 'meeting',
-      description: training.description || '',
-      registrationLink: training.registrationLink || '/training',
-      spotsAvailable: (training.maxParticipants || 0) - (training.currentRegistrations || 0),
-    }))
+
+  // Fetch latest news from database
+  let latestNews: any[] = []
+  try {
+    const allNews = await publicNewsAPI.getActive()
+    latestNews = allNews
+      .sort((a, b) => {
+        if (a.priority !== b.priority) return b.priority - a.priority
+        return new Date(b.published_date).getTime() - new Date(a.published_date).getTime()
+      })
+      .slice(0, 3)
+      .map(news => ({
+        title: news.title,
+        date: news.published_date,
+        excerpt: news.excerpt,
+        author: news.author,
+        slug: news.slug,
+        image: news.image_url
+      }))
+  } catch (error) {
+    console.error('Failed to load news for home page:', error)
+  }
+
+  // Fetch upcoming training events from database
+  let upcomingTraining: any[] = []
+  try {
+    const events = await publicTrainingAPI.getUpcoming()
+    upcomingTraining = events
+      .slice(0, 2)
+      .map(training => ({
+        title: training.title,
+        date: training.event_date,
+        time: training.event_time ? `${training.event_time} - ${
+          // Add 2 hours as default duration
+          new Date(new Date(`2000-01-01 ${training.event_time}`).getTime() + 2 * 60 * 60 * 1000)
+            .toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })
+        }` : 'TBD',
+        location: training.location || 'TBD',
+        type: 'workshop' as const,
+        description: training.description,
+        registrationLink: training.registration_url || '/training',
+        spotsAvailable: training.capacity || undefined
+      }))
+  } catch (error) {
+    console.error('Failed to load training for home page:', error)
+  }
   
   return (
     <>
