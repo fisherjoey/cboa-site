@@ -7,8 +7,6 @@ import ElevateCTA from '@/components/ui/ElevateCTA'
 import { getSiteSettings } from '@/lib/settings'
 import { publicNewsAPI, publicTrainingAPI } from '@/lib/api'
 
-export const dynamic = 'force-dynamic'
-
 export default async function HomePage() {
   // Get statistics from CMS settings
   const settings = getSiteSettings()

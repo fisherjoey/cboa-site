@@ -6,8 +6,6 @@ import { publicPagesAPI } from '@/lib/api'
 import { IconStar, IconScale, IconTrendingUp, IconUsers, IconBallBasketball, IconTrophy, IconCheck } from '@tabler/icons-react'
 import Image from 'next/image'
 
-export const dynamic = 'force-dynamic'
-
 export default async function AboutPage() {
   const settings = getSiteSettings()
   const executiveTeam = settings.executiveTeam || []

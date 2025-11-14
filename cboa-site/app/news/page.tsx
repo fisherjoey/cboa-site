@@ -1,8 +1,6 @@
 import { publicNewsAPI } from '@/lib/api'
 import NewsClient from './news-client'
 
-export const dynamic = 'force-dynamic'
-
 export default async function NewsPage() {
   try {
     // Fetch active news articles from database

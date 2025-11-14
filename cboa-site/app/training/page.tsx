@@ -1,8 +1,6 @@
 import { publicTrainingAPI } from '@/lib/api'
 import TrainingClient from './TrainingClient'
 
-export const dynamic = 'force-dynamic'
-
 export default async function TrainingPage() {
   try {
     // Fetch upcoming active training events from database
