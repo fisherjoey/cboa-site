@@ -14,7 +14,7 @@ import {
 // Use local functions server for development
 const API_BASE = process.env.NODE_ENV === 'production'
   ? '/.netlify/functions'
-  : 'http://localhost:8888/.netlify/functions'
+  : 'http://localhost:8889/.netlify/functions'
 
 // Flag to enable mock data when functions aren't available
 const USE_MOCK_DATA = process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true' || process.env.NODE_ENV === 'development'
