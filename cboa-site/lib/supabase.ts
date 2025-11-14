@@ -12,3 +12,10 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey)
 export const supabaseAdmin = supabaseServiceKey
   ? createClient(supabaseUrl, supabaseServiceKey)
   : null
+
+// Type-safe table accessors for direct Supabase access
+export const publicNewsTable = () => supabase.from('public_news')
+export const publicTrainingTable = () => supabase.from('public_training_events')
+export const publicResourcesTable = () => supabase.from('public_resources')
+export const publicPagesTable = () => supabase.from('public_pages')
+export const officialsTable = () => supabase.from('officials')

@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import NewsCard from '@/components/content/NewsCard'
 import TrainingCard from '@/components/content/TrainingCard'
 import Button from '@/components/ui/Button'
-import { publicNewsAPI, publicTrainingAPI } from '@/lib/api'
+import { publicNewsTable, publicTrainingTable } from '@/lib/supabase'
 
 export default function HomeContent() {
   const [latestNews, setLatestNews] = useState<any[]>([])
@@ -17,8 +17,15 @@ export default function HomeContent() {
         setLoading(true)
 
         // Fetch latest news
-        const allNews = await publicNewsAPI.getActive()
-        const news = allNews
+        const { data: allNews, error: newsError } = await publicNewsTable()
+          .select('*')
+          .eq('active', true)
+          .order('priority', { ascending: false })
+          .order('published_date', { ascending: false })
+
+        if (newsError) throw newsError
+
+        const news = (allNews || [])
           .sort((a, b) => {
             if (a.priority !== b.priority) return b.priority - a.priority
             return new Date(b.published_date).getTime() - new Date(a.published_date).getTime()
@@ -34,9 +41,17 @@ export default function HomeContent() {
           }))
 
         // Fetch upcoming training
-        const events = await publicTrainingAPI.getUpcoming()
-        const training = events
-          .slice(0, 2)
+        const now = new Date().toISOString().split('T')[0]
+        const { data: events, error: trainingError } = await publicTrainingTable()
+          .select('*')
+          .eq('active', true)
+          .gte('event_date', now)
+          .order('event_date', { ascending: true })
+          .limit(2)
+
+        if (trainingError) throw trainingError
+
+        const training = (events || [])
           .map(training => ({
             title: training.title,
             date: training.event_date,
