@@ -11,8 +11,9 @@ import {
   deleteMockMember
 } from './mockData/members'
 
-// Use relative URL for both dev and production so Netlify Dev proxy works
-const API_BASE = '/.netlify/functions'
+// Use /api route which redirects to /.netlify/functions (configured in netlify.toml)
+// This bypasses Next.js routing conflicts
+const API_BASE = '/api'
 
 // Flag to enable mock data when functions aren't available
 const USE_MOCK_DATA = process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true' || process.env.NODE_ENV === 'development'
