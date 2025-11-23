@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react'
 import netlifyIdentity from 'netlify-identity-widget'
+import { membersAPI } from '@/lib/api'
 
 type UserRole = 'official' | 'executive' | 'admin'
 
@@ -33,22 +34,45 @@ function getUserRole(netlifyUser: any): UserRole {
   const userRoles = netlifyUser?.user_metadata?.roles || []
   const directRole = netlifyUser?.user_metadata?.role
   const roles = [...appRoles, ...userRoles]
-  
+
   // Check direct role field first
   if (directRole) {
     if (directRole === 'admin' || directRole === 'Admin') return 'admin'
     if (directRole === 'executive' || directRole === 'Executive') return 'executive'
     if (directRole === 'official' || directRole === 'Official') return 'official'
   }
-  
+
   // Then check roles array
   if (roles.includes('admin') || roles.includes('Admin')) return 'admin'
   if (roles.includes('executive') || roles.includes('Executive')) return 'executive'
   if (roles.includes('official') || roles.includes('Official')) return 'official'
-  
+
   // New users without roles get 'official' by default
   // But they won't have admin panel access
   return 'official'
+}
+
+// Sync Netlify Identity user with Supabase members table
+async function syncUserToMembers(netlifyUser: any): Promise<void> {
+  try {
+    // Check if member already exists by netlify_user_id
+    const existingMember = await membersAPI.getByNetlifyId(netlifyUser.id)
+
+    if (!existingMember) {
+      // Create new member record
+      await membersAPI.create({
+        netlify_user_id: netlifyUser.id,
+        email: netlifyUser.email,
+        name: netlifyUser.user_metadata?.full_name || netlifyUser.email,
+        role: getUserRole(netlifyUser),
+        status: 'active'
+      })
+      console.log('Created new member record for:', netlifyUser.email)
+    }
+  } catch (error) {
+    // Don't block login if sync fails - just log the error
+    console.error('Failed to sync user to members table:', error)
+  }
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -114,6 +138,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         user_metadata: currentUser.user_metadata,
         app_metadata: currentUser.app_metadata
       })
+      // Sync existing user to members table
+      syncUserToMembers(currentUser)
     }
 
     setIsLoading(false)
@@ -128,6 +154,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         user_metadata: netlifyUser.user_metadata,
         app_metadata: netlifyUser.app_metadata
       })
+      // Sync user to members table on login
+      syncUserToMembers(netlifyUser)
       netlifyIdentity.close()
     })
 
