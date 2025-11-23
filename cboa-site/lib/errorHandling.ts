@@ -110,14 +110,14 @@ export const validators = {
 // Sanitization helpers to prevent XSS
 export const sanitize = {
   // Basic HTML escaping for text inputs
+  // Note: Only escape characters that could enable XSS attacks
+  // Apostrophes and quotes are safe in React text content (React escapes on render)
+  // Only < and > are dangerous as they can create HTML tags
   text: (value: string): string => {
     if (!value) return ''
     return value
-      .replace(/&/g, '&amp;')
       .replace(/</g, '&lt;')
       .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;')
-      .replace(/'/g, '&#039;')
   },
 
   // For HTML content from TinyMCE - don't escape, just pass through

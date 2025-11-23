@@ -161,13 +161,13 @@ export default function NewsClient({ initialAnnouncements }: NewsClientProps) {
     }
 
     try {
-      // Sanitize inputs
+      // Prepare data - React handles XSS for text content, so no need to HTML-encode titles
       const sanitizedData = {
-        title: sanitize.text(newAnnouncement.title || ''),
+        title: (newAnnouncement.title || '').trim(),
         content: sanitize.html(newAnnouncement.content || ''), // HTML from TinyMCE
         category: newAnnouncement.category || 'general',
         priority: newAnnouncement.priority || 'normal',
-        author: sanitize.text(newAnnouncement.author || 'CBOA Executive'),
+        author: (newAnnouncement.author || 'CBOA Executive').trim(),
         date: new Date().toISOString()
       }
 
@@ -242,12 +242,12 @@ export default function NewsClient({ initialAnnouncements }: NewsClientProps) {
 
   const saveEdit = async (id: string) => {
     try {
-      // Sanitize updates
+      // Prepare updates - React handles XSS for text content
       const sanitizedUpdates = {
         ...editingData,
-        title: editingData.title ? sanitize.text(editingData.title) : undefined,
+        title: editingData.title ? editingData.title.trim() : undefined,
         content: editingData.content ? sanitize.html(editingData.content) : undefined, // HTML from TinyMCE
-        author: editingData.author ? sanitize.text(editingData.author) : undefined
+        author: editingData.author ? editingData.author.trim() : undefined
       }
 
       const updated = await announcementsAPI.update({ id, ...sanitizedUpdates })
