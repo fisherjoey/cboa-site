@@ -336,7 +336,7 @@ export default function ResourcesClient() {
       if (editingData.resourceType !== undefined) sanitizedUpdates.resource_type = editingData.resourceType
       if (editingData.fileUrl !== undefined) sanitizedUpdates.file_url = editingData.fileUrl
       if (editingData.externalLink !== undefined) {
-        sanitizedUpdates.url = editingData.externalLink ? sanitize.url(editingData.externalLink) : null
+        sanitizedUpdates.file_url = editingData.externalLink ? sanitize.url(editingData.externalLink) : null
       }
       if (editingData.featured !== undefined) sanitizedUpdates.is_featured = editingData.featured
       if (editingData.accessLevel !== undefined) sanitizedUpdates.access_level = editingData.accessLevel

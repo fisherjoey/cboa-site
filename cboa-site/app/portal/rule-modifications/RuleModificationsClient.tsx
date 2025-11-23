@@ -17,23 +17,27 @@ interface RuleModificationsClientProps {
   categories: string[]
 }
 
-export default function RuleModificationsClient({ modifications: initialModifications, categories }: RuleModificationsClientProps) {
+export default function RuleModificationsClient({ modifications: initialModifications, categories: initialCategories }: RuleModificationsClientProps) {
   const { user } = useRole()
   const { toasts, dismissToast, success, error, warning, info } = useToast()
   const [modifications, setModifications] = useState<any[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [selectedCategory, setSelectedCategory] = useState('all')
+
+  // Derive categories from loaded modifications (API data takes precedence)
+  const categories = modifications.length > 0
+    ? Array.from(new Set(modifications.map(mod => mod.category))).filter(Boolean).sort() as string[]
+    : initialCategories
   const [expandedRules, setExpandedRules] = useState<Set<string>>(new Set())
   const [searchTerm, setSearchTerm] = useState('')
   const [isCreating, setIsCreating] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
+  const [editingData, setEditingData] = useState<any>(null)
   const [newModification, setNewModification] = useState({
     title: '',
     category: 'Club Tournament',
     summary: '',
-    content: '',
-    effectiveDate: new Date().toISOString().split('T')[0],
-    active: true
+    content: ''
   })
   const [validationErrors, setValidationErrors] = useState<ValidationError[]>([])
 
@@ -79,11 +83,20 @@ export default function RuleModificationsClient({ modifications: initialModifica
 
   const getCategoryColor = (category: string) => {
     const colors: Record<string, string> = {
+      // Original categories
       'School League': 'bg-blue-100 text-blue-800',
       'School Tournament': 'bg-purple-100 text-purple-800',
       'Club League': 'bg-green-100 text-green-800',
       'Club Tournament': 'bg-orange-100 text-orange-800',
-      'Adult': 'bg-yellow-100 text-yellow-800'
+      'Adult': 'bg-yellow-100 text-yellow-800',
+      // New categories
+      'General': 'bg-gray-100 text-gray-800',
+      'High School': 'bg-blue-100 text-blue-800',
+      'Junior High': 'bg-indigo-100 text-indigo-800',
+      'Elementary': 'bg-cyan-100 text-cyan-800',
+      'League': 'bg-green-100 text-green-800',
+      'Tournament': 'bg-orange-100 text-orange-800',
+      '3x3': 'bg-pink-100 text-pink-800'
     }
     return colors[category] || 'bg-gray-100 text-gray-800'
   }
@@ -105,17 +118,14 @@ export default function RuleModificationsClient({ modifications: initialModifica
         category: newModification.category,
         summary: sanitizedSummary,
         content: sanitizedContent,
-        effective_date: newModification.effectiveDate,
-        active: newModification.active
+        active: true
       })
       setModifications([created, ...modifications])
       setNewModification({
         title: '',
-        category: 'Club Tournament',
+        category: categories[0] || 'Club Tournament',
         summary: '',
-        content: '',
-        effectiveDate: new Date().toISOString().split('T')[0],
-        active: true
+        content: ''
       })
       setIsCreating(false)
       success('Rule modification created successfully!')
@@ -125,25 +135,39 @@ export default function RuleModificationsClient({ modifications: initialModifica
     }
   }
 
-  const handleUpdate = async (id: string, updates: any) => {
-    // Sanitize text inputs if they exist in updates
-    const sanitizedUpdates = { ...updates }
-    if (updates.title) {
-      sanitizedUpdates.title = sanitize.text(updates.title)
-    }
-    if (updates.summary) {
-      sanitizedUpdates.summary = sanitize.text(updates.summary)
-    }
-    if (updates.content) {
-      sanitizedUpdates.content = sanitize.html(updates.content) // HTML from TinyMCE
+  const startEditing = (modification: any) => {
+    setEditingId(modification.id)
+    setEditingData({
+      title: modification.title || '',
+      category: modification.category || categories[0] || 'Club Tournament',
+      summary: modification.summary || '',
+      content: modification.content || modification.body || ''
+    })
+  }
+
+  const cancelEditing = () => {
+    setEditingId(null)
+    setEditingData(null)
+  }
+
+  const handleSaveEdit = async () => {
+    if (!editingId || !editingData) return
+
+    // Sanitize text inputs
+    const sanitizedUpdates = {
+      title: sanitize.text(editingData.title),
+      category: editingData.category,
+      summary: sanitize.text(editingData.summary),
+      content: sanitize.html(editingData.content)
     }
 
     try {
-      const updated = await ruleModificationsAPI.update({ id, ...sanitizedUpdates })
+      const updated = await ruleModificationsAPI.update({ id: editingId, ...sanitizedUpdates })
       setModifications(prev => prev.map(mod =>
-        mod.id === id ? updated : mod
+        mod.id === editingId ? updated : mod
       ))
       success('Rule modification updated successfully!')
+      cancelEditing()
     } catch (err) {
       const errorMessage = parseAPIError(err)
       error(`Failed to update rule modification: ${errorMessage}`)
@@ -180,14 +204,12 @@ export default function RuleModificationsClient({ modifications: initialModifica
             onClick={() => {
               setIsCreating(true)
               // Pre-select the category based on the current tab
-              const category = selectedCategory === 'all' ? 'Club Tournament' : selectedCategory
+              const category = selectedCategory === 'all' ? (categories[0] || 'Club Tournament') : selectedCategory
               setNewModification({
                 title: '',
                 category: category,
                 summary: '',
-                content: '',
-                effectiveDate: new Date().toISOString().split('T')[0],
-                active: true
+                content: ''
               })
             }}
             className="bg-orange-500 text-white px-3 py-2 sm:px-4 rounded-lg hover:bg-orange-600 flex items-center gap-2 text-sm sm:text-base"
@@ -291,16 +313,6 @@ export default function RuleModificationsClient({ modifications: initialModifica
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Effective Date</label>
-              <input
-                type="date"
-                value={newModification.effectiveDate}
-                onChange={(e) => setNewModification({...newModification, effectiveDate: e.target.value})}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
-              />
-            </div>
-
-            <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Content *</label>
               <TinyMCEEditor
                 value={newModification.content}
@@ -326,11 +338,9 @@ export default function RuleModificationsClient({ modifications: initialModifica
                   setIsCreating(false)
                   setNewModification({
                     title: '',
-                    category: 'Club Tournament',
+                    category: categories[0] || 'Club Tournament',
                     summary: '',
-                    content: '',
-                    effectiveDate: new Date().toISOString().split('T')[0],
-                    active: true
+                    content: ''
                   })
                 }}
                 className="bg-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-400 flex items-center justify-center gap-2"
@@ -361,33 +371,33 @@ export default function RuleModificationsClient({ modifications: initialModifica
                 })
               : null
 
-            if (isEditing) {
+            if (isEditing && editingData) {
               return (
                 <div key={modification.id} className="bg-white rounded-lg shadow p-4 sm:p-6">
                   <h3 className="text-lg sm:text-xl font-semibold mb-4">Edit Rule Modification</h3>
                   <div className="space-y-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Title</label>
-                      <input
-                        type="text"
-                        value={modification.title}
-                        onChange={(e) => handleUpdate(modification.id, { title: e.target.value })}
-                        className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 ${
-                          getFieldError(validationErrors, 'title')
-                            ? 'border-red-500 focus:ring-red-500'
-                            : 'border-gray-300 focus:ring-orange-500'
-                        }`}
-                      />
-                      {getFieldError(validationErrors, 'title') && (
-                        <p className="mt-1 text-sm text-red-600">{getFieldError(validationErrors, 'title')}</p>
-                      )}
-                    </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Title</label>
+                        <input
+                          type="text"
+                          value={editingData.title}
+                          onChange={(e) => setEditingData({ ...editingData, title: e.target.value })}
+                          className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 ${
+                            getFieldError(validationErrors, 'title')
+                              ? 'border-red-500 focus:ring-red-500'
+                              : 'border-gray-300 focus:ring-orange-500'
+                          }`}
+                        />
+                        {getFieldError(validationErrors, 'title') && (
+                          <p className="mt-1 text-sm text-red-600">{getFieldError(validationErrors, 'title')}</p>
+                        )}
+                      </div>
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
                         <select
-                          value={modification.category}
-                          onChange={(e) => handleUpdate(modification.id, { category: e.target.value })}
+                          value={editingData.category}
+                          onChange={(e) => setEditingData({ ...editingData, category: e.target.value })}
                           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                         >
                           {categories.map(cat => (
@@ -395,30 +405,21 @@ export default function RuleModificationsClient({ modifications: initialModifica
                           ))}
                         </select>
                       </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Effective Date</label>
-                        <input
-                          type="date"
-                          value={modification.effectiveDate ? new Date(modification.effectiveDate).toISOString().split('T')[0] : ''}
-                          onChange={(e) => handleUpdate(modification.id, { effectiveDate: e.target.value })}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
-                        />
-                      </div>
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">Summary</label>
                       <input
                         type="text"
-                        value={modification.summary}
-                        onChange={(e) => handleUpdate(modification.id, { summary: e.target.value })}
+                        value={editingData.summary}
+                        onChange={(e) => setEditingData({ ...editingData, summary: e.target.value })}
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                       />
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">Content</label>
                       <TinyMCEEditor
-                        value={modification.content || modification.body || ''}
-                        onChange={(value) => handleUpdate(modification.id, { content: value })}
+                        value={editingData.content}
+                        onChange={(value) => setEditingData({ ...editingData, content: value || '' })}
                       />
                       {getFieldError(validationErrors, 'content') && (
                         <p className="mt-1 text-sm text-red-600">{getFieldError(validationErrors, 'content')}</p>
@@ -426,14 +427,14 @@ export default function RuleModificationsClient({ modifications: initialModifica
                     </div>
                     <div className="flex flex-col sm:flex-row gap-2">
                       <button
-                        onClick={() => setEditingId(null)}
+                        onClick={handleSaveEdit}
                         className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 flex items-center justify-center gap-2"
                       >
                         <IconDeviceFloppy className="h-5 w-5" />
                         Save Changes
                       </button>
                       <button
-                        onClick={() => setEditingId(null)}
+                        onClick={cancelEditing}
                         className="bg-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-400 flex items-center justify-center gap-2"
                       >
                         <IconX className="h-5 w-5" />
@@ -485,7 +486,7 @@ export default function RuleModificationsClient({ modifications: initialModifica
                   {canEdit && (
                     <div className="flex gap-1 flex-shrink-0">
                       <button
-                        onClick={() => setEditingId(modification.id)}
+                        onClick={() => startEditing(modification)}
                         className="p-1.5 text-gray-600 hover:bg-gray-100 rounded transition-colors"
                         title="Edit"
                       >

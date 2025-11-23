@@ -10,13 +10,24 @@ import {
   updateMockMember,
   deleteMockMember
 } from './mockData/members'
+import {
+  getFromCache,
+  saveToCache,
+  invalidateCache,
+  CACHE_TTL,
+  type CacheKey
+} from './cache'
 
 // Use /api route which redirects to /.netlify/functions (configured in netlify.toml)
-// This bypasses Next.js routing conflicts
-const API_BASE = '/api'
+// In development, use NEXT_PUBLIC_API_URL to point to the Netlify proxy
+// In production, use relative path '/api'
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || '/api'
 
 // Flag to enable mock data when functions aren't available
 const USE_MOCK_DATA = process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true' || process.env.NODE_ENV === 'development'
+
+// Helper to check if we're in browser (for cache)
+const isBrowser = () => typeof window !== 'undefined'
 
 // Enhanced fetch with better error handling and mock data fallback
 async function apiFetch(url: string, options?: RequestInit): Promise<Response> {
@@ -70,11 +81,26 @@ async function apiFetch(url: string, options?: RequestInit): Promise<Response> {
 
 // Calendar Events API
 export const calendarAPI = {
-  async getAll() {
-    return retryAsync(async () => {
+  async getAll(options?: { forceRefresh?: boolean }) {
+    const cacheKey = 'calendarEvents'
+
+    // Check cache first (unless forcing refresh)
+    if (!options?.forceRefresh && isBrowser()) {
+      const cached = getFromCache(cacheKey)
+      if (cached) return cached
+    }
+
+    const data = await retryAsync(async () => {
       const res = await apiFetch(`${API_BASE}/calendar-events`)
       return res.json()
     })
+
+    // Save to cache
+    if (isBrowser()) {
+      saveToCache(cacheKey, data)
+    }
+
+    return data
   },
 
   async create(event: any) {
@@ -82,6 +108,8 @@ export const calendarAPI = {
       method: 'POST',
       body: JSON.stringify(event)
     })
+    // Invalidate cache on mutation
+    invalidateCache('calendarEvents')
     return res.json()
   },
 
@@ -90,6 +118,8 @@ export const calendarAPI = {
       method: 'PUT',
       body: JSON.stringify(event)
     })
+    // Invalidate cache on mutation
+    invalidateCache('calendarEvents')
     return res.json()
   },
 
@@ -97,16 +127,31 @@ export const calendarAPI = {
     await apiFetch(`${API_BASE}/calendar-events?id=${id}`, {
       method: 'DELETE'
     })
+    // Invalidate cache on mutation
+    invalidateCache('calendarEvents')
   }
 }
 
 // Announcements API
 export const announcementsAPI = {
-  async getAll() {
-    return retryAsync(async () => {
+  async getAll(options?: { forceRefresh?: boolean }) {
+    const cacheKey = 'announcements'
+
+    if (!options?.forceRefresh && isBrowser()) {
+      const cached = getFromCache(cacheKey)
+      if (cached) return cached
+    }
+
+    const data = await retryAsync(async () => {
       const res = await apiFetch(`${API_BASE}/announcements`)
       return res.json()
     })
+
+    if (isBrowser()) {
+      saveToCache(cacheKey, data)
+    }
+
+    return data
   },
 
   async create(announcement: any) {
@@ -114,6 +159,7 @@ export const announcementsAPI = {
       method: 'POST',
       body: JSON.stringify(announcement)
     })
+    invalidateCache('announcements')
     return res.json()
   },
 
@@ -122,6 +168,7 @@ export const announcementsAPI = {
       method: 'PUT',
       body: JSON.stringify(announcement)
     })
+    invalidateCache('announcements')
     return res.json()
   },
 
@@ -129,16 +176,30 @@ export const announcementsAPI = {
     await apiFetch(`${API_BASE}/announcements?id=${id}`, {
       method: 'DELETE'
     })
+    invalidateCache('announcements')
   }
 }
 
 // Rule Modifications API
 export const ruleModificationsAPI = {
-  async getAll() {
-    return retryAsync(async () => {
+  async getAll(options?: { forceRefresh?: boolean }) {
+    const cacheKey = 'ruleModifications'
+
+    if (!options?.forceRefresh && isBrowser()) {
+      const cached = getFromCache(cacheKey)
+      if (cached) return cached
+    }
+
+    const data = await retryAsync(async () => {
       const res = await apiFetch(`${API_BASE}/rule-modifications`)
       return res.json()
     })
+
+    if (isBrowser()) {
+      saveToCache(cacheKey, data)
+    }
+
+    return data
   },
 
   async create(modification: any) {
@@ -146,6 +207,7 @@ export const ruleModificationsAPI = {
       method: 'POST',
       body: JSON.stringify(modification)
     })
+    invalidateCache('ruleModifications')
     return res.json()
   },
 
@@ -154,6 +216,7 @@ export const ruleModificationsAPI = {
       method: 'PUT',
       body: JSON.stringify(modification)
     })
+    invalidateCache('ruleModifications')
     return res.json()
   },
 
@@ -161,16 +224,30 @@ export const ruleModificationsAPI = {
     await apiFetch(`${API_BASE}/rule-modifications?id=${id}`, {
       method: 'DELETE'
     })
+    invalidateCache('ruleModifications')
   }
 }
 
 // Newsletters API
 export const newslettersAPI = {
-  async getAll() {
-    return retryAsync(async () => {
+  async getAll(options?: { forceRefresh?: boolean }) {
+    const cacheKey = 'newsletters'
+
+    if (!options?.forceRefresh && isBrowser()) {
+      const cached = getFromCache(cacheKey)
+      if (cached) return cached
+    }
+
+    const data = await retryAsync(async () => {
       const res = await apiFetch(`${API_BASE}/newsletters`)
       return res.json()
     })
+
+    if (isBrowser()) {
+      saveToCache(cacheKey, data)
+    }
+
+    return data
   },
 
   async create(newsletter: any) {
@@ -178,6 +255,7 @@ export const newslettersAPI = {
       method: 'POST',
       body: JSON.stringify(newsletter)
     })
+    invalidateCache('newsletters')
     return res.json()
   },
 
@@ -186,6 +264,7 @@ export const newslettersAPI = {
       method: 'PUT',
       body: JSON.stringify(newsletter)
     })
+    invalidateCache('newsletters')
     return res.json()
   },
 
@@ -193,17 +272,31 @@ export const newslettersAPI = {
     await apiFetch(`${API_BASE}/newsletters?id=${id}`, {
       method: 'DELETE'
     })
+    invalidateCache('newsletters')
   }
 }
 
 // Members API with mock data fallback
 export const membersAPI = {
-  async getAll() {
+  async getAll(options?: { forceRefresh?: boolean }) {
+    const cacheKey = 'members'
+
+    if (!options?.forceRefresh && isBrowser()) {
+      const cached = getFromCache(cacheKey)
+      if (cached) return cached
+    }
+
     try {
-      return await retryAsync(async () => {
+      const data = await retryAsync(async () => {
         const res = await apiFetch(`${API_BASE}/members`)
         return res.json()
       })
+
+      if (isBrowser()) {
+        saveToCache(cacheKey, data)
+      }
+
+      return data
     } catch (error) {
       if (USE_MOCK_DATA) {
         console.warn('Using mock data for members (functions not available)')
@@ -249,6 +342,7 @@ export const membersAPI = {
         method: 'POST',
         body: JSON.stringify(member)
       })
+      invalidateCache('members')
       return res.json()
     } catch (error) {
       if (USE_MOCK_DATA) {
@@ -265,6 +359,7 @@ export const membersAPI = {
         method: 'PUT',
         body: JSON.stringify(member)
       })
+      invalidateCache('members')
       return res.json()
     } catch (error) {
       if (USE_MOCK_DATA) {
@@ -280,6 +375,7 @@ export const membersAPI = {
       await apiFetch(`${API_BASE}/members?id=${id}`, {
         method: 'DELETE'
       })
+      invalidateCache('members')
     } catch (error) {
       if (USE_MOCK_DATA) {
         console.warn(`Using mock data to delete member: ${id}`)
@@ -293,15 +389,28 @@ export const membersAPI = {
 
 // Member Activities API with mock data fallback
 export const memberActivitiesAPI = {
-  async getAll(memberId?: string) {
+  async getAll(memberId?: string, options?: { forceRefresh?: boolean }) {
+    const cacheKey = memberId ? `memberActivities_${memberId}` : 'memberActivities'
+
+    if (!options?.forceRefresh && isBrowser()) {
+      const cached = getFromCache(cacheKey)
+      if (cached) return cached
+    }
+
     try {
-      return await retryAsync(async () => {
+      const data = await retryAsync(async () => {
         const url = memberId
           ? `${API_BASE}/member-activities?member_id=${memberId}`
           : `${API_BASE}/member-activities`
         const res = await apiFetch(url)
         return res.json()
       })
+
+      if (isBrowser()) {
+        saveToCache(cacheKey, data, CACHE_TTL.memberActivities)
+      }
+
+      return data
     } catch (error) {
       if (USE_MOCK_DATA) {
         console.warn(`Using mock data for activities${memberId ? ` for member: ${memberId}` : ''}`)
@@ -317,11 +426,15 @@ export const memberActivitiesAPI = {
         method: 'POST',
         body: JSON.stringify(activity)
       })
+      // Invalidate all activity caches
+      invalidateCache('memberActivities')
+      if (activity.member_id) {
+        invalidateCache(`memberActivities_${activity.member_id}`)
+      }
       return res.json()
     } catch (error) {
       if (USE_MOCK_DATA) {
         console.warn('Using mock data to create activity (not persisted)')
-        // Create a mock activity that won't persist
         const newActivity = {
           id: `mock-activity-${Date.now()}`,
           ...activity,
@@ -339,26 +452,47 @@ export const memberActivitiesAPI = {
       method: 'PUT',
       body: JSON.stringify(activity)
     })
+    invalidateCache('memberActivities')
+    if (activity.member_id) {
+      invalidateCache(`memberActivities_${activity.member_id}`)
+    }
     return res.json()
   },
 
-  async delete(id: string) {
+  async delete(id: string, memberId?: string) {
     await apiFetch(`${API_BASE}/member-activities?id=${id}`, {
       method: 'DELETE'
     })
+    invalidateCache('memberActivities')
+    if (memberId) {
+      invalidateCache(`memberActivities_${memberId}`)
+    }
   }
 }
 
 // Resources API
 export const resourcesAPI = {
-  async getAll(featured?: boolean) {
-    return retryAsync(async () => {
+  async getAll(featured?: boolean, options?: { forceRefresh?: boolean }) {
+    const cacheKey = featured ? 'resources_featured' : 'resources'
+
+    if (!options?.forceRefresh && isBrowser()) {
+      const cached = getFromCache(cacheKey)
+      if (cached) return cached
+    }
+
+    const data = await retryAsync(async () => {
       const url = featured
         ? `${API_BASE}/resources?featured=true`
         : `${API_BASE}/resources`
       const res = await apiFetch(url)
       return res.json()
     })
+
+    if (isBrowser()) {
+      saveToCache(cacheKey, data)
+    }
+
+    return data
   },
 
   async create(resource: any) {
@@ -366,6 +500,8 @@ export const resourcesAPI = {
       method: 'POST',
       body: JSON.stringify(resource)
     })
+    invalidateCache('resources')
+    invalidateCache('resources_featured')
     return res.json()
   },
 
@@ -374,6 +510,8 @@ export const resourcesAPI = {
       method: 'PUT',
       body: JSON.stringify(resource)
     })
+    invalidateCache('resources')
+    invalidateCache('resources_featured')
     return res.json()
   },
 
@@ -381,6 +519,8 @@ export const resourcesAPI = {
     await apiFetch(`${API_BASE}/resources?id=${id}`, {
       method: 'DELETE'
     })
+    invalidateCache('resources')
+    invalidateCache('resources_featured')
   }
 }
 
@@ -398,11 +538,24 @@ import type {
 
 // Public News API
 export const publicNewsAPI = {
-  async getAll(): Promise<PublicNewsItem[]> {
-    return retryAsync(async () => {
+  async getAll(options?: { forceRefresh?: boolean }): Promise<PublicNewsItem[]> {
+    const cacheKey = 'publicNews'
+
+    if (!options?.forceRefresh && isBrowser()) {
+      const cached = getFromCache<PublicNewsItem[]>(cacheKey)
+      if (cached) return cached
+    }
+
+    const data = await retryAsync(async () => {
       const res = await apiFetch(`${API_BASE}/public-news`)
       return res.json()
     })
+
+    if (isBrowser()) {
+      saveToCache(cacheKey, data)
+    }
+
+    return data
   },
 
   async getActive(): Promise<PublicNewsItem[]> {
@@ -422,6 +575,7 @@ export const publicNewsAPI = {
       method: 'POST',
       body: JSON.stringify(item)
     })
+    invalidateCache('publicNews')
     return res.json()
   },
 
@@ -430,6 +584,7 @@ export const publicNewsAPI = {
       method: 'PUT',
       body: JSON.stringify(item)
     })
+    invalidateCache('publicNews')
     return res.json()
   },
 
@@ -437,16 +592,30 @@ export const publicNewsAPI = {
     await apiFetch(`${API_BASE}/public-news?id=${id}`, {
       method: 'DELETE'
     })
+    invalidateCache('publicNews')
   }
 }
 
 // Public Training Events API
 export const publicTrainingAPI = {
-  async getAll(): Promise<PublicTrainingEvent[]> {
-    return retryAsync(async () => {
+  async getAll(options?: { forceRefresh?: boolean }): Promise<PublicTrainingEvent[]> {
+    const cacheKey = 'publicTraining'
+
+    if (!options?.forceRefresh && isBrowser()) {
+      const cached = getFromCache<PublicTrainingEvent[]>(cacheKey)
+      if (cached) return cached
+    }
+
+    const data = await retryAsync(async () => {
       const res = await apiFetch(`${API_BASE}/public-training`)
       return res.json()
     })
+
+    if (isBrowser()) {
+      saveToCache(cacheKey, data)
+    }
+
+    return data
   },
 
   async getActive(): Promise<PublicTrainingEvent[]> {
@@ -472,6 +641,7 @@ export const publicTrainingAPI = {
       method: 'POST',
       body: JSON.stringify(item)
     })
+    invalidateCache('publicTraining')
     return res.json()
   },
 
@@ -480,6 +650,7 @@ export const publicTrainingAPI = {
       method: 'PUT',
       body: JSON.stringify(item)
     })
+    invalidateCache('publicTraining')
     return res.json()
   },
 
@@ -487,16 +658,30 @@ export const publicTrainingAPI = {
     await apiFetch(`${API_BASE}/public-training?id=${id}`, {
       method: 'DELETE'
     })
+    invalidateCache('publicTraining')
   }
 }
 
 // Public Resources API
 export const publicResourcesAPI = {
-  async getAll(): Promise<PublicResource[]> {
-    return retryAsync(async () => {
+  async getAll(options?: { forceRefresh?: boolean }): Promise<PublicResource[]> {
+    const cacheKey = 'publicResources'
+
+    if (!options?.forceRefresh && isBrowser()) {
+      const cached = getFromCache<PublicResource[]>(cacheKey)
+      if (cached) return cached
+    }
+
+    const data = await retryAsync(async () => {
       const res = await apiFetch(`${API_BASE}/public-resources`)
       return res.json()
     })
+
+    if (isBrowser()) {
+      saveToCache(cacheKey, data)
+    }
+
+    return data
   },
 
   async getActive(): Promise<PublicResource[]> {
@@ -523,6 +708,7 @@ export const publicResourcesAPI = {
       method: 'POST',
       body: JSON.stringify(item)
     })
+    invalidateCache('publicResources')
     return res.json()
   },
 
@@ -531,6 +717,7 @@ export const publicResourcesAPI = {
       method: 'PUT',
       body: JSON.stringify(item)
     })
+    invalidateCache('publicResources')
     return res.json()
   },
 
@@ -538,16 +725,30 @@ export const publicResourcesAPI = {
     await apiFetch(`${API_BASE}/public-resources?id=${id}`, {
       method: 'DELETE'
     })
+    invalidateCache('publicResources')
   }
 }
 
 // Public Pages API
 export const publicPagesAPI = {
-  async getAll(): Promise<PublicPage[]> {
-    return retryAsync(async () => {
+  async getAll(options?: { forceRefresh?: boolean }): Promise<PublicPage[]> {
+    const cacheKey = 'publicPages'
+
+    if (!options?.forceRefresh && isBrowser()) {
+      const cached = getFromCache<PublicPage[]>(cacheKey)
+      if (cached) return cached
+    }
+
+    const data = await retryAsync(async () => {
       const res = await apiFetch(`${API_BASE}/public-pages`)
       return res.json()
     })
+
+    if (isBrowser()) {
+      saveToCache(cacheKey, data)
+    }
+
+    return data
   },
 
   async getByName(pageName: string): Promise<PublicPage> {
@@ -562,17 +763,31 @@ export const publicPagesAPI = {
       method: 'PUT',
       body: JSON.stringify(page)
     })
+    invalidateCache('publicPages')
     return res.json()
   }
 }
 
 // Officials API
 export const officialsAPI = {
-  async getAll(): Promise<Official[]> {
-    return retryAsync(async () => {
+  async getAll(options?: { forceRefresh?: boolean }): Promise<Official[]> {
+    const cacheKey = 'officials'
+
+    if (!options?.forceRefresh && isBrowser()) {
+      const cached = getFromCache<Official[]>(cacheKey)
+      if (cached) return cached
+    }
+
+    const data = await retryAsync(async () => {
       const res = await apiFetch(`${API_BASE}/officials`)
       return res.json()
     })
+
+    if (isBrowser()) {
+      saveToCache(cacheKey, data)
+    }
+
+    return data
   },
 
   async getActive(): Promise<Official[]> {
@@ -592,6 +807,7 @@ export const officialsAPI = {
       method: 'POST',
       body: JSON.stringify(item)
     })
+    invalidateCache('officials')
     return res.json()
   },
 
@@ -600,6 +816,7 @@ export const officialsAPI = {
       method: 'PUT',
       body: JSON.stringify(item)
     })
+    invalidateCache('officials')
     return res.json()
   },
 
@@ -607,5 +824,6 @@ export const officialsAPI = {
     await apiFetch(`${API_BASE}/officials?id=${id}`, {
       method: 'DELETE'
     })
+    invalidateCache('officials')
   }
 }
