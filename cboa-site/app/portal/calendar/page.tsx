@@ -5,18 +5,21 @@ import { Calendar, momentLocalizer, View, Event } from 'react-big-calendar'
 import moment from 'moment'
 import 'react-big-calendar/lib/css/react-big-calendar.css'
 import './calendar.css'
-import { IconPlus, IconEdit, IconTrash, IconCalendar, IconClock, IconMapPin, IconUsers, IconChevronLeft, IconChevronRight, IconList, IconCalendarEvent } from '@tabler/icons-react'
+import { IconPlus, IconEdit, IconTrash, IconCalendar, IconClock, IconMapPin, IconUsers, IconChevronLeft, IconChevronRight, IconList, IconCalendarEvent, IconChartBar, IconX } from '@tabler/icons-react'
 import { calendarAPI } from '@/lib/api'
 import { useRole } from '@/contexts/RoleContext'
 
 const localizer = momentLocalizer(moment)
+
+// Calendar view mode type
+type CalendarViewMode = 'events' | 'statistics'
 
 interface CBOAEvent extends Event {
   id?: string
   title: string
   start: Date
   end: Date
-  type: 'training' | 'meeting' | 'game' | 'deadline' | 'social'
+  type: 'training' | 'meeting' | 'deadline' | 'social'
   description?: string
   location?: string
   instructor?: string
@@ -24,8 +27,40 @@ interface CBOAEvent extends Event {
   registrationLink?: string
 }
 
+// Mock daily game data for Statistics view (February 2026)
+const mockDailyGames: Record<string, { games: number; assignments: number; leagues: { name: string; games: number }[] }> = {
+  '2026-02-02': { games: 12, assignments: 24, leagues: [{ name: 'CBE Junior High', games: 8 }, { name: 'Senior Mens', games: 4 }] },
+  '2026-02-03': { games: 8, assignments: 16, leagues: [{ name: 'CBE Junior High', games: 6 }, { name: 'Womens Div 2', games: 2 }] },
+  '2026-02-04': { games: 15, assignments: 30, leagues: [{ name: 'CSHSAA', games: 10 }, { name: 'CBE Junior High', games: 5 }] },
+  '2026-02-05': { games: 6, assignments: 12, leagues: [{ name: 'Senior Mens', games: 6 }] },
+  '2026-02-06': { games: 22, assignments: 44, leagues: [{ name: 'CBE Junior High', games: 14 }, { name: 'CSHSAA', games: 8 }] },
+  '2026-02-07': { games: 35, assignments: 70, leagues: [{ name: 'Edge Tournament', games: 20 }, { name: 'CBE Junior High', games: 15 }] },
+  '2026-02-08': { games: 28, assignments: 56, leagues: [{ name: 'Edge Tournament', games: 18 }, { name: 'Senior Mens', games: 10 }] },
+  '2026-02-09': { games: 10, assignments: 20, leagues: [{ name: 'CBE Junior High', games: 6 }, { name: 'Womens Div 2', games: 4 }] },
+  '2026-02-10': { games: 14, assignments: 28, leagues: [{ name: 'CBE Junior High', games: 10 }, { name: 'Rocky View League', games: 4 }] },
+  '2026-02-11': { games: 18, assignments: 36, leagues: [{ name: 'CSHSAA', games: 12 }, { name: 'CBE Junior High', games: 6 }] },
+  '2026-02-12': { games: 8, assignments: 16, leagues: [{ name: 'Senior Mens', games: 8 }] },
+  '2026-02-13': { games: 24, assignments: 48, leagues: [{ name: 'CBE Junior High', games: 16 }, { name: 'CSHSAA', games: 8 }] },
+  '2026-02-14': { games: 42, assignments: 84, leagues: [{ name: 'Nelson Mandela Invitational', games: 24 }, { name: 'CBE Junior High', games: 18 }] },
+  '2026-02-15': { games: 38, assignments: 76, leagues: [{ name: 'Nelson Mandela Invitational', games: 22 }, { name: 'Senior Mens', games: 16 }] },
+  '2026-02-16': { games: 5, assignments: 10, leagues: [{ name: 'Womens Masters', games: 5 }] },
+  '2026-02-17': { games: 0, assignments: 0, leagues: [] },
+  '2026-02-18': { games: 12, assignments: 24, leagues: [{ name: 'CBE Junior High', games: 8 }, { name: 'Rocky View League', games: 4 }] },
+  '2026-02-19': { games: 16, assignments: 32, leagues: [{ name: 'CSHSAA', games: 10 }, { name: 'CBE Junior High', games: 6 }] },
+  '2026-02-20': { games: 10, assignments: 20, leagues: [{ name: 'Senior Mens', games: 6 }, { name: 'Womens Div 2', games: 4 }] },
+  '2026-02-21': { games: 30, assignments: 60, leagues: [{ name: 'Holy Trinity Tournament', games: 18 }, { name: 'CBE Junior High', games: 12 }] },
+  '2026-02-22': { games: 26, assignments: 52, leagues: [{ name: 'Holy Trinity Tournament', games: 16 }, { name: 'Senior Mens', games: 10 }] },
+  '2026-02-23': { games: 8, assignments: 16, leagues: [{ name: 'CBE Junior High', games: 5 }, { name: 'Foothills League', games: 3 }] },
+  '2026-02-24': { games: 14, assignments: 28, leagues: [{ name: 'CBE Junior High', games: 10 }, { name: 'CSHSAA', games: 4 }] },
+  '2026-02-25': { games: 20, assignments: 40, leagues: [{ name: 'CSHSAA', games: 14 }, { name: 'CBE Junior High', games: 6 }] },
+  '2026-02-26': { games: 6, assignments: 12, leagues: [{ name: 'Senior Mens', games: 6 }] },
+  '2026-02-27': { games: 18, assignments: 36, leagues: [{ name: 'CBE Junior High', games: 12 }, { name: 'Rocky View League', games: 6 }] },
+  '2026-02-28': { games: 32, assignments: 64, leagues: [{ name: 'Rundle Tournament', games: 20 }, { name: 'Senior Mens', games: 12 }] },
+}
+
 export default function CalendarPage() {
   const { user } = useRole()
+  const [calendarMode, setCalendarMode] = useState<CalendarViewMode>('events')
   const [events, setEvents] = useState<CBOAEvent[]>([])
   const [view, setView] = useState<View>('month')
   const [date, setDate] = useState(new Date())
@@ -33,6 +68,7 @@ export default function CalendarPage() {
   const [selectedEvent, setSelectedEvent] = useState<CBOAEvent | null>(null)
   const [isEditing, setIsEditing] = useState(false)
   const [mobileView, setMobileView] = useState<'calendar' | 'list'>('list')
+  const [selectedStatDate, setSelectedStatDate] = useState<string | null>(null)
 
   // Load events from API on mount
   useEffect(() => {
@@ -169,16 +205,13 @@ export default function CalendarPage() {
 
   const eventStyleGetter = (event: CBOAEvent) => {
     let backgroundColor = '#3174ad'
-    
+
     switch (event.type) {
       case 'training':
         backgroundColor = '#10b981' // green
         break
       case 'meeting':
         backgroundColor = '#8b5cf6' // purple
-        break
-      case 'game':
-        backgroundColor = '#f97316' // orange
         break
       case 'deadline':
         backgroundColor = '#ef4444' // red
@@ -238,12 +271,13 @@ export default function CalendarPage() {
     switch (type) {
       case 'training': return 'bg-green-500'
       case 'meeting': return 'bg-purple-500'
-      case 'game': return 'bg-orange-500'
       case 'deadline': return 'bg-red-500'
       case 'social': return 'bg-blue-500'
       default: return 'bg-gray-500'
     }
   }
+
+  const selectedStatDayData = selectedStatDate ? mockDailyGames[selectedStatDate] : null
 
   const monthEvents = getEventsForMonth(date)
   const upcomingEvents = getUpcomingEvents()
@@ -254,77 +288,107 @@ export default function CalendarPage() {
       <div className="mb-4 sm:mb-6 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">CBOA Calendar</h1>
-          <p className="text-sm sm:text-base text-gray-600 mt-1">Training events, meetings, and important dates</p>
+          <p className="text-sm sm:text-base text-gray-600 mt-1">
+            {calendarMode === 'events'
+              ? 'Training events, meetings, and important dates'
+              : 'Game statistics and assignment data'}
+          </p>
         </div>
-        {canEdit && (
-          <button
-            onClick={() => {
-              setSelectedEvent({
-                title: '',
-                start: new Date(),
-                end: new Date(),
-                type: 'training'
-              })
-              setIsEditing(true)
-              setShowEventModal(true)
-            }}
-            className="bg-orange-500 text-white px-4 py-2 rounded-lg hover:bg-orange-600 flex items-center justify-center gap-2 text-sm sm:text-base"
-          >
-            <IconPlus className="h-5 w-5" />
-            Add Event
-          </button>
-        )}
+        <div className="flex items-center gap-3">
+          {/* Calendar Mode Toggle */}
+          <div className="flex bg-gray-100 rounded-lg p-1">
+            <button
+              onClick={() => setCalendarMode('events')}
+              className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors flex items-center gap-1.5 ${
+                calendarMode === 'events'
+                  ? 'bg-white shadow text-gray-900'
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              <IconCalendarEvent className="h-4 w-4" />
+              Events
+            </button>
+            <button
+              onClick={() => setCalendarMode('statistics')}
+              className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors flex items-center gap-1.5 ${
+                calendarMode === 'statistics'
+                  ? 'bg-white shadow text-gray-900'
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              <IconChartBar className="h-4 w-4" />
+              Statistics
+            </button>
+          </div>
+          {canEdit && calendarMode === 'events' && (
+            <button
+              onClick={() => {
+                setSelectedEvent({
+                  title: '',
+                  start: new Date(),
+                  end: new Date(),
+                  type: 'training'
+                })
+                setIsEditing(true)
+                setShowEventModal(true)
+              }}
+              className="bg-orange-500 text-white px-4 py-2 rounded-lg hover:bg-orange-600 flex items-center justify-center gap-2 text-sm sm:text-base"
+            >
+              <IconPlus className="h-5 w-5" />
+              Add Event
+            </button>
+          )}
+        </div>
       </div>
 
-      {/* Mobile View Toggle */}
-      <div className="mb-4 flex sm:hidden">
-        <button
-          onClick={() => setMobileView('list')}
-          className={`flex-1 py-2 px-4 text-sm font-medium rounded-l-lg flex items-center justify-center gap-2 ${
-            mobileView === 'list'
-              ? 'bg-orange-500 text-white'
-              : 'bg-gray-200 text-gray-700'
-          }`}
-        >
-          <IconList className="h-4 w-4" />
-          List
-        </button>
-        <button
-          onClick={() => setMobileView('calendar')}
-          className={`flex-1 py-2 px-4 text-sm font-medium rounded-r-lg flex items-center justify-center gap-2 ${
-            mobileView === 'calendar'
-              ? 'bg-orange-500 text-white'
-              : 'bg-gray-200 text-gray-700'
-          }`}
-        >
-          <IconCalendarEvent className="h-4 w-4" />
-          Calendar
-        </button>
-      </div>
+      {/* Events Mode Content */}
+      {calendarMode === 'events' && (
+        <>
+          {/* Mobile View Toggle */}
+          <div className="mb-4 flex sm:hidden">
+            <button
+              onClick={() => setMobileView('list')}
+              className={`flex-1 py-2 px-4 text-sm font-medium rounded-l-lg flex items-center justify-center gap-2 ${
+                mobileView === 'list'
+                  ? 'bg-orange-500 text-white'
+                  : 'bg-gray-200 text-gray-700'
+              }`}
+            >
+              <IconList className="h-4 w-4" />
+              List
+            </button>
+            <button
+              onClick={() => setMobileView('calendar')}
+              className={`flex-1 py-2 px-4 text-sm font-medium rounded-r-lg flex items-center justify-center gap-2 ${
+                mobileView === 'calendar'
+                  ? 'bg-orange-500 text-white'
+                  : 'bg-gray-200 text-gray-700'
+              }`}
+            >
+              <IconCalendarEvent className="h-4 w-4" />
+              Calendar
+            </button>
+          </div>
 
-      {/* Legend */}
-      <div className="mb-4 flex flex-wrap gap-2 sm:gap-4 text-xs sm:text-sm">
-        <div className="flex items-center gap-1 sm:gap-2">
-          <div className="w-3 h-3 sm:w-4 sm:h-4 bg-green-500 rounded"></div>
-          <span>Training</span>
-        </div>
-        <div className="flex items-center gap-1 sm:gap-2">
-          <div className="w-3 h-3 sm:w-4 sm:h-4 bg-purple-500 rounded"></div>
-          <span>Meeting</span>
-        </div>
-        <div className="flex items-center gap-1 sm:gap-2">
-          <div className="w-3 h-3 sm:w-4 sm:h-4 bg-orange-500 rounded"></div>
-          <span>Game</span>
-        </div>
-        <div className="flex items-center gap-1 sm:gap-2">
-          <div className="w-3 h-3 sm:w-4 sm:h-4 bg-red-500 rounded"></div>
-          <span>Deadline</span>
-        </div>
-        <div className="flex items-center gap-1 sm:gap-2">
-          <div className="w-3 h-3 sm:w-4 sm:h-4 bg-blue-500 rounded"></div>
-          <span>Social</span>
-        </div>
-      </div>
+          {/* Legend */}
+          <div className="mb-4 flex flex-wrap gap-2 sm:gap-4 text-xs sm:text-sm">
+            <div className="flex items-center gap-1 sm:gap-2">
+              <div className="w-3 h-3 sm:w-4 sm:h-4 bg-green-500 rounded"></div>
+              <span>Training</span>
+            </div>
+            <div className="flex items-center gap-1 sm:gap-2">
+              <div className="w-3 h-3 sm:w-4 sm:h-4 bg-purple-500 rounded"></div>
+              <span>Meeting</span>
+            </div>
+            <div className="flex items-center gap-1 sm:gap-2">
+              <div className="w-3 h-3 sm:w-4 sm:h-4 bg-red-500 rounded"></div>
+              <span>Deadline</span>
+            </div>
+            <div className="flex items-center gap-1 sm:gap-2">
+              <div className="w-3 h-3 sm:w-4 sm:h-4 bg-blue-500 rounded"></div>
+              <span>Social</span>
+            </div>
+          </div>
 
       {/* Mobile List View */}
       <div className={`sm:hidden ${mobileView === 'list' ? 'block' : 'hidden'}`}>
@@ -430,14 +494,14 @@ export default function CalendarPage() {
 
       {/* Mobile Calendar View */}
       <div className={`sm:hidden ${mobileView === 'calendar' ? 'block' : 'hidden'}`}>
-        <div className="bg-white rounded-lg shadow p-2 overflow-x-auto">
-          <div style={{ minHeight: '400px' }}>
+        <div className="bg-white rounded-lg shadow p-2">
+          <div style={{ minHeight: '650px' }}>
             <Calendar
               localizer={localizer}
               events={events}
               startAccessor="start"
               endAccessor="end"
-              style={{ height: 400 }}
+              style={{ height: 650 }}
               onSelectEvent={handleSelectEvent}
               view="month"
               date={date}
@@ -468,6 +532,168 @@ export default function CalendarPage() {
           eventPropGetter={eventStyleGetter}
         />
       </div>
+        </>
+      )}
+
+      {/* Statistics Mode Content */}
+      {calendarMode === 'statistics' && (
+        <>
+          {/* Under Construction Banner */}
+          <div className="mb-4 bg-amber-100 border border-amber-300 rounded-lg p-4 flex items-center gap-3">
+            <span className="text-2xl">🚧</span>
+            <div>
+              <p className="font-semibold text-amber-800">Under Construction</p>
+              <p className="text-sm text-amber-700">This view is currently displaying mock data for demonstration purposes.</p>
+            </div>
+          </div>
+
+          {/* Statistics Legend */}
+          <div className="mb-4 flex flex-wrap items-center gap-4 text-xs sm:text-sm text-gray-600">
+            <span>Games:</span>
+            <div className="flex items-center gap-1">
+              <span className="w-4 h-4 bg-gray-50 border rounded"></span>
+              <span>0</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <span className="w-4 h-4 bg-blue-100 rounded"></span>
+              <span>1-9</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <span className="w-4 h-4 bg-blue-200 rounded"></span>
+              <span>10-19</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <span className="w-4 h-4 bg-blue-300 rounded"></span>
+              <span>20-29</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <span className="w-4 h-4 bg-blue-400 rounded"></span>
+              <span>30-39</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <span className="w-4 h-4 bg-blue-500 rounded"></span>
+              <span>40+</span>
+            </div>
+          </div>
+
+          {/* Statistics Calendar - using react-big-calendar */}
+          <div className="hidden sm:block bg-white rounded-lg shadow p-4" style={{ height: '600px' }}>
+            <Calendar
+              localizer={localizer}
+              events={[]} // No events displayed in stats view
+              startAccessor="start"
+              endAccessor="end"
+              style={{ height: '100%' }}
+              view={view}
+              onView={setView}
+              date={date}
+              onNavigate={setDate}
+              onSelectSlot={({ start }: { start: Date }) => {
+                const dateKey = moment(start).format('YYYY-MM-DD')
+                setSelectedStatDate(selectedStatDate === dateKey ? null : dateKey)
+              }}
+              selectable={true}
+              components={{
+                dateCellWrapper: ({ children, value }: { children: React.ReactNode; value: Date }) => {
+                  const dateKey = moment(value).format('YYYY-MM-DD')
+                  const dayData = mockDailyGames[dateKey]
+                  const games = dayData?.games || 0
+                  const isSelected = selectedStatDate === dateKey
+
+                  return (
+                    <div
+                      className={`rbc-day-bg cursor-pointer transition-all ${
+                        isSelected ? 'ring-2 ring-orange-500 ring-inset' : ''
+                      }`}
+                      style={{
+                        backgroundColor: games === 0 ? '#f9fafb' :
+                          games < 10 ? '#dbeafe' :
+                          games < 20 ? '#bfdbfe' :
+                          games < 30 ? '#93c5fd' :
+                          games < 40 ? '#60a5fa' : '#3b82f6'
+                      }}
+                    >
+                      {children}
+                      {games > 0 && (
+                        <div className="absolute bottom-1 left-1 right-1 text-center">
+                          <span className={`text-xs font-medium ${games >= 30 ? 'text-white' : 'text-gray-700'}`}>
+                            {games} games
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  )
+                }
+              }}
+              dayPropGetter={(dateValue: Date) => {
+                const dateKey = moment(dateValue).format('YYYY-MM-DD')
+                const dayData = mockDailyGames[dateKey]
+                const games = dayData?.games || 0
+                const isSelected = selectedStatDate === dateKey
+
+                return {
+                  className: isSelected ? 'stats-day-selected' : '',
+                  style: {
+                    backgroundColor: games === 0 ? '#f9fafb' :
+                      games < 10 ? '#dbeafe' :
+                      games < 20 ? '#bfdbfe' :
+                      games < 30 ? '#93c5fd' :
+                      games < 40 ? '#60a5fa' : '#3b82f6'
+                  }
+                }
+              }}
+            />
+          </div>
+
+          {/* Selected Day Detail */}
+          {selectedStatDate && selectedStatDayData && (
+            <div className="mt-4 p-4 bg-white rounded-lg shadow">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="font-semibold">
+                  {new Date(selectedStatDate + 'T00:00:00').toLocaleDateString('en-US', {
+                    weekday: 'long',
+                    month: 'long',
+                    day: 'numeric',
+                    year: 'numeric'
+                  })}
+                </h3>
+                <button
+                  onClick={() => setSelectedStatDate(null)}
+                  className="p-1 hover:bg-gray-200 rounded"
+                >
+                  <IconX className="h-4 w-4" />
+                </button>
+              </div>
+              <div className="flex gap-6 mb-3 text-sm">
+                <div>
+                  <span className="text-gray-500">Total Games:</span>
+                  <span className="ml-2 font-semibold">{selectedStatDayData.games}</span>
+                </div>
+                <div>
+                  <span className="text-gray-500">Assignments:</span>
+                  <span className="ml-2 font-semibold">{selectedStatDayData.assignments}</span>
+                </div>
+              </div>
+              {selectedStatDayData.leagues.length > 0 && (
+                <div>
+                  <h4 className="text-sm font-medium text-gray-700 mb-2">League Breakdown:</h4>
+                  <div className="space-y-1">
+                    {selectedStatDayData.leagues.map((league, idx) => (
+                      <div key={idx} className="flex justify-between text-sm">
+                        <span>{league.name}</span>
+                        <span className="text-gray-600">{league.games} games</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {selectedStatDayData.games === 0 && (
+                <p className="text-sm text-gray-500">No games scheduled</p>
+              )}
+            </div>
+          )}
+        </>
+      )}
 
       {/* Event Modal */}
       {showEventModal && selectedEvent && (
@@ -645,7 +871,6 @@ function EventModal({
               >
                 <option value="training">Training</option>
                 <option value="meeting">Meeting</option>
-                <option value="game">Game</option>
                 <option value="deadline">Deadline</option>
                 <option value="social">Social</option>
               </select>
