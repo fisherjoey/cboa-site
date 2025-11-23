@@ -11,7 +11,12 @@ import {
   IconClipboard,
   IconSettings,
   IconUser,
-  IconUsers
+  IconUsers,
+  IconExternalLink,
+  IconCalendarEvent,
+  IconBallBasketball,
+  IconBrandDiscord,
+  IconArchive
 } from '@tabler/icons-react';
 import UpcomingEventsWidget from '@/components/dashboard/UpcomingEventsWidget';
 import LatestAnnouncementWidget from '@/components/dashboard/LatestAnnouncementWidget';
@@ -149,6 +154,7 @@ export default function PortalDashboard() {
       <div className="bg-gray-50 rounded-lg shadow p-4 sm:p-6">
         <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-4">Quick Links</h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          {/* Portal Links */}
           <Link
             href="/portal/profile"
             className="flex items-center gap-2 p-3 bg-white rounded-lg hover:shadow-md transition-shadow border border-gray-200"
@@ -209,15 +215,47 @@ export default function PortalDashboard() {
               </Link>
             </>
           )}
-          {user.role === 'admin' && (
-            <Link
-              href="/admin"
-              className="flex items-center gap-2 p-3 bg-white rounded-lg hover:shadow-md transition-shadow border border-gray-200"
-            >
-              <IconSettings className="h-5 w-5 text-orange-600 flex-shrink-0" />
-              <span className="text-sm font-medium text-gray-900">CMS Admin</span>
-            </Link>
-          )}
+          {/* External Links */}
+          <a
+            href="https://app.arbitersports.com/login"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-2 p-3 bg-white rounded-lg hover:shadow-md transition-shadow border border-gray-200"
+          >
+            <IconCalendarEvent className="h-5 w-5 text-orange-600 flex-shrink-0" />
+            <span className="text-sm font-medium text-gray-900">Arbiter</span>
+            <IconExternalLink className="h-3 w-3 text-gray-400 ml-auto flex-shrink-0" />
+          </a>
+          <a
+            href="https://gameplanbasketball.ca/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-2 p-3 bg-white rounded-lg hover:shadow-md transition-shadow border border-gray-200"
+          >
+            <IconBallBasketball className="h-5 w-5 text-orange-600 flex-shrink-0" />
+            <span className="text-sm font-medium text-gray-900">Game Plan</span>
+            <IconExternalLink className="h-3 w-3 text-gray-400 ml-auto flex-shrink-0" />
+          </a>
+          <a
+            href="https://discord.com/invite/CeqKGMyVhh"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-2 p-3 bg-white rounded-lg hover:shadow-md transition-shadow border border-gray-200"
+          >
+            <IconBrandDiscord className="h-5 w-5 text-orange-600 flex-shrink-0" />
+            <span className="text-sm font-medium text-gray-900">Discord</span>
+            <IconExternalLink className="h-3 w-3 text-gray-400 ml-auto flex-shrink-0" />
+          </a>
+          <a
+            href="https://sites.google.com/view/cboa-resource-centre/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-2 p-3 bg-white rounded-lg hover:shadow-md transition-shadow border border-gray-200"
+          >
+            <IconArchive className="h-5 w-5 text-orange-600 flex-shrink-0" />
+            <span className="text-sm font-medium text-gray-900">Legacy Resource Centre</span>
+            <IconExternalLink className="h-3 w-3 text-gray-400 ml-auto flex-shrink-0" />
+          </a>
         </div>
       </div>
     </div>
