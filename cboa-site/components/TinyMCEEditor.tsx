@@ -14,7 +14,7 @@ interface TinyMCEEditorProps {
 export function TinyMCEEditor({
   value,
   onChange,
-  height = 500,
+  height = 300,
   placeholder = 'Start typing here...',
   readOnly = false
 }: TinyMCEEditorProps) {
@@ -28,7 +28,6 @@ export function TinyMCEEditor({
       onEditorChange={onChange}
       disabled={readOnly}
       init={{
-        height: height,
         menubar: true,
         plugins: [
           'advlist', 'autolink', 'lists', 'link', 'image', 'charmap', 'preview',
@@ -39,6 +38,13 @@ export function TinyMCEEditor({
           'bold italic forecolor | alignleft aligncenter ' +
           'alignright alignjustify | bullist numlist outdent indent | ' +
           'removeformat | image link | table | code | help',
+        // Mobile-specific configuration
+        mobile: {
+          menubar: false,
+          plugins: ['autolink', 'lists', 'link', 'image'],
+          toolbar: 'undo redo | bold italic | bullist numlist | link image',
+          toolbar_mode: 'scrolling',
+        },
         content_style: `
           body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
@@ -66,7 +72,10 @@ export function TinyMCEEditor({
         branding: false,
         promotion: false,
         toolbar_mode: 'sliding',
-        statusbar: false,
+        statusbar: true,
+        resize: true,
+        min_height: 200,
+        max_height: 800,
         onboarding: false,
         // Image upload handling - convert to base64
         images_upload_handler: async (blobInfo, progress) => {
@@ -96,6 +105,7 @@ export function TinyMCEEditor({
           '#10B981', 'Green',
           '#3B82F6', 'Blue',
         ],
+        height: height,
       }}
     />
   )

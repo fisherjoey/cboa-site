@@ -102,6 +102,31 @@ export default function ResourceViewer({ resource, onClose }: ResourceViewerProp
         )
       }
 
+      // Google Drive embed
+      if (resource.externalLink.includes('drive.google.com')) {
+        // Handle various Google Drive URL formats
+        let embedUrl = resource.externalLink
+
+        // If it's already a /preview URL, use it directly
+        if (!embedUrl.includes('/preview')) {
+          // Extract file ID from various formats
+          // Format: /file/d/FILE_ID/view or /file/d/FILE_ID/edit etc.
+          const match = embedUrl.match(/\/file\/d\/([^/]+)/)
+          if (match) {
+            embedUrl = `https://drive.google.com/file/d/${match[1]}/preview`
+          }
+        }
+
+        return (
+          <iframe
+            src={embedUrl}
+            className="w-full h-full"
+            allowFullScreen
+            allow="autoplay; fullscreen"
+          />
+        )
+      }
+
       // Other video links - show button to open
       return (
         <div className="flex flex-col items-center justify-center h-full gap-6 p-6">
@@ -149,6 +174,25 @@ export default function ResourceViewer({ resource, onClose }: ResourceViewerProp
             className="w-full h-full"
             allowFullScreen
             allow="autoplay; fullscreen; picture-in-picture"
+          />
+        )
+      }
+
+      // Google Drive embed (legacy)
+      if (resource.externalLink.includes('drive.google.com')) {
+        let embedUrl = resource.externalLink
+        if (!embedUrl.includes('/preview')) {
+          const match = embedUrl.match(/\/file\/d\/([^/]+)/)
+          if (match) {
+            embedUrl = `https://drive.google.com/file/d/${match[1]}/preview`
+          }
+        }
+        return (
+          <iframe
+            src={embedUrl}
+            className="w-full h-full"
+            allowFullScreen
+            allow="autoplay; fullscreen"
           />
         )
       }
