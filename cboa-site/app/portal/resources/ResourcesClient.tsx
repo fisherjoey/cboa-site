@@ -9,12 +9,12 @@ import { useRole } from '@/contexts/RoleContext'
 import { useToast } from '@/hooks/useToast'
 import { ToastContainer } from '@/components/Toast'
 import {
-  validateResourceForm,
   getFieldError,
   hasErrors,
   formatValidationErrors
 } from '@/lib/portalValidation'
 import { parseAPIError, sanitize, ValidationError } from '@/lib/errorHandling'
+import { TinyMCEEditor, HTMLViewer } from '@/components/TinyMCEEditor'
 import {
   IconPlus,
   IconEdit,
@@ -30,14 +30,19 @@ import {
   IconX,
   IconUpload,
   IconFileUpload,
-  IconEye
+  IconEye,
+  IconLink,
+  IconArticle
 } from '@tabler/icons-react'
+
+type ResourceType = 'file' | 'link' | 'video' | 'text'
 
 interface Resource {
   id: string
   title: string
   description: string
   category: 'rulebooks' | 'forms' | 'training' | 'policies' | 'guides' | 'videos'
+  resourceType: ResourceType
   fileUrl?: string
   externalLink?: string
   fileSize?: string
@@ -54,11 +59,13 @@ export default function ResourcesClient() {
   const [searchTerm, setSearchTerm] = useState('')
   const [isCreating, setIsCreating] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
+  const [editingData, setEditingData] = useState<Partial<Resource> | null>(null)
   const [viewingResource, setViewingResource] = useState<Resource | null>(null)
   const [newResource, setNewResource] = useState<Partial<Resource>>({
     title: '',
     description: '',
     category: 'rulebooks',
+    resourceType: 'file',
     accessLevel: 'all'
   })
   const [uploadedFile, setUploadedFile] = useState<File | null>(null)
@@ -102,6 +109,7 @@ export default function ResourcesClient() {
         title: r.title,
         description: r.description || '',
         category: r.category,
+        resourceType: (r.resource_type || 'file') as ResourceType,
         fileUrl: r.file_name === 'external-link' ? '' : r.file_url,
         externalLink: r.file_name === 'external-link' ? r.file_url : undefined,
         lastUpdated: r.updated_at || r.created_at,
@@ -109,8 +117,8 @@ export default function ResourcesClient() {
         accessLevel: r.access_level || 'all'
       }))
       setResources(mapped)
-    } catch (error) {
-      error('Failed to Load Resources', parseAPIError(error))
+    } catch (err) {
+      error('Failed to Load Resources', parseAPIError(err))
       setResources([])
     }
   }
@@ -125,6 +133,56 @@ export default function ResourcesClient() {
     { value: 'videos', label: 'Videos', icon: IconVideo }
   ]
 
+  const resourceTypes = [
+    { value: 'file', label: 'File Upload', icon: IconFile, description: 'Upload a PDF, document, or other file' },
+    { value: 'link', label: 'External Link', icon: IconLink, description: 'Link to an external website or resource' },
+    { value: 'video', label: 'Video', icon: IconVideo, description: 'Embed a video link (YouTube, Vimeo, etc.)' },
+    { value: 'text', label: 'Text Content', icon: IconArticle, description: 'Rich text content displayed directly' }
+  ]
+
+  // Custom validation based on resource type
+  const validateResourceFormCustom = (data: Partial<Resource>, file?: File | null): ValidationError[] => {
+    const errors: ValidationError[] = []
+
+    // Title validation
+    if (!data.title || data.title.trim().length < 3) {
+      errors.push({ field: 'title', message: 'Title must be at least 3 characters' })
+    }
+    if (data.title && data.title.length > 200) {
+      errors.push({ field: 'title', message: 'Title must be less than 200 characters' })
+    }
+
+    // Category validation
+    if (!data.category) {
+      errors.push({ field: 'category', message: 'Category is required' })
+    }
+
+    // Resource type specific validation
+    const resourceType = data.resourceType || 'file'
+
+    if (resourceType === 'file') {
+      if (!file && !data.fileUrl) {
+        errors.push({ field: 'file', message: 'Please upload a file or select an existing one' })
+      }
+    } else if (resourceType === 'link' || resourceType === 'video') {
+      if (!data.externalLink) {
+        errors.push({ field: 'externalLink', message: 'Please provide a URL' })
+      }
+    } else if (resourceType === 'text') {
+      // For text resources, description is required and should have content
+      if (!data.description || data.description.trim().length < 10) {
+        errors.push({ field: 'description', message: 'Text content must be at least 10 characters' })
+      }
+    }
+
+    // Description validation for non-text types (optional but with max length if provided)
+    if (resourceType !== 'text' && data.description && data.description.length > 1000) {
+      errors.push({ field: 'description', message: 'Description must be less than 1000 characters' })
+    }
+
+    return errors
+  }
+
   const filteredResources = resources.filter(resource => {
     const matchesCategory = selectedCategory === 'all' || resource.category === selectedCategory
     const matchesSearch = searchTerm === '' || 
@@ -137,16 +195,8 @@ export default function ResourcesClient() {
     // Clear previous validation errors
     setValidationErrors([])
 
-    // Validate form data
-    const errors = validateResourceForm({
-      title: newResource.title,
-      description: newResource.description,
-      category: newResource.category,
-      file: uploadedFile,
-      fileUrl: newResource.fileUrl,
-      externalLink: newResource.externalLink,
-      accessLevel: newResource.accessLevel
-    })
+    // Validate form data using custom validation
+    const errors = validateResourceFormCustom(newResource, uploadedFile)
 
     if (hasErrors(errors)) {
       setValidationErrors(errors)
@@ -154,11 +204,13 @@ export default function ResourcesClient() {
       return
     }
 
-    // Sanitize inputs
+    // Sanitize inputs - don't sanitize HTML for text type
+    const resourceType = newResource.resourceType || 'file'
     const sanitizedData = {
       title: sanitize.text(newResource.title || ''),
-      description: sanitize.text(newResource.description || ''),
+      description: resourceType === 'text' ? newResource.description || '' : sanitize.text(newResource.description || ''),
       category: newResource.category,
+      resourceType: resourceType,
       externalLink: newResource.externalLink ? sanitize.url(newResource.externalLink) : undefined,
       accessLevel: newResource.accessLevel || 'all',
       featured: newResource.featured || false
@@ -169,8 +221,8 @@ export default function ResourcesClient() {
       let fileUrl = newResource.fileUrl
       let fileName: string | undefined
 
-      // Handle file upload with automatic validation
-      if (uploadedFile) {
+      // Handle file upload with automatic validation (only for file type)
+      if (resourceType === 'file' && uploadedFile) {
         try {
           const uploadResult = await uploadFile(uploadedFile)
           fileUrl = uploadResult.url
@@ -183,12 +235,27 @@ export default function ResourcesClient() {
         }
       }
 
+      // Determine file_url and file_name based on resource type
+      let apiFileUrl = ''
+      let apiFileName = ''
+      if (resourceType === 'file') {
+        apiFileUrl = fileUrl || ''
+        apiFileName = fileName || 'uploaded-file'
+      } else if (resourceType === 'link' || resourceType === 'video') {
+        apiFileUrl = sanitizedData.externalLink || ''
+        apiFileName = 'external-link'
+      } else if (resourceType === 'text') {
+        apiFileUrl = ''
+        apiFileName = 'text-content'
+      }
+
       const apiData = {
         title: sanitizedData.title,
         description: sanitizedData.description,
         category: sanitizedData.category,
-        file_url: fileUrl || sanitizedData.externalLink || '',
-        file_name: fileName || 'external-link',
+        resource_type: sanitizedData.resourceType,
+        file_url: apiFileUrl,
+        file_name: apiFileName,
         is_featured: sanitizedData.featured,
         access_level: sanitizedData.accessLevel
       }
@@ -199,7 +266,8 @@ export default function ResourcesClient() {
         title: created.title,
         description: created.description,
         category: created.category,
-        fileUrl: created.file_name === 'external-link' ? '' : created.file_url,
+        resourceType: (created.resource_type || 'file') as ResourceType,
+        fileUrl: created.file_name === 'external-link' || created.file_name === 'text-content' ? '' : created.file_url,
         externalLink: created.file_name === 'external-link' ? created.file_url : undefined,
         fileSize: newResource.fileSize,
         lastUpdated: created.created_at,
@@ -215,6 +283,7 @@ export default function ResourcesClient() {
         title: '',
         description: '',
         category: 'rulebooks',
+        resourceType: 'file',
         accessLevel: 'all'
       })
       setUploadedFile(null)
@@ -223,38 +292,67 @@ export default function ResourcesClient() {
       setValidationErrors([])
       if (fileInputRef.current) fileInputRef.current.value = ''
       setIsCreating(false)
-    } catch (error) {
-      error('Failed to Create Resource', parseAPIError(error))
+    } catch (err) {
+      error('Failed to Create Resource', parseAPIError(err))
     } finally {
       setIsUploading(false)
     }
   }
 
-  const handleUpdate = async (id: string, updates: Partial<Resource>) => {
+  // Start editing a resource - copy data to local buffer
+  const startEditing = (resource: Resource) => {
+    setEditingId(resource.id)
+    setEditingData({
+      title: resource.title || '',
+      description: resource.description || '',
+      category: resource.category,
+      resourceType: resource.resourceType || 'file',
+      fileUrl: resource.fileUrl,
+      externalLink: resource.externalLink,
+      featured: resource.featured,
+      accessLevel: resource.accessLevel
+    })
+  }
+
+  // Cancel editing - clear local buffer
+  const cancelEditing = () => {
+    setEditingId(null)
+    setEditingData(null)
+  }
+
+  // Save edit - only call API when Save button is clicked
+  const handleSaveEdit = async () => {
+    if (!editingId || !editingData) return
+
     try {
-      // Sanitize updates
-      const sanitizedUpdates: any = { id }
-      if (updates.title !== undefined) sanitizedUpdates.title = sanitize.text(updates.title)
-      if (updates.description !== undefined) sanitizedUpdates.description = sanitize.text(updates.description)
-      if (updates.category !== undefined) sanitizedUpdates.category = updates.category
-      if (updates.fileUrl !== undefined) sanitizedUpdates.file_url = updates.fileUrl
-      if (updates.externalLink !== undefined) {
-        sanitizedUpdates.url = updates.externalLink ? sanitize.url(updates.externalLink) : null
+      // Sanitize updates - don't sanitize HTML for text type
+      const isTextType = editingData.resourceType === 'text'
+      const sanitizedUpdates: any = { id: editingId }
+      if (editingData.title !== undefined) sanitizedUpdates.title = sanitize.text(editingData.title)
+      if (editingData.description !== undefined) {
+        sanitizedUpdates.description = isTextType ? editingData.description : sanitize.text(editingData.description)
       }
-      if (updates.featured !== undefined) sanitizedUpdates.is_featured = updates.featured
-      if (updates.accessLevel !== undefined) sanitizedUpdates.access_level = updates.accessLevel
+      if (editingData.category !== undefined) sanitizedUpdates.category = editingData.category
+      if (editingData.resourceType !== undefined) sanitizedUpdates.resource_type = editingData.resourceType
+      if (editingData.fileUrl !== undefined) sanitizedUpdates.file_url = editingData.fileUrl
+      if (editingData.externalLink !== undefined) {
+        sanitizedUpdates.url = editingData.externalLink ? sanitize.url(editingData.externalLink) : null
+      }
+      if (editingData.featured !== undefined) sanitizedUpdates.is_featured = editingData.featured
+      if (editingData.accessLevel !== undefined) sanitizedUpdates.access_level = editingData.accessLevel
 
       const updated = await resourcesAPI.update(sanitizedUpdates)
       setResources(prev => prev.map(r =>
-        r.id === id ? {
+        r.id === editingId ? {
           ...r,
-          ...updates,
+          ...editingData,
           lastUpdated: updated.updated_at
         } : r
       ))
       success('Resource Updated', 'Changes saved successfully.')
-    } catch (error) {
-      error('Update Failed', parseAPIError(error))
+      cancelEditing()
+    } catch (err) {
+      error('Update Failed', parseAPIError(err))
     }
   }
 
@@ -294,6 +392,7 @@ export default function ResourcesClient() {
                 title: '',
                 description: '',
                 category: category as Resource['category'],
+                resourceType: 'file',
                 accessLevel: 'all'
               })
             }}
@@ -309,8 +408,37 @@ export default function ResourcesClient() {
       {isCreating && (
         <div className="mb-6 bg-white rounded-lg shadow-lg p-4 sm:p-6">
           <h2 className="text-lg sm:text-xl font-semibold mb-4">Add New Resource</h2>
-          
+
           <div className="space-y-4">
+            {/* Resource Type Selector */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Resource Type *</label>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                {resourceTypes.map((type) => {
+                  const Icon = type.icon
+                  const isSelected = newResource.resourceType === type.value
+                  return (
+                    <button
+                      key={type.value}
+                      type="button"
+                      onClick={() => setNewResource({ ...newResource, resourceType: type.value as ResourceType, externalLink: '', fileUrl: '' })}
+                      className={`p-3 rounded-lg border-2 transition-all flex flex-col items-center gap-1 ${
+                        isSelected
+                          ? 'border-orange-500 bg-orange-50 text-orange-700'
+                          : 'border-gray-200 hover:border-gray-300 text-gray-600'
+                      }`}
+                    >
+                      <Icon className="h-6 w-6" />
+                      <span className="text-sm font-medium">{type.label}</span>
+                    </button>
+                  )
+                })}
+              </div>
+              <p className="mt-1 text-xs text-gray-500">
+                {resourceTypes.find(t => t.value === newResource.resourceType)?.description}
+              </p>
+            </div>
+
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Title *</label>
@@ -349,19 +477,33 @@ export default function ResourcesClient() {
               </div>
             </div>
 
+            {/* Description/Content - TinyMCE for text type, textarea for others */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Description *</label>
-              <textarea
-                value={newResource.description}
-                onChange={(e) => setNewResource({ ...newResource, description: e.target.value })}
-                className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 ${
-                  getFieldError(validationErrors, 'description')
-                    ? 'border-red-500 focus:ring-red-500'
-                    : 'border-gray-300 focus:ring-orange-500'
-                }`}
-                rows={3}
-                placeholder="Brief description of the resource..."
-              />
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                {newResource.resourceType === 'text' ? 'Content *' : 'Description'}
+              </label>
+              {newResource.resourceType === 'text' ? (
+                <div className={`border rounded-lg ${getFieldError(validationErrors, 'description') ? 'border-red-500' : 'border-gray-300'}`}>
+                  <TinyMCEEditor
+                    value={newResource.description || ''}
+                    onChange={(value) => setNewResource({ ...newResource, description: value })}
+                    height={400}
+                    placeholder="Enter your content here..."
+                  />
+                </div>
+              ) : (
+                <textarea
+                  value={newResource.description}
+                  onChange={(e) => setNewResource({ ...newResource, description: e.target.value })}
+                  className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 ${
+                    getFieldError(validationErrors, 'description')
+                      ? 'border-red-500 focus:ring-red-500'
+                      : 'border-gray-300 focus:ring-orange-500'
+                  }`}
+                  rows={3}
+                  placeholder="Brief description of the resource..."
+                />
+              )}
               {getFieldError(validationErrors, 'description') && (
                 <p className="mt-1 text-sm text-red-600">
                   {getFieldError(validationErrors, 'description')}
@@ -369,82 +511,89 @@ export default function ResourcesClient() {
               )}
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {/* File Upload - only for file type */}
+            {newResource.resourceType === 'file' && (
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Resource File</label>
-                <div className="space-y-2">
-                  {/* Upload new file button */}
-                  <div className="flex gap-2">
-                    <input
-                      type="file"
-                      ref={fileInputRef}
-                      onChange={(e) => {
-                        const file = e.target.files?.[0]
-                        if (file) {
-                          setUploadedFile(file)
-                          const sizeInMB = (file.size / (1024 * 1024)).toFixed(2)
-                          setNewResource({ 
-                            ...newResource, 
-                            fileSize: `${sizeInMB} MB`,
-                            fileUrl: '' // Clear any existing selection
-                          })
-                          setFileSearchTerm('')
-                        }
-                      }}
-                      className="hidden"
-                      accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx"
-                    />
+                <label className="block text-sm font-medium text-gray-700 mb-1">Resource File *</label>
+                <div className="flex gap-2">
+                  <input
+                    type="file"
+                    ref={fileInputRef}
+                    onChange={(e) => {
+                      const file = e.target.files?.[0]
+                      if (file) {
+                        setUploadedFile(file)
+                        const sizeInMB = (file.size / (1024 * 1024)).toFixed(2)
+                        setNewResource({
+                          ...newResource,
+                          fileSize: `${sizeInMB} MB`,
+                          fileUrl: ''
+                        })
+                        setFileSearchTerm('')
+                      }
+                    }}
+                    className="hidden"
+                    accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    className={`flex-1 px-3 py-2 rounded-lg border flex items-center justify-center gap-2 transition-colors ${
+                      getFieldError(validationErrors, 'file')
+                        ? 'border-red-500 bg-red-50'
+                        : 'border-gray-300 bg-gray-100 hover:bg-gray-200'
+                    }`}
+                  >
+                    <IconFileUpload className="h-5 w-5" />
+                    {uploadedFile ? uploadedFile.name : 'Upload File'}
+                  </button>
+                  {uploadedFile && (
                     <button
                       type="button"
-                      onClick={() => fileInputRef.current?.click()}
-                      className="flex-1 bg-gray-100 hover:bg-gray-200 px-3 py-2 rounded-lg border border-gray-300 flex items-center justify-center gap-2 transition-colors"
+                      onClick={() => {
+                        setUploadedFile(null)
+                        setNewResource({ ...newResource, fileSize: '', fileUrl: '' })
+                        if (fileInputRef.current) fileInputRef.current.value = ''
+                      }}
+                      className="px-3 py-2 bg-red-100 hover:bg-red-200 text-red-600 rounded-lg"
                     >
-                      <IconFileUpload className="h-5 w-5" />
-                      {uploadedFile ? uploadedFile.name : 'Upload New File'}
+                      <IconX className="h-5 w-5" />
                     </button>
-                    {uploadedFile && (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setUploadedFile(null)
-                          setNewResource({ ...newResource, fileSize: '', fileUrl: '' })
-                          if (fileInputRef.current) fileInputRef.current.value = ''
-                        }}
-                        className="px-3 py-2 bg-red-100 hover:bg-red-200 text-red-600 rounded-lg"
-                      >
-                        <IconX className="h-5 w-5" />
-                      </button>
-                    )}
-                  </div>
-
+                  )}
                 </div>
+                {newResource.fileSize && (
+                  <p className="mt-1 text-xs text-gray-500">File size: {newResource.fileSize}</p>
+                )}
+                {getFieldError(validationErrors, 'file') && (
+                  <p className="mt-1 text-sm text-red-600">{getFieldError(validationErrors, 'file')}</p>
+                )}
               </div>
+            )}
 
+            {/* External Link - for link and video types */}
+            {(newResource.resourceType === 'link' || newResource.resourceType === 'video') && (
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">External Link</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  {newResource.resourceType === 'video' ? 'Video URL *' : 'External Link *'}
+                </label>
                 <input
                   type="url"
                   value={newResource.externalLink || ''}
                   onChange={(e) => setNewResource({ ...newResource, externalLink: e.target.value })}
-                  className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
-                  placeholder="https://..."
+                  className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 ${
+                    getFieldError(validationErrors, 'externalLink')
+                      ? 'border-red-500 focus:ring-red-500'
+                      : 'border-gray-300 focus:ring-orange-500'
+                  }`}
+                  placeholder={newResource.resourceType === 'video' ? 'https://youtube.com/watch?v=...' : 'https://...'}
                 />
+                {getFieldError(validationErrors, 'externalLink') && (
+                  <p className="mt-1 text-sm text-red-600">{getFieldError(validationErrors, 'externalLink')}</p>
+                )}
               </div>
-            </div>
+            )}
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">File Size</label>
-                <input
-                  type="text"
-                  value={newResource.fileSize || ''}
-                  className="w-full px-3 py-2 border rounded-lg bg-gray-50 cursor-not-allowed"
-                  placeholder="Auto-calculated"
-                  disabled
-                  readOnly
-                />
-              </div>
-
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Access Level</label>
                 <select
@@ -469,7 +618,7 @@ export default function ResourcesClient() {
                     onChange={(e) => setNewResource({ ...newResource, featured: e.target.checked })}
                     className="rounded text-orange-500 focus:ring-orange-500"
                   />
-                  <span className="text-sm font-medium text-gray-700">Featured</span>
+                  <span className="text-sm font-medium text-gray-700">Featured Resource</span>
                 </label>
               </div>
             </div>
@@ -499,6 +648,7 @@ export default function ResourcesClient() {
                     title: '',
                     description: '',
                     category: 'rulebooks',
+                    resourceType: 'file',
                     accessLevel: 'all'
                   })
                   setUploadedFile(null)
@@ -610,7 +760,7 @@ export default function ResourcesClient() {
                       {canEdit && (
                         <>
                           <button
-                            onClick={() => setEditingId(resource.id)}
+                            onClick={() => startEditing(resource)}
                             className="text-gray-600 hover:text-gray-800"
                           >
                             <IconEdit className="h-5 w-5" />
@@ -641,34 +791,140 @@ export default function ResourcesClient() {
         {filteredResources.filter(r => !r.featured).map(resource => {
           const Icon = getCategoryIcon(resource.category)
           
-          if (editingId === resource.id) {
-            // Edit mode
+          if (editingId === resource.id && editingData) {
+            // Edit mode - use local editingData state
             return (
               <div key={resource.id} className="bg-white rounded-lg shadow p-4">
                 <div className="space-y-3">
+                  {/* Resource Type Selector */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Resource Type</label>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                      {resourceTypes.map((type) => {
+                        const TypeIcon = type.icon
+                        const isSelected = editingData.resourceType === type.value
+                        return (
+                          <button
+                            key={type.value}
+                            type="button"
+                            onClick={() => setEditingData({ ...editingData, resourceType: type.value as ResourceType })}
+                            className={`p-2 rounded-lg border-2 transition-all flex flex-col items-center gap-1 ${
+                              isSelected
+                                ? 'border-orange-500 bg-orange-50 text-orange-700'
+                                : 'border-gray-200 hover:border-gray-300 text-gray-600'
+                            }`}
+                          >
+                            <TypeIcon className="h-5 w-5" />
+                            <span className="text-xs font-medium">{type.label}</span>
+                          </button>
+                        )
+                      })}
+                    </div>
+                  </div>
+
                   <input
                     type="text"
-                    value={resource.title}
-                    onChange={(e) => handleUpdate(resource.id, { title: e.target.value })}
+                    value={editingData.title || ''}
+                    onChange={(e) => setEditingData({ ...editingData, title: e.target.value })}
                     className="w-full font-semibold px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                    placeholder="Resource title..."
                   />
-                  <textarea
-                    value={resource.description}
-                    onChange={(e) => handleUpdate(resource.id, { description: e.target.value })}
-                    className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
-                    rows={2}
-                  />
+
+                  {/* Description/Content */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      {editingData.resourceType === 'text' ? 'Content' : 'Description'}
+                    </label>
+                    {editingData.resourceType === 'text' ? (
+                      <TinyMCEEditor
+                        value={editingData.description || ''}
+                        onChange={(value) => setEditingData({ ...editingData, description: value })}
+                        height={300}
+                        placeholder="Enter your content here..."
+                      />
+                    ) : (
+                      <textarea
+                        value={editingData.description || ''}
+                        onChange={(e) => setEditingData({ ...editingData, description: e.target.value })}
+                        className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                        rows={2}
+                        placeholder="Resource description..."
+                      />
+                    )}
+                  </div>
+
+                  {/* External Link for link/video types */}
+                  {(editingData.resourceType === 'link' || editingData.resourceType === 'video') && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        {editingData.resourceType === 'video' ? 'Video URL' : 'External Link'}
+                      </label>
+                      <input
+                        type="url"
+                        value={editingData.externalLink || ''}
+                        onChange={(e) => setEditingData({ ...editingData, externalLink: e.target.value })}
+                        className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                        placeholder="https://..."
+                      />
+                    </div>
+                  )}
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
+                      <select
+                        value={editingData.category || 'rulebooks'}
+                        onChange={(e) => setEditingData({ ...editingData, category: e.target.value as any })}
+                        className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                      >
+                        <option value="rulebooks">Rulebooks</option>
+                        <option value="forms">Forms</option>
+                        <option value="training">Training Materials</option>
+                        <option value="policies">Policies</option>
+                        <option value="guides">Guides</option>
+                        <option value="videos">Videos</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Access Level</label>
+                      <select
+                        value={editingData.accessLevel || 'all'}
+                        onChange={(e) => setEditingData({ ...editingData, accessLevel: e.target.value as any })}
+                        className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                      >
+                        <option value="all">All Officials</option>
+                        <option value="level1">Level 1+</option>
+                        <option value="level2">Level 2+</option>
+                        <option value="level3">Level 3+</option>
+                        <option value="level4">Level 4+</option>
+                        <option value="level5">Level 5 Only</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div className="flex items-center">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={editingData.featured || false}
+                        onChange={(e) => setEditingData({ ...editingData, featured: e.target.checked })}
+                        className="rounded text-orange-500 focus:ring-orange-500"
+                      />
+                      <span className="text-sm font-medium text-gray-700">Featured</span>
+                    </label>
+                  </div>
                   <div className="flex gap-2">
                     <button
-                      onClick={() => setEditingId(null)}
-                      className="bg-green-600 text-white px-3 py-1 rounded text-sm hover:bg-green-700"
+                      onClick={handleSaveEdit}
+                      className="bg-green-600 text-white px-3 py-1 rounded text-sm hover:bg-green-700 flex items-center gap-1"
                     >
-                      Save
+                      <IconDeviceFloppy className="h-4 w-4" />
+                      Save Changes
                     </button>
                     <button
-                      onClick={() => setEditingId(null)}
-                      className="bg-gray-300 text-gray-700 px-3 py-1 rounded text-sm hover:bg-gray-400"
+                      onClick={cancelEditing}
+                      className="bg-gray-300 text-gray-700 px-3 py-1 rounded text-sm hover:bg-gray-400 flex items-center gap-1"
                     >
+                      <IconX className="h-4 w-4" />
                       Cancel
                     </button>
                   </div>
@@ -677,19 +933,51 @@ export default function ResourcesClient() {
             )
           }
 
+          // Get resource type icon
+          const getResourceTypeIcon = (type: ResourceType) => {
+            switch (type) {
+              case 'file': return IconFile
+              case 'link': return IconLink
+              case 'video': return IconVideo
+              case 'text': return IconArticle
+              default: return IconFile
+            }
+          }
+          const ResourceTypeIcon = getResourceTypeIcon(resource.resourceType || 'file')
+
           return (
             <div key={resource.id} className="bg-white rounded-lg shadow hover:shadow-md transition-shadow p-4">
               <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
                 <div className="flex items-start gap-3 flex-1 min-w-0">
-                  <ResourceThumbnail
-                    resource={resource}
-                    size="medium"
-                    onClick={() => setViewingResource(resource)}
-                  />
+                  {resource.resourceType === 'text' ? (
+                    <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                      <IconArticle className="h-6 w-6 text-purple-600" />
+                    </div>
+                  ) : (
+                    <ResourceThumbnail
+                      resource={resource}
+                      size="medium"
+                      onClick={() => setViewingResource(resource)}
+                    />
+                  )}
                   <div className="flex-1 min-w-0">
                     <h3 className="font-semibold text-gray-900 break-words">{resource.title}</h3>
-                    <p className="text-sm text-gray-600 mt-1 line-clamp-2">{resource.description}</p>
+                    {resource.resourceType === 'text' ? (
+                      <div className="text-sm text-gray-600 mt-1 line-clamp-3">
+                        <HTMLViewer content={resource.description} />
+                      </div>
+                    ) : (
+                      <p className="text-sm text-gray-600 mt-1 line-clamp-2">{resource.description}</p>
+                    )}
                     <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-gray-500">
+                      <span className={`px-2 py-0.5 rounded ${
+                        resource.resourceType === 'text' ? 'bg-purple-100 text-purple-800' :
+                        resource.resourceType === 'video' ? 'bg-red-100 text-red-800' :
+                        resource.resourceType === 'link' ? 'bg-green-100 text-green-800' :
+                        'bg-gray-100 text-gray-800'
+                      }`}>
+                        {resource.resourceType || 'file'}
+                      </span>
                       <span>Updated: {resource.lastUpdated}</span>
                       {resource.fileSize && <span>{resource.fileSize}</span>}
                       {resource.accessLevel && resource.accessLevel !== 'all' && (
@@ -734,7 +1022,7 @@ export default function ResourcesClient() {
                   {canEdit && (
                     <>
                       <button
-                        onClick={() => setEditingId(resource.id)}
+                        onClick={() => startEditing(resource)}
                         className="text-gray-600 hover:text-gray-800"
                       >
                         <IconEdit className="h-5 w-5" />

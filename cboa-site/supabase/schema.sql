@@ -14,6 +14,7 @@ CREATE TABLE IF NOT EXISTS resources (
   title TEXT,
   description TEXT,
   category TEXT,
+  resource_type TEXT DEFAULT 'file',
   access_level TEXT DEFAULT 'all',
   is_featured BOOLEAN DEFAULT false,
   uploaded_by UUID,
