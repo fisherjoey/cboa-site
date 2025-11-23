@@ -33,9 +33,9 @@ export default function Footer() {
           <div>
             <h3 className="text-cboa-orange font-bold text-base sm:text-lg mb-3 sm:mb-4">Affiliations</h3>
             <ul className="space-y-1.5 sm:space-y-2">
-              <li><a href="https://basketballalberta.ca" target="_blank" rel="noopener noreferrer" className="text-gray-300 hover:text-cboa-orange transition-colors text-sm sm:text-base">Basketball Alberta</a></li>
+              <li><a href="https://abbasketball.ca/" target="_blank" rel="noopener noreferrer" className="text-gray-300 hover:text-cboa-orange transition-colors text-sm sm:text-base">Basketball Alberta</a></li>
+              <li><a href="https://refalberta.ca/" target="_blank" rel="noopener noreferrer" className="text-gray-300 hover:text-cboa-orange transition-colors text-sm sm:text-base">Alberta Basketball Officials Association</a></li>
               <li><a href="https://basketball.ca" target="_blank" rel="noopener noreferrer" className="text-gray-300 hover:text-cboa-orange transition-colors text-sm sm:text-base">Canada Basketball</a></li>
-              <li><a href="https://fiba.basketball" target="_blank" rel="noopener noreferrer" className="text-gray-300 hover:text-cboa-orange transition-colors text-sm sm:text-base">FIBA</a></li>
             </ul>
           </div>
 

@@ -94,22 +94,12 @@ export default function Header() {
                 </a>
               </div>
               <SearchBox />
-              {/* Temporarily using Google Sites */}
               <Link
-                href="https://sites.google.com/view/cboa-resource-centre/home?pli=1"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-white hover:text-cboa-orange transition-colors font-medium text-base px-4 py-2 border border-white/20 rounded hover:border-cboa-orange"
-              >
-                Member Portal
-              </Link>
-              {/* Original portal link - commented out temporarily */}
-              {/* <Link
                 href="/portal"
                 className="text-white hover:text-cboa-orange transition-colors font-medium text-base px-4 py-2 border border-white/20 rounded hover:border-cboa-orange"
               >
                 Member Portal
-              </Link> */}
+              </Link>
             </div>
             
             {/* Mobile Menu Button */}
@@ -208,22 +198,12 @@ export default function Header() {
               
               {/* Portal Button */}
               <div className="px-4 py-3 mt-4 border-t border-white/20">
-                {/* Temporarily using Google Sites */}
                 <Link
-                  href="https://sites.google.com/view/cboa-resource-centre/home?pli=1"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="block text-center bg-cboa-orange text-white py-2 px-4 rounded font-medium hover:bg-orange-600 transition-colors"
-                >
-                  Member Portal
-                </Link>
-                {/* Original portal link - commented out temporarily */}
-                {/* <Link
                   href="/portal"
                   className="block text-center bg-cboa-orange text-white py-2 px-4 rounded font-medium hover:bg-orange-600 transition-colors"
                 >
                   Member Portal
-                </Link> */}
+                </Link>
               </div>
             </nav>
           </div>

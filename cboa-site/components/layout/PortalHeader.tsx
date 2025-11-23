@@ -20,7 +20,8 @@ import {
   IconUserCircle,
   IconShield,
   IconUsers,
-  IconMail
+  IconMail,
+  IconChartBar
 } from '@tabler/icons-react'
 
 import { useAuth } from '@/contexts/AuthContext'
@@ -54,6 +55,7 @@ export default function PortalHeader() {
   const portalLinks = [
     { href: '/portal', label: 'Dashboard', icon: IconHome },
     { href: '/portal/calendar', label: 'Calendar', icon: IconCalendar },
+    { href: '/portal/statistics', label: 'Statistics', icon: IconChartBar },
     { href: '/portal/resources', label: 'Resources', icon: IconBooks },
     { href: '/portal/news', label: 'News & Announcements', icon: IconNews },
     { href: '/portal/rule-modifications', label: 'Rule Modifications', icon: IconGavel },
