@@ -2,6 +2,11 @@
   command = "npm install && npm run build"
   publish = ".next"
 
+[dev]
+  command = "npm run dev"
+  targetPort = 3000
+  autoLaunch = false
+
 [build.environment]
   NODE_VERSION = "18"
   NEXT_TELEMETRY_DISABLED = "1"
@@ -17,10 +22,16 @@
 [context.production]
   environment = { SITE_URL = "https://refalberta.ca" }
 
+# CMS disabled - redirect /admin to portal
 [[redirects]]
   from = "/admin"
-  to = "/admin/index.html"
-  status = 200
+  to = "/portal"
+  status = 302
+
+[[redirects]]
+  from = "/admin/*"
+  to = "/portal"
+  status = 302
 
 [[redirects]]
   from = "/api/*"
