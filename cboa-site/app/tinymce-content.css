@@ -43,22 +43,36 @@
   margin-bottom: 0.75rem;
 }
 
-.tinymce-content ul,
+.tinymce-content ul {
+  margin-top: 1.5rem;
+  margin-bottom: 1.5rem;
+  padding-left: 1.5rem;
+  list-style-type: disc;
+}
+
 .tinymce-content ol {
   margin-top: 1.5rem;
   margin-bottom: 1.5rem;
   padding-left: 1.5rem;
+  list-style-type: decimal;
 }
 
 .tinymce-content li {
   margin-top: 0.5rem;
   margin-bottom: 0.5rem;
+  display: list-item;
 }
 
-.tinymce-content li > ul,
+.tinymce-content li > ul {
+  margin-top: 0.5rem;
+  margin-bottom: 0.5rem;
+  list-style-type: circle;
+}
+
 .tinymce-content li > ol {
   margin-top: 0.5rem;
   margin-bottom: 0.5rem;
+  list-style-type: lower-alpha;
 }
 
 .tinymce-content blockquote {
@@ -138,4 +152,133 @@
   height: auto;
   border-radius: 0.5rem;
   margin: 1.5rem 0;
+}
+
+/* Compact variant for accordions/panels (rule modifications, etc.) */
+.tinymce-content-compact {
+  font-size: 0.9375rem;
+  line-height: 1.6;
+  color: #374151;
+}
+
+.tinymce-content-compact p {
+  margin-bottom: 0.75rem;
+}
+
+.tinymce-content-compact p:last-child {
+  margin-bottom: 0;
+}
+
+.tinymce-content-compact h1,
+.tinymce-content-compact h2,
+.tinymce-content-compact h3,
+.tinymce-content-compact h4 {
+  color: #1e40af;
+  font-weight: 600;
+  margin-top: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+.tinymce-content-compact h1:first-child,
+.tinymce-content-compact h2:first-child,
+.tinymce-content-compact h3:first-child,
+.tinymce-content-compact h4:first-child {
+  margin-top: 0;
+}
+
+.tinymce-content-compact h1 { font-size: 1.25rem; }
+.tinymce-content-compact h2 { font-size: 1.125rem; }
+.tinymce-content-compact h3 { font-size: 1rem; }
+.tinymce-content-compact h4 { font-size: 0.9375rem; }
+
+.tinymce-content-compact ul {
+  margin-top: 0.5rem;
+  margin-bottom: 0.75rem;
+  padding-left: 1.5rem;
+  list-style-type: disc;
+}
+
+.tinymce-content-compact ol {
+  margin-top: 0.5rem;
+  margin-bottom: 0.75rem;
+  padding-left: 1.5rem;
+  list-style-type: decimal;
+}
+
+.tinymce-content-compact li {
+  margin-top: 0.25rem;
+  margin-bottom: 0.25rem;
+  display: list-item;
+}
+
+.tinymce-content-compact li > ul {
+  margin-top: 0.25rem;
+  margin-bottom: 0.25rem;
+  list-style-type: circle;
+}
+
+.tinymce-content-compact li > ol {
+  margin-top: 0.25rem;
+  margin-bottom: 0.25rem;
+  list-style-type: lower-alpha;
+}
+
+.tinymce-content-compact blockquote {
+  border-left: 3px solid #3b82f6;
+  background-color: #eff6ff;
+  padding: 0.625rem 1rem;
+  margin: 0.75rem 0;
+  font-style: italic;
+  font-size: 0.875rem;
+}
+
+.tinymce-content-compact blockquote p {
+  margin-bottom: 0;
+}
+
+.tinymce-content-compact table {
+  width: 100%;
+  margin: 0.75rem 0;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+
+.tinymce-content-compact th {
+  background-color: #1e40af;
+  color: white;
+  font-weight: 600;
+  padding: 0.5rem 0.75rem;
+  text-align: left;
+}
+
+.tinymce-content-compact td {
+  border: 1px solid #E5E7EB;
+  padding: 0.5rem 0.75rem;
+}
+
+.tinymce-content-compact hr {
+  border: none;
+  border-top: 1px solid #E5E7EB;
+  margin: 1rem 0;
+}
+
+.tinymce-content-compact strong {
+  color: #1e40af;
+  font-weight: 600;
+}
+
+.tinymce-content-compact a {
+  color: #2563eb;
+  text-decoration: underline;
+}
+
+.tinymce-content-compact a:hover {
+  color: #1d4ed8;
+}
+
+.tinymce-content-compact img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 0.375rem;
+  margin: 0.75rem 0;
 }

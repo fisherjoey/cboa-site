@@ -104,12 +104,13 @@ export function TinyMCEEditor({
 interface HTMLViewerProps {
   content: string
   className?: string
+  compact?: boolean
 }
 
-export function HTMLViewer({ content, className = '' }: HTMLViewerProps) {
+export function HTMLViewer({ content, className = '', compact = false }: HTMLViewerProps) {
   return (
     <div
-      className={`tinymce-content ${className}`}
+      className={`${compact ? 'tinymce-content-compact' : 'tinymce-content'} ${className}`}
       dangerouslySetInnerHTML={{ __html: content }}
     />
   )

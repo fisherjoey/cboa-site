@@ -505,11 +505,9 @@ export default function RuleModificationsClient({ modifications: initialModifica
 
                 {/* Expanded Content */}
                 {isExpanded && (
-                  <div className="border-t border-gray-200">
-                    <div className="py-3 pr-4 pl-10">
-                      <div className="prose prose-sm max-w-none">
-                        <HTMLViewer content={modification.content || modification.body || ''} />
-                      </div>
+                  <div className="border-t border-gray-200 bg-gray-50">
+                    <div className="py-4 px-5">
+                      <HTMLViewer content={modification.content || modification.body || ''} compact />
 
                       {modification.references && modification.references.length > 0 && (
                         <div className="mt-4 pt-4 border-t border-gray-200">
