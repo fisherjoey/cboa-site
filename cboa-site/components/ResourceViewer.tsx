@@ -1,7 +1,8 @@
 'use client'
 
 import { useState } from 'react'
-import { IconX, IconDownload, IconExternalLink, IconMaximize } from '@tabler/icons-react'
+import { IconX, IconDownload, IconExternalLink, IconMaximize, IconLink, IconArticle } from '@tabler/icons-react'
+import { HTMLViewer } from './TinyMCEEditor'
 
 interface ResourceViewerProps {
   resource: {
@@ -10,6 +11,7 @@ interface ResourceViewerProps {
     externalLink?: string
     description?: string
     fileSize?: string
+    resourceType?: 'file' | 'link' | 'video' | 'text'
   }
   onClose: () => void
 }
@@ -35,13 +37,48 @@ export default function ResourceViewer({ resource, onClose }: ResourceViewerProp
   const fileType = resource.fileUrl ? getFileType(resource.fileUrl) : null
   
   const renderContent = () => {
-    if (resource.externalLink && !resource.fileUrl) {
-      // For external links, show in iframe if it's a video platform
+    // Handle text type resources - show the HTML content
+    if (resource.resourceType === 'text' && resource.description) {
+      return (
+        <div className="p-6 overflow-auto h-full">
+          <HTMLViewer content={resource.description} className="prose max-w-none" />
+        </div>
+      )
+    }
+
+    // Handle link type resources - show link info with button to open
+    if (resource.resourceType === 'link' && resource.externalLink) {
+      return (
+        <div className="flex flex-col items-center justify-center h-full gap-6 p-6">
+          <IconLink className="h-16 w-16 text-gray-400" />
+          <div className="text-center">
+            <p className="text-gray-600 mb-2">External Link</p>
+            <p className="text-sm text-gray-500 break-all max-w-md">{resource.externalLink}</p>
+          </div>
+          <a
+            href={resource.externalLink}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 flex items-center gap-2 text-lg"
+          >
+            <IconExternalLink className="h-5 w-5" />
+            Open Link
+          </a>
+          {resource.description && (
+            <p className="text-sm text-gray-500 max-w-md text-center">{resource.description}</p>
+          )}
+        </div>
+      )
+    }
+
+    // Handle video type resources
+    if (resource.resourceType === 'video' && resource.externalLink) {
+      // YouTube embed
       if (resource.externalLink.includes('youtube.com') || resource.externalLink.includes('youtu.be')) {
-        const videoId = resource.externalLink.includes('youtu.be') 
+        const videoId = resource.externalLink.includes('youtu.be')
           ? resource.externalLink.split('/').pop()
           : resource.externalLink.split('v=')[1]?.split('&')[0]
-          
+
         return (
           <iframe
             src={`https://www.youtube.com/embed/${videoId}`}
@@ -51,7 +88,8 @@ export default function ResourceViewer({ resource, onClose }: ResourceViewerProp
           />
         )
       }
-      
+
+      // Vimeo embed
       if (resource.externalLink.includes('vimeo.com')) {
         const videoId = resource.externalLink.split('/').pop()
         return (
@@ -63,14 +101,76 @@ export default function ResourceViewer({ resource, onClose }: ResourceViewerProp
           />
         )
       }
-      
-      // For other external links, show in iframe
+
+      // Other video links - show button to open
       return (
-        <iframe
-          src={resource.externalLink}
-          className="w-full h-full"
-          title={resource.title}
-        />
+        <div className="flex flex-col items-center justify-center h-full gap-6 p-6">
+          <IconExternalLink className="h-16 w-16 text-gray-400" />
+          <div className="text-center">
+            <p className="text-gray-600 mb-2">Video Link</p>
+            <p className="text-sm text-gray-500 break-all max-w-md">{resource.externalLink}</p>
+          </div>
+          <a
+            href={resource.externalLink}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="bg-red-600 text-white px-6 py-3 rounded-lg hover:bg-red-700 flex items-center gap-2 text-lg"
+          >
+            <IconExternalLink className="h-5 w-5" />
+            Watch Video
+          </a>
+        </div>
+      )
+    }
+
+    // Legacy handling for external links without resourceType
+    if (resource.externalLink && !resource.fileUrl) {
+      // For YouTube/Vimeo, embed
+      if (resource.externalLink.includes('youtube.com') || resource.externalLink.includes('youtu.be')) {
+        const videoId = resource.externalLink.includes('youtu.be')
+          ? resource.externalLink.split('/').pop()
+          : resource.externalLink.split('v=')[1]?.split('&')[0]
+
+        return (
+          <iframe
+            src={`https://www.youtube.com/embed/${videoId}`}
+            className="w-full h-full"
+            allowFullScreen
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          />
+        )
+      }
+
+      if (resource.externalLink.includes('vimeo.com')) {
+        const videoId = resource.externalLink.split('/').pop()
+        return (
+          <iframe
+            src={`https://player.vimeo.com/video/${videoId}`}
+            className="w-full h-full"
+            allowFullScreen
+            allow="autoplay; fullscreen; picture-in-picture"
+          />
+        )
+      }
+
+      // For other external links, show a button instead of iframe
+      return (
+        <div className="flex flex-col items-center justify-center h-full gap-6 p-6">
+          <IconLink className="h-16 w-16 text-gray-400" />
+          <div className="text-center">
+            <p className="text-gray-600 mb-2">External Link</p>
+            <p className="text-sm text-gray-500 break-all max-w-md">{resource.externalLink}</p>
+          </div>
+          <a
+            href={resource.externalLink}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 flex items-center gap-2 text-lg"
+          >
+            <IconExternalLink className="h-5 w-5" />
+            Open Link
+          </a>
+        </div>
       )
     }
     
@@ -159,14 +259,39 @@ export default function ResourceViewer({ resource, onClose }: ResourceViewerProp
       case 'word':
       case 'excel':
       case 'powerpoint':
-        // For Office files, show preview using Office Online viewer
-        const officeUrl = `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(window.location.origin + resource.fileUrl)}`
+        // Office files can't be previewed directly - show download/open options
+        const fileTypeLabels = {
+          word: 'Word Document',
+          excel: 'Excel Spreadsheet',
+          powerpoint: 'PowerPoint Presentation'
+        }
         return (
-          <iframe
-            src={officeUrl}
-            className="w-full h-full"
-            title={resource.title}
-          />
+          <div className="flex flex-col items-center justify-center h-full gap-6 p-6">
+            <IconArticle className="h-16 w-16 text-gray-400" />
+            <div className="text-center">
+              <p className="text-gray-600 mb-2">{fileTypeLabels[fileType]}</p>
+              <p className="text-sm text-gray-500">Preview not available for this file type</p>
+            </div>
+            <div className="flex gap-3">
+              <a
+                href={resource.fileUrl}
+                download
+                className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 flex items-center gap-2"
+              >
+                <IconDownload className="h-5 w-5" />
+                Download File
+              </a>
+              <a
+                href={resource.fileUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="bg-gray-600 text-white px-6 py-3 rounded-lg hover:bg-gray-700 flex items-center gap-2"
+              >
+                <IconExternalLink className="h-5 w-5" />
+                Open in New Tab
+              </a>
+            </div>
+          </div>
         )
         
       default:
