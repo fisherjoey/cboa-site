@@ -12,9 +12,16 @@ export default function AboutContent() {
       try {
         setLoading(true)
         const aboutPage = await publicPagesAPI.getByName('about')
-        setHtmlContent(aboutPage?.content || null)
+        // Ensure content is a string, not an object
+        const content = aboutPage?.content
+        if (typeof content === 'string') {
+          setHtmlContent(content)
+        } else {
+          setHtmlContent(null)
+        }
       } catch (error) {
         console.error('Failed to load about page content:', error)
+        setHtmlContent(null)
       } finally {
         setLoading(false)
       }

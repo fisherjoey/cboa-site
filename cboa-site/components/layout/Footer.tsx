@@ -25,8 +25,8 @@ export default function Footer() {
             <h3 className="text-cboa-orange font-bold text-base sm:text-lg mb-3 sm:mb-4">Quick Links</h3>
             <ul className="space-y-1.5 sm:space-y-2">
               <li><Link href="/become-a-referee" className="text-gray-300 hover:text-cboa-orange transition-colors text-sm sm:text-base">Become an Official</Link></li>
-              <li><Link href="/training" className="text-gray-300 hover:text-cboa-orange transition-colors text-sm sm:text-base">Training & Certification</Link></li>
-              <li><Link href="/resources" className="text-gray-300 hover:text-cboa-orange transition-colors text-sm sm:text-base">Resources</Link></li>
+              <li><Link href="/get-officials" className="text-gray-300 hover:text-cboa-orange transition-colors text-sm sm:text-base">Book Referees</Link></li>
+              <li><Link href="/about" className="text-gray-300 hover:text-cboa-orange transition-colors text-sm sm:text-base">About Us</Link></li>
             </ul>
           </div>
           

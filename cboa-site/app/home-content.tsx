@@ -88,7 +88,7 @@ export default function HomeContent() {
 
   return (
     <>
-      {/* Latest News */}
+      {/* Latest News - Commented out for public site
       <section className="py-8 sm:py-12 lg:py-16">
         <div className="container mx-auto px-4">
           <div className="flex justify-between items-center mb-6 sm:mb-8">
@@ -106,8 +106,9 @@ export default function HomeContent() {
           </div>
         </div>
       </section>
+      */}
 
-      {/* Upcoming Training */}
+      {/* Upcoming Training - Commented out for public site
       <section className="py-8 sm:py-12 lg:py-16 bg-gray-50">
         <div className="container mx-auto px-4">
           <div className="flex justify-between items-center mb-6 sm:mb-8">
@@ -125,6 +126,7 @@ export default function HomeContent() {
           </div>
         </div>
       </section>
+      */}
     </>
   )
 }

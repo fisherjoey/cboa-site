@@ -10,7 +10,6 @@ import {
   IconHome,
   IconInfoCircle,
   IconCalendar,
-  IconClipboard,
   IconUserCheck,
   IconPhone,
   IconLogin,
@@ -57,7 +56,6 @@ export default function MobileHeader() {
     { href: '/', label: 'Home', icon: IconHome },
     { href: '/about', label: 'About Us', icon: IconInfoCircle },
     { href: '/calendar', label: 'Calendar', icon: IconCalendar },
-    { href: '/training', label: 'Training', icon: IconClipboard },
     { href: '/become-a-referee', label: 'Become a Referee', icon: IconUserCheck },
     { href: '/contact', label: 'Contact', icon: IconPhone },
   ]

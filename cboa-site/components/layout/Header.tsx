@@ -127,11 +127,8 @@ export default function Header() {
             <ul className="flex gap-6 py-5">
               <li><Link href="/" className={`transition-colors px-3 py-2 text-base font-medium ${isActive('/') ? 'text-cboa-orange' : 'hover:text-cboa-orange'}`}>Home</Link></li>
               <li><Link href="/about" className={`transition-colors px-3 py-2 text-base font-medium ${isActive('/about') ? 'text-cboa-orange' : 'hover:text-cboa-orange'}`}>About</Link></li>
-              <li><Link href="/training" className={`transition-colors px-3 py-2 text-base font-medium ${isActive('/training') ? 'text-cboa-orange' : 'hover:text-cboa-orange'}`}>Training</Link></li>
               <li><Link href="/become-a-referee" className={`transition-colors px-3 py-2 text-base font-medium ${isActive('/become-a-referee') ? 'text-cboa-orange' : 'hover:text-cboa-orange'}`}>Become a Referee</Link></li>
               <li><Link href="/get-officials" className={`transition-colors px-3 py-2 text-base font-medium ${isActive('/get-officials') ? 'text-cboa-orange' : 'hover:text-cboa-orange'}`}>Book Referees</Link></li>
-              <li><Link href="/resources" className={`transition-colors px-3 py-2 text-base font-medium ${isActive('/resources') ? 'text-cboa-orange' : 'hover:text-cboa-orange'}`}>Resources</Link></li>
-              <li><Link href="/news" className={`transition-colors px-3 py-2 text-base font-medium ${isActive('/news') ? 'text-cboa-orange' : 'hover:text-cboa-orange'}`}>News</Link></li>
             </ul>
             
             {/* Portal Navigation - Right side when logged in */}
@@ -190,11 +187,8 @@ export default function Header() {
             <nav className="py-4">
               <Link href="/" className={`block px-4 py-3 transition-colors ${isActive('/') ? 'bg-cboa-orange' : 'hover:bg-white/10'}`}>Home</Link>
               <Link href="/about" className={`block px-4 py-3 transition-colors ${isActive('/about') ? 'bg-cboa-orange' : 'hover:bg-white/10'}`}>About</Link>
-              <Link href="/training" className={`block px-4 py-3 transition-colors ${isActive('/training') ? 'bg-cboa-orange' : 'hover:bg-white/10'}`}>Training</Link>
               <Link href="/become-a-referee" className={`block px-4 py-3 transition-colors ${isActive('/become-a-referee') ? 'bg-cboa-orange' : 'hover:bg-white/10'}`}>Become a Referee</Link>
               <Link href="/get-officials" className={`block px-4 py-3 transition-colors ${isActive('/get-officials') ? 'bg-cboa-orange' : 'hover:bg-white/10'}`}>Book Referees</Link>
-              <Link href="/resources" className={`block px-4 py-3 transition-colors ${isActive('/resources') ? 'bg-cboa-orange' : 'hover:bg-white/10'}`}>Resources</Link>
-              <Link href="/news" className={`block px-4 py-3 transition-colors ${isActive('/news') ? 'bg-cboa-orange' : 'hover:bg-white/10'}`}>News</Link>
               
               {/* Portal Button */}
               <div className="px-4 py-3 mt-4 border-t border-white/20">
