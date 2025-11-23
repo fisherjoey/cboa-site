@@ -248,9 +248,9 @@ export function generateCBOAEmailTemplate(options: EmailTemplateOptions): string
               <p style="margin: 0 0 15px 0;">Calgary, Alberta, Canada</p>
 
               <div class="footer-links">
-                <a href="https://refalberta.ca">Website</a>
-                <a href="https://refalberta.ca/portal">Member Portal</a>
-                <a href="https://refalberta.ca/contact">Contact Us</a>
+                <a href="https://cboa.ca">Website</a>
+                <a href="https://cboa.ca/portal">Member Portal</a>
+                <a href="mailto: info@cboa.ca">Contact Us</a>
               </div>
 
               <p style="margin: 20px 0 10px 0; font-size: 12px; color: #6b7280;">
@@ -302,7 +302,7 @@ export const sampleEmails = {
       </ul>
 
       <p style="text-align: center;">
-        <a href="https://refalberta.ca/portal/calendar" class="button">Register Now</a>
+        <a href="https://cboa.ca/portal/calendar" class="button">Register Now</a>
       </p>
 
       <p>Space is limited to 30 participants, so please register early to secure your spot.</p>
@@ -350,7 +350,7 @@ export const sampleEmails = {
       </ul>
 
       <p style="text-align: center;">
-        <a href="https://refalberta.ca/portal" class="button">Visit Portal</a>
+        <a href="https://cboa.ca/portal" class="button">Visit Portal</a>
       </p>
 
       <p>Stay safe and see you on the court!</p>
@@ -402,7 +402,7 @@ export const sampleEmails = {
       <p>If you have any conflicts or questions, please contact the assignor immediately at <a href="mailto:assignor@cboa.ca">assignor@cboa.ca</a>.</p>
 
       <p style="text-align: center;">
-        <a href="https://refalberta.ca/portal/calendar" class="button">View Full Schedule</a>
+        <a href="https://cboa.ca/portal/calendar" class="button">View Full Schedule</a>
       </p>
 
       <p>Good luck!</p>

@@ -551,7 +551,7 @@ export default function TrainingClient({ trainingEvents: initialEvents }: Traini
                 </h3>
                 <div className="space-y-3">
                   <a 
-                    href="https://refalberta.ca" 
+                    href="https://cboa.ca" 
                     target="_blank" 
                     rel="noopener noreferrer"
                     className="flex items-center justify-between p-3 bg-gray-50 rounded hover:bg-gray-100 transition-colors"

@@ -20,7 +20,7 @@
 
 # Enable Netlify Identity
 [context.production]
-  environment = { SITE_URL = "https://refalberta.ca" }
+  environment = { SITE_URL = "https://cboa.ca" }
 
 # CMS disabled - redirect /admin to portal
 [[redirects]]
