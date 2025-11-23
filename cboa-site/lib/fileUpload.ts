@@ -1,7 +1,33 @@
 import { validators, AppError } from './errorHandling'
+import { createClient } from '@supabase/supabase-js'
 
 const MAX_FILE_SIZE_MB = 25
 const ALLOWED_FILE_TYPES = ['pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'mp4', 'avi', 'mov', 'jpg', 'jpeg', 'png']
+
+// Initialize Supabase client for direct uploads
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+
+function getContentType(filename: string): string {
+  const ext = filename.split('.').pop()?.toLowerCase()
+  const types: Record<string, string> = {
+    'pdf': 'application/pdf',
+    'jpg': 'image/jpeg',
+    'jpeg': 'image/jpeg',
+    'png': 'image/png',
+    'gif': 'image/gif',
+    'doc': 'application/msword',
+    'docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    'xls': 'application/vnd.ms-excel',
+    'xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    'ppt': 'application/vnd.ms-powerpoint',
+    'pptx': 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+    'mp4': 'video/mp4',
+    'avi': 'video/x-msvideo',
+    'mov': 'video/quicktime'
+  }
+  return types[ext || ''] || 'application/octet-stream'
+}
 
 export async function uploadFile(file: File, path?: string): Promise<{ url: string; fileName: string; size: number }> {
   // Frontend validation before upload
@@ -16,48 +42,49 @@ export async function uploadFile(file: File, path?: string): Promise<{ url: stri
   }
 
   // Check for potentially dangerous file names
-  const fileName = file.name
-  if (fileName.includes('..') || fileName.includes('/') || fileName.includes('\\')) {
+  const originalFileName = file.name
+  if (originalFileName.includes('..') || originalFileName.includes('/') || originalFileName.includes('\\')) {
     throw new AppError('Invalid file name. File names cannot contain path separators.', 'VALIDATION_ERROR')
   }
 
-  // Prepare upload
-  const formData = new FormData()
-  formData.append('file', file)
-  formData.append('path', path || `/portal/resources/`)
+  // Generate safe filename with timestamp
+  const timestamp = Date.now()
+  const safeFilename = originalFileName.replace(/[^a-zA-Z0-9.-]/g, '_')
+  const fileName = `${timestamp}-${safeFilename}`
 
-  const API_BASE = process.env.NODE_ENV === 'production'
-    ? '/.netlify/functions'
-    : 'http://localhost:9000/.netlify/functions'
+  // Determine bucket based on path
+  const bucket = path && path.includes('newsletter')
+    ? 'newsletters'
+    : path && path.includes('training')
+    ? 'training-materials'
+    : 'portal-resources'
 
   try {
-    const response = await fetch(`${API_BASE}/upload-file`, {
-      method: 'POST',
-      body: formData
-    })
+    // Use direct Supabase upload (bypasses Netlify function size limits)
+    const supabase = createClient(supabaseUrl, supabaseAnonKey)
 
-    if (!response.ok) {
-      let errorMessage = `Upload failed with status ${response.status}`
-      try {
-        const errorData = await response.json()
-        errorMessage = errorData.error || errorMessage
-      } catch {
-        // If JSON parsing fails, try to get text
-        try {
-          const errorText = await response.text()
-          if (errorText) errorMessage = errorText
-        } catch {
-          // Use default error message
-        }
-      }
-      throw new AppError(errorMessage, 'UPLOAD_ERROR', response.status)
+    const { data, error } = await supabase.storage
+      .from(bucket)
+      .upload(fileName, file, {
+        contentType: getContentType(originalFileName),
+        cacheControl: '3600',
+        upsert: false
+      })
+
+    if (error) {
+      console.error('Supabase upload error:', error)
+      throw new AppError(`Upload failed: ${error.message}`, 'UPLOAD_ERROR')
     }
 
-    const result = await response.json()
+    // Get public URL
+    const { data: { publicUrl } } = supabase.storage
+      .from(bucket)
+      .getPublicUrl(data.path)
+
     return {
-      url: result.url,
-      fileName: result.fileName,
-      size: result.size
+      url: publicUrl,
+      fileName,
+      size: file.size
     }
   } catch (error) {
     if (error instanceof AppError) {

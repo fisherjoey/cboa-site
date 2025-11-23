@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { IconPlus, IconEdit, IconTrash, IconDeviceFloppy, IconX, IconAlertCircle, IconSearch, IconFilter } from '@tabler/icons-react'
 import { TinyMCEEditor, HTMLViewer } from '@/components/TinyMCEEditor'
 import { useRole } from '@/contexts/RoleContext'
@@ -14,6 +14,68 @@ import {
   formatValidationErrors
 } from '@/lib/portalValidation'
 import { parseAPIError, sanitize, ValidationError } from '@/lib/errorHandling'
+
+// All available categories with display names
+const ALL_CATEGORIES = {
+  // General categories
+  general: 'General',
+  rules: 'Rules',
+  schedule: 'Schedule',
+  training: 'Training',
+  administrative: 'Administrative',
+  // Executive role categories
+  president: 'President',
+  'vice-president': 'Vice President',
+  'past-president': 'Past President',
+  treasurer: 'Treasurer',
+  secretary: 'Secretary',
+  'performance-assessment': 'Performance & Assessment',
+  'member-services': 'Member Services',
+  'referee-development': 'Referee Development',
+  assignor: 'Assignor',
+  scheduler: 'Scheduler',
+  webmaster: 'Webmaster',
+  'officiating-coordinator': 'Officiating Coordinator',
+  'recruiting-coordinator': 'Recruiting Coordinator'
+} as const
+
+type CategoryKey = keyof typeof ALL_CATEGORIES
+
+// Author options for announcements
+const AUTHOR_OPTIONS = [
+  // Organization
+  { value: 'CBOA Executive', label: 'CBOA Executive', group: 'Organization' },
+  { value: 'CBOA Board', label: 'CBOA Board', group: 'Organization' },
+  // Executive with names
+  { value: 'Natasha Proulx, President', label: 'Natasha Proulx, President', group: 'Executive' },
+  { value: 'Justin Weir, Vice President', label: 'Justin Weir, Vice President', group: 'Executive' },
+  { value: 'Ian Pollard, Past President', label: 'Ian Pollard, Past President', group: 'Executive' },
+  { value: 'Cole Andrew, Treasurer', label: 'Cole Andrew, Treasurer', group: 'Executive' },
+  { value: 'Shane Ross, Secretary', label: 'Shane Ross, Secretary', group: 'Executive' },
+  { value: 'Cam Broadhead, Performance & Assessment', label: 'Cam Broadhead, Performance & Assessment', group: 'Executive' },
+  { value: 'David Falkenberg, Member Services', label: 'David Falkenberg, Member Services', group: 'Executive' },
+  { value: 'Doran Davidson, Referee Development', label: 'Doran Davidson, Referee Development', group: 'Executive' },
+  { value: 'Ryler Kerrison, Assignor', label: 'Ryler Kerrison, Assignor', group: 'Executive' },
+  { value: 'Jerome Bohaychuk, Scheduler', label: 'Jerome Bohaychuk, Scheduler', group: 'Executive' },
+  { value: 'Joe Lam, Scheduler', label: 'Joe Lam, Scheduler', group: 'Executive' },
+  { value: 'Joey Fisher, Webmaster', label: 'Joey Fisher, Webmaster', group: 'Executive' },
+  { value: 'Chris Gauvin, Officiating Coordinator', label: 'Chris Gauvin, Officiating Coordinator', group: 'Executive' },
+  { value: 'Candy Brown, Recruiting Coordinator', label: 'Candy Brown, Recruiting Coordinator', group: 'Executive' },
+  // Role only
+  { value: 'President', label: 'President', group: 'Role Only' },
+  { value: 'Vice President', label: 'Vice President', group: 'Role Only' },
+  { value: 'Past President', label: 'Past President', group: 'Role Only' },
+  { value: 'Treasurer', label: 'Treasurer', group: 'Role Only' },
+  { value: 'Secretary', label: 'Secretary', group: 'Role Only' },
+  { value: 'Performance & Assessment', label: 'Performance & Assessment', group: 'Role Only' },
+  { value: 'Member Services', label: 'Member Services', group: 'Role Only' },
+  { value: 'Referee Development', label: 'Referee Development', group: 'Role Only' },
+  { value: 'Assignor', label: 'Assignor', group: 'Role Only' },
+  { value: 'Scheduler', label: 'Scheduler', group: 'Role Only' },
+  { value: 'Webmaster', label: 'Webmaster', group: 'Role Only' },
+  { value: 'Officiating Coordinator', label: 'Officiating Coordinator', group: 'Role Only' },
+  { value: 'Recruiting Coordinator', label: 'Recruiting Coordinator', group: 'Role Only' },
+]
 
 interface Announcement {
   id: string
@@ -35,7 +97,7 @@ export default function NewsClient({ initialAnnouncements }: NewsClientProps) {
   const { user } = useRole()
   const [announcements, setAnnouncements] = useState<Announcement[]>([])
   const [isLoading, setIsLoading] = useState(true)
-  const [filter, setFilter] = useState<'all' | 'general' | 'rules' | 'schedule' | 'training' | 'administrative'>('all')
+  const [filter, setFilter] = useState<'all' | CategoryKey>('all')
   const [searchTerm, setSearchTerm] = useState('')
   const [isCreating, setIsCreating] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
@@ -64,14 +126,22 @@ export default function NewsClient({ initialAnnouncements }: NewsClientProps) {
     try {
       const data = await announcementsAPI.getAll()
       setAnnouncements(data)
-    } catch (error) {
-      const errorMessage = parseAPIError(error)
-      error(`Failed to load announcements: ${errorMessage}`)
+    } catch (err) {
+      const errorMessage = parseAPIError(err)
+      console.error(`Failed to load announcements: ${errorMessage}`)
     } finally {
       setIsLoading(false)
     }
   }
 
+  // Compute which categories have posts (for dynamic filter buttons)
+  const categoriesWithPosts = useMemo(() => {
+    const categories = new Set<string>()
+    announcements.forEach(a => {
+      if (a.category) categories.add(a.category)
+    })
+    return categories
+  }, [announcements])
 
   const filteredAnnouncements = announcements.filter(item => {
     const matchesFilter = filter === 'all' || item.category === filter
@@ -213,11 +283,26 @@ export default function NewsClient({ initialAnnouncements }: NewsClientProps) {
 
   const getCategoryColor = (category: string) => {
     switch (category) {
+      // General categories
       case 'general': return 'bg-blue-100 text-blue-800'
       case 'rules': return 'bg-purple-100 text-purple-800'
       case 'schedule': return 'bg-green-100 text-green-800'
       case 'training': return 'bg-orange-100 text-orange-800'
       case 'administrative': return 'bg-red-100 text-red-800'
+      // Executive role categories
+      case 'president': return 'bg-amber-100 text-amber-800'
+      case 'vice-president': return 'bg-amber-100 text-amber-800'
+      case 'past-president': return 'bg-amber-100 text-amber-800'
+      case 'treasurer': return 'bg-emerald-100 text-emerald-800'
+      case 'secretary': return 'bg-sky-100 text-sky-800'
+      case 'performance-assessment': return 'bg-violet-100 text-violet-800'
+      case 'member-services': return 'bg-teal-100 text-teal-800'
+      case 'referee-development': return 'bg-indigo-100 text-indigo-800'
+      case 'assignor': return 'bg-rose-100 text-rose-800'
+      case 'scheduler': return 'bg-pink-100 text-pink-800'
+      case 'webmaster': return 'bg-cyan-100 text-cyan-800'
+      case 'officiating-coordinator': return 'bg-fuchsia-100 text-fuchsia-800'
+      case 'recruiting-coordinator': return 'bg-lime-100 text-lime-800'
       default: return 'bg-gray-100 text-gray-800'
     }
   }
@@ -296,11 +381,28 @@ export default function NewsClient({ initialAnnouncements }: NewsClientProps) {
                   onChange={(e) => setNewAnnouncement({ ...newAnnouncement, category: e.target.value as any })}
                   className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                 >
-                  <option value="general">General</option>
-                  <option value="rules">Rules</option>
-                  <option value="schedule">Schedule</option>
-                  <option value="training">Training</option>
-                  <option value="administrative">Administrative</option>
+                  <optgroup label="General">
+                    <option value="general">General</option>
+                    <option value="rules">Rules</option>
+                    <option value="schedule">Schedule</option>
+                    <option value="training">Training</option>
+                    <option value="administrative">Administrative</option>
+                  </optgroup>
+                  <optgroup label="Executive">
+                    <option value="president">President</option>
+                    <option value="vice-president">Vice President</option>
+                    <option value="past-president">Past President</option>
+                    <option value="treasurer">Treasurer</option>
+                    <option value="secretary">Secretary</option>
+                    <option value="performance-assessment">Performance &amp; Assessment</option>
+                    <option value="member-services">Member Services</option>
+                    <option value="referee-development">Referee Development</option>
+                    <option value="assignor">Assignor</option>
+                    <option value="scheduler">Scheduler</option>
+                    <option value="webmaster">Webmaster</option>
+                    <option value="officiating-coordinator">Officiating Coordinator</option>
+                    <option value="recruiting-coordinator">Recruiting Coordinator</option>
+                  </optgroup>
                 </select>
               </div>
 
@@ -319,12 +421,27 @@ export default function NewsClient({ initialAnnouncements }: NewsClientProps) {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Author</label>
-                <input
-                  type="text"
+                <select
                   value={newAnnouncement.author}
                   onChange={(e) => setNewAnnouncement({ ...newAnnouncement, author: e.target.value })}
                   className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
-                />
+                >
+                  <optgroup label="Organization">
+                    {AUTHOR_OPTIONS.filter(o => o.group === 'Organization').map(opt => (
+                      <option key={opt.value} value={opt.value}>{opt.label}</option>
+                    ))}
+                  </optgroup>
+                  <optgroup label="Executive">
+                    {AUTHOR_OPTIONS.filter(o => o.group === 'Executive').map(opt => (
+                      <option key={opt.value} value={opt.value}>{opt.label}</option>
+                    ))}
+                  </optgroup>
+                  <optgroup label="Role Only">
+                    {AUTHOR_OPTIONS.filter(o => o.group === 'Role Only').map(opt => (
+                      <option key={opt.value} value={opt.value}>{opt.label}</option>
+                    ))}
+                  </optgroup>
+                </select>
               </div>
             </div>
 
@@ -397,31 +514,46 @@ export default function NewsClient({ initialAnnouncements }: NewsClientProps) {
 
       {/* Search and Filters */}
       <div className="mb-6 bg-white rounded-lg shadow p-4">
-        <div className="flex flex-col sm:flex-row gap-4">
-          <div className="flex-1 min-w-0">
-            <input
-              type="text"
-              placeholder="Search announcements..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-orange-500 focus:border-orange-500"
-            />
+        <div className="flex flex-col gap-4">
+          <div className="flex flex-col sm:flex-row gap-4">
+            <div className="flex-1 min-w-0">
+              <input
+                type="text"
+                placeholder="Search announcements..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-orange-500 focus:border-orange-500"
+              />
+            </div>
           </div>
 
+          {/* Category Filter Buttons - only show categories with posts */}
           <div className="flex flex-wrap gap-2">
-            {(['all', 'general', 'rules', 'schedule', 'training', 'administrative'] as const).map(cat => (
-              <button
-                key={cat}
-                onClick={() => setFilter(cat)}
-                className={`px-3 py-2 rounded-md capitalize text-sm ${
-                  filter === cat
-                    ? 'bg-orange-500 text-white'
-                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                }`}
-              >
-                {cat === 'all' ? 'All' : cat}
-              </button>
-            ))}
+            <button
+              onClick={() => setFilter('all')}
+              className={`px-3 py-2 rounded-md text-sm ${
+                filter === 'all'
+                  ? 'bg-orange-500 text-white'
+                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+              }`}
+            >
+              All
+            </button>
+            {(Object.keys(ALL_CATEGORIES) as CategoryKey[])
+              .filter(cat => categoriesWithPosts.has(cat))
+              .map(cat => (
+                <button
+                  key={cat}
+                  onClick={() => setFilter(cat)}
+                  className={`px-3 py-2 rounded-md text-sm ${
+                    filter === cat
+                      ? 'bg-orange-500 text-white'
+                      : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                  }`}
+                >
+                  {ALL_CATEGORIES[cat]}
+                </button>
+              ))}
           </div>
         </div>
       </div>
@@ -462,11 +594,28 @@ export default function NewsClient({ initialAnnouncements }: NewsClientProps) {
                       onChange={(e) => handleEditChange('category', e.target.value)}
                       className="px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                     >
-                      <option value="general">General</option>
-                      <option value="rules">Rules</option>
-                      <option value="schedule">Schedule</option>
-                      <option value="training">Training</option>
-                      <option value="administrative">Administrative</option>
+                      <optgroup label="General">
+                        <option value="general">General</option>
+                        <option value="rules">Rules</option>
+                        <option value="schedule">Schedule</option>
+                        <option value="training">Training</option>
+                        <option value="administrative">Administrative</option>
+                      </optgroup>
+                      <optgroup label="Executive">
+                        <option value="president">President</option>
+                        <option value="vice-president">Vice President</option>
+                        <option value="past-president">Past President</option>
+                        <option value="treasurer">Treasurer</option>
+                        <option value="secretary">Secretary</option>
+                        <option value="performance-assessment">Performance &amp; Assessment</option>
+                        <option value="member-services">Member Services</option>
+                        <option value="referee-development">Referee Development</option>
+                        <option value="assignor">Assignor</option>
+                        <option value="scheduler">Scheduler</option>
+                        <option value="webmaster">Webmaster</option>
+                        <option value="officiating-coordinator">Officiating Coordinator</option>
+                        <option value="recruiting-coordinator">Recruiting Coordinator</option>
+                      </optgroup>
                     </select>
 
                     <select
@@ -479,12 +628,27 @@ export default function NewsClient({ initialAnnouncements }: NewsClientProps) {
                       <option value="low">Low</option>
                     </select>
 
-                    <input
-                      type="text"
-                      value={editingData.author || ''}
+                    <select
+                      value={editingData.author || 'CBOA Executive'}
                       onChange={(e) => handleEditChange('author', e.target.value)}
                       className="px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
-                    />
+                    >
+                      <optgroup label="Organization">
+                        {AUTHOR_OPTIONS.filter(o => o.group === 'Organization').map(opt => (
+                          <option key={opt.value} value={opt.value}>{opt.label}</option>
+                        ))}
+                      </optgroup>
+                      <optgroup label="Executive">
+                        {AUTHOR_OPTIONS.filter(o => o.group === 'Executive').map(opt => (
+                          <option key={opt.value} value={opt.value}>{opt.label}</option>
+                        ))}
+                      </optgroup>
+                      <optgroup label="Role Only">
+                        {AUTHOR_OPTIONS.filter(o => o.group === 'Role Only').map(opt => (
+                          <option key={opt.value} value={opt.value}>{opt.label}</option>
+                        ))}
+                      </optgroup>
+                    </select>
                   </div>
 
                   <TinyMCEEditor
@@ -517,7 +681,7 @@ export default function NewsClient({ initialAnnouncements }: NewsClientProps) {
                   <div className="flex-1 min-w-0 overflow-hidden">
                     <div className="flex flex-wrap items-center gap-2 mb-2">
                       <span className={`px-2 py-1 text-xs font-semibold rounded-full ${getCategoryColor(announcement.category)}`}>
-                        {announcement.category}
+                        {ALL_CATEGORIES[announcement.category as CategoryKey] || announcement.category}
                       </span>
                       {announcement.priority === 'high' && (
                         <span className={`text-xs font-medium ${getPriorityBadge(announcement.priority).color}`}>
