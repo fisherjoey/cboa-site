@@ -4,7 +4,8 @@ import { useState, useCallback, useEffect } from 'react'
 import { Calendar, momentLocalizer, View, Event } from 'react-big-calendar'
 import moment from 'moment'
 import 'react-big-calendar/lib/css/react-big-calendar.css'
-import { IconPlus, IconEdit, IconTrash, IconCalendar, IconClock, IconMapPin, IconUsers } from '@tabler/icons-react'
+import './calendar.css'
+import { IconPlus, IconEdit, IconTrash, IconCalendar, IconClock, IconMapPin, IconUsers, IconChevronLeft, IconChevronRight, IconList, IconCalendarEvent } from '@tabler/icons-react'
 import { calendarAPI } from '@/lib/api'
 import { useRole } from '@/contexts/RoleContext'
 
@@ -31,6 +32,7 @@ export default function CalendarPage() {
   const [showEventModal, setShowEventModal] = useState(false)
   const [selectedEvent, setSelectedEvent] = useState<CBOAEvent | null>(null)
   const [isEditing, setIsEditing] = useState(false)
+  const [mobileView, setMobileView] = useState<'calendar' | 'list'>('list')
 
   // Load events from API on mount
   useEffect(() => {
@@ -198,13 +200,61 @@ export default function CalendarPage() {
     }
   }
 
+  // Get events for a specific month
+  const getEventsForMonth = (targetDate: Date) => {
+    const startOfMonth = moment(targetDate).startOf('month')
+    const endOfMonth = moment(targetDate).endOf('month')
+    return events.filter(event => {
+      const eventStart = moment(event.start)
+      return eventStart.isBetween(startOfMonth, endOfMonth, 'day', '[]')
+    }).sort((a, b) => new Date(a.start).getTime() - new Date(b.start).getTime())
+  }
+
+  // Get upcoming events (next 30 days)
+  const getUpcomingEvents = () => {
+    const now = moment()
+    const thirtyDaysLater = moment().add(30, 'days')
+    return events.filter(event => {
+      const eventStart = moment(event.start)
+      return eventStart.isBetween(now, thirtyDaysLater, 'day', '[]')
+    }).sort((a, b) => new Date(a.start).getTime() - new Date(b.start).getTime())
+  }
+
+  // Navigate months for mobile
+  const navigateMonth = (direction: 'prev' | 'next') => {
+    setDate(prev => {
+      const newDate = new Date(prev)
+      if (direction === 'prev') {
+        newDate.setMonth(newDate.getMonth() - 1)
+      } else {
+        newDate.setMonth(newDate.getMonth() + 1)
+      }
+      return newDate
+    })
+  }
+
+  // Get event type color
+  const getEventTypeColor = (type: CBOAEvent['type']) => {
+    switch (type) {
+      case 'training': return 'bg-green-500'
+      case 'meeting': return 'bg-purple-500'
+      case 'game': return 'bg-orange-500'
+      case 'deadline': return 'bg-red-500'
+      case 'social': return 'bg-blue-500'
+      default: return 'bg-gray-500'
+    }
+  }
+
+  const monthEvents = getEventsForMonth(date)
+  const upcomingEvents = getUpcomingEvents()
+
   return (
-    <div className="p-6">
+    <div className="p-4 sm:p-6">
       {/* Header */}
-      <div className="mb-6 flex justify-between items-center">
+      <div className="mb-4 sm:mb-6 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">CBOA Calendar</h1>
-          <p className="text-gray-600 mt-1">Training events, meetings, and important dates</p>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">CBOA Calendar</h1>
+          <p className="text-sm sm:text-base text-gray-600 mt-1">Training events, meetings, and important dates</p>
         </div>
         {canEdit && (
           <button
@@ -218,7 +268,7 @@ export default function CalendarPage() {
               setIsEditing(true)
               setShowEventModal(true)
             }}
-            className="bg-orange-500 text-white px-4 py-2 rounded-lg hover:bg-orange-600 flex items-center gap-2"
+            className="bg-orange-500 text-white px-4 py-2 rounded-lg hover:bg-orange-600 flex items-center justify-center gap-2 text-sm sm:text-base"
           >
             <IconPlus className="h-5 w-5" />
             Add Event
@@ -226,32 +276,182 @@ export default function CalendarPage() {
         )}
       </div>
 
+      {/* Mobile View Toggle */}
+      <div className="mb-4 flex sm:hidden">
+        <button
+          onClick={() => setMobileView('list')}
+          className={`flex-1 py-2 px-4 text-sm font-medium rounded-l-lg flex items-center justify-center gap-2 ${
+            mobileView === 'list'
+              ? 'bg-orange-500 text-white'
+              : 'bg-gray-200 text-gray-700'
+          }`}
+        >
+          <IconList className="h-4 w-4" />
+          List
+        </button>
+        <button
+          onClick={() => setMobileView('calendar')}
+          className={`flex-1 py-2 px-4 text-sm font-medium rounded-r-lg flex items-center justify-center gap-2 ${
+            mobileView === 'calendar'
+              ? 'bg-orange-500 text-white'
+              : 'bg-gray-200 text-gray-700'
+          }`}
+        >
+          <IconCalendarEvent className="h-4 w-4" />
+          Calendar
+        </button>
+      </div>
+
       {/* Legend */}
-      <div className="mb-4 flex flex-wrap gap-4 text-sm">
-        <div className="flex items-center gap-2">
-          <div className="w-4 h-4 bg-green-500 rounded"></div>
+      <div className="mb-4 flex flex-wrap gap-2 sm:gap-4 text-xs sm:text-sm">
+        <div className="flex items-center gap-1 sm:gap-2">
+          <div className="w-3 h-3 sm:w-4 sm:h-4 bg-green-500 rounded"></div>
           <span>Training</span>
         </div>
-        <div className="flex items-center gap-2">
-          <div className="w-4 h-4 bg-purple-500 rounded"></div>
+        <div className="flex items-center gap-1 sm:gap-2">
+          <div className="w-3 h-3 sm:w-4 sm:h-4 bg-purple-500 rounded"></div>
           <span>Meeting</span>
         </div>
-        <div className="flex items-center gap-2">
-          <div className="w-4 h-4 bg-orange-500 rounded"></div>
+        <div className="flex items-center gap-1 sm:gap-2">
+          <div className="w-3 h-3 sm:w-4 sm:h-4 bg-orange-500 rounded"></div>
           <span>Game</span>
         </div>
-        <div className="flex items-center gap-2">
-          <div className="w-4 h-4 bg-red-500 rounded"></div>
+        <div className="flex items-center gap-1 sm:gap-2">
+          <div className="w-3 h-3 sm:w-4 sm:h-4 bg-red-500 rounded"></div>
           <span>Deadline</span>
         </div>
-        <div className="flex items-center gap-2">
-          <div className="w-4 h-4 bg-blue-500 rounded"></div>
+        <div className="flex items-center gap-1 sm:gap-2">
+          <div className="w-3 h-3 sm:w-4 sm:h-4 bg-blue-500 rounded"></div>
           <span>Social</span>
         </div>
       </div>
 
-      {/* Calendar */}
-      <div className="bg-white rounded-lg shadow p-4" style={{ height: '600px' }}>
+      {/* Mobile List View */}
+      <div className={`sm:hidden ${mobileView === 'list' ? 'block' : 'hidden'}`}>
+        {/* Month Navigation */}
+        <div className="bg-white rounded-lg shadow mb-4">
+          <div className="flex items-center justify-between p-4 border-b">
+            <button
+              onClick={() => navigateMonth('prev')}
+              className="p-2 hover:bg-gray-100 rounded-lg"
+            >
+              <IconChevronLeft className="h-5 w-5" />
+            </button>
+            <h2 className="text-lg font-semibold">
+              {moment(date).format('MMMM YYYY')}
+            </h2>
+            <button
+              onClick={() => navigateMonth('next')}
+              className="p-2 hover:bg-gray-100 rounded-lg"
+            >
+              <IconChevronRight className="h-5 w-5" />
+            </button>
+          </div>
+
+          {/* Events List */}
+          <div className="divide-y">
+            {monthEvents.length === 0 ? (
+              <div className="p-6 text-center text-gray-500">
+                <IconCalendar className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                <p>No events this month</p>
+              </div>
+            ) : (
+              monthEvents.map((event) => (
+                <button
+                  key={event.id}
+                  onClick={() => {
+                    setSelectedEvent(event)
+                    setIsEditing(false)
+                    setShowEventModal(true)
+                  }}
+                  className="w-full p-4 text-left hover:bg-gray-50 flex items-start gap-3"
+                >
+                  <div className={`w-1 self-stretch rounded-full ${getEventTypeColor(event.type)}`} />
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-start justify-between gap-2">
+                      <h3 className="font-medium text-gray-900 truncate">{event.title}</h3>
+                      <span className={`text-xs px-2 py-0.5 rounded-full text-white ${getEventTypeColor(event.type)}`}>
+                        {event.type}
+                      </span>
+                    </div>
+                    <div className="mt-1 text-sm text-gray-500 flex items-center gap-1">
+                      <IconClock className="h-4 w-4" />
+                      {moment(event.start).format('ddd, MMM D • h:mm A')}
+                    </div>
+                    {event.location && (
+                      <div className="mt-1 text-sm text-gray-500 flex items-center gap-1">
+                        <IconMapPin className="h-4 w-4" />
+                        {event.location}
+                      </div>
+                    )}
+                  </div>
+                </button>
+              ))
+            )}
+          </div>
+        </div>
+
+        {/* Upcoming Events Section */}
+        <div className="bg-white rounded-lg shadow">
+          <div className="p-4 border-b">
+            <h2 className="text-lg font-semibold">Upcoming Events</h2>
+            <p className="text-sm text-gray-500">Next 30 days</p>
+          </div>
+          <div className="divide-y max-h-64 overflow-y-auto">
+            {upcomingEvents.length === 0 ? (
+              <div className="p-6 text-center text-gray-500">
+                <p>No upcoming events</p>
+              </div>
+            ) : (
+              upcomingEvents.slice(0, 5).map((event) => (
+                <button
+                  key={event.id}
+                  onClick={() => {
+                    setSelectedEvent(event)
+                    setIsEditing(false)
+                    setShowEventModal(true)
+                  }}
+                  className="w-full p-3 text-left hover:bg-gray-50 flex items-center gap-3"
+                >
+                  <div className={`w-10 h-10 rounded-lg flex flex-col items-center justify-center text-white ${getEventTypeColor(event.type)}`}>
+                    <span className="text-xs font-medium">{moment(event.start).format('MMM')}</span>
+                    <span className="text-sm font-bold leading-none">{moment(event.start).format('D')}</span>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-medium text-gray-900 text-sm truncate">{event.title}</h3>
+                    <p className="text-xs text-gray-500">{moment(event.start).format('h:mm A')}</p>
+                  </div>
+                </button>
+              ))
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Mobile Calendar View */}
+      <div className={`sm:hidden ${mobileView === 'calendar' ? 'block' : 'hidden'}`}>
+        <div className="bg-white rounded-lg shadow p-2 overflow-x-auto">
+          <div style={{ minHeight: '400px' }}>
+            <Calendar
+              localizer={localizer}
+              events={events}
+              startAccessor="start"
+              endAccessor="end"
+              style={{ height: 400 }}
+              onSelectEvent={handleSelectEvent}
+              view="month"
+              date={date}
+              onNavigate={setDate}
+              eventPropGetter={eventStyleGetter}
+              toolbar={true}
+              views={['month']}
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Desktop Calendar */}
+      <div className="hidden sm:block bg-white rounded-lg shadow p-4" style={{ height: '600px' }}>
         <Calendar
           localizer={localizer}
           events={events}
