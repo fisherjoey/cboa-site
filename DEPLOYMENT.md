@@ -20,7 +20,7 @@
 #### Environment Variables
 Set the following in Netlify Dashboard > Site Settings > Environment Variables:
 ```
-NEXT_PUBLIC_SITE_URL=https://refalberta.ca
+NEXT_PUBLIC_SITE_URL=https://cboa.ca
 ```
 
 #### Identity Configuration
@@ -46,7 +46,7 @@ NEXT_PUBLIC_SITE_URL=https://refalberta.ca
 ### 3. CMS Setup
 
 1. **First Admin User**:
-   - Go to https://refalberta.ca/admin
+   - Go to https://cboa.ca/admin
    - You'll be prompted to create the first user
    - Use the invitation system to add more editors
 
@@ -59,7 +59,7 @@ NEXT_PUBLIC_SITE_URL=https://refalberta.ca
 
 1. **Add Custom Domain**:
    - Go to Site Settings > Domain Management
-   - Add custom domain: `refalberta.ca`
+   - Add custom domain: `cboa.ca`
    - Configure DNS records with your domain provider
 
 2. **SSL Certificate**:
@@ -169,7 +169,7 @@ git push origin main
 
 ## Important URLs
 
-- Production Site: https://refalberta.ca
-- CMS Admin: https://refalberta.ca/admin
-- Member Portal: https://refalberta.ca/portal
+- Production Site: https://cboa.ca
+- CMS Admin: https://cboa.ca/admin
+- Member Portal: https://cboa.ca/portal
 - Netlify Dashboard: https://app.netlify.com

@@ -7,8 +7,8 @@ public_folder: "/uploads"
 
 # Site configuration
 logo_url: "/images/logos/cboa-logo.png"
-site_url: "https://refalberta.ca"
-display_url: "https://refalberta.ca"
+site_url: "https://cboa.ca"
+display_url: "https://cboa.ca"
 
 collections:
   - name: "officials"
