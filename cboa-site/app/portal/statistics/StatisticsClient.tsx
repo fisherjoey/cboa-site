@@ -315,6 +315,15 @@ export default function StatisticsClient() {
 
   return (
     <div className="space-y-6">
+      {/* Under Construction Banner */}
+      <div className="bg-amber-100 border border-amber-300 rounded-lg p-4 flex items-center gap-3">
+        <span className="text-2xl">🚧</span>
+        <div>
+          <p className="font-semibold text-amber-800">Under Construction</p>
+          <p className="text-sm text-amber-700">This page is currently displaying mock data for demonstration purposes.</p>
+        </div>
+      </div>
+
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
@@ -548,13 +557,6 @@ export default function StatisticsClient() {
         </div>
       )}
 
-      {/* Data Source Note */}
-      <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-        <p className="text-sm text-yellow-800">
-          <strong>Note:</strong> This dashboard is currently showing placeholder data.
-          Connect your CBOA Scheduler data source to display real statistics.
-        </p>
-      </div>
     </div>
   )
 }
