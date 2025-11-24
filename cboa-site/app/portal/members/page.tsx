@@ -95,8 +95,8 @@ export default function MembersPage() {
       setIsLoading(true)
       const data = await membersAPI.getAll()
       setMembers(data)
-    } catch (error) {
-      const errorMessage = parseAPIError(error)
+    } catch (err) {
+      const errorMessage = parseAPIError(err)
       error(errorMessage)
     } finally {
       setIsLoading(false)
@@ -205,8 +205,8 @@ export default function MembersPage() {
       setShowMemberModal(false)
       setIsEditing(false)
       setValidationErrors([])
-    } catch (error) {
-      const errorMessage = parseAPIError(error)
+    } catch (err) {
+      const errorMessage = parseAPIError(err)
       error(errorMessage)
     } finally {
       setIsSaving(false)
@@ -223,8 +223,8 @@ export default function MembersPage() {
       success('Member deleted successfully')
       await loadMembers()
       setShowMemberModal(false)
-    } catch (error) {
-      const errorMessage = parseAPIError(error)
+    } catch (err) {
+      const errorMessage = parseAPIError(err)
       error(errorMessage)
     }
   }
@@ -265,8 +265,8 @@ export default function MembersPage() {
 
       setShowActivityModal(false)
       setActivityValidationErrors([])
-    } catch (error) {
-      const errorMessage = parseAPIError(error)
+    } catch (err) {
+      const errorMessage = parseAPIError(err)
       error(errorMessage)
     } finally {
       setIsSaving(false)
@@ -287,8 +287,8 @@ export default function MembersPage() {
         const activities = await memberActivitiesAPI.getAll(selectedMember.id)
         setMemberActivities(activities)
       }
-    } catch (error) {
-      const errorMessage = parseAPIError(error)
+    } catch (err) {
+      const errorMessage = parseAPIError(err)
       error(errorMessage)
     }
   }
