@@ -176,16 +176,16 @@ export default function MembersPage() {
       // Sanitize text inputs
       const sanitizedForm = {
         ...editForm,
-        name: sanitize(editForm.name),
-        email: sanitize(editForm.email),
-        phone: editForm.phone ? sanitize(editForm.phone) : undefined,
-        address: editForm.address ? sanitize(editForm.address) : undefined,
-        city: editForm.city ? sanitize(editForm.city) : undefined,
-        province: editForm.province ? sanitize(editForm.province) : undefined,
-        postal_code: editForm.postal_code ? sanitize(editForm.postal_code) : undefined,
-        emergency_contact_name: editForm.emergency_contact_name ? sanitize(editForm.emergency_contact_name) : undefined,
-        emergency_contact_phone: editForm.emergency_contact_phone ? sanitize(editForm.emergency_contact_phone) : undefined,
-        notes: editForm.notes ? sanitize(editForm.notes) : undefined
+        name: sanitize.text(editForm.name),
+        email: sanitize.text(editForm.email),
+        phone: editForm.phone ? sanitize.text(editForm.phone) : undefined,
+        address: editForm.address ? sanitize.text(editForm.address) : undefined,
+        city: editForm.city ? sanitize.text(editForm.city) : undefined,
+        province: editForm.province ? sanitize.text(editForm.province) : undefined,
+        postal_code: editForm.postal_code ? sanitize.text(editForm.postal_code) : undefined,
+        emergency_contact_name: editForm.emergency_contact_name ? sanitize.text(editForm.emergency_contact_name) : undefined,
+        emergency_contact_phone: editForm.emergency_contact_phone ? sanitize.text(editForm.emergency_contact_phone) : undefined,
+        notes: editForm.notes ? sanitize.text(editForm.notes) : undefined
       }
 
       if (selectedMember?.id) {
