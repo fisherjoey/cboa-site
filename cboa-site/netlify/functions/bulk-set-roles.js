@@ -20,24 +20,8 @@ exports.handler = async (event, context) => {
     };
   }
 
-  const USER_LIST_FILE = path.join(__dirname, '..', '..', '.claude', 'list of users.txt');
   const SITE_URL = process.env.URL || 'https://cboa.ca';
   const GOTRUE_URL = `${SITE_URL}/.netlify/identity`;
-
-  // Read the user list
-  function readUserList() {
-    try {
-      const content = fs.readFileSync(USER_LIST_FILE, 'utf8');
-      const emails = content
-        .split('\n')
-        .map(line => line.trim().toLowerCase())
-        .filter(line => line && line.includes('@'));
-
-      return new Set(emails);
-    } catch (error) {
-      throw new Error(`Error reading user list: ${error.message}`);
-    }
-  }
 
   // Delay function
   function delay(ms) {
@@ -72,10 +56,6 @@ exports.handler = async (event, context) => {
       };
     }
 
-    // Read email list
-    const emailList = readUserList();
-    console.log(`Found ${emailList.size} email addresses in list`);
-
     // Fetch all users using admin API
     console.log('📋 Fetching all users...');
     const usersResponse = await fetch(`${GOTRUE_URL}/admin/users`, {
@@ -90,15 +70,8 @@ exports.handler = async (event, context) => {
     }
 
     const data = await usersResponse.json();
-    const allUsers = data.users || data;
-    console.log(`✅ Found ${allUsers.length} total users`);
-
-    // Filter to users in list
-    const usersToUpdate = allUsers.filter(user =>
-      emailList.has(user.email.toLowerCase())
-    );
-
-    console.log(`📧 Found ${usersToUpdate.length} users matching the email list`);
+    const usersToUpdate = data.users || data;
+    console.log(`✅ Found ${usersToUpdate.length} total users`);
 
     if (usersToUpdate.length === 0) {
       return {
