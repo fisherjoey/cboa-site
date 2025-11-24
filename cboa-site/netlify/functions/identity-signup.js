@@ -46,33 +46,8 @@ function assignRole(email) {
     return 'official';
   }
 
-  // Special admin emails (customize these)
-  const adminEmails = [
-    'webmaster@cboa.ca',
-    'admin@cboa.ca'
-  ];
-
-  if (adminEmails.includes(normalizedEmail)) {
-    return 'admin';
-  }
-
-  // Executive emails (customize these)
-  const executiveEmails = [
-    'natashaaproulx@gmail.com',  // President
-    'justinjweir@gmail.com',      // Vice President
-    'rbt.ian.pollard@gmail.com',  // Past President
-    'cole.andrew89@gmail.com',    // Treasurer
-    'shanedross03@gmail.com',     // Secretary
-    'cdbroadh@gmail.com',         // Performance & Assessment
-    'davidefalkenberg@gmail.com', // Member Services
-    // Add other executive emails here
-  ];
-
-  if (executiveEmails.includes(normalizedEmail)) {
-    return 'executive';
-  }
-
   // Default: no role (user needs to be approved)
+  // Note: Admin and executive roles should be set manually via Netlify Identity UI
   return null;
 }
 
