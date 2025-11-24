@@ -3,8 +3,10 @@
 import PortalHeader from '@/components/layout/PortalHeader';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { RoleProvider } from '@/contexts/RoleContext';
+import { MemberProvider } from '@/contexts/MemberContext';
 import { ToastProvider } from '@/contexts/ToastContext';
 import AuthGuard from '@/components/AuthGuard';
+import MemberGuard from '@/components/portal/MemberGuard';
 
 export default function PortalLayout({
   children,
@@ -15,18 +17,22 @@ export default function PortalLayout({
     <AuthProvider>
       <AuthGuard requireAuth={true}>
         <RoleProvider>
-          <ToastProvider>
-            <div className="min-h-screen bg-gray-50">
-              <PortalHeader />
+          <MemberProvider>
+            <ToastProvider>
+              <MemberGuard>
+                <div className="min-h-screen bg-gray-50">
+                  <PortalHeader />
 
-              {/* Portal Content */}
-              <main className="container mx-auto px-4 py-6">
-                <div className="max-w-7xl mx-auto">
-                  {children}
+                  {/* Portal Content */}
+                  <main className="container mx-auto px-4 py-6">
+                    <div className="max-w-7xl mx-auto">
+                      {children}
+                    </div>
+                  </main>
                 </div>
-              </main>
-            </div>
-          </ToastProvider>
+              </MemberGuard>
+            </ToastProvider>
+          </MemberProvider>
         </RoleProvider>
       </AuthGuard>
     </AuthProvider>
