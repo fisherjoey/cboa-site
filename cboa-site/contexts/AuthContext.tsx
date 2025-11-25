@@ -157,6 +157,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Sync user to members table on login
       syncUserToMembers(netlifyUser)
       netlifyIdentity.close()
+
+      // Redirect to portal or stored path after login
+      const redirectPath = sessionStorage.getItem('redirectAfterLogin') || '/portal'
+      sessionStorage.removeItem('redirectAfterLogin')
+      window.location.href = redirectPath
     })
 
     netlifyIdentity.on('logout', () => {

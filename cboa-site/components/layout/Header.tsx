@@ -55,14 +55,10 @@ export default function Header() {
     const currentUser = netlifyIdentity.currentUser()
     setIsLoggedIn(!!currentUser)
 
-    // Listen for login/logout events
+    // Listen for login/logout events to update local state
     const handleLogin = () => {
       setIsLoggedIn(true)
-      netlifyIdentity.close()
-      // Check if there's a stored redirect path
-      const redirectPath = sessionStorage.getItem('redirectAfterLogin') || '/portal'
-      sessionStorage.removeItem('redirectAfterLogin')
-      router.push(redirectPath)
+      // Redirect is handled by AuthContext
     }
 
     const handleLogout = () => {
