@@ -52,26 +52,41 @@ export default function AuthGuard({
   // Not authenticated and auth is required
   if (!isAuthenticated && requireAuth) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="max-w-md w-full bg-white rounded-lg shadow-lg p-8">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-orange-50">
+        <div className="max-w-md w-full bg-white rounded-xl shadow-xl p-8 mx-4">
           <div className="text-center">
-            <IconLock className="h-16 w-16 text-cboa-blue mx-auto mb-4" />
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">
-              Authentication Required
-            </h2>
-            <p className="text-gray-600 mb-6">
-              Please log in to access the CBOA Member Portal
+            {/* CBOA Logo/Branding */}
+            <div className="mb-6">
+              <div className="w-20 h-20 bg-gradient-to-br from-cboa-blue to-blue-700 rounded-2xl mx-auto flex items-center justify-center shadow-lg">
+                <span className="text-white font-bold text-2xl">CBOA</span>
+              </div>
+            </div>
+
+            <h1 className="text-2xl font-bold text-gray-900 mb-2">
+              Officials Portal
+            </h1>
+            <p className="text-gray-600 mb-8">
+              Sign in to access schedules, resources, and member tools.
             </p>
+
             <button
               onClick={login}
-              className="w-full bg-cboa-orange text-white py-3 px-4 rounded-lg font-medium hover:bg-orange-600 transition-colors"
+              className="w-full bg-cboa-orange text-white py-3 px-4 rounded-lg font-semibold hover:bg-orange-600 transition-all hover:shadow-lg active:scale-[0.98]"
             >
-              Log In
+              Sign In with Email
             </button>
-            <p className="mt-4 text-sm text-gray-500">
-              Don't have an account? Contact your administrator for access.
-            </p>
+
+            <div className="mt-6 pt-6 border-t border-gray-100">
+              <p className="text-sm text-gray-500">
+                New to CBOA? Contact <a href="mailto:info@cboa.ca" className="text-cboa-orange hover:underline">info@cboa.ca</a> to get started.
+              </p>
+            </div>
           </div>
+        </div>
+
+        {/* Footer */}
+        <div className="absolute bottom-4 text-center text-xs text-gray-400">
+          Calgary Basketball Officials Association
         </div>
       </div>
     )
