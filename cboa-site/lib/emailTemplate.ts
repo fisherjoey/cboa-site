@@ -24,187 +24,114 @@ export function generateCBOAEmailTemplate(options: EmailTemplateOptions): string
   </style>
   <![endif]-->
   <style>
+    /* Base styles - these serve as fallbacks for email clients that support <style> */
     body {
       margin: 0;
       padding: 0;
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
       background-color: #f5f5f5;
+      -webkit-text-size-adjust: 100%;
+      -ms-text-size-adjust: 100%;
     }
-    .email-container {
-      max-width: 600px;
-      margin: 0 auto;
-      background-color: #ffffff;
-    }
-    .header {
-      background-color: #1f2937;
-      padding: 20px 30px;
-      border-bottom: 3px solid #F97316;
-    }
-    .header table {
-      width: 100%;
-    }
-    .header img {
-      max-width: 80px;
-      height: auto;
-      display: block;
-    }
-    .header h1 {
-      color: #ffffff;
-      margin: 0 0 4px 0;
-      font-size: 20px;
-      font-weight: 700;
-      letter-spacing: -0.5px;
-      line-height: 1.2;
-    }
-    .header p {
-      color: #ffffff;
-      margin: 0;
-      font-size: 13px;
-      font-weight: 500;
-      opacity: 0.95;
-    }
-    .content {
-      padding: 40px 30px;
-      color: #333333;
-      font-size: 16px;
-      line-height: 1.6;
-    }
-    .content h1 {
+    /* Content typography */
+    h1 {
       color: #003DA5;
-      font-size: 28px;
+      font-size: 24px;
       margin-top: 0;
-      margin-bottom: 20px;
+      margin-bottom: 16px;
       font-weight: 700;
       line-height: 1.3;
     }
-    .content h2 {
+    h2 {
       color: #003DA5;
-      font-size: 22px;
-      margin-top: 30px;
-      margin-bottom: 15px;
+      font-size: 20px;
+      margin-top: 24px;
+      margin-bottom: 12px;
       font-weight: 600;
       border-bottom: 2px solid #F97316;
       padding-bottom: 8px;
     }
-    .content h3 {
+    h3 {
       color: #1f2937;
-      font-size: 19px;
+      font-size: 18px;
       margin-top: 20px;
-      margin-bottom: 12px;
+      margin-bottom: 10px;
       font-weight: 600;
     }
-    .content p {
-      margin: 0 0 15px 0;
+    p {
+      margin: 0 0 16px 0;
+      font-size: 16px;
+      line-height: 1.6;
     }
-    .content ul, .content ol {
-      margin: 0 0 15px 0;
-      padding-left: 25px;
+    ul, ol {
+      margin: 0 0 16px 0;
+      padding-left: 20px;
     }
-    .content li {
+    li {
       margin-bottom: 8px;
+      font-size: 16px;
+      line-height: 1.5;
     }
-    .content a {
+    a {
       color: #F97316;
       text-decoration: underline;
     }
-    .content a:hover {
-      color: #003DA5;
-    }
-    .content strong {
+    strong {
       color: #003DA5;
       font-weight: 600;
     }
-    .content table {
+    /* Tables in content */
+    table {
       width: 100%;
       border-collapse: collapse;
-      margin: 20px 0;
     }
-    .content th {
+    th {
       background-color: #003DA5;
       color: #ffffff;
       padding: 12px;
       text-align: left;
       font-weight: 600;
+      font-size: 14px;
     }
-    .content td {
+    td {
       padding: 10px 12px;
       border: 1px solid #E5E7EB;
+      font-size: 14px;
     }
-    .content blockquote {
+    blockquote {
       border-left: 4px solid #F97316;
       background-color: #FFF7ED;
-      padding: 15px 20px;
-      margin: 20px 0;
+      padding: 12px 16px;
+      margin: 16px 0;
       font-style: italic;
     }
+    /* Button - mobile-friendly with larger tap target */
     .button {
       display: inline-block;
-      padding: 16px 36px;
+      padding: 14px 28px;
+      min-height: 44px;
       background-color: #F97316;
       color: #ffffff !important;
       text-decoration: none;
       border-radius: 8px;
       font-weight: 600;
-      margin: 20px 0;
-      box-shadow: 0 4px 6px rgba(249, 115, 22, 0.3);
-    }
-    .button:hover {
-      background-color: #EA580C;
-      box-shadow: 0 6px 8px rgba(249, 115, 22, 0.4);
-    }
-    .footer {
-      background-color: #1F2937;
-      color: #D1D5DB;
-      padding: 35px 30px;
+      font-size: 16px;
+      margin: 16px 0;
       text-align: center;
-      font-size: 14px;
-      line-height: 1.7;
-      border-top: 3px solid #F97316;
     }
-    .footer a {
-      color: #F97316;
-      text-decoration: none;
-      transition: color 0.2s;
-    }
-    .footer a:hover {
-      color: #FED7AA;
-    }
-    .footer-links {
-      margin: 20px 0;
-    }
-    .footer-links a {
-      color: #D1D5DB;
-      text-decoration: none;
-      margin: 0 12px;
-      padding: 8px 12px;
-      border-radius: 4px;
-      display: inline-block;
-    }
-    .footer-links a:hover {
-      background-color: #1f2937;
-      color: #F97316;
-    }
-    .social-links {
-      margin: 20px 0;
-    }
-    .social-links a {
-      display: inline-block;
-      margin: 0 8px;
-      color: #9ca3af;
-      text-decoration: none;
-    }
-    @media only screen and (max-width: 600px) {
-      .content {
-        padding: 25px 20px;
+    /* Responsive adjustments for clients that support media queries */
+    @media only screen and (max-width: 480px) {
+      h1 {
+        font-size: 22px !important;
       }
-      .header h1 {
-        font-size: 20px;
+      h2 {
+        font-size: 18px !important;
       }
-      .content h1 {
-        font-size: 20px;
-      }
-      .content h2 {
-        font-size: 18px;
+      .button {
+        display: block !important;
+        width: 100% !important;
+        padding: 16px 20px !important;
+        box-sizing: border-box !important;
       }
     }
   </style>
@@ -214,50 +141,50 @@ export function generateCBOAEmailTemplate(options: EmailTemplateOptions): string
 
   <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: #f5f5f5;">
     <tr>
-      <td style="padding: 20px 0;">
-        <table role="presentation" class="email-container" cellspacing="0" cellpadding="0" border="0" width="600" align="center">
+      <td style="padding: 20px 10px;">
+        <table role="presentation" class="email-container" cellspacing="0" cellpadding="0" border="0" style="max-width: 600px; width: 100%; margin: 0 auto; background-color: #ffffff;" align="center">
 
           <!-- Header -->
           <tr>
-            <td class="header">
-              <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
-                <tr>
-                  <td style="width: 80px; vertical-align: middle; padding-right: 20px;">
-                    <img src="https://i.imgur.com/BQe360J.png" alt="CBOA Logo" style="max-width: 80px; height: auto; display: block;">
-                  </td>
-                  <td style="vertical-align: middle;">
-                    <h1 style="color: #ffffff; margin: 0 0 4px 0; font-size: 20px; font-weight: 700; letter-spacing: -0.5px; line-height: 1.2;">Calgary Basketball Officials Association</h1>
-                    <p style="color: #ffffff; margin: 0; font-size: 13px; font-weight: 500; opacity: 0.95;">Excellence in Basketball Officiating</p>
-                  </td>
-                </tr>
-              </table>
+            <td style="background-color: #1f2937; padding: 24px 20px; border-bottom: 3px solid #F97316; text-align: center;">
+              <img src="https://i.imgur.com/BQe360J.png" alt="CBOA Logo" style="max-width: 70px; height: auto; display: inline-block; margin-bottom: 12px;">
+              <h1 style="color: #ffffff; margin: 0 0 4px 0; font-size: 18px; font-weight: 700; letter-spacing: -0.5px; line-height: 1.3;">Calgary Basketball Officials Association</h1>
+              <p style="color: #ffffff; margin: 0; font-size: 14px; font-weight: 500; opacity: 0.95;">Excellence in Basketball Officiating</p>
             </td>
           </tr>
 
           <!-- Main Content -->
           <tr>
-            <td class="content">
+            <td style="padding: 30px 20px; color: #333333; font-size: 16px; line-height: 1.6;">
               ${content}
             </td>
           </tr>
 
           <!-- Footer -->
           <tr>
-            <td class="footer">
+            <td style="background-color: #1F2937; color: #D1D5DB; padding: 30px 20px; text-align: center; font-size: 14px; line-height: 1.7; border-top: 3px solid #F97316;">
               <p style="margin: 0 0 10px 0; font-weight: 600; color: #ffffff;">Calgary Basketball Officials Association</p>
               <p style="margin: 0 0 15px 0;">Calgary, Alberta, Canada</p>
 
-              <div class="footer-links">
-                <a href="https://cboa.ca">Website</a>
-                <a href="https://cboa.ca/portal">Member Portal</a>
-                <a href="mailto: info@cboa.ca">Contact Us</a>
-              </div>
+              <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin: 20px auto;">
+                <tr>
+                  <td style="padding: 0 8px;">
+                    <a href="https://cboa.ca" style="color: #F97316; text-decoration: none; font-size: 14px;">Website</a>
+                  </td>
+                  <td style="padding: 0 8px;">
+                    <a href="https://cboa.ca/portal" style="color: #F97316; text-decoration: none; font-size: 14px;">Member Portal</a>
+                  </td>
+                  <td style="padding: 0 8px;">
+                    <a href="mailto:info@cboa.ca" style="color: #F97316; text-decoration: none; font-size: 14px;">Contact Us</a>
+                  </td>
+                </tr>
+              </table>
 
-              <p style="margin: 20px 0 10px 0; font-size: 12px; color: #6b7280;">
+              <p style="margin: 20px 0 10px 0; font-size: 13px; color: #9ca3af;">
                 You are receiving this email because you are a member of the Calgary Basketball Officials Association.
               </p>
 
-              <p style="margin: 0; font-size: 12px; color: #6b7280;">
+              <p style="margin: 0; font-size: 13px; color: #9ca3af;">
                 © ${new Date().getFullYear()} Calgary Basketball Officials Association. All rights reserved.
               </p>
             </td>

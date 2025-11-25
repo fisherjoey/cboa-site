@@ -192,6 +192,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(devUsers[nextIndex])
       return
     }
+    // Set flag so AuthGuard knows not to open login modal
+    sessionStorage.setItem('justLoggedOut', 'true')
     netlifyIdentity.logout()
   }
 

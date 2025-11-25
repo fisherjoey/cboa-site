@@ -1,9 +1,10 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
 import { useRouter, usePathname } from 'next/navigation'
-import { IconLock, IconLoader2 } from '@tabler/icons-react'
+import { IconLoader2 } from '@tabler/icons-react'
+import netlifyIdentity from 'netlify-identity-widget'
 
 interface AuthGuardProps {
   children: React.ReactNode
@@ -16,9 +17,10 @@ export default function AuthGuard({
   requireAuth = true,
   redirectTo = '/'
 }: AuthGuardProps) {
-  const { isAuthenticated, isLoading, login } = useAuth()
+  const { isAuthenticated, isLoading } = useAuth()
   const router = useRouter()
   const pathname = usePathname()
+  const [hasRedirected, setHasRedirected] = useState(false)
 
   // Check if authentication should be disabled in development
   const isDevMode = process.env.NODE_ENV === 'development'
@@ -26,11 +28,28 @@ export default function AuthGuard({
   const shouldBypassAuth = isDevMode && disableAuthInDev
 
   useEffect(() => {
-    // Store the intended destination (only if not bypassing auth)
-    if (!shouldBypassAuth && !isAuthenticated && !isLoading && requireAuth) {
+    // If not authenticated and auth is required, redirect to home and open login modal
+    if (!shouldBypassAuth && !isAuthenticated && !isLoading && requireAuth && !hasRedirected) {
+      setHasRedirected(true)
+
+      // Check if user just logged out - don't open modal in that case
+      const justLoggedOut = sessionStorage.getItem('justLoggedOut')
+      if (justLoggedOut) {
+        sessionStorage.removeItem('justLoggedOut')
+        router.push('/')
+        return
+      }
+
+      // Store intended destination
       sessionStorage.setItem('redirectAfterLogin', pathname)
+      // Redirect to home
+      router.push('/')
+      // Open the login modal after a brief delay to let the redirect happen
+      setTimeout(() => {
+        netlifyIdentity.open('login')
+      }, 100)
     }
-  }, [isAuthenticated, isLoading, requireAuth, pathname, shouldBypassAuth])
+  }, [isAuthenticated, isLoading, requireAuth, pathname, shouldBypassAuth, hasRedirected, router])
 
   // If auth is bypassed in development, always allow access
   if (shouldBypassAuth) {
@@ -49,44 +68,13 @@ export default function AuthGuard({
     )
   }
 
-  // Not authenticated and auth is required
+  // Not authenticated and auth is required - show loading while redirecting
   if (!isAuthenticated && requireAuth) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-orange-50">
-        <div className="max-w-md w-full bg-white rounded-xl shadow-xl p-8 mx-4">
-          <div className="text-center">
-            {/* CBOA Logo/Branding */}
-            <div className="mb-6">
-              <div className="w-20 h-20 bg-gradient-to-br from-cboa-blue to-blue-700 rounded-2xl mx-auto flex items-center justify-center shadow-lg">
-                <span className="text-white font-bold text-2xl">CBOA</span>
-              </div>
-            </div>
-
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">
-              Officials Portal
-            </h1>
-            <p className="text-gray-600 mb-8">
-              Sign in to access schedules, resources, and member tools.
-            </p>
-
-            <button
-              onClick={login}
-              className="w-full bg-cboa-orange text-white py-3 px-4 rounded-lg font-semibold hover:bg-orange-600 transition-all hover:shadow-lg active:scale-[0.98]"
-            >
-              Sign In with Email
-            </button>
-
-            <div className="mt-6 pt-6 border-t border-gray-100">
-              <p className="text-sm text-gray-500">
-                New to CBOA? Contact <a href="mailto:info@cboa.ca" className="text-cboa-orange hover:underline">info@cboa.ca</a> to get started.
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* Footer */}
-        <div className="absolute bottom-4 text-center text-xs text-gray-400">
-          Calgary Basketball Officials Association
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <IconLoader2 className="h-12 w-12 text-cboa-blue animate-spin mx-auto mb-4" />
+          <p className="text-gray-600">Redirecting to login...</p>
         </div>
       </div>
     )
