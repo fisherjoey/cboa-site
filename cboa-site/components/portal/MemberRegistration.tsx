@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
 import { membersAPI } from '@/lib/api'
-import { IconUser, IconPhone, IconHome, IconAlertCircle } from '@tabler/icons-react'
+import { IconUser, IconPhone, IconHome, IconAlertCircle, IconLogout } from '@tabler/icons-react'
 
 interface MemberRegistrationProps {
   onComplete: () => void
@@ -21,7 +21,7 @@ interface ValidationErrors {
 }
 
 export default function MemberRegistration({ onComplete }: MemberRegistrationProps) {
-  const { user } = useAuth()
+  const { user, logout } = useAuth()
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [validationErrors, setValidationErrors] = useState<ValidationErrors>({})
@@ -261,10 +261,18 @@ export default function MemberRegistration({ onComplete }: MemberRegistrationPro
               )}
             </div>
 
-            <div className="p-3 bg-gray-50 rounded-lg">
+            <div className="p-3 bg-gray-50 rounded-lg flex items-center justify-between">
               <p className="text-sm text-gray-600">
                 <span className="font-medium">Email:</span> {user?.email}
               </p>
+              <button
+                type="button"
+                onClick={logout}
+                className="text-sm text-red-600 hover:text-red-700 flex items-center gap-1"
+              >
+                <IconLogout size={16} />
+                Sign out
+              </button>
             </div>
           </div>
 

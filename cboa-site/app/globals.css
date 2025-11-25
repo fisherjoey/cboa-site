@@ -97,10 +97,8 @@ body {
     scrollbar-width: none;
   }
 
-  /* Mobile-optimized container */
-  @media (max-width: 640px) {
-    .container {
-      @apply px-4;
-    }
+  /* Mobile-optimized container - minimal padding like native apps */
+  .container {
+    @apply px-2 sm:px-4;
   }
 }
