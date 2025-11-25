@@ -25,25 +25,41 @@ export default function MailPage() {
   const [showEmailDropdown, setShowEmailDropdown] = useState(false)
   const [saveAsAnnouncement, setSaveAsAnnouncement] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
-  const [debouncedContent, setDebouncedContent] = useState(content)
+  const iframeRef = useRef<HTMLIFrameElement>(null)
+  const [previewInitialized, setPreviewInitialized] = useState(false)
 
-  // Debounce content updates to reduce preview reloads
+  // Generate the initial template shell (only once)
+  const templateShell = useMemo(() => {
+    return generateCBOAEmailTemplate({
+      subject: 'Email Subject',
+      content: '<div id="live-content"></div>',
+      previewText: ''
+    })
+  }, [])
+
+  // Update just the content inside the iframe (no full reload)
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedContent(content)
-    }, 500) // Wait 500ms after user stops typing
+    if (!previewInitialized || !iframeRef.current) return
 
-    return () => clearTimeout(timer)
-  }, [content])
+    const iframeDoc = iframeRef.current.contentDocument
+    if (!iframeDoc) return
 
-  // Generate live preview HTML - memoized to prevent unnecessary regeneration
-  const previewHtml = useMemo(() => {
-    return debouncedContent ? generateCBOAEmailTemplate({
-      subject: subject || 'Email Subject',
-      content: debouncedContent,
-      previewText: subject
-    }) : ''
-  }, [debouncedContent, subject])
+    const contentDiv = iframeDoc.getElementById('live-content')
+    if (contentDiv) {
+      contentDiv.innerHTML = content || '<p style="color: #999;">Start typing to see your content here...</p>'
+    }
+
+    // Update subject in preview text if it exists
+    const titleEl = iframeDoc.querySelector('title')
+    if (titleEl) {
+      titleEl.textContent = subject || 'Email Subject'
+    }
+  }, [content, subject, previewInitialized])
+
+  // Handle iframe load
+  const handleIframeLoad = () => {
+    setPreviewInitialized(true)
+  }
 
   // Redirect non-executives
   useEffect(() => {
@@ -457,28 +473,19 @@ export default function MailPage() {
 
             {/* Live Preview */}
             {showPreview && (
-              <div className="border border-gray-300 rounded-lg overflow-hidden bg-gray-50">
+              <div className="rounded-lg overflow-hidden">
                 <div className="bg-gray-700 text-white px-4 py-2 text-sm font-semibold flex items-center gap-2">
                   <IconEye className="h-4 w-4" />
-                  Email Preview
+                  Live Email Preview
                 </div>
-                <div className="p-4">
-                  {content ? (
-                    <iframe
-                      srcDoc={previewHtml}
-                      className="w-full border-0 bg-white rounded"
-                      style={{ height: '800px' }}
-                      title="Email Preview"
-                    />
-                  ) : (
-                    <div className="flex items-center justify-center h-64 text-gray-400">
-                      <div className="text-center">
-                        <IconMail className="h-12 w-12 mx-auto mb-2 opacity-50" />
-                        <p>Start typing to see preview</p>
-                      </div>
-                    </div>
-                  )}
-                </div>
+                <iframe
+                  ref={iframeRef}
+                  srcDoc={templateShell}
+                  onLoad={handleIframeLoad}
+                  className="w-full border-0"
+                  style={{ height: '800px' }}
+                  title="Email Preview"
+                />
               </div>
             )}
           </div>

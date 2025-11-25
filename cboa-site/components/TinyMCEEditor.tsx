@@ -75,7 +75,7 @@ export function TinyMCEEditor({
         statusbar: true,
         resize: true,
         min_height: 200,
-        max_height: 800,
+        max_height: 2000,
         onboarding: false,
         // Image upload handling - convert to base64
         images_upload_handler: async (blobInfo, progress) => {
@@ -94,6 +94,11 @@ export function TinyMCEEditor({
         images_reuse_filename: true,
         // Prevent image proxy
         images_file_types: 'jpg,jpeg,png,gif,svg,webp',
+        // Image resizing - drag handles in editor
+        image_advtab: true,
+        image_caption: true,
+        object_resizing: true,
+        resize_img_proportional: true,
         // Color picker with CBOA brand colors
         color_map: [
           '#003DA5', 'CBOA Blue',
