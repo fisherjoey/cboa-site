@@ -53,7 +53,9 @@ export async function uploadFile(file: File, path?: string): Promise<{ url: stri
   const fileName = `${timestamp}-${safeFilename}`
 
   // Determine bucket based on path
-  const bucket = path && path.includes('newsletter')
+  const bucket = path && path.includes('email-images')
+    ? 'email-images'
+    : path && path.includes('newsletter')
     ? 'newsletters'
     : path && path.includes('training')
     ? 'training-materials'

@@ -93,7 +93,9 @@ export const handler: Handler = async (event) => {
         const fullBuffer = Buffer.concat(fileBuffer)
 
         // Determine bucket based on path or default to portal-resources
-        const bucket = filePath && filePath.includes('newsletter')
+        const bucket = filePath && filePath.includes('email-images')
+          ? 'email-images'
+          : filePath && filePath.includes('newsletter')
           ? 'newsletters'
           : filePath && filePath.includes('training')
           ? 'training-materials'

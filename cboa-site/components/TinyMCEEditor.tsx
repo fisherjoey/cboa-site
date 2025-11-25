@@ -1,7 +1,7 @@
 'use client'
 
 import { Editor } from '@tinymce/tinymce-react'
-import { useRef } from 'react'
+import { useRef, useCallback } from 'react'
 
 interface TinyMCEEditorProps {
   value: string
@@ -77,19 +77,36 @@ export function TinyMCEEditor({
         min_height: 200,
         max_height: 2000,
         onboarding: false,
-        // Image upload handling - convert to base64
+        // Image upload handling - upload to Supabase for email compatibility
         images_upload_handler: async (blobInfo, progress) => {
-          return new Promise((resolve, reject) => {
-            const reader = new FileReader()
-            reader.onload = () => {
-              resolve(reader.result as string)
+          const API_BASE = process.env.NODE_ENV === 'production'
+            ? '/.netlify/functions'
+            : 'http://localhost:9000/.netlify/functions'
+
+          const formData = new FormData()
+          formData.append('file', blobInfo.blob(), blobInfo.filename())
+          formData.append('path', 'email-images')
+
+          try {
+            const response = await fetch(`${API_BASE}/upload-file`, {
+              method: 'POST',
+              body: formData
+            })
+
+            if (!response.ok) {
+              const error = await response.json()
+              throw new Error(error.error || 'Upload failed')
             }
-            reader.onerror = () => reject('Failed to read image')
-            reader.readAsDataURL(blobInfo.blob())
-          })
+
+            const data = await response.json()
+            return data.publicUrl || data.url
+          } catch (error) {
+            console.error('Image upload failed:', error)
+            throw error
+          }
         },
-        // Disable automatic uploads on paste
-        automatic_uploads: false,
+        // Enable automatic uploads so pasted/dropped images get uploaded
+        automatic_uploads: true,
         // Cache images in browser
         images_reuse_filename: true,
         // Prevent image proxy
