@@ -82,11 +82,6 @@ export default function Header() {
     }
     // If logged in, let the Link navigate normally
   }
-
-  // Handle logout
-  const handleLogout = () => {
-    netlifyIdentity.logout()
-  }
   
   // Don't render main header on portal pages
   if (isPortalPage) {
@@ -175,25 +170,6 @@ export default function Header() {
               <li><Link href="/become-a-referee" className={`transition-colors px-3 py-2 text-base font-medium ${isActive('/become-a-referee') ? 'text-cboa-orange' : 'hover:text-cboa-orange'}`}>Become a Referee</Link></li>
               <li><Link href="/get-officials" className={`transition-colors px-3 py-2 text-base font-medium ${isActive('/get-officials') ? 'text-cboa-orange' : 'hover:text-cboa-orange'}`}>Book Referees</Link></li>
             </ul>
-            
-            {/* Portal Navigation - Right side when logged in */}
-            {isLoggedIn && (
-              <ul className="flex gap-4 py-4 items-center">
-                <li className="text-cboa-orange font-medium">Portal:</li>
-                <li><Link href="/portal" className="hover:text-cboa-orange transition-colors px-2 py-1">Dashboard</Link></li>
-                <li><Link href="/portal/resources" className="hover:text-cboa-orange transition-colors px-2 py-1">Resources</Link></li>
-                <li><Link href="/portal/news" className="hover:text-cboa-orange transition-colors px-2 py-1">News</Link></li>
-                <li><Link href="/portal/the-bounce" className="hover:text-cboa-orange transition-colors px-2 py-1">The Bounce</Link></li>
-                <li>
-                  <button
-                    className="text-sm hover:text-cboa-orange px-2 py-1 transition-colors"
-                    onClick={handleLogout}
-                  >
-                    Logout
-                  </button>
-                </li>
-              </ul>
-            )}
           </div>
         </div>
       </nav>
