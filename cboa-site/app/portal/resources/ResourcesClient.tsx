@@ -32,7 +32,6 @@ import {
   IconX,
   IconUpload,
   IconFileUpload,
-  IconEye,
   IconLink,
   IconArticle,
   IconChevronDown,
@@ -667,11 +666,25 @@ export default function ResourcesClient() {
     const isVideo = resource.resourceType === 'video'
     const videoThumbnail = isVideo ? getVideoThumbnail(resource.externalLink) : null
 
+    // Handle clicking on the resource card/row
+    const handleResourceClick = () => {
+      if (isTextResource) {
+        toggleTextResourceExpanded(resource.id)
+      } else if (resource.fileUrl || resource.externalLink) {
+        setViewingResource(resource)
+      }
+    }
+
     // Grid view card (always on mobile, optional on desktop)
     // On mobile, always use card layout for better readability
     if (viewMode === 'grid') {
       return (
-        <div key={resource.id} id={`resource-${resource.id}`} className="bg-white rounded-lg shadow hover:shadow-md transition-shadow p-4 flex flex-col">
+        <div
+          key={resource.id}
+          id={`resource-${resource.id}`}
+          className="bg-white rounded-lg shadow hover:shadow-md transition-shadow p-4 flex flex-col cursor-pointer"
+          onClick={handleResourceClick}
+        >
           <div className="flex items-start gap-3 mb-3">
             {videoThumbnail ? (
               <div className="w-16 h-12 rounded-lg overflow-hidden flex-shrink-0 relative">
@@ -696,23 +709,14 @@ export default function ResourcesClient() {
               </div>
             </div>
           </div>
-          <div className="mt-auto flex items-center gap-1 pt-2 border-t border-gray-100">
-            {!isTextResource && (resource.fileUrl || resource.externalLink) && (
-              <button
-                onClick={() => setViewingResource(resource)}
-                className="p-1.5 text-blue-600 hover:bg-blue-50 rounded"
-                title="View"
-              >
-                <IconEye className="h-4 w-4" />
-              </button>
-            )}
+          <div className="mt-auto flex items-center gap-1 pt-2 border-t border-gray-100" onClick={(e) => e.stopPropagation()}>
             {resource.fileUrl && (
               <a href={resource.fileUrl} download className="p-1.5 text-green-600 hover:bg-green-50 rounded" title="Download">
                 <IconDownload className="h-4 w-4" />
               </a>
             )}
             {resource.externalLink && (
-              <a href={resource.externalLink} target="_blank" rel="noopener noreferrer" className="p-1.5 text-blue-600 hover:bg-blue-50 rounded" title="Open">
+              <a href={resource.externalLink} target="_blank" rel="noopener noreferrer" className="p-1.5 text-blue-600 hover:bg-blue-50 rounded" title="Open in new tab">
                 <IconExternalLink className="h-4 w-4" />
               </a>
             )}
@@ -733,7 +737,7 @@ export default function ResourcesClient() {
             )}
           </div>
           {isTextResource && isExpanded && (
-            <div className="mt-3 pt-3 border-t border-gray-100 prose prose-sm max-w-none">
+            <div className="mt-3 pt-3 border-t border-gray-100 prose prose-sm max-w-none" onClick={(e) => e.stopPropagation()}>
               <HTMLViewer content={resource.description} />
             </div>
           )}
@@ -743,7 +747,7 @@ export default function ResourcesClient() {
 
     // List view row - renders as card on mobile, row on desktop
     return (
-      <div key={resource.id} id={`resource-${resource.id}`} className="bg-white rounded-lg shadow hover:shadow-md transition-shadow">
+      <div key={resource.id} id={`resource-${resource.id}`} className="bg-white rounded-lg shadow hover:shadow-md transition-shadow cursor-pointer" onClick={handleResourceClick}>
         {/* Mobile card layout */}
         <div className="sm:hidden p-4">
           <div className="flex items-start gap-3 mb-3">
@@ -764,19 +768,14 @@ export default function ResourcesClient() {
               <div className="text-xs text-gray-500 mt-1">{formatDate(resource.lastUpdated)}</div>
             </div>
           </div>
-          <div className="flex items-center gap-1 pt-2 border-t border-gray-100">
-            {!isTextResource && (resource.fileUrl || resource.externalLink) && (
-              <button onClick={() => setViewingResource(resource)} className="p-1.5 text-blue-600 hover:bg-blue-50 rounded" title="View">
-                <IconEye className="h-4 w-4" />
-              </button>
-            )}
+          <div className="flex items-center gap-1 pt-2 border-t border-gray-100" onClick={(e) => e.stopPropagation()}>
             {resource.fileUrl && (
               <a href={resource.fileUrl} download className="p-1.5 text-green-600 hover:bg-green-50 rounded" title="Download">
                 <IconDownload className="h-4 w-4" />
               </a>
             )}
             {resource.externalLink && (
-              <a href={resource.externalLink} target="_blank" rel="noopener noreferrer" className="p-1.5 text-blue-600 hover:bg-blue-50 rounded" title="Open">
+              <a href={resource.externalLink} target="_blank" rel="noopener noreferrer" className="p-1.5 text-blue-600 hover:bg-blue-50 rounded" title="Open in new tab">
                 <IconExternalLink className="h-4 w-4" />
               </a>
             )}
@@ -797,7 +796,7 @@ export default function ResourcesClient() {
             )}
           </div>
           {isTextResource && isExpanded && (
-            <div className="mt-3 pt-3 border-t border-gray-100 prose prose-sm max-w-none">
+            <div className="mt-3 pt-3 border-t border-gray-100 prose prose-sm max-w-none" onClick={(e) => e.stopPropagation()}>
               <HTMLViewer content={resource.description} />
             </div>
           )}
@@ -807,24 +806,18 @@ export default function ResourcesClient() {
         <div className="hidden sm:block">
           <div className="p-4 flex items-center gap-4">
             {videoThumbnail ? (
-              <div className="w-16 h-12 rounded-lg overflow-hidden flex-shrink-0 relative cursor-pointer" onClick={() => setViewingResource(resource)}>
+              <div className="w-16 h-12 rounded-lg overflow-hidden flex-shrink-0 relative">
                 <img src={videoThumbnail} alt={resource.title} className="w-full h-full object-cover" />
                 <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-30">
                   <IconVideo className="h-5 w-5 text-white" />
                 </div>
               </div>
             ) : (
-              <div
-                className={`w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0 ${resourceIcon.bg} ${isTextResource ? 'cursor-pointer' : ''}`}
-                onClick={isTextResource ? () => toggleTextResourceExpanded(resource.id) : undefined}
-              >
+              <div className={`w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0 ${resourceIcon.bg}`}>
                 <IconComponent className={`h-6 w-6 ${resourceIcon.color}`} />
               </div>
             )}
-            <div
-              className={`flex-1 min-w-0 ${isTextResource ? 'cursor-pointer' : ''}`}
-              onClick={isTextResource ? () => toggleTextResourceExpanded(resource.id) : undefined}
-            >
+            <div className="flex-1 min-w-0">
               <h3 className="font-semibold text-gray-900 break-words">{resource.title}</h3>
               <div className="flex flex-wrap items-center gap-2 text-xs text-gray-500 mt-1">
                 <span>{formatDate(resource.lastUpdated)}</span>
@@ -834,19 +827,14 @@ export default function ResourcesClient() {
                 )}
               </div>
             </div>
-            <div className="flex items-center gap-1 flex-shrink-0">
-              {!isTextResource && (resource.fileUrl || resource.externalLink) && (
-                <button onClick={() => setViewingResource(resource)} className="p-2 text-blue-600 hover:bg-blue-50 rounded" title="View">
-                  <IconEye className="h-5 w-5" />
-                </button>
-              )}
+            <div className="flex items-center gap-1 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
               {resource.fileUrl && (
                 <a href={resource.fileUrl} download className="p-2 text-green-600 hover:bg-green-50 rounded" title="Download">
                   <IconDownload className="h-5 w-5" />
                 </a>
               )}
               {resource.externalLink && (
-                <a href={resource.externalLink} target="_blank" rel="noopener noreferrer" className="p-2 text-blue-600 hover:bg-blue-50 rounded" title="Open">
+                <a href={resource.externalLink} target="_blank" rel="noopener noreferrer" className="p-2 text-blue-600 hover:bg-blue-50 rounded" title="Open in new tab">
                   <IconExternalLink className="h-5 w-5" />
                 </a>
               )}
@@ -868,7 +856,7 @@ export default function ResourcesClient() {
             </div>
           </div>
           {isTextResource && isExpanded && (
-            <div className="px-4 pb-4 border-t border-gray-100">
+            <div className="px-4 pb-4 border-t border-gray-100" onClick={(e) => e.stopPropagation()}>
               <div className="pt-4 prose prose-sm max-w-none">
                 <HTMLViewer content={resource.description} />
               </div>
@@ -1297,8 +1285,21 @@ export default function ResourcesClient() {
                 }, 100)
               }
 
+              // Handle clicking on featured resource
+              const handleFeaturedClick = () => {
+                if (isTextResource) {
+                  handleTextResourceClick()
+                } else if (resource.fileUrl || resource.externalLink) {
+                  setViewingResource(resource)
+                }
+              }
+
               return (
-                <div key={resource.id} className="bg-orange-50 border border-orange-200 rounded-lg p-3 sm:p-4">
+                <div
+                  key={resource.id}
+                  className="bg-orange-50 border border-orange-200 rounded-lg p-3 sm:p-4 cursor-pointer hover:bg-orange-100 transition-colors"
+                  onClick={handleFeaturedClick}
+                >
                   <div className="flex items-center gap-3">
                     {/* Thumbnail/Icon */}
                     {videoThumbnail ? (
@@ -1324,24 +1325,7 @@ export default function ResourcesClient() {
                     </div>
 
                     {/* Actions */}
-                    <div className="flex items-center gap-1 flex-shrink-0">
-                      {isTextResource ? (
-                        <button
-                          onClick={handleTextResourceClick}
-                          className="p-2 text-blue-600 hover:bg-blue-50 rounded"
-                          title="View content"
-                        >
-                          <IconEye className="h-5 w-5" />
-                        </button>
-                      ) : (resource.fileUrl || resource.externalLink) && (
-                        <button
-                          onClick={() => setViewingResource(resource)}
-                          className="p-2 text-blue-600 hover:bg-blue-50 rounded"
-                          title="View"
-                        >
-                          <IconEye className="h-5 w-5" />
-                        </button>
-                      )}
+                    <div className="flex items-center gap-1 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
                       {resource.fileUrl && (
                         <a
                           href={resource.fileUrl}
