@@ -3,17 +3,15 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { usePathname, useRouter } from 'next/navigation'
+import { usePathname } from 'next/navigation'
 import SearchBox from '../ui/SearchBox'
 import { IconBrandFacebook, IconBrandInstagram } from '@tabler/icons-react'
-import netlifyIdentity from 'netlify-identity-widget'
+import { useAuth } from '@/contexts/AuthContext'
 
 export default function Header() {
   const pathname = usePathname()
-  const router = useRouter()
+  const { isAuthenticated, login, logout } = useAuth()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
-  const [isLoggedIn, setIsLoggedIn] = useState(false)
-  const [identityInitialized, setIdentityInitialized] = useState(false)
 
   // Helper function to check if a link is active
   const isActive = (href: string) => {
@@ -41,44 +39,11 @@ export default function Header() {
     }
   }, [mobileMenuOpen, isPortalPage])
   
-  // Initialize Netlify Identity and check login state
-  useEffect(() => {
-    if (!identityInitialized) {
-      netlifyIdentity.init({
-        container: 'body',
-        locale: 'en'
-      })
-      setIdentityInitialized(true)
-    }
-
-    // Check current user
-    const currentUser = netlifyIdentity.currentUser()
-    setIsLoggedIn(!!currentUser)
-
-    // Listen for login/logout events to update local state
-    const handleLogin = () => {
-      setIsLoggedIn(true)
-      // Redirect is handled by AuthContext
-    }
-
-    const handleLogout = () => {
-      setIsLoggedIn(false)
-    }
-
-    netlifyIdentity.on('login', handleLogin)
-    netlifyIdentity.on('logout', handleLogout)
-
-    return () => {
-      netlifyIdentity.off('login', handleLogin)
-      netlifyIdentity.off('logout', handleLogout)
-    }
-  }, [identityInitialized, router])
-
   // Handle portal button click - open modal if not logged in
   const handlePortalClick = (e: React.MouseEvent) => {
-    if (!isLoggedIn) {
+    if (!isAuthenticated) {
       e.preventDefault()
-      netlifyIdentity.open('login')
+      login()
     }
     // If logged in, let the Link navigate normally
   }
@@ -172,7 +137,7 @@ export default function Header() {
             </ul>
             
             {/* Portal Navigation - Right side when logged in */}
-            {isLoggedIn && (
+            {isAuthenticated && (
               <ul className="flex gap-4 py-4 items-center">
                 <li className="text-cboa-orange font-medium">Portal:</li>
                 <li><Link href="/portal" className="hover:text-cboa-orange transition-colors px-2 py-1">Dashboard</Link></li>
@@ -180,9 +145,9 @@ export default function Header() {
                 <li><Link href="/portal/news" className="hover:text-cboa-orange transition-colors px-2 py-1">News</Link></li>
                 <li><Link href="/portal/the-bounce" className="hover:text-cboa-orange transition-colors px-2 py-1">The Bounce</Link></li>
                 <li>
-                  <button 
+                  <button
                     className="text-sm hover:text-cboa-orange px-2 py-1 transition-colors"
-                    onClick={() => setIsLoggedIn(false)}
+                    onClick={logout}
                   >
                     Logout
                   </button>
