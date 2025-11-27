@@ -76,7 +76,16 @@ async function sendEmail(
             address: 'announcements@cboa.ca'
           }
         },
-        toRecipients: batch.map(email => ({
+        // Send to self as the "To" recipient
+        toRecipients: [
+          {
+            emailAddress: {
+              address: senderEmail
+            }
+          }
+        ],
+        // BCC all actual recipients for privacy
+        bccRecipients: batch.map(email => ({
           emailAddress: {
             address: email
           }
