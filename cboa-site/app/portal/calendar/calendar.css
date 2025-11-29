@@ -372,3 +372,78 @@
     opacity: 1;
   }
 }
+
+/* ========================================
+   AGENDA VIEW - FIX COLUMN WIDTHS
+   ======================================== */
+
+.rbc-agenda-view {
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.rbc-agenda-table {
+  width: 100%;
+  table-layout: fixed;
+}
+
+/* Date column - compact */
+.rbc-agenda-date-cell {
+  width: 100px;
+  min-width: 100px;
+  max-width: 100px;
+  white-space: nowrap;
+  padding: 12px 8px;
+  font-weight: 500;
+  color: #374151;
+  vertical-align: top;
+}
+
+/* Time column - compact */
+.rbc-agenda-time-cell {
+  width: 120px;
+  min-width: 120px;
+  max-width: 120px;
+  white-space: nowrap;
+  padding: 12px 8px;
+  color: #6b7280;
+  vertical-align: top;
+}
+
+/* Event column - takes remaining space */
+.rbc-agenda-event-cell {
+  width: auto;
+  padding: 12px 8px;
+  vertical-align: top;
+}
+
+/* Header row styling */
+.rbc-agenda-view table thead tr {
+  background-color: #4b6cb7;
+}
+
+.rbc-agenda-view table thead th {
+  padding: 12px 8px;
+  font-weight: 600;
+  color: white;
+  text-align: left;
+  border-bottom: 2px solid #3b5998;
+}
+
+/* Alternate row colors for readability */
+.rbc-agenda-view table tbody tr:nth-child(even) {
+  background-color: #f9fafb;
+}
+
+.rbc-agenda-view table tbody tr:hover {
+  background-color: #f3f4f6;
+}
+
+/* Event styling in agenda */
+.rbc-agenda-event-cell .rbc-event {
+  display: inline-block;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 14px;
+}
