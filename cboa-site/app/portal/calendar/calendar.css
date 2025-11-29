@@ -236,3 +236,139 @@
 .stats-day-selected.rbc-today {
   background-color: inherit;
 }
+
+/* ========================================
+   SCROLLABLE DAY CELLS WITH THIN SCROLLBAR
+   Shows on hover only (Google Calendar style)
+   ======================================== */
+
+/* Scrollbar theme variables */
+:root {
+  --scrollbar-thumb: rgba(0, 0, 0, 0.2);
+  --scrollbar-thumb-hover: rgba(0, 0, 0, 0.4);
+  --scrollbar-track: transparent;
+}
+
+/* Fixed row heights to enable scrolling */
+.rbc-month-row {
+  min-height: 100px;
+  max-height: 120px;
+  overflow: hidden;
+  position: relative;
+}
+
+/* Make row content scrollable */
+.rbc-month-row .rbc-row-content {
+  overflow-y: auto;
+  overflow-x: hidden;
+  max-height: 100%;
+  padding-right: 2px;
+  scrollbar-gutter: stable;
+}
+
+/* Modern browsers (Firefox) - hidden by default, show on hover */
+.rbc-month-row .rbc-row-content {
+  scrollbar-width: thin;
+  scrollbar-color: transparent var(--scrollbar-track);
+  transition: scrollbar-color 0.15s ease;
+}
+
+.rbc-month-row:hover .rbc-row-content {
+  scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+}
+
+/* WebKit browsers (Chrome, Safari, Edge) */
+.rbc-month-row .rbc-row-content::-webkit-scrollbar {
+  width: 6px;
+}
+
+.rbc-month-row .rbc-row-content::-webkit-scrollbar-track {
+  background: var(--scrollbar-track);
+  border-radius: 3px;
+}
+
+.rbc-month-row .rbc-row-content::-webkit-scrollbar-thumb {
+  background-color: transparent;
+  border-radius: 3px;
+  transition: background-color 0.15s ease;
+}
+
+.rbc-month-row:hover .rbc-row-content::-webkit-scrollbar-thumb {
+  background-color: var(--scrollbar-thumb);
+}
+
+.rbc-month-row .rbc-row-content::-webkit-scrollbar-thumb:hover {
+  background-color: var(--scrollbar-thumb-hover);
+}
+
+/* Hide "+X more" link since all events are now scrollable */
+.rbc-month-view .rbc-show-more {
+  display: none;
+}
+
+/* ========================================
+   READABILITY ENHANCEMENTS
+   ======================================== */
+
+/* Fade gradient at bottom to indicate more content (scroll hint) */
+.rbc-month-row::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 20px;
+  background: linear-gradient(to bottom, transparent, rgba(255, 255, 255, 0.9));
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  z-index: 1;
+}
+
+/* Show fade on hover to hint scrollability */
+.rbc-month-row:hover::after {
+  opacity: 1;
+}
+
+/* Ensure minimum event height for readability */
+.rbc-month-view .rbc-event {
+  min-height: 20px;
+  padding: 2px 5px;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.3;
+}
+
+/* High contrast white text on colored events */
+.rbc-month-view .rbc-event-content {
+  color: white;
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.2);
+}
+
+/* Ensure text doesn't get cut off */
+.rbc-month-view .rbc-event-content {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Mobile: always-visible scrollbar (no hover on touch) */
+@media (max-width: 640px) {
+  .rbc-month-row .rbc-row-content::-webkit-scrollbar {
+    width: 5px;
+  }
+
+  /* Always show scrollbar on mobile (touch devices have no hover) */
+  .rbc-month-row .rbc-row-content::-webkit-scrollbar-thumb {
+    background-color: var(--scrollbar-thumb) !important;
+  }
+
+  .rbc-month-row .rbc-row-content {
+    scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track) !important;
+  }
+
+  /* Always show fade gradient on mobile */
+  .rbc-month-row::after {
+    opacity: 1;
+  }
+}

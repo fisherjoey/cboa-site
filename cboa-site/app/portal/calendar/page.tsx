@@ -19,7 +19,7 @@ interface CBOAEvent extends Event {
   title: string
   start: Date
   end: Date
-  type: 'training' | 'meeting' | 'deadline' | 'social'
+  type: 'training' | 'meeting' | 'league' | 'social'
   description?: string
   location?: string
   instructor?: string
@@ -111,11 +111,11 @@ export default function CalendarPage() {
         },
         {
           id: '3',
-          title: 'Registration Deadline - Winter League',
+          title: 'Winter League Playoffs Begin',
           start: new Date(2025, 0, 31, 23, 59),
           end: new Date(2025, 0, 31, 23, 59),
-          type: 'deadline',
-          description: 'Last day to register for winter league assignments'
+          type: 'league',
+          description: 'Start of winter league playoff season'
         }
       ])
     }
@@ -213,7 +213,7 @@ export default function CalendarPage() {
       case 'meeting':
         backgroundColor = '#8b5cf6' // purple
         break
-      case 'deadline':
+      case 'league':
         backgroundColor = '#ef4444' // red
         break
       case 'social':
@@ -271,7 +271,7 @@ export default function CalendarPage() {
     switch (type) {
       case 'training': return 'bg-green-500'
       case 'meeting': return 'bg-purple-500'
-      case 'deadline': return 'bg-red-500'
+      case 'league': return 'bg-red-500'
       case 'social': return 'bg-blue-500'
       default: return 'bg-gray-500'
     }
@@ -382,7 +382,7 @@ export default function CalendarPage() {
             </div>
             <div className="flex items-center gap-1 sm:gap-2">
               <div className="w-3 h-3 sm:w-4 sm:h-4 bg-red-500 rounded"></div>
-              <span>Deadline</span>
+              <span>League Date</span>
             </div>
             <div className="flex items-center gap-1 sm:gap-2">
               <div className="w-3 h-3 sm:w-4 sm:h-4 bg-blue-500 rounded"></div>
@@ -509,13 +509,14 @@ export default function CalendarPage() {
               eventPropGetter={eventStyleGetter}
               toolbar={true}
               views={['month']}
+              showAllEvents
             />
           </div>
         </div>
       </div>
 
       {/* Desktop Calendar */}
-      <div className="hidden sm:block bg-white rounded-lg shadow p-4" style={{ height: '600px' }}>
+      <div className="hidden sm:block bg-white rounded-lg shadow p-4" style={{ height: '800px' }}>
         <Calendar
           localizer={localizer}
           events={events}
@@ -530,6 +531,7 @@ export default function CalendarPage() {
           date={date}
           onNavigate={setDate}
           eventPropGetter={eventStyleGetter}
+          showAllEvents
         />
       </div>
         </>
@@ -871,7 +873,7 @@ function EventModal({
               >
                 <option value="training">Training</option>
                 <option value="meeting">Meeting</option>
-                <option value="deadline">Deadline</option>
+                <option value="league">League Date</option>
                 <option value="social">Social</option>
               </select>
             </div>
