@@ -12,6 +12,15 @@ interface AuthGuardProps {
   redirectTo?: string
 }
 
+// Check if URL hash contains a Netlify Identity token that needs processing
+function hasIdentityToken(): boolean {
+  if (typeof window === 'undefined') return false
+  const hash = window.location.hash
+  return hash.includes('recovery_token=') ||
+         hash.includes('confirmation_token=') ||
+         hash.includes('invite_token=')
+}
+
 export default function AuthGuard({
   children,
   requireAuth = true,
@@ -21,13 +30,24 @@ export default function AuthGuard({
   const router = useRouter()
   const pathname = usePathname()
   const [hasRedirected, setHasRedirected] = useState(false)
+  const [hasToken, setHasToken] = useState(false)
 
   // Check if authentication should be disabled in development
   const isDevMode = process.env.NODE_ENV === 'development'
   const disableAuthInDev = process.env.NEXT_PUBLIC_DISABLE_AUTH_DEV === 'true'
   const shouldBypassAuth = isDevMode && disableAuthInDev
 
+  // Check for identity tokens on mount
   useEffect(() => {
+    setHasToken(hasIdentityToken())
+  }, [])
+
+  useEffect(() => {
+    // Don't redirect if there's an identity token in the URL - let the widget handle it
+    if (hasToken) {
+      return
+    }
+
     // If not authenticated and auth is required, redirect to home and open login modal
     if (!shouldBypassAuth && !isAuthenticated && !isLoading && requireAuth && !hasRedirected) {
       setHasRedirected(true)
@@ -49,7 +69,7 @@ export default function AuthGuard({
         netlifyIdentity.open('login')
       }, 100)
     }
-  }, [isAuthenticated, isLoading, requireAuth, pathname, shouldBypassAuth, hasRedirected, router])
+  }, [isAuthenticated, isLoading, requireAuth, pathname, shouldBypassAuth, hasRedirected, router, hasToken])
 
   // If auth is bypassed in development, always allow access
   if (shouldBypassAuth) {
@@ -68,13 +88,15 @@ export default function AuthGuard({
     )
   }
 
-  // Not authenticated and auth is required - show loading while redirecting
+  // Not authenticated and auth is required - show loading while redirecting or processing token
   if (!isAuthenticated && requireAuth) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
           <IconLoader2 className="h-12 w-12 text-cboa-blue animate-spin mx-auto mb-4" />
-          <p className="text-gray-600">Redirecting to login...</p>
+          <p className="text-gray-600">
+            {hasToken ? 'Processing your request...' : 'Redirecting to login...'}
+          </p>
         </div>
       </div>
     )
