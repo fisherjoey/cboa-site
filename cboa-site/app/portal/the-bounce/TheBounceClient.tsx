@@ -9,7 +9,6 @@ import { useRole } from '@/contexts/RoleContext'
 import { newslettersAPI } from '@/lib/api'
 import { uploadFile } from '@/lib/fileUpload'
 import { useToast } from '@/hooks/useToast'
-import { ToastContainer } from '@/components/Toast'
 import { validateNewsletterForm, getFieldError, hasErrors, formatValidationErrors } from '@/lib/portalValidation'
 import { parseAPIError, sanitize, ValidationError } from '@/lib/errorHandling'
 import FileUpload from '@/components/FileUpload'
@@ -36,7 +35,7 @@ interface Newsletter {
 
 export default function TheBounceClient({ newsletters: initialNewsletters }: TheBounceClientProps) {
   const { user } = useRole()
-  const { toasts, dismissToast, success, error, warning, info } = useToast()
+  const { success, error, warning, info } = useToast()
   const [newsletters, setNewsletters] = useState<Newsletter[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [selectedNewsletter, setSelectedNewsletter] = useState<Newsletter | null>(null)
@@ -204,7 +203,6 @@ export default function TheBounceClient({ newsletters: initialNewsletters }: The
   
   return (
     <div className="px-4 py-5 sm:p-6">
-      <ToastContainer toasts={toasts} onDismiss={dismissToast} />
 
       {/* Header */}
       <div className="mb-6 sm:mb-8 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">

@@ -6,7 +6,6 @@ import { TinyMCEEditor, HTMLViewer } from '@/components/TinyMCEEditor'
 import { useRole } from '@/contexts/RoleContext'
 import { announcementsAPI } from '@/lib/api'
 import { useToast } from '@/hooks/useToast'
-import { ToastContainer } from '@/components/Toast'
 import {
   validateAnnouncementForm,
   getFieldError,
@@ -112,7 +111,7 @@ export default function NewsClient({ initialAnnouncements }: NewsClientProps) {
   })
   const [sendAsEmail, setSendAsEmail] = useState(false)
   const [emailRecipients, setEmailRecipients] = useState<string[]>(['all-members'])
-  const { toasts, dismissToast, success, error, warning, info } = useToast()
+  const { success, error, warning, info } = useToast()
   const [validationErrors, setValidationErrors] = useState<ValidationError[]>([])
 
   const canEdit = user.role === 'admin' || user.role === 'executive'
@@ -318,7 +317,6 @@ export default function NewsClient({ initialAnnouncements }: NewsClientProps) {
 
   return (
     <div className="px-4 py-5 sm:p-6">
-      <ToastContainer toasts={toasts} onDismiss={dismissToast} />
 
       {/* Header */}
       <div className="mb-6 sm:mb-8 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">

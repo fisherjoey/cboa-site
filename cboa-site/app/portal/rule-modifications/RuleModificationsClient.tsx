@@ -8,7 +8,6 @@ import { useRole } from '@/contexts/RoleContext'
 import { TinyMCEEditor, HTMLViewer } from '@/components/TinyMCEEditor'
 import { ruleModificationsAPI } from '@/lib/api'
 import { useToast } from '@/hooks/useToast'
-import { ToastContainer } from '@/components/Toast'
 import { parseAPIError, sanitize, ValidationError } from '@/lib/errorHandling'
 import { getFieldError } from '@/lib/portalValidation'
 
@@ -19,7 +18,7 @@ interface RuleModificationsClientProps {
 
 export default function RuleModificationsClient({ modifications: initialModifications, categories: initialCategories }: RuleModificationsClientProps) {
   const { user } = useRole()
-  const { toasts, dismissToast, success, error, warning, info } = useToast()
+  const { success, error, warning, info } = useToast()
   const [modifications, setModifications] = useState<any[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [selectedCategory, setSelectedCategory] = useState('all')
@@ -189,7 +188,6 @@ export default function RuleModificationsClient({ modifications: initialModifica
 
   return (
     <div className="py-5 sm:py-6">
-      <ToastContainer toasts={toasts} onDismiss={dismissToast} />
 
       {/* Header */}
       <div className="mb-6 sm:mb-8 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">

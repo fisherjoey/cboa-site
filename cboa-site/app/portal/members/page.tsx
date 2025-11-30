@@ -5,7 +5,6 @@ import { useRole } from '@/contexts/RoleContext'
 import { membersAPI, memberActivitiesAPI } from '@/lib/api'
 import { IconUser, IconSearch, IconPlus, IconEdit, IconTrash, IconCalendar, IconX, IconCheck, IconFilter } from '@tabler/icons-react'
 import { useToast } from '@/hooks/useToast'
-import { ToastContainer } from '@/components/Toast'
 import {
   validateMemberForm,
   validateActivityForm,
@@ -73,7 +72,7 @@ export default function MembersPage() {
     activity_date: new Date().toISOString().split('T')[0],
     notes: ''
   })
-  const { toasts, dismissToast, success, error, warning, info } = useToast()
+  const { success, error, warning, info } = useToast()
   const [validationErrors, setValidationErrors] = useState<ValidationError[]>([])
   const [activityValidationErrors, setActivityValidationErrors] = useState<ValidationError[]>([])
 
@@ -316,7 +315,6 @@ export default function MembersPage() {
 
   return (
     <div className="max-w-7xl mx-auto p-6">
-      <ToastContainer toasts={toasts} onDismiss={dismissToast} />
       <div className="mb-6">
         <div className="flex items-center justify-between mb-4">
           <h1 className="text-3xl font-bold text-gray-900">Members Directory</h1>

@@ -1,57 +1,61 @@
 'use client'
 
-import { useState, useCallback } from 'react'
-import { Toast, ToastType } from '@/components/Toast'
+import { useCallback } from 'react'
+import { toast } from 'sonner'
 
-export function useToast() {
-  const [toasts, setToasts] = useState<Toast[]>([])
+export type ToastType = 'success' | 'error' | 'warning' | 'info'
 
+export function useToastHook() {
   const showToast = useCallback((
     type: ToastType,
     title: string,
     message?: string,
     duration?: number
   ) => {
-    const id = Math.random().toString(36).substring(2, 9)
-    const newToast: Toast = {
-      id,
-      type,
-      title,
-      message,
-      duration: duration || 5000
+    const content = message ? `${title}: ${message}` : title
+
+    switch (type) {
+      case 'success':
+        toast.success(title, { description: message, duration })
+        break
+      case 'error':
+        toast.error(title, { description: message, duration: duration || 7000 })
+        break
+      case 'warning':
+        toast.warning(title, { description: message, duration })
+        break
+      case 'info':
+      default:
+        toast.info(title, { description: message, duration })
+        break
     }
-
-    setToasts(prev => [...prev, newToast])
-  }, [])
-
-  const dismissToast = useCallback((id: string) => {
-    setToasts(prev => prev.filter(toast => toast.id !== id))
   }, [])
 
   // Convenience methods
   const success = useCallback((title: string, message?: string, duration?: number) => {
-    showToast('success', title, message, duration)
-  }, [showToast])
+    toast.success(title, { description: message, duration })
+  }, [])
 
   const error = useCallback((title: string, message?: string, duration?: number) => {
-    showToast('error', title, message, duration || 7000) // Errors stay longer
-  }, [showToast])
+    toast.error(title, { description: message, duration: duration || 7000 })
+  }, [])
 
   const warning = useCallback((title: string, message?: string, duration?: number) => {
-    showToast('warning', title, message, duration)
-  }, [showToast])
+    toast.warning(title, { description: message, duration })
+  }, [])
 
   const info = useCallback((title: string, message?: string, duration?: number) => {
-    showToast('info', title, message, duration)
-  }, [showToast])
+    toast.info(title, { description: message, duration })
+  }, [])
 
   return {
-    toasts,
     showToast,
-    dismissToast,
     success,
     error,
     warning,
     info
   }
 }
+
+// Re-export for backwards compatibility
+export { useToastHook as useToast }

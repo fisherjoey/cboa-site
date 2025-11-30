@@ -7,7 +7,6 @@ import ResourceViewer from '@/components/ResourceViewer'
 import ResourceThumbnail from '@/components/ResourceThumbnail'
 import { useRole } from '@/contexts/RoleContext'
 import { useToast } from '@/hooks/useToast'
-import { ToastContainer } from '@/components/Toast'
 import { useCache } from '@/hooks/useCache'
 import { CACHE_TTL } from '@/lib/cache'
 import {
@@ -60,7 +59,7 @@ interface Resource {
 
 export default function ResourcesClient() {
   const { user } = useRole()
-  const { toasts, dismissToast, success, error, warning, info } = useToast()
+  const { success, error, warning, info } = useToast()
   const [resources, setResources] = useState<Resource[]>([])
   const [selectedCategory, setSelectedCategory] = useState<string>('all')
   const [searchTerm, setSearchTerm] = useState('')
@@ -869,7 +868,6 @@ export default function ResourcesClient() {
 
   return (
     <div className="px-4 py-5 sm:p-6">
-      <ToastContainer toasts={toasts} onDismiss={dismissToast} />
 
       <div className="mb-6 sm:mb-8 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
         <div>

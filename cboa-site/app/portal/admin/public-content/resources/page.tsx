@@ -6,14 +6,13 @@ import { useRole } from '@/contexts/RoleContext'
 import { TinyMCEEditor, HTMLViewer } from '@/components/TinyMCEEditor'
 import { publicResourcesAPI } from '@/lib/api'
 import { useToast } from '@/hooks/useToast'
-import { ToastContainer } from '@/components/Toast'
 import { parseAPIError, sanitize, ValidationError } from '@/lib/errorHandling'
 import { getFieldError } from '@/lib/portalValidation'
 import type { PublicResource } from '@/types/publicContent'
 
 export default function PublicResourcesAdmin() {
   const { user } = useRole()
-  const { toasts, dismissToast, success, error, warning, info } = useToast()
+  const { success, error, warning, info } = useToast()
   const [resources, setResources] = useState<PublicResource[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
@@ -188,7 +187,6 @@ export default function PublicResourcesAdmin() {
 
   return (
     <div className="py-5 sm:py-6">
-      <ToastContainer toasts={toasts} onDismiss={dismissToast} />
 
       {/* Header */}
       <div className="mb-6 sm:mb-8 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">

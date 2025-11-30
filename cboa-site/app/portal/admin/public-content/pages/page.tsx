@@ -6,14 +6,13 @@ import { useRole } from '@/contexts/RoleContext'
 import { TinyMCEEditor, HTMLViewer } from '@/components/TinyMCEEditor'
 import { publicPagesAPI } from '@/lib/api'
 import { useToast } from '@/hooks/useToast'
-import { ToastContainer } from '@/components/Toast'
 import { parseAPIError, sanitize, ValidationError } from '@/lib/errorHandling'
 import { getFieldError } from '@/lib/portalValidation'
 import type { PublicPage } from '@/types/publicContent'
 
 export default function PublicPagesAdmin() {
   const { user } = useRole()
-  const { toasts, dismissToast, success, error, warning, info } = useToast()
+  const { success, error, warning, info } = useToast()
   const [pages, setPages] = useState<PublicPage[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [editingId, setEditingId] = useState<string | null>(null)
@@ -96,7 +95,6 @@ export default function PublicPagesAdmin() {
 
   return (
     <div className="py-5 sm:py-6">
-      <ToastContainer toasts={toasts} onDismiss={dismissToast} />
 
       {/* Header */}
       <div className="mb-6 sm:mb-8">
