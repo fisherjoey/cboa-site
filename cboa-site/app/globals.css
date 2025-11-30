@@ -7,6 +7,15 @@
   --cboa-blue: #2c3e50;
   --cboa-dark: #1a1a1a;
   --cboa-light-blue: #3498db;
+  --tooltip-bg: white;
+  --tooltip-border: #e5e7eb;
+  --tooltip-text: #1f2937;
+}
+
+.dark {
+  --tooltip-bg: #1f2937;
+  --tooltip-border: #374151;
+  --tooltip-text: #f9fafb;
 }
 
 * {
@@ -111,4 +120,18 @@ body {
 .ReactModal__Content .poweredBy,
 .ReactModal__Content a[href*="netlify"] {
   display: none !important;
+}
+
+/* TinyMCE Editor Styling */
+.tinymce-wrapper .tox-tinymce {
+  border: none !important;
+  border-radius: 0 !important;
+}
+
+.tinymce-wrapper .tox-statusbar {
+  border-top: 1px solid #e5e7eb;
+}
+
+.dark .tinymce-wrapper .tox-statusbar {
+  border-top: 1px solid #374151;
 }
