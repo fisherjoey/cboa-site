@@ -722,7 +722,7 @@ export default function ResourcesClient() {
                 <button onClick={() => startEditing(resource)} className="p-1.5 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded ml-auto" title="Edit">
                   <IconEdit className="h-4 w-4" />
                 </button>
-                <button onClick={() => handleDelete(resource.id)} className="p-1.5 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 rounded" title="Delete">
+                <button onClick={() => handleDelete(resource.id)} className="p-1.5 text-red-500 dark:text-red-400/70 hover:bg-red-50 dark:hover:bg-red-900/30 rounded" title="Delete">
                   <IconTrash className="h-4 w-4" />
                 </button>
               </>
@@ -781,7 +781,7 @@ export default function ResourcesClient() {
                 <button onClick={() => startEditing(resource)} className="p-1.5 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded ml-auto" title="Edit">
                   <IconEdit className="h-4 w-4" />
                 </button>
-                <button onClick={() => handleDelete(resource.id)} className="p-1.5 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 rounded" title="Delete">
+                <button onClick={() => handleDelete(resource.id)} className="p-1.5 text-red-500 dark:text-red-400/70 hover:bg-red-50 dark:hover:bg-red-900/30 rounded" title="Delete">
                   <IconTrash className="h-4 w-4" />
                 </button>
               </>
@@ -840,7 +840,7 @@ export default function ResourcesClient() {
                   <button onClick={() => startEditing(resource)} className="p-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded" title="Edit">
                     <IconEdit className="h-5 w-5" />
                   </button>
-                  <button onClick={() => handleDelete(resource.id)} className="p-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 rounded" title="Delete">
+                  <button onClick={() => handleDelete(resource.id)} className="p-2 text-red-500 dark:text-red-400/70 hover:bg-red-50 dark:hover:bg-red-900/30 rounded" title="Delete">
                     <IconTrash className="h-5 w-5" />
                   </button>
                 </>
@@ -1324,7 +1324,7 @@ export default function ResourcesClient() {
                           </button>
                           <button
                             onClick={() => handleDelete(resource.id)}
-                            className="p-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 rounded"
+                            className="p-2 text-red-500 dark:text-red-400/70 hover:bg-red-50 dark:hover:bg-red-900/30 rounded"
                             title="Delete"
                           >
                             <IconTrash className="h-5 w-5" />
