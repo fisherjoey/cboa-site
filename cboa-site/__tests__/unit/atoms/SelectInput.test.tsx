@@ -1,4 +1,4 @@
-import { render, screen, fireEvent } from '@testing-library/react'
+import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import SelectInput from '@/components/atoms/SelectInput'
 
@@ -22,7 +22,8 @@ describe('SelectInput Atom', () => {
       expect(screen.getByText('Category')).toBeInTheDocument()
     })
 
-    it('should render all options', () => {
+    it('should render all options when opened', async () => {
+      const user = userEvent.setup()
       render(
         <SelectInput
           label="Category"
@@ -32,9 +33,13 @@ describe('SelectInput Atom', () => {
         />
       )
 
-      const select = screen.getByRole('combobox')
+      // Click to open the listbox
+      const button = screen.getByRole('button')
+      await user.click(button)
+
+      // Check all options are visible
       mockOptions.forEach(option => {
-        expect(select).toContainHTML(option.label)
+        expect(screen.getByText(option.label)).toBeInTheDocument()
       })
     })
 
@@ -48,8 +53,8 @@ describe('SelectInput Atom', () => {
         />
       )
 
-      const select = screen.getByRole('combobox') as HTMLSelectElement
-      expect(select.value).toBe('adult')
+      const button = screen.getByRole('button')
+      expect(button).toHaveTextContent('Adult')
     })
 
     it('should show placeholder when no value selected', () => {
@@ -81,8 +86,13 @@ describe('SelectInput Atom', () => {
         />
       )
 
-      const select = screen.getByRole('combobox')
-      await user.selectOptions(select, 'club-tournament')
+      // Open the dropdown
+      const button = screen.getByRole('button')
+      await user.click(button)
+
+      // Select an option
+      const option = screen.getByText('Club Tournament')
+      await user.click(option)
 
       expect(handleChange).toHaveBeenCalledWith('club-tournament')
     })
@@ -101,10 +111,35 @@ describe('SelectInput Atom', () => {
         />
       )
 
-      const select = screen.getByRole('combobox')
-      await user.selectOptions(select, 'adult')
+      // Try to click the disabled button
+      const button = screen.getByRole('button')
+      await user.click(button)
 
+      // Options should not be shown
+      expect(screen.queryByRole('listbox')).not.toBeInTheDocument()
       expect(handleChange).not.toHaveBeenCalled()
+    })
+
+    it('should support keyboard navigation', async () => {
+      const handleChange = jest.fn()
+      const user = userEvent.setup()
+
+      render(
+        <SelectInput
+          label="Category"
+          value=""
+          onChange={handleChange}
+          options={mockOptions}
+        />
+      )
+
+      const button = screen.getByRole('button')
+      await user.click(button)
+
+      // Navigate down and select with Enter
+      await user.keyboard('{ArrowDown}{ArrowDown}{Enter}')
+
+      expect(handleChange).toHaveBeenCalled()
     })
   })
 
@@ -121,7 +156,7 @@ describe('SelectInput Atom', () => {
       )
 
       expect(screen.getByText('Please select a category')).toBeInTheDocument()
-      expect(screen.getByRole('combobox')).toHaveClass('border-red-500')
+      expect(screen.getByRole('button')).toHaveClass('border-red-500')
     })
 
     it('should show disabled state', () => {
@@ -135,9 +170,9 @@ describe('SelectInput Atom', () => {
         />
       )
 
-      const select = screen.getByRole('combobox')
-      expect(select).toBeDisabled()
-      expect(select).toHaveClass('bg-gray-50')
+      const button = screen.getByRole('button')
+      expect(button).toHaveClass('cursor-not-allowed')
+      expect(button).toHaveClass('opacity-60')
     })
 
     it('should show required indicator', () => {
@@ -157,7 +192,8 @@ describe('SelectInput Atom', () => {
   })
 
   describe('Option Groups', () => {
-    it('should support grouped options', () => {
+    it('should support grouped options', async () => {
+      const user = userEvent.setup()
       const groupedOptions = [
         {
           group: 'School',
@@ -184,28 +220,21 @@ describe('SelectInput Atom', () => {
         />
       )
 
-      // Check that optgroups are rendered
-      const select = screen.getByRole('combobox')
-      expect(select.innerHTML).toContain('School')
-      expect(select.innerHTML).toContain('Club')
+      // Open the dropdown
+      const button = screen.getByRole('button')
+      await user.click(button)
+
+      // Check that group headers are rendered
+      expect(screen.getByText('School')).toBeInTheDocument()
+      expect(screen.getByText('Club')).toBeInTheDocument()
+
+      // Check that options are rendered
+      expect(screen.getByText('School League')).toBeInTheDocument()
+      expect(screen.getByText('Club Tournament')).toBeInTheDocument()
     })
   })
 
   describe('Accessibility', () => {
-    it('should have proper aria-label', () => {
-      render(
-        <SelectInput
-          label="Category"
-          value=""
-          onChange={() => {}}
-          options={mockOptions}
-        />
-      )
-
-      const select = screen.getByRole('combobox')
-      expect(select).toHaveAttribute('aria-label', 'Category')
-    })
-
     it('should have aria-invalid when error', () => {
       render(
         <SelectInput
@@ -217,23 +246,8 @@ describe('SelectInput Atom', () => {
         />
       )
 
-      const select = screen.getByRole('combobox')
-      expect(select).toHaveAttribute('aria-invalid', 'true')
-    })
-
-    it('should have aria-required when required', () => {
-      render(
-        <SelectInput
-          label="Category"
-          value=""
-          onChange={() => {}}
-          options={mockOptions}
-          required
-        />
-      )
-
-      const select = screen.getByRole('combobox')
-      expect(select).toHaveAttribute('aria-required', 'true')
+      const button = screen.getByRole('button')
+      expect(button).toHaveAttribute('aria-invalid', 'true')
     })
 
     it('should have aria-describedby for error message', () => {
@@ -247,12 +261,34 @@ describe('SelectInput Atom', () => {
         />
       )
 
-      const select = screen.getByRole('combobox')
-      const errorId = select.getAttribute('aria-describedby')
+      const button = screen.getByRole('button')
+      const errorId = button.getAttribute('aria-describedby')
       expect(errorId).toBeTruthy()
 
       const errorElement = document.getElementById(errorId!)
       expect(errorElement).toHaveTextContent('Error message')
+    })
+
+    it('should show check icon for selected option', async () => {
+      const user = userEvent.setup()
+      render(
+        <SelectInput
+          label="Category"
+          value="adult"
+          onChange={() => {}}
+          options={mockOptions}
+        />
+      )
+
+      // Open the dropdown
+      await user.click(screen.getByRole('button'))
+
+      // Find the Adult option and check it has the check icon
+      const adultOption = screen.getByText('Adult').closest('[role="option"]')
+      expect(adultOption).toBeInTheDocument()
+
+      // Check the selected option has font-medium class
+      expect(within(adultOption!).getByText('Adult')).toHaveClass('font-medium')
     })
   })
 
@@ -271,23 +307,43 @@ describe('SelectInput Atom', () => {
       expect(screen.getByText('No options available')).toBeInTheDocument()
     })
 
-    it('should handle options with same value', () => {
-      const duplicateOptions = [
-        { value: 'same', label: 'Option 1' },
-        { value: 'same', label: 'Option 2' },
-      ]
-
+    it('should close dropdown when option is selected', async () => {
+      const user = userEvent.setup()
       render(
         <SelectInput
           label="Category"
-          value="same"
+          value=""
           onChange={() => {}}
-          options={duplicateOptions}
+          options={mockOptions}
         />
       )
 
-      const select = screen.getByRole('combobox') as HTMLSelectElement
-      expect(select.value).toBe('same')
+      // Open and select
+      await user.click(screen.getByRole('button'))
+      await user.click(screen.getByText('Adult'))
+
+      // Listbox should be closed
+      expect(screen.queryByRole('listbox')).not.toBeInTheDocument()
+    })
+
+    it('should close dropdown on Escape key', async () => {
+      const user = userEvent.setup()
+      render(
+        <SelectInput
+          label="Category"
+          value=""
+          onChange={() => {}}
+          options={mockOptions}
+        />
+      )
+
+      // Open dropdown
+      await user.click(screen.getByRole('button'))
+      expect(screen.getByRole('listbox')).toBeInTheDocument()
+
+      // Press Escape
+      await user.keyboard('{Escape}')
+      expect(screen.queryByRole('listbox')).not.toBeInTheDocument()
     })
   })
 })

@@ -17,51 +17,57 @@ describe('FilterBar Molecule', () => {
   describe('Rendering', () => {
     it('should render search input', () => {
       render(<FilterBar {...defaultProps} />)
-      
+
       expect(screen.getByLabelText('Search')).toBeInTheDocument()
       expect(screen.getByPlaceholderText('Search rules...')).toBeInTheDocument()
     })
 
     it('should render category select', () => {
       render(<FilterBar {...defaultProps} />)
-      
-      expect(screen.getByLabelText('Category')).toBeInTheDocument()
-      expect(screen.getByRole('combobox')).toBeInTheDocument()
+
+      expect(screen.getByText('Category')).toBeInTheDocument()
+      expect(screen.getByRole('button', { name: /all categories/i })).toBeInTheDocument()
     })
 
     it('should display current search query', () => {
       render(<FilterBar {...defaultProps} searchQuery="test query" />)
-      
+
       expect(screen.getByDisplayValue('test query')).toBeInTheDocument()
     })
 
     it('should display selected category', () => {
       render(<FilterBar {...defaultProps} selectedCategory="School League" />)
-      
-      const select = screen.getByRole('combobox') as HTMLSelectElement
-      expect(select.value).toBe('School League')
+
+      const button = screen.getByRole('button')
+      expect(button).toHaveTextContent('School League')
     })
 
-    it('should render default categories', () => {
+    it('should render default categories when opened', async () => {
+      const user = userEvent.setup()
       render(<FilterBar {...defaultProps} />)
-      
-      const select = screen.getByRole('combobox')
-      expect(select).toContainHTML('All Categories')
-      expect(select).toContainHTML('School League')
-      expect(select).toContainHTML('School Tournament')
-      expect(select).toContainHTML('Club League')
-      expect(select).toContainHTML('Club Tournament')
-      expect(select).toContainHTML('Adult')
+
+      // Open the dropdown
+      await user.click(screen.getByRole('button'))
+
+      expect(screen.getByText('All Categories')).toBeInTheDocument()
+      expect(screen.getByText('School League')).toBeInTheDocument()
+      expect(screen.getByText('School Tournament')).toBeInTheDocument()
+      expect(screen.getByText('Club League')).toBeInTheDocument()
+      expect(screen.getByText('Club Tournament')).toBeInTheDocument()
+      expect(screen.getByText('Adult')).toBeInTheDocument()
     })
 
-    it('should render custom categories when provided', () => {
+    it('should render custom categories when provided', async () => {
+      const user = userEvent.setup()
       const customCategories = ['Category 1', 'Category 2']
       render(<FilterBar {...defaultProps} categories={customCategories} />)
-      
-      const select = screen.getByRole('combobox')
-      expect(select).toContainHTML('Category 1')
-      expect(select).toContainHTML('Category 2')
-      expect(select).not.toContainHTML('School League')
+
+      // Open the dropdown
+      await user.click(screen.getByRole('button'))
+
+      expect(screen.getByText('Category 1')).toBeInTheDocument()
+      expect(screen.getByText('Category 2')).toBeInTheDocument()
+      expect(screen.queryByText('School League')).not.toBeInTheDocument()
     })
   })
 
@@ -69,17 +75,17 @@ describe('FilterBar Molecule', () => {
     it('should call onSearchChange when typing in search input', async () => {
       const handleSearchChange = jest.fn()
       const user = userEvent.setup()
-      
+
       render(
         <FilterBar
           {...defaultProps}
           onSearchChange={handleSearchChange}
         />
       )
-      
+
       const searchInput = screen.getByLabelText('Search')
       await user.type(searchInput, 'test')
-      
+
       expect(handleSearchChange).toHaveBeenCalledTimes(4) // Once for each character
       expect(handleSearchChange).toHaveBeenLastCalledWith('t')
     })
@@ -87,24 +93,27 @@ describe('FilterBar Molecule', () => {
     it('should call onCategoryChange when selecting a category', async () => {
       const handleCategoryChange = jest.fn()
       const user = userEvent.setup()
-      
+
       render(
         <FilterBar
           {...defaultProps}
           onCategoryChange={handleCategoryChange}
         />
       )
-      
-      const categorySelect = screen.getByLabelText('Category')
-      await user.selectOptions(categorySelect, 'Club Tournament')
-      
+
+      // Open the dropdown
+      await user.click(screen.getByRole('button'))
+
+      // Select an option
+      await user.click(screen.getByText('Club Tournament'))
+
       expect(handleCategoryChange).toHaveBeenCalledWith('Club Tournament')
     })
 
     it('should handle clearing category selection', async () => {
       const handleCategoryChange = jest.fn()
       const user = userEvent.setup()
-      
+
       render(
         <FilterBar
           {...defaultProps}
@@ -112,10 +121,13 @@ describe('FilterBar Molecule', () => {
           onCategoryChange={handleCategoryChange}
         />
       )
-      
-      const categorySelect = screen.getByLabelText('Category')
-      await user.selectOptions(categorySelect, '')
-      
+
+      // Open the dropdown
+      await user.click(screen.getByRole('button'))
+
+      // Select "All Categories" (empty value)
+      await user.click(screen.getByText('All Categories'))
+
       expect(handleCategoryChange).toHaveBeenCalledWith('')
     })
   })
@@ -123,7 +135,7 @@ describe('FilterBar Molecule', () => {
   describe('Responsive Layout', () => {
     it('should use grid layout for inputs', () => {
       render(<FilterBar {...defaultProps} />)
-      
+
       const container = screen.getByLabelText('Search').closest('.grid')
       expect(container).toHaveClass('grid-cols-1', 'md:grid-cols-2')
     })

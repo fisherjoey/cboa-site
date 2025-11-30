@@ -65,8 +65,8 @@ export default function ResourceThumbnail({ resource, size = 'medium', onClick }
   // For images, show actual thumbnail
   if (fileType === 'image' && resource.fileUrl) {
     return (
-      <div 
-        className={`${sizeClasses[size]} rounded-lg overflow-hidden bg-gray-100 flex items-center justify-center ${onClick ? 'cursor-pointer hover:opacity-80 transition-opacity' : ''}`}
+      <div
+        className={`${sizeClasses[size]} rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-800 flex items-center justify-center ${onClick ? 'cursor-pointer hover:opacity-80 transition-opacity' : ''}`}
         onClick={onClick}>
         <img
           src={resource.fileUrl}
@@ -94,8 +94,8 @@ export default function ResourceThumbnail({ resource, size = 'medium', onClick }
     
     if (videoId) {
       return (
-        <div 
-          className={`${sizeClasses[size]} rounded-lg overflow-hidden bg-gray-100 flex items-center justify-center relative ${onClick ? 'cursor-pointer hover:opacity-80 transition-opacity' : ''}`}
+        <div
+          className={`${sizeClasses[size]} rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-800 flex items-center justify-center relative ${onClick ? 'cursor-pointer hover:opacity-80 transition-opacity' : ''}`}
           onClick={onClick}>
           <img
             src={`https://img.youtube.com/vi/${videoId}/mqdefault.jpg`}
@@ -117,54 +117,54 @@ export default function ResourceThumbnail({ resource, size = 'medium', onClick }
   
   // Icon-based thumbnails for other file types
   let Icon = IconFile
-  let bgColor = 'bg-gray-100'
-  let iconColor = 'text-gray-600'
-  
+  let bgColor = 'bg-gray-100 dark:bg-gray-700'
+  let iconColor = 'text-gray-600 dark:text-gray-300'
+
   switch (fileType || externalType) {
     case 'pdf':
       Icon = IconFileTypePdf
-      bgColor = 'bg-red-50'
-      iconColor = 'text-red-600'
+      bgColor = 'bg-red-50 dark:bg-red-900/60'
+      iconColor = 'text-red-600 dark:text-red-300'
       break
     case 'word':
       Icon = IconFileTypeDoc
-      bgColor = 'bg-blue-50'
-      iconColor = 'text-blue-600'
+      bgColor = 'bg-blue-50 dark:bg-blue-900/60'
+      iconColor = 'text-blue-600 dark:text-blue-300'
       break
     case 'excel':
       Icon = IconFileTypeXls
-      bgColor = 'bg-green-50'
-      iconColor = 'text-green-600'
+      bgColor = 'bg-green-50 dark:bg-green-900/60'
+      iconColor = 'text-green-600 dark:text-green-300'
       break
     case 'powerpoint':
       Icon = IconFileTypePpt
-      bgColor = 'bg-orange-50'
-      iconColor = 'text-orange-600'
+      bgColor = 'bg-orange-50 dark:bg-orange-900/60'
+      iconColor = 'text-orange-600 dark:text-orange-300'
       break
     case 'video':
       Icon = IconVideo
-      bgColor = 'bg-purple-50'
-      iconColor = 'text-purple-600'
+      bgColor = 'bg-purple-50 dark:bg-purple-900/60'
+      iconColor = 'text-purple-600 dark:text-purple-300'
       break
     case 'audio':
       Icon = IconMusic
-      bgColor = 'bg-pink-50'
-      iconColor = 'text-pink-600'
+      bgColor = 'bg-pink-50 dark:bg-pink-900/60'
+      iconColor = 'text-pink-600 dark:text-pink-300'
       break
     case 'text':
       Icon = IconFileText
-      bgColor = 'bg-gray-50'
-      iconColor = 'text-gray-600'
+      bgColor = 'bg-gray-50 dark:bg-gray-700'
+      iconColor = 'text-gray-600 dark:text-gray-300'
       break
     case 'vimeo':
       Icon = IconBrandVimeo
-      bgColor = 'bg-blue-50'
-      iconColor = 'text-blue-600'
+      bgColor = 'bg-blue-50 dark:bg-blue-900/60'
+      iconColor = 'text-blue-600 dark:text-blue-300'
       break
     case 'website':
       Icon = IconWorld
-      bgColor = 'bg-indigo-50'
-      iconColor = 'text-indigo-600'
+      bgColor = 'bg-indigo-50 dark:bg-indigo-900/60'
+      iconColor = 'text-indigo-600 dark:text-indigo-300'
       break
   }
   

@@ -768,6 +768,139 @@ export const publicPagesAPI = {
   }
 }
 
+// ============================================================================
+// Netlify Identity Admin API
+// ============================================================================
+
+export interface IdentityUser {
+  id: string
+  email: string
+  name?: string
+  confirmed: boolean
+  confirmed_at?: string
+  invited_at?: string
+  created_at?: string
+  roles: string[]
+}
+
+export interface IdentityStatus {
+  exists: boolean
+  id?: string
+  email?: string
+  name?: string
+  confirmed?: boolean
+  confirmed_at?: string
+  invited_at?: string
+  created_at?: string
+  roles?: string[]
+}
+
+// Helper to get the current user's JWT token
+function getIdentityToken(): string | null {
+  if (typeof window === 'undefined') return null
+
+  // Access netlifyIdentity from window
+  const netlifyIdentity = (window as any).netlifyIdentity
+  if (!netlifyIdentity) return null
+
+  const currentUser = netlifyIdentity.currentUser()
+  if (!currentUser) return null
+
+  return currentUser.token?.access_token || null
+}
+
+// Identity Admin API - requires admin/executive role
+export const identityAPI = {
+  // List all identity users
+  async listUsers(): Promise<IdentityUser[]> {
+    const token = getIdentityToken()
+    if (!token) {
+      throw new AppError('Not authenticated', 'AUTH_ERROR', 401)
+    }
+
+    const res = await apiFetch(`${API_BASE}/identity-admin?action=list`, {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    })
+    const data = await res.json()
+    return data.users || []
+  },
+
+  // Get identity status for a specific email
+  async getStatus(email: string): Promise<IdentityStatus> {
+    const token = getIdentityToken()
+    if (!token) {
+      throw new AppError('Not authenticated', 'AUTH_ERROR', 401)
+    }
+
+    try {
+      const res = await apiFetch(`${API_BASE}/identity-admin?email=${encodeURIComponent(email)}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      })
+      return await res.json()
+    } catch (error) {
+      // Return not found status for 404
+      if (error instanceof AppError && error.statusCode === 404) {
+        return { exists: false }
+      }
+      throw error
+    }
+  },
+
+  // Send invite to a new user
+  async sendInvite(email: string, name?: string): Promise<{ success: boolean; message?: string; error?: string }> {
+    const token = getIdentityToken()
+    if (!token) {
+      throw new AppError('Not authenticated', 'AUTH_ERROR', 401)
+    }
+
+    const res = await apiFetch(`${API_BASE}/identity-admin`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({ email, name })
+    })
+    return res.json()
+  },
+
+  // Resend invite for a pending user
+  async resendInvite(email: string, name?: string): Promise<{ success: boolean; message?: string; error?: string }> {
+    const token = getIdentityToken()
+    if (!token) {
+      throw new AppError('Not authenticated', 'AUTH_ERROR', 401)
+    }
+
+    const res = await apiFetch(`${API_BASE}/identity-admin`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({ email, name, action: 'resend' })
+    })
+    return res.json()
+  },
+
+  // Delete a user from Identity
+  async deleteUser(email: string): Promise<{ success: boolean; message?: string; error?: string }> {
+    const token = getIdentityToken()
+    if (!token) {
+      throw new AppError('Not authenticated', 'AUTH_ERROR', 401)
+    }
+
+    const res = await apiFetch(`${API_BASE}/identity-admin?email=${encodeURIComponent(email)}`, {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    })
+    return res.json()
+  }
+}
+
 // Officials API
 export const officialsAPI = {
   async getAll(options?: { forceRefresh?: boolean }): Promise<Official[]> {
