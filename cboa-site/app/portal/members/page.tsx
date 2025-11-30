@@ -3,7 +3,8 @@
 import { useState, useEffect } from 'react'
 import { useRole } from '@/contexts/RoleContext'
 import { membersAPI, memberActivitiesAPI, identityAPI, type IdentityStatus } from '@/lib/api'
-import { IconUser, IconSearch, IconPlus, IconEdit, IconTrash, IconCalendar, IconX, IconCheck, IconFilter, IconMail, IconMailForward, IconCircleCheck, IconClock } from '@tabler/icons-react'
+import { IconUser, IconSearch, IconPlus, IconEdit, IconTrash, IconCalendar, IconX, IconCheck, IconFilter, IconMail, IconMailForward, IconCircleCheck, IconClock, IconUsers, IconUserPlus, IconRefresh } from '@tabler/icons-react'
+import type { IdentityUser } from '@/lib/api'
 import Modal from '@/components/ui/Modal'
 import { useToast } from '@/hooks/useToast'
 import {
@@ -82,6 +83,12 @@ export default function MembersPage() {
   const [loadingIdentityStatus, setLoadingIdentityStatus] = useState(false)
   const [sendInviteOnCreate, setSendInviteOnCreate] = useState(true)
   const [sendingInvite, setSendingInvite] = useState(false)
+
+  // Identity users modal state
+  const [showIdentityModal, setShowIdentityModal] = useState(false)
+  const [identityUsers, setIdentityUsers] = useState<IdentityUser[]>([])
+  const [loadingIdentityUsers, setLoadingIdentityUsers] = useState(false)
+  const [importingUser, setImportingUser] = useState<string | null>(null)
 
   // Check if user has admin/executive access
   const hasAccess = user.role === 'admin' || user.role === 'executive'
@@ -189,6 +196,87 @@ export default function MembersPage() {
       error(errorMessage)
     } finally {
       setSendingInvite(false)
+    }
+  }
+
+  // Load all identity users
+  const loadIdentityUsers = async () => {
+    try {
+      setLoadingIdentityUsers(true)
+      const users = await identityAPI.listUsers()
+      setIdentityUsers(users)
+    } catch (err) {
+      const errorMessage = parseAPIError(err)
+      error(errorMessage)
+    } finally {
+      setLoadingIdentityUsers(false)
+    }
+  }
+
+  // Open identity users modal
+  const handleShowIdentityUsers = () => {
+    setShowIdentityModal(true)
+    loadIdentityUsers()
+  }
+
+  // Check if an identity user is already in members
+  const isIdentityUserInMembers = (email: string): boolean => {
+    return members.some(m => m.email.toLowerCase() === email.toLowerCase())
+  }
+
+  // Import identity user to members
+  const handleImportIdentityUser = async (identityUser: IdentityUser) => {
+    try {
+      setImportingUser(identityUser.email)
+      await membersAPI.create({
+        email: identityUser.email,
+        name: identityUser.name || identityUser.email.split('@')[0],
+        status: 'active',
+        role: 'official'
+      })
+      success(`Imported ${identityUser.email} to members`)
+      await loadMembers()
+    } catch (err) {
+      const errorMessage = parseAPIError(err)
+      error(errorMessage)
+    } finally {
+      setImportingUser(null)
+    }
+  }
+
+  // Import all identity users not in members
+  const handleImportAllIdentityUsers = async () => {
+    const usersToImport = identityUsers.filter(u => !isIdentityUserInMembers(u.email))
+    if (usersToImport.length === 0) {
+      info('All identity users are already in members')
+      return
+    }
+
+    let imported = 0
+    let failed = 0
+
+    for (const identityUser of usersToImport) {
+      try {
+        setImportingUser(identityUser.email)
+        await membersAPI.create({
+          email: identityUser.email,
+          name: identityUser.name || identityUser.email.split('@')[0],
+          status: 'active',
+          role: 'official'
+        })
+        imported++
+      } catch {
+        failed++
+      }
+    }
+
+    setImportingUser(null)
+    await loadMembers()
+
+    if (failed === 0) {
+      success(`Imported ${imported} users to members`)
+    } else {
+      warning(`Imported ${imported} users, ${failed} failed`)
     }
   }
 
@@ -423,13 +511,22 @@ export default function MembersPage() {
       <div className="mb-6">
         <div className="flex items-center justify-between mb-4">
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Members Directory</h1>
-          <button
-            onClick={handleAddMember}
-            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-          >
-            <IconPlus size={20} />
-            Add Member
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handleShowIdentityUsers}
+              className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+            >
+              <IconUsers size={20} />
+              Identity Users
+            </button>
+            <button
+              onClick={handleAddMember}
+              className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              <IconPlus size={20} />
+              Add Member
+            </button>
+          </div>
         </div>
 
         {/* Filters */}
@@ -1040,6 +1137,142 @@ export default function MembersPage() {
               {isSaving ? 'Saving...' : 'Save Activity'}
             </button>
           </div>
+        </div>
+      </Modal>
+
+      {/* Identity Users Modal */}
+      <Modal
+        isOpen={showIdentityModal}
+        onClose={() => setShowIdentityModal(false)}
+        title="Netlify Identity Users"
+        size="lg"
+      >
+        <div className="space-y-4">
+          {/* Header with actions */}
+          <div className="flex items-center justify-between pb-4 border-b border-gray-200 dark:border-gray-700">
+            <p className="text-sm text-gray-600 dark:text-gray-400">
+              {identityUsers.length} users in Netlify Identity
+            </p>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={loadIdentityUsers}
+                disabled={loadingIdentityUsers}
+                className="flex items-center gap-2 px-3 py-1.5 text-sm bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 disabled:opacity-50"
+              >
+                <IconRefresh size={16} className={loadingIdentityUsers ? 'animate-spin' : ''} />
+                Refresh
+              </button>
+              <button
+                onClick={handleImportAllIdentityUsers}
+                disabled={loadingIdentityUsers || importingUser !== null}
+                className="flex items-center gap-2 px-3 py-1.5 text-sm bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50"
+              >
+                <IconUserPlus size={16} />
+                Import All Missing
+              </button>
+            </div>
+          </div>
+
+          {/* Loading state */}
+          {loadingIdentityUsers && identityUsers.length === 0 && (
+            <div className="text-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600 mx-auto"></div>
+              <p className="mt-2 text-gray-600 dark:text-gray-400">Loading identity users...</p>
+            </div>
+          )}
+
+          {/* Users list */}
+          {!loadingIdentityUsers && identityUsers.length === 0 && (
+            <div className="text-center py-8">
+              <p className="text-gray-600 dark:text-gray-400">No users found in Netlify Identity.</p>
+              <p className="text-sm text-gray-500 dark:text-gray-500 mt-1">
+                This feature only works on the deployed site, not locally.
+              </p>
+            </div>
+          )}
+
+          {identityUsers.length > 0 && (
+            <div className="max-h-96 overflow-y-auto space-y-2">
+              {identityUsers.map((identityUser) => {
+                const inMembers = isIdentityUserInMembers(identityUser.email)
+                const isImporting = importingUser === identityUser.email
+
+                return (
+                  <div
+                    key={identityUser.id}
+                    className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg"
+                  >
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <p className="font-medium text-gray-900 dark:text-white truncate">
+                          {identityUser.name || identityUser.email.split('@')[0]}
+                        </p>
+                        {identityUser.confirmed ? (
+                          <span className="px-2 py-0.5 text-xs bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300 rounded-full flex items-center gap-1">
+                            <IconCircleCheck size={12} />
+                            Active
+                          </span>
+                        ) : (
+                          <span className="px-2 py-0.5 text-xs bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 rounded-full flex items-center gap-1">
+                            <IconClock size={12} />
+                            Pending
+                          </span>
+                        )}
+                        {inMembers && (
+                          <span className="px-2 py-0.5 text-xs bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 rounded-full">
+                            In Members
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-sm text-gray-600 dark:text-gray-400 truncate">
+                        {identityUser.email}
+                      </p>
+                    </div>
+
+                    <div className="flex items-center gap-2 ml-2">
+                      {/* Resend invite button for pending users */}
+                      {!identityUser.confirmed && (
+                        <button
+                          onClick={async () => {
+                            try {
+                              setSendingInvite(true)
+                              const result = await identityAPI.resendInvite(identityUser.email, identityUser.name)
+                              if (result.success) {
+                                success(`Invite resent to ${identityUser.email}`)
+                                loadIdentityUsers()
+                              } else {
+                                error(result.error || 'Failed to resend invite')
+                              }
+                            } catch (err) {
+                              error(parseAPIError(err))
+                            } finally {
+                              setSendingInvite(false)
+                            }
+                          }}
+                          disabled={sendingInvite}
+                          className="flex items-center gap-1 px-3 py-1.5 text-sm bg-amber-600 text-white rounded-lg hover:bg-amber-700 disabled:opacity-50"
+                        >
+                          <IconMailForward size={16} />
+                          Resend
+                        </button>
+                      )}
+                      {/* Import button for users not in members */}
+                      {!inMembers && (
+                        <button
+                          onClick={() => handleImportIdentityUser(identityUser)}
+                          disabled={isImporting}
+                          className="flex items-center gap-1 px-3 py-1.5 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+                        >
+                          <IconUserPlus size={16} />
+                          {isImporting ? 'Importing...' : 'Import'}
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          )}
         </div>
       </Modal>
     </div>
