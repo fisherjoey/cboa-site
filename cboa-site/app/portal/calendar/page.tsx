@@ -1,6 +1,8 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
 import FullCalendar from '@fullcalendar/react'
 import dayGridPlugin from '@fullcalendar/daygrid'
 import listPlugin from '@fullcalendar/list'
@@ -12,6 +14,7 @@ import Modal from '@/components/ui/Modal'
 import { calendarAPI } from '@/lib/api'
 import { useRole } from '@/contexts/RoleContext'
 import moment from 'moment'
+import { calendarEventFormSchema, formDataToEvent, EVENT_TYPES, type CalendarEventFormData } from '@/lib/schemas'
 
 // Calendar view mode type
 type CalendarViewMode = 'events' | 'statistics'
@@ -451,12 +454,35 @@ function EventModal({
   onClose: () => void
   onEdit: () => void
 }) {
-  const [formData, setFormData] = useState<CBOAEvent>(event)
+  const {
+    register,
+    handleSubmit,
+    watch,
+    formState: { errors },
+  } = useForm<CalendarEventFormData>({
+    resolver: zodResolver(calendarEventFormSchema),
+    defaultValues: {
+      title: event.title,
+      type: event.type,
+      start: moment(event.start).format('YYYY-MM-DDTHH:mm'),
+      end: moment(event.end).format('YYYY-MM-DDTHH:mm'),
+      location: event.location || '',
+      description: event.description || '',
+      instructor: event.instructor || '',
+      maxParticipants: event.maxParticipants?.toString() || '',
+      registrationLink: event.registrationLink || '',
+    },
+  })
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    onSave(formData)
+  const eventType = watch('type')
+
+  const onFormSubmit = (data: CalendarEventFormData) => {
+    const eventData = formDataToEvent(data)
+    onSave({ ...eventData, id: event.id })
   }
+
+  const inputClassName = (hasError: boolean) =>
+    `w-full px-3 py-2 border ${hasError ? 'border-red-500' : 'border-gray-200 dark:border-gray-700'} bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500`
 
   if (!isEditing) {
     // View mode
@@ -552,18 +578,19 @@ function EventModal({
       title={event.id ? 'Edit Event' : 'Add New Event'}
       size="md"
     >
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit(onFormSubmit)} className="space-y-4">
         <div>
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
             Event Title *
           </label>
           <input
             type="text"
-            value={formData.title}
-            onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-            className="w-full px-3 py-2 border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
-            required
+            {...register('title')}
+            className={inputClassName(!!errors.title)}
           />
+          {errors.title && (
+            <p className="mt-1 text-sm text-red-600">{errors.title.message}</p>
+          )}
         </div>
 
         <div>
@@ -571,16 +598,17 @@ function EventModal({
             Event Type *
           </label>
           <select
-            value={formData.type}
-            onChange={(e) => setFormData({ ...formData, type: e.target.value as CBOAEvent['type'] })}
-            className="w-full px-3 py-2 border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
-            required
+            {...register('type')}
+            className={inputClassName(!!errors.type)}
           >
             <option value="training">Training</option>
             <option value="meeting">Meeting</option>
             <option value="league">League Date</option>
             <option value="social">Social</option>
           </select>
+          {errors.type && (
+            <p className="mt-1 text-sm text-red-600">{errors.type.message}</p>
+          )}
         </div>
 
         <div className="grid grid-cols-2 gap-4">
@@ -590,11 +618,12 @@ function EventModal({
             </label>
             <input
               type="datetime-local"
-              value={moment(formData.start).format('YYYY-MM-DDTHH:mm')}
-              onChange={(e) => setFormData({ ...formData, start: new Date(e.target.value) })}
-              className="w-full px-3 py-2 border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
-              required
+              {...register('start')}
+              className={inputClassName(!!errors.start)}
             />
+            {errors.start && (
+              <p className="mt-1 text-sm text-red-600">{errors.start.message}</p>
+            )}
           </div>
 
           <div>
@@ -603,11 +632,12 @@ function EventModal({
             </label>
             <input
               type="datetime-local"
-              value={moment(formData.end).format('YYYY-MM-DDTHH:mm')}
-              onChange={(e) => setFormData({ ...formData, end: new Date(e.target.value) })}
-              className="w-full px-3 py-2 border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
-              required
+              {...register('end')}
+              className={inputClassName(!!errors.end)}
             />
+            {errors.end && (
+              <p className="mt-1 text-sm text-red-600">{errors.end.message}</p>
+            )}
           </div>
         </div>
 
@@ -617,9 +647,8 @@ function EventModal({
           </label>
           <input
             type="text"
-            value={formData.location || ''}
-            onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-            className="w-full px-3 py-2 border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+            {...register('location')}
+            className={inputClassName(!!errors.location)}
           />
         </div>
 
@@ -628,14 +657,13 @@ function EventModal({
             Description
           </label>
           <textarea
-            value={formData.description || ''}
-            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-            className="w-full px-3 py-2 border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+            {...register('description')}
+            className={inputClassName(!!errors.description)}
             rows={3}
           />
         </div>
 
-        {formData.type === 'training' && (
+        {eventType === 'training' && (
           <>
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
@@ -643,9 +671,8 @@ function EventModal({
               </label>
               <input
                 type="text"
-                value={formData.instructor || ''}
-                onChange={(e) => setFormData({ ...formData, instructor: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                {...register('instructor')}
+                className={inputClassName(!!errors.instructor)}
               />
             </div>
 
@@ -655,9 +682,8 @@ function EventModal({
               </label>
               <input
                 type="number"
-                value={formData.maxParticipants || ''}
-                onChange={(e) => setFormData({ ...formData, maxParticipants: parseInt(e.target.value) })}
-                className="w-full px-3 py-2 border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                {...register('maxParticipants')}
+                className={inputClassName(!!errors.maxParticipants)}
               />
             </div>
 
@@ -667,10 +693,12 @@ function EventModal({
               </label>
               <input
                 type="url"
-                value={formData.registrationLink || ''}
-                onChange={(e) => setFormData({ ...formData, registrationLink: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                {...register('registrationLink')}
+                className={inputClassName(!!errors.registrationLink)}
               />
+              {errors.registrationLink && (
+                <p className="mt-1 text-sm text-red-600">{errors.registrationLink.message}</p>
+              )}
             </div>
           </>
         )}

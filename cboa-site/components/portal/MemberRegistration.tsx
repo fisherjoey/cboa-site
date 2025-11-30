@@ -1,159 +1,59 @@
 'use client'
 
 import { useState } from 'react'
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
 import { useAuth } from '@/contexts/AuthContext'
 import { membersAPI } from '@/lib/api'
 import { IconUser, IconPhone, IconHome, IconAlertCircle, IconLogout } from '@tabler/icons-react'
+import { memberRegistrationSchema, PROVINCES, type MemberRegistrationFormData } from '@/lib/schemas'
 
 interface MemberRegistrationProps {
   onComplete: () => void
-}
-
-interface ValidationErrors {
-  first_name?: string
-  last_name?: string
-  phone?: string
-  address?: string
-  city?: string
-  postal_code?: string
-  emergency_contact_name?: string
-  emergency_contact_phone?: string
 }
 
 export default function MemberRegistration({ onComplete }: MemberRegistrationProps) {
   const { user, logout } = useAuth()
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [validationErrors, setValidationErrors] = useState<ValidationErrors>({})
 
-  const [formData, setFormData] = useState({
-    first_name: '',
-    last_name: '',
-    phone: '',
-    address: '',
-    city: 'Calgary',
-    province: 'AB',
-    postal_code: '',
-    emergency_contact_name: '',
-    emergency_contact_phone: ''
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<MemberRegistrationFormData>({
+    resolver: zodResolver(memberRegistrationSchema),
+    defaultValues: {
+      first_name: '',
+      last_name: '',
+      phone: '',
+      address: '',
+      city: 'Calgary',
+      province: 'AB',
+      postal_code: '',
+      emergency_contact_name: '',
+      emergency_contact_phone: '',
+    },
   })
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { name, value } = e.target
-    setFormData(prev => ({ ...prev, [name]: value }))
-    // Clear validation error when user starts typing
-    if (validationErrors[name as keyof ValidationErrors]) {
-      setValidationErrors(prev => ({ ...prev, [name]: undefined }))
-    }
-  }
-
-  const validatePhone = (phone: string): boolean => {
-    // Remove all non-digits
-    const digits = phone.replace(/\D/g, '')
-    // Must have at least 10 digits
-    return digits.length >= 10
-  }
-
-  const validatePostalCode = (postalCode: string): boolean => {
-    // Canadian postal code format: A1A 1A1 or A1A1A1
-    const postalRegex = /^[A-Za-z]\d[A-Za-z][ -]?\d[A-Za-z]\d$/
-    return postalRegex.test(postalCode.trim())
-  }
-
-  const validateName = (name: string): boolean => {
-    // Must be at least 2 characters, only letters, spaces, hyphens, apostrophes
-    const nameRegex = /^[A-Za-z][A-Za-z\s\-']{0,}[A-Za-z]$/
-    return name.trim().length >= 2 && nameRegex.test(name.trim())
-  }
-
-  const validateForm = (): boolean => {
-    const errors: ValidationErrors = {}
-
-    // First name validation
-    if (!formData.first_name.trim()) {
-      errors.first_name = 'First name is required'
-    } else if (!validateName(formData.first_name)) {
-      errors.first_name = 'Please enter a valid first name (letters only, at least 2 characters)'
-    }
-
-    // Last name validation
-    if (!formData.last_name.trim()) {
-      errors.last_name = 'Last name is required'
-    } else if (!validateName(formData.last_name)) {
-      errors.last_name = 'Please enter a valid last name (letters only, at least 2 characters)'
-    }
-
-    // Phone validation
-    if (!formData.phone.trim()) {
-      errors.phone = 'Phone number is required'
-    } else if (!validatePhone(formData.phone)) {
-      errors.phone = 'Please enter a valid phone number (at least 10 digits)'
-    }
-
-    // Address validation
-    if (!formData.address.trim()) {
-      errors.address = 'Street address is required'
-    } else if (formData.address.trim().length < 5) {
-      errors.address = 'Please enter a valid street address'
-    }
-
-    // City validation
-    if (!formData.city.trim()) {
-      errors.city = 'City is required'
-    } else if (formData.city.trim().length < 2) {
-      errors.city = 'Please enter a valid city name'
-    }
-
-    // Postal code validation
-    if (!formData.postal_code.trim()) {
-      errors.postal_code = 'Postal code is required'
-    } else if (!validatePostalCode(formData.postal_code)) {
-      errors.postal_code = 'Please enter a valid postal code (e.g., T2P 1J9)'
-    }
-
-    // Emergency contact name validation
-    if (!formData.emergency_contact_name.trim()) {
-      errors.emergency_contact_name = 'Emergency contact name is required'
-    } else if (formData.emergency_contact_name.trim().length < 2) {
-      errors.emergency_contact_name = 'Please enter a valid contact name'
-    }
-
-    // Emergency contact phone validation
-    if (!formData.emergency_contact_phone.trim()) {
-      errors.emergency_contact_phone = 'Emergency contact phone is required'
-    } else if (!validatePhone(formData.emergency_contact_phone)) {
-      errors.emergency_contact_phone = 'Please enter a valid phone number (at least 10 digits)'
-    }
-
-    setValidationErrors(errors)
-    return Object.keys(errors).length === 0
-  }
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+  const onFormSubmit = async (data: MemberRegistrationFormData) => {
     setError(null)
-
-    if (!validateForm()) {
-      setError('Please correct the errors below before submitting.')
-      return
-    }
-
     setIsSubmitting(true)
 
     try {
-      const fullName = `${formData.first_name.trim()} ${formData.last_name.trim()}`
+      const fullName = `${data.first_name.trim()} ${data.last_name.trim()}`
 
       await membersAPI.create({
         netlify_user_id: user?.id,
         email: user?.email,
         name: fullName,
-        phone: formData.phone.trim(),
-        address: formData.address.trim(),
-        city: formData.city.trim(),
-        province: formData.province,
-        postal_code: formData.postal_code.trim().toUpperCase(),
-        emergency_contact_name: formData.emergency_contact_name.trim(),
-        emergency_contact_phone: formData.emergency_contact_phone.trim(),
+        phone: data.phone.trim(),
+        address: data.address.trim(),
+        city: data.city.trim(),
+        province: data.province,
+        postal_code: data.postal_code.trim().toUpperCase(),
+        emergency_contact_name: data.emergency_contact_name.trim(),
+        emergency_contact_phone: data.emergency_contact_phone.trim(),
         status: 'active',
         role: 'official'
       })
@@ -167,9 +67,9 @@ export default function MemberRegistration({ onComplete }: MemberRegistrationPro
     }
   }
 
-  const inputClassName = (fieldName: keyof ValidationErrors) => {
+  const inputClassName = (hasError: boolean) => {
     const baseClass = "w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-    return validationErrors[fieldName]
+    return hasError
       ? `${baseClass} border-red-500 bg-red-50`
       : `${baseClass} border-gray-300`
   }
@@ -197,7 +97,7 @@ export default function MemberRegistration({ onComplete }: MemberRegistrationPro
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit(onFormSubmit)} className="space-y-6">
           {/* Basic Info */}
           <div className="space-y-4">
             <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
@@ -213,14 +113,12 @@ export default function MemberRegistration({ onComplete }: MemberRegistrationPro
                 <input
                   type="text"
                   id="first_name"
-                  name="first_name"
-                  value={formData.first_name}
-                  onChange={handleChange}
+                  {...register('first_name')}
                   placeholder="John"
-                  className={inputClassName('first_name')}
+                  className={inputClassName(!!errors.first_name)}
                 />
-                {validationErrors.first_name && (
-                  <p className="mt-1 text-sm text-red-600">{validationErrors.first_name}</p>
+                {errors.first_name && (
+                  <p className="mt-1 text-sm text-red-600">{errors.first_name.message}</p>
                 )}
               </div>
 
@@ -231,14 +129,12 @@ export default function MemberRegistration({ onComplete }: MemberRegistrationPro
                 <input
                   type="text"
                   id="last_name"
-                  name="last_name"
-                  value={formData.last_name}
-                  onChange={handleChange}
+                  {...register('last_name')}
                   placeholder="Smith"
-                  className={inputClassName('last_name')}
+                  className={inputClassName(!!errors.last_name)}
                 />
-                {validationErrors.last_name && (
-                  <p className="mt-1 text-sm text-red-600">{validationErrors.last_name}</p>
+                {errors.last_name && (
+                  <p className="mt-1 text-sm text-red-600">{errors.last_name.message}</p>
                 )}
               </div>
             </div>
@@ -250,14 +146,12 @@ export default function MemberRegistration({ onComplete }: MemberRegistrationPro
               <input
                 type="tel"
                 id="phone"
-                name="phone"
-                value={formData.phone}
-                onChange={handleChange}
+                {...register('phone')}
                 placeholder="(403) 555-0100"
-                className={inputClassName('phone')}
+                className={inputClassName(!!errors.phone)}
               />
-              {validationErrors.phone && (
-                <p className="mt-1 text-sm text-red-600">{validationErrors.phone}</p>
+              {errors.phone && (
+                <p className="mt-1 text-sm text-red-600">{errors.phone.message}</p>
               )}
             </div>
 
@@ -290,14 +184,12 @@ export default function MemberRegistration({ onComplete }: MemberRegistrationPro
               <input
                 type="text"
                 id="address"
-                name="address"
-                value={formData.address}
-                onChange={handleChange}
+                {...register('address')}
                 placeholder="123 Main Street"
-                className={inputClassName('address')}
+                className={inputClassName(!!errors.address)}
               />
-              {validationErrors.address && (
-                <p className="mt-1 text-sm text-red-600">{validationErrors.address}</p>
+              {errors.address && (
+                <p className="mt-1 text-sm text-red-600">{errors.address.message}</p>
               )}
             </div>
 
@@ -309,13 +201,11 @@ export default function MemberRegistration({ onComplete }: MemberRegistrationPro
                 <input
                   type="text"
                   id="city"
-                  name="city"
-                  value={formData.city}
-                  onChange={handleChange}
-                  className={inputClassName('city')}
+                  {...register('city')}
+                  className={inputClassName(!!errors.city)}
                 />
-                {validationErrors.city && (
-                  <p className="mt-1 text-sm text-red-600">{validationErrors.city}</p>
+                {errors.city && (
+                  <p className="mt-1 text-sm text-red-600">{errors.city.message}</p>
                 )}
               </div>
 
@@ -325,24 +215,12 @@ export default function MemberRegistration({ onComplete }: MemberRegistrationPro
                 </label>
                 <select
                   id="province"
-                  name="province"
-                  value={formData.province}
-                  onChange={handleChange}
+                  {...register('province')}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
                 >
-                  <option value="AB">AB</option>
-                  <option value="BC">BC</option>
-                  <option value="SK">SK</option>
-                  <option value="MB">MB</option>
-                  <option value="ON">ON</option>
-                  <option value="QC">QC</option>
-                  <option value="NB">NB</option>
-                  <option value="NS">NS</option>
-                  <option value="PE">PE</option>
-                  <option value="NL">NL</option>
-                  <option value="YT">YT</option>
-                  <option value="NT">NT</option>
-                  <option value="NU">NU</option>
+                  {PROVINCES.map(prov => (
+                    <option key={prov} value={prov}>{prov}</option>
+                  ))}
                 </select>
               </div>
 
@@ -353,14 +231,12 @@ export default function MemberRegistration({ onComplete }: MemberRegistrationPro
                 <input
                   type="text"
                   id="postal_code"
-                  name="postal_code"
-                  value={formData.postal_code}
-                  onChange={handleChange}
+                  {...register('postal_code')}
                   placeholder="T2P 1J9"
-                  className={`${inputClassName('postal_code')} uppercase`}
+                  className={`${inputClassName(!!errors.postal_code)} uppercase`}
                 />
-                {validationErrors.postal_code && (
-                  <p className="mt-1 text-sm text-red-600">{validationErrors.postal_code}</p>
+                {errors.postal_code && (
+                  <p className="mt-1 text-sm text-red-600">{errors.postal_code.message}</p>
                 )}
               </div>
             </div>
@@ -381,14 +257,12 @@ export default function MemberRegistration({ onComplete }: MemberRegistrationPro
                 <input
                   type="text"
                   id="emergency_contact_name"
-                  name="emergency_contact_name"
-                  value={formData.emergency_contact_name}
-                  onChange={handleChange}
+                  {...register('emergency_contact_name')}
                   placeholder="Jane Smith"
-                  className={inputClassName('emergency_contact_name')}
+                  className={inputClassName(!!errors.emergency_contact_name)}
                 />
-                {validationErrors.emergency_contact_name && (
-                  <p className="mt-1 text-sm text-red-600">{validationErrors.emergency_contact_name}</p>
+                {errors.emergency_contact_name && (
+                  <p className="mt-1 text-sm text-red-600">{errors.emergency_contact_name.message}</p>
                 )}
               </div>
 
@@ -399,14 +273,12 @@ export default function MemberRegistration({ onComplete }: MemberRegistrationPro
                 <input
                   type="tel"
                   id="emergency_contact_phone"
-                  name="emergency_contact_phone"
-                  value={formData.emergency_contact_phone}
-                  onChange={handleChange}
+                  {...register('emergency_contact_phone')}
                   placeholder="(403) 555-0100"
-                  className={inputClassName('emergency_contact_phone')}
+                  className={inputClassName(!!errors.emergency_contact_phone)}
                 />
-                {validationErrors.emergency_contact_phone && (
-                  <p className="mt-1 text-sm text-red-600">{validationErrors.emergency_contact_phone}</p>
+                {errors.emergency_contact_phone && (
+                  <p className="mt-1 text-sm text-red-600">{errors.emergency_contact_phone.message}</p>
                 )}
               </div>
             </div>

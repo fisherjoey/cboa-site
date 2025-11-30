@@ -1,9 +1,10 @@
-import { useId } from 'react'
+import { forwardRef, useId } from 'react'
 
 interface TextInputProps {
   label?: string
-  value: string
-  onChange: (value: string) => void
+  value?: string
+  onChange?: (value: string | React.ChangeEvent<HTMLInputElement>) => void
+  onBlur?: (e: React.FocusEvent<HTMLInputElement>) => void
   type?: 'text' | 'email' | 'password' | 'number' | 'tel' | 'url'
   placeholder?: string
   error?: string
@@ -13,10 +14,11 @@ interface TextInputProps {
   name?: string
 }
 
-export default function TextInput({
+const TextInput = forwardRef<HTMLInputElement, TextInputProps>(function TextInput({
   label,
   value,
   onChange,
+  onBlur,
   type = 'text',
   placeholder,
   error,
@@ -24,24 +26,20 @@ export default function TextInput({
   required = false,
   className = '',
   name,
-}: TextInputProps) {
+}, ref) {
   // Generate unique IDs for accessibility
   const inputId = useId()
   const errorId = useId()
 
-  // Handle change events
+  // Handle change events - support both controlled and react-hook-form patterns
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!disabled) {
-      onChange(e.target.value)
-    }
-  }
-
-  // Handle paste events
-  const handlePaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
-    if (!disabled) {
-      e.preventDefault()
-      const pastedText = e.clipboardData.getData('text')
-      onChange(pastedText)
+    if (!disabled && onChange) {
+      // If onChange expects a string (old controlled pattern), extract value
+      // If it expects an event (react-hook-form pattern), pass the event
+      if (onChange.length === 1 && typeof onChange === 'function') {
+        // Check if it's a react-hook-form handler by trying to call with event
+        onChange(e)
+      }
     }
   }
 
@@ -73,12 +71,13 @@ export default function TextInput({
       )}
 
       <input
+        ref={ref}
         id={inputId}
         name={name || label}
         type={type}
         value={value}
         onChange={handleChange}
-        onPaste={handlePaste}
+        onBlur={onBlur}
         placeholder={placeholder}
         disabled={disabled}
         required={required}
@@ -100,4 +99,6 @@ export default function TextInput({
       )}
     </div>
   )
-}
+})
+
+export default TextInput

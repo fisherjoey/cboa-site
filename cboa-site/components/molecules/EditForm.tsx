@@ -1,7 +1,9 @@
-import { useState } from 'react'
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
 import TextInput from '@/components/atoms/TextInput'
 import SelectInput from '@/components/atoms/SelectInput'
 import { RuleModification } from '@/lib/adapters/types'
+import { ruleModificationSchema, RULE_CATEGORIES, type RuleModificationFormData } from '@/lib/schemas'
 
 interface EditFormProps {
   rule?: Partial<RuleModification>
@@ -10,86 +12,60 @@ interface EditFormProps {
   isCreating?: boolean
 }
 
-const CATEGORIES = [
-  'School League',
-  'School Tournament', 
-  'Club League',
-  'Club Tournament',
-  'Adult',
-]
-
 export default function EditForm({
   rule = {},
   onSubmit,
   onCancel,
   isCreating = false,
 }: EditFormProps) {
-  const [formData, setFormData] = useState<Partial<RuleModification>>({
-    title: rule.title || '',
-    category: rule.category || '',
-    summary: rule.summary || '',
-    content: rule.content || '',
-    date: rule.date || new Date().toISOString().split('T')[0],
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+    watch,
+    setValue,
+  } = useForm<RuleModificationFormData>({
+    resolver: zodResolver(ruleModificationSchema),
+    defaultValues: {
+      title: rule.title || '',
+      category: rule.category as RuleModificationFormData['category'] || undefined,
+      summary: rule.summary || '',
+      content: rule.content || '',
+      date: rule.date || new Date().toISOString().split('T')[0],
+    },
   })
 
-  const [errors, setErrors] = useState<Record<string, string>>({})
+  const categoryOptions = RULE_CATEGORIES.map(cat => ({ value: cat, label: cat }))
 
-  const validateForm = (): boolean => {
-    const newErrors: Record<string, string> = {}
-
-    if (!formData.title?.trim()) {
-      newErrors.title = 'Title is required'
-    }
-
-    if (!formData.category) {
-      newErrors.category = 'Category is required'
-    }
-
-    if (!formData.summary?.trim()) {
-      newErrors.summary = 'Summary is required'
-    }
-
-    if (!formData.content?.trim()) {
-      newErrors.content = 'Content is required'
-    }
-
-    setErrors(newErrors)
-    return Object.keys(newErrors).length === 0
+  const onFormSubmit = (data: RuleModificationFormData) => {
+    onSubmit(data)
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    if (validateForm()) {
-      onSubmit(formData)
-    }
-  }
-
-  const categoryOptions = CATEGORIES.map(cat => ({ value: cat, label: cat }))
+  // Watch values for controlled components
+  const categoryValue = watch('category')
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <form onSubmit={handleSubmit(onFormSubmit)} className="space-y-6">
       <TextInput
         label="Title"
-        value={formData.title || ''}
-        onChange={(value) => setFormData({ ...formData, title: value })}
-        error={errors.title}
+        {...register('title')}
+        error={errors.title?.message}
         required
       />
 
       <SelectInput
         label="Category"
-        value={formData.category || ''}
-        onChange={(value) => setFormData({ ...formData, category: value })}
+        value={categoryValue || ''}
+        onChange={(value) => setValue('category', value as RuleModificationFormData['category'])}
         options={categoryOptions}
-        error={errors.category}
+        error={errors.category?.message}
         required
       />
 
       <TextInput
         label="Summary"
-        value={formData.summary || ''}
-        onChange={(value) => setFormData({ ...formData, summary: value })}
-        error={errors.summary}
+        {...register('summary')}
+        error={errors.summary?.message}
         required
       />
 
@@ -99,16 +75,14 @@ export default function EditForm({
         </label>
         <textarea
           id="content"
-          value={formData.content || ''}
-          onChange={(e) => setFormData({ ...formData, content: e.target.value })}
+          {...register('content')}
           className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
             errors.content ? 'border-red-500' : 'border-gray-300'
           }`}
           rows={10}
-          required
         />
         {errors.content && (
-          <p className="mt-1 text-sm text-red-600">{errors.content}</p>
+          <p className="mt-1 text-sm text-red-600">{errors.content.message}</p>
         )}
       </div>
 
