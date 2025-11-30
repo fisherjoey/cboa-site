@@ -1,15 +1,14 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import {
   IconUsers,
   IconCalendarEvent,
   IconClipboardList,
-  IconTrophy,
-  IconChevronDown,
-  IconChevronRight,
-  IconSearch
+  IconTrophy
 } from '@tabler/icons-react'
+import { ColumnDef } from '@tanstack/react-table'
+import { DataTable } from '@/components/ui/DataTable'
 import {
   BarChart,
   Bar,
@@ -239,6 +238,64 @@ const mockMonthlyData = {
   }
 }
 
+// Types for TanStack Table
+type TournamentRow = {
+  name: string
+  count: number
+  games: number
+  assignments: number
+}
+
+type LeagueRow = {
+  name: string
+  games: number
+  assignments: number
+  subRows?: LeagueRow[]
+}
+
+// Column definitions for tournaments table
+const tournamentColumns: ColumnDef<TournamentRow>[] = [
+  {
+    accessorKey: 'name',
+    header: 'Tournament',
+  },
+  {
+    accessorKey: 'count',
+    header: 'Count',
+    meta: { align: 'right' as const },
+  },
+  {
+    accessorKey: 'games',
+    header: 'Games',
+    meta: { align: 'right' as const },
+  },
+  {
+    accessorKey: 'assignments',
+    header: 'Assignments',
+    meta: { align: 'right' as const },
+  },
+]
+
+// Column definitions for leagues table
+const leagueColumns: ColumnDef<LeagueRow>[] = [
+  {
+    accessorKey: 'name',
+    header: 'League',
+  },
+  {
+    accessorKey: 'games',
+    header: 'Games',
+    meta: { align: 'right' as const },
+    cell: ({ getValue }) => getValue<number>().toLocaleString(),
+  },
+  {
+    accessorKey: 'assignments',
+    header: 'Assignments',
+    meta: { align: 'right' as const },
+    cell: ({ getValue }) => getValue<number>().toLocaleString(),
+  },
+]
+
 // Stat Card Component
 function StatCard({ label, value, icon: Icon, subtext }: {
   label: string
@@ -247,55 +304,20 @@ function StatCard({ label, value, icon: Icon, subtext }: {
   subtext?: string
 }) {
   return (
-    <div className="bg-white rounded-lg shadow p-4 sm:p-6">
+    <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 sm:p-6">
       <div className="flex items-center gap-3">
         {Icon && (
-          <div className="p-2 bg-blue-100 rounded-lg">
-            <Icon className="h-6 w-6 text-blue-600" />
+          <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
+            <Icon className="h-6 w-6 text-blue-600 dark:text-blue-400" />
           </div>
         )}
         <div>
-          <p className="text-sm text-gray-500">{label}</p>
-          <p className="text-2xl font-bold text-gray-900">{typeof value === 'number' ? value.toLocaleString() : value}</p>
-          {subtext && <p className="text-xs text-gray-400">{subtext}</p>}
+          <p className="text-sm text-gray-500 dark:text-gray-400">{label}</p>
+          <p className="text-2xl font-bold text-gray-900 dark:text-white">{typeof value === 'number' ? value.toLocaleString() : value}</p>
+          {subtext && <p className="text-xs text-gray-400 dark:text-gray-500">{subtext}</p>}
         </div>
       </div>
     </div>
-  )
-}
-
-// Expandable League Row - uses useState since Disclosure doesn't work well with HTML tables
-function LeagueRow({ league }: { league: typeof mockSeasonData.leagues.breakdown[0] }) {
-  const [expanded, setExpanded] = useState(false)
-  const hasSubdivisions = league.subdivisions && league.subdivisions.length > 0
-
-  return (
-    <>
-      <tr
-        className={`border-b hover:bg-gray-50 ${hasSubdivisions ? 'cursor-pointer' : ''}`}
-        onClick={() => hasSubdivisions && setExpanded(!expanded)}
-      >
-        <td className="px-4 py-3">
-          <div className="flex items-center gap-2">
-            <span className="w-4 h-4 flex items-center justify-center flex-shrink-0">
-              {hasSubdivisions && (
-                expanded ? <IconChevronDown className="h-4 w-4 text-gray-400" /> : <IconChevronRight className="h-4 w-4 text-gray-400" />
-              )}
-            </span>
-            <span>{league.name}</span>
-          </div>
-        </td>
-        <td className="px-4 py-3 text-right">{league.games.toLocaleString()}</td>
-        <td className="px-4 py-3 text-right">{league.assignments.toLocaleString()}</td>
-      </tr>
-      {expanded && league.subdivisions?.map((sub, idx) => (
-        <tr key={idx} className="border-b bg-gray-50">
-          <td className="px-4 py-2 pl-10 text-sm text-gray-600">{sub.name}</td>
-          <td className="px-4 py-2 text-right text-sm text-gray-600">{sub.games}</td>
-          <td className="px-4 py-2 text-right text-sm text-gray-600">{sub.assignments}</td>
-        </tr>
-      ))}
-    </>
   )
 }
 
@@ -303,43 +325,54 @@ export default function StatisticsClient() {
   const [viewType, setViewType] = useState<'season' | 'monthly'>('season')
   const [selectedSeason, setSelectedSeason] = useState('2025-2026')
   const [selectedMonth, setSelectedMonth] = useState('February 2026')
-  const [tournamentSearch, setTournamentSearch] = useState('')
 
   const data = viewType === 'season' ? mockSeasonData : mockMonthlyData as typeof mockSeasonData
 
-  const filteredTournaments = mockSeasonData.tournaments.breakdown.filter(t =>
-    t.name.toLowerCase().includes(tournamentSearch.toLowerCase())
-  )
+  // Transform leagues data for TanStack Table with subRows
+  const leaguesData = useMemo((): LeagueRow[] => {
+    return mockSeasonData.leagues.breakdown.map((league) => ({
+      name: league.name,
+      games: league.games,
+      assignments: league.assignments,
+      subRows: league.subdivisions && league.subdivisions.length > 0
+        ? league.subdivisions.map((sub) => ({
+            name: sub.name,
+            games: sub.games,
+            assignments: sub.assignments,
+          }))
+        : undefined,
+    }))
+  }, [])
 
   const CHART_COLORS = ['#3b82f6', '#60a5fa', '#93c5fd']
 
   return (
     <div className="space-y-6">
       {/* Under Construction Banner */}
-      <div className="bg-amber-100 border border-amber-300 rounded-lg p-4 flex items-center gap-3">
+      <div className="bg-amber-100 dark:bg-amber-900/30 border border-amber-300 dark:border-amber-700 rounded-lg p-4 flex items-center gap-3">
         <span className="text-2xl">🚧</span>
         <div>
-          <p className="font-semibold text-amber-800">Under Construction</p>
-          <p className="text-sm text-amber-700">This page is currently displaying mock data for demonstration purposes.</p>
+          <p className="font-semibold text-amber-800 dark:text-amber-300">Under Construction</p>
+          <p className="text-sm text-amber-700 dark:text-amber-400">This page is currently displaying mock data for demonstration purposes.</p>
         </div>
       </div>
 
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Statistics Dashboard</h1>
-          <p className="text-gray-600">CBOA Scheduler statistics and reports</p>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Statistics Dashboard</h1>
+          <p className="text-gray-600 dark:text-gray-400">CBOA Scheduler statistics and reports</p>
         </div>
 
         {/* View Toggle & Selectors */}
         <div className="flex flex-wrap items-center gap-3">
-          <div className="flex bg-gray-100 rounded-lg p-1">
+          <div className="flex bg-gray-100 dark:bg-gray-800 rounded-lg p-1">
             <button
               onClick={() => setViewType('season')}
               className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
                 viewType === 'season'
-                  ? 'bg-white shadow text-gray-900'
-                  : 'text-gray-600 hover:text-gray-900'
+                  ? 'bg-white dark:bg-gray-700 shadow text-gray-900 dark:text-white'
+                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
               }`}
             >
               Season Summary
@@ -348,8 +381,8 @@ export default function StatisticsClient() {
               onClick={() => setViewType('monthly')}
               className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
                 viewType === 'monthly'
-                  ? 'bg-white shadow text-gray-900'
-                  : 'text-gray-600 hover:text-gray-900'
+                  ? 'bg-white dark:bg-gray-700 shadow text-gray-900 dark:text-white'
+                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
               }`}
             >
               Monthly
@@ -360,7 +393,7 @@ export default function StatisticsClient() {
             <select
               value={selectedSeason}
               onChange={(e) => setSelectedSeason(e.target.value)}
-              className="px-3 py-2 border rounded-lg text-sm"
+              className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
             >
               <option value="2025-2026">2025-2026 Season</option>
               <option value="2024-2025">2024-2025 Season</option>
@@ -370,7 +403,7 @@ export default function StatisticsClient() {
             <select
               value={selectedMonth}
               onChange={(e) => setSelectedMonth(e.target.value)}
-              className="px-3 py-2 border rounded-lg text-sm"
+              className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
             >
               <option value="February 2026">February 2026</option>
               <option value="March 2026">March 2026</option>
@@ -397,8 +430,8 @@ export default function StatisticsClient() {
       </div>
 
       {/* Distribution Chart */}
-      <div className="bg-white rounded-lg shadow p-6">
-        <h2 className="text-lg font-semibold mb-4">Officials by Games Refereed</h2>
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+        <h2 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Officials by Games Refereed</h2>
         <div className="h-80">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={data.distribution} layout="vertical" margin={{ left: 60, right: 30 }}>
@@ -416,9 +449,9 @@ export default function StatisticsClient() {
 
       {/* Cumulative Distribution (Season only) */}
       {viewType === 'season' && mockSeasonData.cumulativeDistribution && (
-        <div className="bg-white rounded-lg shadow p-6">
-          <h2 className="text-lg font-semibold mb-4">Assignment Distribution (Cumulative)</h2>
-          <p className="text-sm text-gray-500 mb-4">Shows cumulative assignments by top officials</p>
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+          <h2 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Assignment Distribution (Cumulative)</h2>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">Shows cumulative assignments by top officials</p>
           <div className="h-80">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={mockSeasonData.cumulativeDistribution} margin={{ top: 20, right: 30, bottom: 5 }}>
@@ -457,17 +490,17 @@ export default function StatisticsClient() {
       )}
 
       {/* Tournaments Section */}
-      <div className="bg-white rounded-lg shadow p-6">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-3">
             <IconTrophy className="h-6 w-6 text-yellow-500" />
-            <h2 className="text-lg font-semibold">Tournaments</h2>
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Tournaments</h2>
           </div>
-          <div className="flex items-center gap-4 text-sm text-gray-600">
-            <span><strong>{data.tournaments.total}</strong> tournaments</span>
-            <span><strong>{data.tournaments.totalGames.toLocaleString()}</strong> games</span>
+          <div className="flex items-center gap-4 text-sm text-gray-600 dark:text-gray-400">
+            <span><strong className="text-gray-900 dark:text-white">{data.tournaments.total}</strong> tournaments</span>
+            <span><strong className="text-gray-900 dark:text-white">{data.tournaments.totalGames.toLocaleString()}</strong> games</span>
             {data.tournaments.totalAssignments > 0 && (
-              <span><strong>{data.tournaments.totalAssignments.toLocaleString()}</strong> assignments</span>
+              <span><strong className="text-gray-900 dark:text-white">{data.tournaments.totalAssignments.toLocaleString()}</strong> assignments</span>
             )}
           </div>
         </div>
@@ -475,10 +508,10 @@ export default function StatisticsClient() {
         {/* Category Summary */}
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mb-6">
           {data.tournaments.byCategory.map((cat) => (
-            <div key={cat.name} className="bg-gray-50 rounded-lg p-3">
-              <p className="text-sm font-medium text-gray-900">{cat.name}</p>
-              <p className="text-xl font-bold text-blue-600">{cat.count}</p>
-              <p className="text-xs text-gray-500">{cat.games} games</p>
+            <div key={cat.name} className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3">
+              <p className="text-sm font-medium text-gray-900 dark:text-white">{cat.name}</p>
+              <p className="text-xl font-bold text-blue-600 dark:text-blue-400">{cat.count}</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">{cat.games} games</p>
             </div>
           ))}
         </div>
@@ -486,74 +519,37 @@ export default function StatisticsClient() {
         {/* Tournament Breakdown Table (Season only) */}
         {viewType === 'season' && (
           <>
-            <div className="flex items-center gap-3 mb-4">
-              <h3 className="font-medium text-gray-700">Tournament Breakdown</h3>
-              <div className="relative flex-1 max-w-xs">
-                <IconSearch className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                <input
-                  type="text"
-                  placeholder="Search tournaments..."
-                  value={tournamentSearch}
-                  onChange={(e) => setTournamentSearch(e.target.value)}
-                  className="w-full pl-9 pr-3 py-2 text-sm border rounded-lg"
-                />
-              </div>
-            </div>
-            <div className="overflow-x-auto max-h-96">
-              <table className="w-full text-sm">
-                <thead className="bg-gray-50 sticky top-0">
-                  <tr>
-                    <th className="px-4 py-3 text-left font-medium text-gray-600">Tournament</th>
-                    <th className="px-4 py-3 text-right font-medium text-gray-600">Count</th>
-                    <th className="px-4 py-3 text-right font-medium text-gray-600">Games</th>
-                    <th className="px-4 py-3 text-right font-medium text-gray-600">Assignments</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredTournaments.map((tournament, idx) => (
-                    <tr key={idx} className="border-b hover:bg-gray-50">
-                      <td className="px-4 py-3">{tournament.name}</td>
-                      <td className="px-4 py-3 text-right">{tournament.count}</td>
-                      <td className="px-4 py-3 text-right">{tournament.games}</td>
-                      <td className="px-4 py-3 text-right">{tournament.assignments}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+            <h3 className="font-medium text-gray-700 dark:text-gray-300 mb-4">Tournament Breakdown</h3>
+            <DataTable
+              data={mockSeasonData.tournaments.breakdown}
+              columns={tournamentColumns}
+              searchable
+              searchPlaceholder="Search tournaments..."
+              maxHeight="24rem"
+              stickyHeader
+            />
           </>
         )}
       </div>
 
       {/* Leagues Section (Season only) */}
       {viewType === 'season' && (
-        <div className="bg-white rounded-lg shadow p-6">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold">Leagues</h2>
-            <div className="flex items-center gap-4 text-sm text-gray-600">
-              <span><strong>{mockSeasonData.leagues.totalGames.toLocaleString()}</strong> games</span>
-              <span><strong>{mockSeasonData.leagues.totalAssignments.toLocaleString()}</strong> assignments</span>
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Leagues</h2>
+            <div className="flex items-center gap-4 text-sm text-gray-600 dark:text-gray-400">
+              <span><strong className="text-gray-900 dark:text-white">{mockSeasonData.leagues.totalGames.toLocaleString()}</strong> games</span>
+              <span><strong className="text-gray-900 dark:text-white">{mockSeasonData.leagues.totalAssignments.toLocaleString()}</strong> assignments</span>
             </div>
           </div>
 
-          <p className="text-sm text-gray-500 mb-4">Click on a league with subdivisions to expand</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">Click on a league with subdivisions to expand</p>
 
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-4 py-3 text-left font-medium text-gray-600">League</th>
-                  <th className="px-4 py-3 text-right font-medium text-gray-600">Games</th>
-                  <th className="px-4 py-3 text-right font-medium text-gray-600">Assignments</th>
-                </tr>
-              </thead>
-              <tbody>
-                {mockSeasonData.leagues.breakdown.map((league, idx) => (
-                  <LeagueRow key={idx} league={league} />
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <DataTable
+            data={leaguesData}
+            columns={leagueColumns}
+            getSubRows={(row) => row.subRows}
+          />
         </div>
       )}
 

@@ -182,8 +182,8 @@ export default function RuleModificationsClient({ modifications: initialModifica
       {/* Header */}
       <div className="mb-6 sm:mb-8 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Rule Modifications</h1>
-          <p className="mt-1 sm:mt-2 text-sm sm:text-base text-gray-600">
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">Rule Modifications</h1>
+          <p className="mt-1 sm:mt-2 text-sm sm:text-base text-gray-600 dark:text-gray-300">
             Official rule modifications and clarifications for CBOA officials
           </p>
         </div>
@@ -209,14 +209,14 @@ export default function RuleModificationsClient({ modifications: initialModifica
       </div>
 
       {/* Search and Category Filter */}
-      <div className="mb-6 bg-white rounded-lg shadow p-3 sm:p-4">
+      <div className="mb-6 bg-white dark:bg-gray-800 rounded-lg shadow p-3 sm:p-4">
         <div className="flex-1 min-w-0">
           <input
             type="text"
             placeholder="Search rule modifications..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full px-3 py-2 text-sm sm:text-base border border-gray-300 rounded-md focus:outline-none focus:ring-orange-500 focus:border-orange-500"
+            className="w-full px-3 py-2 text-sm sm:text-base border border-gray-300 dark:border-gray-700 rounded-md focus:outline-none focus:ring-orange-500 focus:border-orange-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
           />
         </div>
 
@@ -226,7 +226,7 @@ export default function RuleModificationsClient({ modifications: initialModifica
             className={`px-2 sm:px-3 py-1.5 sm:py-2 rounded-md text-xs sm:text-sm flex items-center gap-1 sm:gap-2 ${
               selectedCategory === 'all'
                 ? 'bg-orange-500 text-white'
-                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
             }`}
           >
             <IconGavel className="h-3 w-3 sm:h-4 sm:w-4" />
@@ -239,7 +239,7 @@ export default function RuleModificationsClient({ modifications: initialModifica
               className={`px-2 sm:px-3 py-1.5 sm:py-2 rounded-md text-xs sm:text-sm ${
                 selectedCategory === category
                   ? 'bg-orange-500 text-white'
-                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                  : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
               }`}
             >
               {category}
@@ -250,21 +250,21 @@ export default function RuleModificationsClient({ modifications: initialModifica
 
       {/* Create New Rule Form */}
       {isCreating && (
-        <div className="mb-6 bg-white rounded-lg shadow-lg p-4 sm:p-6">
-          <h2 className="text-lg sm:text-xl font-semibold mb-4">Add New Rule Modification</h2>
+        <div className="mb-6 bg-white dark:bg-gray-800 rounded-lg shadow-lg p-4 sm:p-6">
+          <h2 className="text-lg sm:text-xl font-semibold mb-4 text-gray-900 dark:text-white">Add New Rule Modification</h2>
 
           <div className="space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Title *</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Title *</label>
                 <input
                   type="text"
                   value={newModification.title}
                   onChange={(e) => setNewModification({...newModification, title: e.target.value})}
-                  className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 ${
+                  className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-white ${
                     getFieldError(validationErrors, 'title')
                       ? 'border-red-500 focus:ring-red-500'
-                      : 'border-gray-300 focus:ring-orange-500'
+                      : 'border-gray-300 dark:border-gray-700 focus:ring-orange-500'
                   }`}
                   placeholder="Rule title..."
                 />
@@ -276,11 +276,11 @@ export default function RuleModificationsClient({ modifications: initialModifica
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Category *</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Category *</label>
                 <select
                   value={newModification.category}
                   onChange={(e) => setNewModification({...newModification, category: e.target.value})}
-                  className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
                 >
                   {categories.map(cat => (
                     <option key={cat} value={cat}>{cat}</option>
@@ -290,18 +290,18 @@ export default function RuleModificationsClient({ modifications: initialModifica
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Summary</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Summary</label>
               <input
                 type="text"
                 value={newModification.summary}
                 onChange={(e) => setNewModification({...newModification, summary: e.target.value})}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
                 placeholder="Brief summary..."
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Content *</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Content *</label>
               <TinyMCEEditor
                 value={newModification.content}
                 onChange={(value) => setNewModification({...newModification, content: value || ''})}
@@ -344,7 +344,7 @@ export default function RuleModificationsClient({ modifications: initialModifica
       {/* Rule Modifications List */}
       {filteredModifications.length > 0 ? (
         <div className="space-y-3 sm:space-y-4">
-          <h2 className="text-lg font-semibold text-gray-900">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
             {selectedCategory === 'all' ? 'All Rule Modifications' : `${selectedCategory} Rules`}
           </h2>
 
@@ -360,20 +360,20 @@ export default function RuleModificationsClient({ modifications: initialModifica
 
             if (isEditing && editingData) {
               return (
-                <div key={modification.id} className="bg-white rounded-lg shadow p-4 sm:p-6">
-                  <h3 className="text-lg sm:text-xl font-semibold mb-4">Edit Rule Modification</h3>
+                <div key={modification.id} className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 sm:p-6">
+                  <h3 className="text-lg sm:text-xl font-semibold mb-4 text-gray-900 dark:text-white">Edit Rule Modification</h3>
                   <div className="space-y-4">
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Title</label>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Title</label>
                         <input
                           type="text"
                           value={editingData.title}
                           onChange={(e) => setEditingData({ ...editingData, title: e.target.value })}
-                          className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 ${
+                          className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-white ${
                             getFieldError(validationErrors, 'title')
                               ? 'border-red-500 focus:ring-red-500'
-                              : 'border-gray-300 focus:ring-orange-500'
+                              : 'border-gray-300 dark:border-gray-700 focus:ring-orange-500'
                           }`}
                         />
                         {getFieldError(validationErrors, 'title') && (
@@ -381,11 +381,11 @@ export default function RuleModificationsClient({ modifications: initialModifica
                         )}
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Category</label>
                         <select
                           value={editingData.category}
                           onChange={(e) => setEditingData({ ...editingData, category: e.target.value })}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
                         >
                           {categories.map(cat => (
                             <option key={cat} value={cat}>{cat}</option>
@@ -394,16 +394,16 @@ export default function RuleModificationsClient({ modifications: initialModifica
                       </div>
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Summary</label>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Summary</label>
                       <input
                         type="text"
                         value={editingData.summary}
                         onChange={(e) => setEditingData({ ...editingData, summary: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Content</label>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Content</label>
                       <TinyMCEEditor
                         value={editingData.content}
                         onChange={(value) => setEditingData({ ...editingData, content: value || '' })}
@@ -435,7 +435,7 @@ export default function RuleModificationsClient({ modifications: initialModifica
 
             return (
               <Accordion key={modification.id}>
-                <div className="bg-white border border-gray-200 rounded-lg hover:border-gray-300 transition-colors">
+                <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg hover:border-gray-300 dark:hover:border-gray-600 transition-colors">
                   {/* Accordion Header */}
                   <div className="flex items-center gap-3 py-3 pr-4">
                     <AccordionButton className="flex items-center gap-3 flex-1 min-w-0 pl-3">
@@ -447,12 +447,12 @@ export default function RuleModificationsClient({ modifications: initialModifica
                               <span className={`px-2 py-0.5 rounded text-xs font-medium ${getCategoryColor(modification.category)}`}>
                                 {modification.category}
                               </span>
-                              <h3 className="font-semibold text-gray-900 text-sm sm:text-base">
+                              <h3 className="font-semibold text-gray-900 dark:text-white text-sm sm:text-base">
                                 {modification.title}
                               </h3>
                             </div>
                             {modification.summary && (
-                              <p className="text-sm text-gray-600 mt-1 line-clamp-1">
+                              <p className="text-sm text-gray-600 dark:text-gray-300 mt-1 line-clamp-1">
                                 {modification.summary}
                               </p>
                             )}
@@ -466,14 +466,14 @@ export default function RuleModificationsClient({ modifications: initialModifica
                       <div className="flex gap-1 flex-shrink-0">
                         <button
                           onClick={() => startEditing(modification)}
-                          className="p-1.5 text-gray-600 hover:bg-gray-100 rounded transition-colors"
+                          className="p-1.5 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"
                           title="Edit"
                         >
                           <IconEdit className="h-4 w-4" />
                         </button>
                         <button
                           onClick={() => handleDelete(modification.id)}
-                          className="p-1.5 text-red-600 hover:bg-red-50 rounded transition-colors"
+                          className="p-1.5 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors"
                           title="Delete"
                         >
                           <IconTrash className="h-4 w-4" />
@@ -483,16 +483,16 @@ export default function RuleModificationsClient({ modifications: initialModifica
                   </div>
 
                   {/* Expanded Content */}
-                  <AccordionPanel className="border-t border-gray-200 bg-gray-50">
+                  <AccordionPanel className="border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
                     <div className="py-4 px-5">
                       <HTMLViewer content={modification.content || modification.body || ''} compact />
 
                       {modification.references && modification.references.length > 0 && (
-                        <div className="mt-4 pt-4 border-t border-gray-200">
-                          <h4 className="font-semibold text-gray-900 text-sm mb-2">References:</h4>
+                        <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+                          <h4 className="font-semibold text-gray-900 dark:text-white text-sm mb-2">References:</h4>
                           <ul className="list-disc list-inside space-y-1">
                             {modification.references.map((ref: any, index: number) => (
-                              <li key={index} className="text-sm text-gray-600">
+                              <li key={index} className="text-sm text-gray-600 dark:text-gray-300">
                                 {typeof ref === 'string' ? ref : ref.reference}
                               </li>
                             ))}
@@ -507,10 +507,10 @@ export default function RuleModificationsClient({ modifications: initialModifica
           })}
         </div>
       ) : (
-        <div className="text-center py-12 bg-white rounded-lg shadow">
+        <div className="text-center py-12 bg-white dark:bg-gray-800 rounded-lg shadow">
           <IconGavel className="mx-auto h-12 w-12 text-gray-400" />
-          <h3 className="mt-2 text-sm font-medium text-gray-900">No rule modifications found</h3>
-          <p className="mt-1 text-sm text-gray-500">
+          <h3 className="mt-2 text-sm font-medium text-gray-900 dark:text-white">No rule modifications found</h3>
+          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
             {searchTerm
               ? `No rule modifications match "${searchTerm}"`
               : selectedCategory === 'all'

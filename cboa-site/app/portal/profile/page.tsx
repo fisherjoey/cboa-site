@@ -11,7 +11,7 @@ export default function ProfilePage() {
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading your profile...</p>
+          <p className="mt-4 text-gray-600 dark:text-gray-300">Loading your profile...</p>
         </div>
       </div>
     )
@@ -21,7 +21,7 @@ export default function ProfilePage() {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-center">
-          <p className="text-gray-600">Please log in to view your profile.</p>
+          <p className="text-gray-600 dark:text-gray-300">Please log in to view your profile.</p>
         </div>
       </div>
     )
@@ -46,9 +46,9 @@ export default function ProfilePage() {
 
   return (
     <div className="max-w-2xl mx-auto">
-      <h1 className="text-3xl font-bold text-gray-900 mb-6">My Profile</h1>
+      <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-6">My Profile</h1>
 
-      <div className="bg-white rounded-lg shadow-md overflow-hidden">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden">
         {/* Profile Header */}
         <div className="bg-gradient-to-r from-cboa-blue to-slate-700 px-6 py-8">
           <div className="flex items-center gap-4">
@@ -66,34 +66,34 @@ export default function ProfilePage() {
 
         {/* Profile Details */}
         <div className="p-6 space-y-6">
-          <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-lg">
-            <IconMail size={24} className="text-gray-500" />
+          <div className="flex items-center gap-3 p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
+            <IconMail size={24} className="text-gray-500 dark:text-gray-400" />
             <div>
-              <p className="text-sm text-gray-500">Email</p>
-              <p className="text-gray-900 font-medium">{user.email}</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">Email</p>
+              <p className="text-gray-900 dark:text-white font-medium">{user.email}</p>
             </div>
           </div>
 
-          <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-lg">
-            <IconShield size={24} className="text-gray-500" />
+          <div className="flex items-center gap-3 p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
+            <IconShield size={24} className="text-gray-500 dark:text-gray-400" />
             <div>
-              <p className="text-sm text-gray-500">Role</p>
-              <p className="text-gray-900 font-medium">{formatRole(user.role)}</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">Role</p>
+              <p className="text-gray-900 dark:text-white font-medium">{formatRole(user.role)}</p>
             </div>
           </div>
 
-          <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-lg">
-            <IconId size={24} className="text-gray-500" />
+          <div className="flex items-center gap-3 p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
+            <IconId size={24} className="text-gray-500 dark:text-gray-400" />
             <div>
-              <p className="text-sm text-gray-500">User ID</p>
-              <p className="text-gray-900 font-medium text-sm font-mono">{user.id}</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">User ID</p>
+              <p className="text-gray-900 dark:text-white font-medium text-sm font-mono">{user.id}</p>
             </div>
           </div>
         </div>
 
         {/* Info Footer */}
-        <div className="px-6 py-4 bg-gray-50 border-t">
-          <p className="text-sm text-gray-500">
+        <div className="px-6 py-4 bg-gray-50 dark:bg-gray-800/50 border-t border-gray-200 dark:border-gray-700">
+          <p className="text-sm text-gray-500 dark:text-gray-400">
             Profile information is managed through your Netlify Identity account.
           </p>
         </div>

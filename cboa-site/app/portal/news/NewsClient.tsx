@@ -321,8 +321,8 @@ export default function NewsClient({ initialAnnouncements }: NewsClientProps) {
       {/* Header */}
       <div className="mb-6 sm:mb-8 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">News & Announcements</h1>
-          <p className="mt-1 sm:mt-2 text-sm sm:text-base text-gray-600">
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">News & Announcements</h1>
+          <p className="mt-1 sm:mt-2 text-sm sm:text-base text-gray-600 dark:text-gray-300">
             Stay informed with the latest CBOA updates
           </p>
         </div>
@@ -351,17 +351,17 @@ export default function NewsClient({ initialAnnouncements }: NewsClientProps) {
 
       {/* Create New Announcement Form */}
       {isCreating && (
-        <div className="mb-6 bg-white rounded-lg shadow-lg p-6">
-          <h2 className="text-xl font-semibold mb-4">Create New Announcement</h2>
+        <div className="mb-6 bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
+          <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-white">Create New Announcement</h2>
           
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Title</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Title</label>
               <input
                 type="text"
                 value={newAnnouncement.title}
                 onChange={(e) => setNewAnnouncement({ ...newAnnouncement, title: e.target.value })}
-                className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 ${
+                className={`w-full px-3 py-2 border bg-white dark:bg-gray-700 text-gray-900 dark:text-white border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 ${
                   getFieldError(validationErrors, 'title') ? 'border-red-500' : ''
                 }`}
                 placeholder="Enter announcement title..."
@@ -373,11 +373,11 @@ export default function NewsClient({ initialAnnouncements }: NewsClientProps) {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Category</label>
                 <select
                   value={newAnnouncement.category}
                   onChange={(e) => setNewAnnouncement({ ...newAnnouncement, category: e.target.value as any })}
-                  className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                  className="w-full px-3 py-2 border bg-white dark:bg-gray-700 text-gray-900 dark:text-white border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                 >
                   <optgroup label="General">
                     <option value="general">General</option>
@@ -405,11 +405,11 @@ export default function NewsClient({ initialAnnouncements }: NewsClientProps) {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Priority</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Priority</label>
                 <select
                   value={newAnnouncement.priority}
                   onChange={(e) => setNewAnnouncement({ ...newAnnouncement, priority: e.target.value as any })}
-                  className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                  className="w-full px-3 py-2 border bg-white dark:bg-gray-700 text-gray-900 dark:text-white border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                 >
                   <option value="high">High</option>
                   <option value="normal">Normal</option>
@@ -418,11 +418,11 @@ export default function NewsClient({ initialAnnouncements }: NewsClientProps) {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Author</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Author</label>
                 <select
                   value={newAnnouncement.author}
                   onChange={(e) => setNewAnnouncement({ ...newAnnouncement, author: e.target.value })}
-                  className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                  className="w-full px-3 py-2 border bg-white dark:bg-gray-700 text-gray-900 dark:text-white border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                 >
                   <optgroup label="Organization">
                     {AUTHOR_OPTIONS.filter(o => o.group === 'Organization').map(opt => (
@@ -444,7 +444,7 @@ export default function NewsClient({ initialAnnouncements }: NewsClientProps) {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Content</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Content</label>
               <div className={getFieldError(validationErrors, 'content') ? 'border-2 border-red-500 rounded-lg' : ''}>
                 <TinyMCEEditor
                   value={newAnnouncement.content}
@@ -459,7 +459,7 @@ export default function NewsClient({ initialAnnouncements }: NewsClientProps) {
             </div>
 
             {/* Send as Email Checkbox */}
-            <div className="border-t pt-4">
+            <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
               <label className="flex items-center gap-3 cursor-pointer">
                 <input
                   type="checkbox"
@@ -468,15 +468,15 @@ export default function NewsClient({ initialAnnouncements }: NewsClientProps) {
                   className="h-5 w-5 text-orange-600 border-gray-300 rounded focus:ring-orange-500"
                 />
                 <div>
-                  <div className="font-medium text-gray-900">Also send as email</div>
-                  <div className="text-sm text-gray-600">Send this announcement to all members via email</div>
+                  <div className="font-medium text-gray-900 dark:text-white">Also send as email</div>
+                  <div className="text-sm text-gray-600 dark:text-gray-300">Send this announcement to all members via email</div>
                 </div>
               </label>
 
               {sendAsEmail && (
-                <div className="mt-3 ml-8 p-3 bg-gray-50 rounded-lg">
-                  <p className="text-sm text-gray-700 mb-2">Recipients: <span className="font-medium">All Members</span></p>
-                  <p className="text-xs text-gray-500">The announcement will be formatted in an email template and sent to all registered members.</p>
+                <div className="mt-3 ml-8 p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
+                  <p className="text-sm text-gray-700 dark:text-gray-300 mb-2">Recipients: <span className="font-medium">All Members</span></p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">The announcement will be formatted in an email template and sent to all registered members.</p>
                 </div>
               )}
             </div>
@@ -511,7 +511,7 @@ export default function NewsClient({ initialAnnouncements }: NewsClientProps) {
       )}
 
       {/* Search and Filters */}
-      <div className="mb-6 bg-white rounded-lg shadow p-4">
+      <div className="mb-6 bg-white dark:bg-gray-800 rounded-lg shadow p-4">
         <div className="flex flex-col gap-4">
           <div className="flex flex-col sm:flex-row gap-4">
             <div className="flex-1 min-w-0">
@@ -520,7 +520,7 @@ export default function NewsClient({ initialAnnouncements }: NewsClientProps) {
                 placeholder="Search announcements..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-orange-500 focus:border-orange-500"
+                className="w-full px-3 py-2 border bg-white dark:bg-gray-700 text-gray-900 dark:text-white border-gray-300 dark:border-gray-700 rounded-md focus:outline-none focus:ring-orange-500 focus:border-orange-500"
               />
             </div>
           </div>
@@ -532,7 +532,7 @@ export default function NewsClient({ initialAnnouncements }: NewsClientProps) {
               className={`px-3 py-2 rounded-md text-sm ${
                 filter === 'all'
                   ? 'bg-orange-500 text-white'
-                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                  : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-700/50'
               }`}
             >
               All
@@ -546,7 +546,7 @@ export default function NewsClient({ initialAnnouncements }: NewsClientProps) {
                   className={`px-3 py-2 rounded-md text-sm ${
                     filter === cat
                       ? 'bg-orange-500 text-white'
-                      : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                      : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-700/50'
                   }`}
                 >
                   {ALL_CATEGORIES[cat]}
@@ -574,7 +574,7 @@ export default function NewsClient({ initialAnnouncements }: NewsClientProps) {
       {/* Announcements List */}
       <div className="space-y-4">
         {filteredAnnouncements.map(announcement => (
-          <div key={announcement.id} className="bg-white rounded-lg shadow hover:shadow-lg transition-shadow overflow-hidden">
+          <div key={announcement.id} className="bg-white dark:bg-gray-800 rounded-lg shadow hover:shadow-lg transition-shadow overflow-hidden">
             {editingId === announcement.id ? (
               // Edit Mode
               <div className="p-6">
@@ -583,14 +583,14 @@ export default function NewsClient({ initialAnnouncements }: NewsClientProps) {
                     type="text"
                     value={editingData.title || ''}
                     onChange={(e) => handleEditChange('title', e.target.value)}
-                    className="w-full text-lg font-semibold px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                    className="w-full text-lg font-semibold px-3 py-2 border bg-white dark:bg-gray-700 text-gray-900 dark:text-white border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                   />
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                     <select
                       value={editingData.category || 'general'}
                       onChange={(e) => handleEditChange('category', e.target.value)}
-                      className="px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                      className="px-3 py-2 border bg-white dark:bg-gray-700 text-gray-900 dark:text-white border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                     >
                       <optgroup label="General">
                         <option value="general">General</option>
@@ -619,7 +619,7 @@ export default function NewsClient({ initialAnnouncements }: NewsClientProps) {
                     <select
                       value={editingData.priority || 'normal'}
                       onChange={(e) => handleEditChange('priority', e.target.value)}
-                      className="px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                      className="px-3 py-2 border bg-white dark:bg-gray-700 text-gray-900 dark:text-white border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                     >
                       <option value="high">High Priority</option>
                       <option value="normal">Normal</option>
@@ -629,7 +629,7 @@ export default function NewsClient({ initialAnnouncements }: NewsClientProps) {
                     <select
                       value={editingData.author || 'CBOA Executive'}
                       onChange={(e) => handleEditChange('author', e.target.value)}
-                      className="px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                      className="px-3 py-2 border bg-white dark:bg-gray-700 text-gray-900 dark:text-white border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                     >
                       <optgroup label="Organization">
                         {AUTHOR_OPTIONS.filter(o => o.group === 'Organization').map(opt => (
@@ -687,16 +687,16 @@ export default function NewsClient({ initialAnnouncements }: NewsClientProps) {
                         </span>
                       )}
                     </div>
-                    <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
                       {announcement.title}
                     </h3>
-                    <div className="text-gray-600 mb-3 overflow-hidden">
+                    <div className="text-gray-600 dark:text-gray-300 mb-3 overflow-hidden">
                       <HTMLViewer
                         content={announcement.content}
                         className="break-words"
                       />
                     </div>
-                    <div className="flex flex-wrap items-center gap-2 text-sm text-gray-500">
+                    <div className="flex flex-wrap items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
                       <span>{new Date(announcement.date).toLocaleDateString('en-US', {
                         year: 'numeric',
                         month: 'long',
@@ -730,13 +730,13 @@ export default function NewsClient({ initialAnnouncements }: NewsClientProps) {
       </div>
 
       {filteredAnnouncements.length === 0 && (
-        <div className="text-center py-12 bg-white rounded-lg">
-          <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div className="text-center py-12 bg-white dark:bg-gray-800 rounded-lg">
+          <svg className="mx-auto h-12 w-12 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
           </svg>
-          <h3 className="mt-2 text-sm font-medium text-gray-900">No announcements yet</h3>
-          <p className="mt-1 text-sm text-gray-500">
-            {canEdit 
+          <h3 className="mt-2 text-sm font-medium text-gray-900 dark:text-white">No announcements yet</h3>
+          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+            {canEdit
               ? 'Click "New Announcement" to create your first announcement.'
               : 'Announcements will appear here once added by administrators.'}
           </p>
@@ -744,9 +744,9 @@ export default function NewsClient({ initialAnnouncements }: NewsClientProps) {
       )}
 
       {/* Subscription Notice */}
-      <div className="mt-8 p-4 bg-blue-50 rounded-lg">
-        <h3 className="text-sm font-medium text-blue-900 mb-2">Stay Updated</h3>
-        <p className="text-sm text-blue-700">
+      <div className="mt-8 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+        <h3 className="text-sm font-medium text-blue-900 dark:text-blue-300 mb-2">Stay Updated</h3>
+        <p className="text-sm text-blue-700 dark:text-blue-400">
           Important announcements are also sent via email. Make sure your contact information is up to date.
         </p>
       </div>

@@ -48,14 +48,14 @@ export default function LatestNewsletterWidget() {
 
   if (isLoading) {
     return (
-      <div className="bg-gradient-to-r from-orange-50 to-orange-100 rounded-lg shadow p-6">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-          <IconNotebook className="h-5 w-5 text-orange-600" />
+      <div className="bg-gradient-to-r from-orange-50 to-orange-100 dark:from-orange-900/20 dark:to-orange-800/20 rounded-lg shadow p-6">
+        <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+          <IconNotebook className="h-5 w-5 text-orange-600 dark:text-orange-500" />
           Latest Newsletter
         </h2>
         <div className="animate-pulse">
-          <div className="h-4 bg-orange-200 rounded w-3/4 mb-2"></div>
-          <div className="h-16 bg-orange-200 rounded"></div>
+          <div className="h-4 bg-orange-200 dark:bg-orange-800/40 rounded w-3/4 mb-2"></div>
+          <div className="h-16 bg-orange-200 dark:bg-orange-800/40 rounded"></div>
         </div>
       </div>
     )
@@ -63,13 +63,13 @@ export default function LatestNewsletterWidget() {
 
   if (!newsletter) {
     return (
-      <div className="bg-gradient-to-r from-orange-50 to-orange-100 rounded-lg shadow p-4 sm:p-6">
-        <h2 className="text-base sm:text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-          <IconNotebook className="h-5 w-5 text-orange-600" />
+      <div className="bg-gradient-to-r from-orange-50 to-orange-100 dark:from-orange-900/20 dark:to-orange-800/20 rounded-lg shadow p-4 sm:p-6">
+        <h2 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+          <IconNotebook className="h-5 w-5 text-orange-600 dark:text-orange-500" />
           Latest Newsletter
         </h2>
-        <div className="text-center py-8 text-gray-500">
-          <IconNotebook className="h-12 w-12 mx-auto mb-2 text-orange-300" />
+        <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+          <IconNotebook className="h-12 w-12 mx-auto mb-2 text-orange-300 dark:text-orange-700" />
           <p className="text-sm">No newsletters yet</p>
         </div>
       </div>
@@ -77,15 +77,15 @@ export default function LatestNewsletterWidget() {
   }
 
   return (
-    <div className="bg-gradient-to-r from-orange-50 to-orange-100 rounded-lg shadow p-4 sm:p-6">
+    <div className="bg-gradient-to-r from-orange-50 to-orange-100 dark:from-orange-900/20 dark:to-orange-800/20 rounded-lg shadow p-4 sm:p-6">
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-base sm:text-lg font-semibold text-gray-900 flex items-center gap-2">
-          <IconNotebook className="h-5 w-5 text-orange-600" />
+        <h2 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+          <IconNotebook className="h-5 w-5 text-orange-600 dark:text-orange-500" />
           The Bounce Newsletter
         </h2>
         <Link
           href="/portal/the-bounce"
-          className="text-sm text-orange-600 hover:text-orange-700 font-medium flex items-center gap-1"
+          className="text-sm text-orange-600 dark:text-orange-500 hover:text-orange-700 dark:hover:text-orange-400 font-medium flex items-center gap-1"
         >
           View All
           <IconChevronRight className="h-4 w-4" />
@@ -94,17 +94,17 @@ export default function LatestNewsletterWidget() {
 
       <div>
         <div className="mb-2">
-          <span className="text-xs text-orange-600 font-medium">Latest Issue</span>
+          <span className="text-xs text-orange-600 dark:text-orange-500 font-medium">Latest Issue</span>
         </div>
-        <h3 className="font-semibold text-gray-900 mb-2 text-base sm:text-lg">
+        <h3 className="font-semibold text-gray-900 dark:text-white mb-2 text-base sm:text-lg">
           {newsletter.title}
         </h3>
         {newsletter.description && (
-          <p className="text-sm text-gray-700 mb-3 line-clamp-2">
+          <p className="text-sm text-gray-700 dark:text-gray-300 mb-3 line-clamp-2">
             {newsletter.description}
           </p>
         )}
-        <div className="flex items-center gap-2 text-xs text-gray-600 mb-4">
+        <div className="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400 mb-4">
           <span>
             Published: {new Date(newsletter.date).toLocaleDateString('en-US', {
               month: 'long',
@@ -126,7 +126,7 @@ export default function LatestNewsletterWidget() {
             <a
               href={newsletter.file_url}
               download
-              className="flex-1 border-2 border-orange-600 text-orange-600 px-4 py-2 rounded-lg hover:bg-orange-600 hover:text-white transition-colors flex items-center justify-center gap-2 text-sm font-medium"
+              className="flex-1 border-2 border-orange-600 text-orange-600 dark:text-orange-500 px-4 py-2 rounded-lg hover:bg-orange-600 hover:text-white transition-colors flex items-center justify-center gap-2 text-sm font-medium"
             >
               <IconDownload className="h-4 w-4" />
               Download PDF

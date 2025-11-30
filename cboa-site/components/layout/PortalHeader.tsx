@@ -23,6 +23,7 @@ import {
   IconMail,
   IconChartBar
 } from '@tabler/icons-react'
+import ThemeToggle from '../ui/ThemeToggle'
 
 import { useAuth } from '@/contexts/AuthContext'
 
@@ -107,6 +108,7 @@ export default function PortalHeader() {
 
             {/* Desktop User Menu */}
             <div className="hidden md:flex items-center gap-4">
+              <ThemeToggle className="text-white" />
               <div className="relative">
                 <button
                   onClick={() => setProfileMenuOpen(!profileMenuOpen)}
@@ -121,10 +123,10 @@ export default function PortalHeader() {
 
                 {/* Profile Dropdown */}
                 {profileMenuOpen && (
-                  <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50">
+                  <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-slate-800 rounded-md shadow-lg py-1 z-50">
                     <button
                       onClick={logout}
-                      className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100"
+                      className="block w-full text-left px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-slate-700"
                     >
                       {isDevMode ? 'Switch Role' : 'Logout'}
                     </button>
@@ -133,17 +135,20 @@ export default function PortalHeader() {
               </div>
             </div>
 
-            {/* Mobile Menu Button */}
-            <button
-              className="md:hidden p-2"
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            >
-              {mobileMenuOpen ? (
-                <IconX className="h-6 w-6" />
-              ) : (
-                <IconMenu2 className="h-6 w-6" />
-              )}
-            </button>
+            {/* Mobile Theme Toggle and Menu Button */}
+            <div className="md:hidden flex items-center gap-2">
+              <ThemeToggle className="text-white" />
+              <button
+                className="p-2"
+                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              >
+                {mobileMenuOpen ? (
+                  <IconX className="h-6 w-6" />
+                ) : (
+                  <IconMenu2 className="h-6 w-6" />
+                )}
+              </button>
+            </div>
           </div>
         </div>
       </div>

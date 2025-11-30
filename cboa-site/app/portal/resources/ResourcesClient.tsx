@@ -519,11 +519,11 @@ export default function ResourcesClient() {
     // Check if editing this resource
     if (editingId === resource.id && editingData) {
       return (
-        <div key={resource.id} className="bg-white rounded-lg shadow p-4 col-span-full">
+        <div key={resource.id} className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 col-span-full">
           <div className="space-y-3">
             {/* Resource Type Selector */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Resource Type</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Resource Type</label>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                 {resourceTypes.map((type) => {
                   const TypeIcon = type.icon
@@ -536,7 +536,7 @@ export default function ResourcesClient() {
                       className={`p-2 rounded-lg border-2 transition-all flex flex-col items-center gap-1 ${
                         isSelected
                           ? 'border-orange-500 bg-orange-50 text-orange-700'
-                          : 'border-gray-200 hover:border-gray-300 text-gray-600'
+                          : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 text-gray-600 dark:text-gray-300'
                       }`}
                     >
                       <TypeIcon className="h-5 w-5" />
@@ -551,13 +551,13 @@ export default function ResourcesClient() {
               type="text"
               value={editingData.title || ''}
               onChange={(e) => setEditingData({ ...editingData, title: e.target.value })}
-              className="w-full font-semibold px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+              className="w-full font-semibold px-3 py-2 border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
               placeholder="Resource title..."
             />
 
             {/* Description/Content */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 {editingData.resourceType === 'text' ? 'Content' : 'Description'}
               </label>
               {editingData.resourceType === 'text' ? (
@@ -571,7 +571,7 @@ export default function ResourcesClient() {
                 <textarea
                   value={editingData.description || ''}
                   onChange={(e) => setEditingData({ ...editingData, description: e.target.value })}
-                  className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                  className="w-full px-3 py-2 border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                   rows={2}
                   placeholder="Resource description..."
                 />
@@ -581,14 +581,14 @@ export default function ResourcesClient() {
             {/* External Link for link/video types */}
             {(editingData.resourceType === 'link' || editingData.resourceType === 'video') && (
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   {editingData.resourceType === 'video' ? 'Video URL' : 'External Link'}
                 </label>
                 <input
                   type="url"
                   value={editingData.externalLink || ''}
                   onChange={(e) => setEditingData({ ...editingData, externalLink: e.target.value })}
-                  className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                  className="w-full px-3 py-2 border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                   placeholder="https://..."
                 />
               </div>
@@ -596,11 +596,11 @@ export default function ResourcesClient() {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Category</label>
                 <select
                   value={editingData.category || 'rulebooks'}
                   onChange={(e) => setEditingData({ ...editingData, category: e.target.value as Resource['category'] })}
-                  className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                  className="w-full px-3 py-2 border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                 >
                   <option value="rulebooks">Rulebooks</option>
                   <option value="forms">Forms</option>
@@ -611,11 +611,11 @@ export default function ResourcesClient() {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Access Level</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Access Level</label>
                 <select
                   value={editingData.accessLevel || 'all'}
                   onChange={(e) => setEditingData({ ...editingData, accessLevel: e.target.value as Resource['accessLevel'] })}
-                  className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                  className="w-full px-3 py-2 border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                 >
                   <option value="all">All Officials</option>
                   <option value="level1">Level 1+</option>
@@ -634,7 +634,7 @@ export default function ResourcesClient() {
                   onChange={(e) => setEditingData({ ...editingData, featured: e.target.checked })}
                   className="rounded text-orange-500 focus:ring-orange-500"
                 />
-                <span className="text-sm font-medium text-gray-700">Featured</span>
+                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Featured</span>
               </label>
             </div>
             <div className="flex gap-2">
@@ -647,7 +647,7 @@ export default function ResourcesClient() {
               </button>
               <button
                 onClick={cancelEditing}
-                className="bg-gray-300 text-gray-700 px-3 py-1 rounded text-sm hover:bg-gray-400 flex items-center gap-1"
+                className="bg-gray-300 dark:bg-gray-600 text-gray-700 dark:text-gray-200 px-3 py-1 rounded text-sm hover:bg-gray-400 dark:hover:bg-gray-500 flex items-center gap-1"
               >
                 <IconX className="h-4 w-4" />
                 Cancel
@@ -681,7 +681,7 @@ export default function ResourcesClient() {
         <div
           key={resource.id}
           id={`resource-${resource.id}`}
-          className="bg-white rounded-lg shadow hover:shadow-md transition-shadow p-4 flex flex-col cursor-pointer"
+          className="bg-white dark:bg-gray-800 rounded-lg shadow hover:shadow-md transition-shadow p-4 flex flex-col cursor-pointer"
           onClick={handleResourceClick}
         >
           <div className="flex items-start gap-3 mb-3">
@@ -702,41 +702,41 @@ export default function ResourcesClient() {
               </div>
             )}
             <div className="flex-1 min-w-0">
-              <h3 className="font-semibold text-gray-900 text-sm line-clamp-2">{resource.title}</h3>
-              <div className="text-xs text-gray-500 mt-1">
+              <h3 className="font-semibold text-gray-900 dark:text-white text-sm line-clamp-2">{resource.title}</h3>
+              <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                 {formatDate(resource.lastUpdated)}
               </div>
             </div>
           </div>
-          <div className="mt-auto flex items-center gap-1 pt-2 border-t border-gray-100" onClick={(e) => e.stopPropagation()}>
+          <div className="mt-auto flex items-center gap-1 pt-2 border-t border-gray-100 dark:border-gray-700" onClick={(e) => e.stopPropagation()}>
             {resource.fileUrl && (
-              <a href={resource.fileUrl} download className="p-1.5 text-green-600 hover:bg-green-50 rounded" title="Download">
+              <a href={resource.fileUrl} download className="p-1.5 text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/30 rounded" title="Download">
                 <IconDownload className="h-4 w-4" />
               </a>
             )}
             {resource.externalLink && (
-              <a href={resource.externalLink} target="_blank" rel="noopener noreferrer" className="p-1.5 text-blue-600 hover:bg-blue-50 rounded" title="Open in new tab">
+              <a href={resource.externalLink} target="_blank" rel="noopener noreferrer" className="p-1.5 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded" title="Open in new tab">
                 <IconExternalLink className="h-4 w-4" />
               </a>
             )}
             {canEdit && (
               <>
-                <button onClick={() => startEditing(resource)} className="p-1.5 text-gray-600 hover:bg-gray-100 rounded ml-auto" title="Edit">
+                <button onClick={() => startEditing(resource)} className="p-1.5 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded ml-auto" title="Edit">
                   <IconEdit className="h-4 w-4" />
                 </button>
-                <button onClick={() => handleDelete(resource.id)} className="p-1.5 text-red-600 hover:bg-red-50 rounded" title="Delete">
+                <button onClick={() => handleDelete(resource.id)} className="p-1.5 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 rounded" title="Delete">
                   <IconTrash className="h-4 w-4" />
                 </button>
               </>
             )}
             {isTextResource && (
-              <button onClick={() => toggleTextResourceExpanded(resource.id)} className="p-1.5 text-gray-400 hover:bg-gray-100 rounded ml-auto">
+              <button onClick={() => toggleTextResourceExpanded(resource.id)} className="p-1.5 text-gray-400 dark:text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 rounded ml-auto">
                 {isExpanded ? <IconChevronUp className="h-4 w-4" /> : <IconChevronDown className="h-4 w-4" />}
               </button>
             )}
           </div>
           {isTextResource && isExpanded && (
-            <div className="mt-3 pt-3 border-t border-gray-100 prose prose-sm max-w-none" onClick={(e) => e.stopPropagation()}>
+            <div className="mt-3 pt-3 border-t border-gray-100 dark:border-gray-700 prose prose-sm max-w-none" onClick={(e) => e.stopPropagation()}>
               <HTMLViewer content={resource.description} />
             </div>
           )}
@@ -746,7 +746,7 @@ export default function ResourcesClient() {
 
     // List view row - renders as card on mobile, row on desktop
     return (
-      <div key={resource.id} id={`resource-${resource.id}`} className="bg-white rounded-lg shadow hover:shadow-md transition-shadow cursor-pointer" onClick={handleResourceClick}>
+      <div key={resource.id} id={`resource-${resource.id}`} className="bg-white dark:bg-gray-800 rounded-lg shadow hover:shadow-md transition-shadow cursor-pointer" onClick={handleResourceClick}>
         {/* Mobile card layout */}
         <div className="sm:hidden p-4">
           <div className="flex items-start gap-3 mb-3">
@@ -763,39 +763,39 @@ export default function ResourcesClient() {
               </div>
             )}
             <div className="flex-1 min-w-0">
-              <h3 className="font-semibold text-gray-900 text-sm">{resource.title}</h3>
-              <div className="text-xs text-gray-500 mt-1">{formatDate(resource.lastUpdated)}</div>
+              <h3 className="font-semibold text-gray-900 dark:text-white text-sm">{resource.title}</h3>
+              <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">{formatDate(resource.lastUpdated)}</div>
             </div>
           </div>
-          <div className="flex items-center gap-1 pt-2 border-t border-gray-100" onClick={(e) => e.stopPropagation()}>
+          <div className="flex items-center gap-1 pt-2 border-t border-gray-100 dark:border-gray-700" onClick={(e) => e.stopPropagation()}>
             {resource.fileUrl && (
-              <a href={resource.fileUrl} download className="p-1.5 text-green-600 hover:bg-green-50 rounded" title="Download">
+              <a href={resource.fileUrl} download className="p-1.5 text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/30 rounded" title="Download">
                 <IconDownload className="h-4 w-4" />
               </a>
             )}
             {resource.externalLink && (
-              <a href={resource.externalLink} target="_blank" rel="noopener noreferrer" className="p-1.5 text-blue-600 hover:bg-blue-50 rounded" title="Open in new tab">
+              <a href={resource.externalLink} target="_blank" rel="noopener noreferrer" className="p-1.5 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded" title="Open in new tab">
                 <IconExternalLink className="h-4 w-4" />
               </a>
             )}
             {canEdit && (
               <>
-                <button onClick={() => startEditing(resource)} className="p-1.5 text-gray-600 hover:bg-gray-100 rounded ml-auto" title="Edit">
+                <button onClick={() => startEditing(resource)} className="p-1.5 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded ml-auto" title="Edit">
                   <IconEdit className="h-4 w-4" />
                 </button>
-                <button onClick={() => handleDelete(resource.id)} className="p-1.5 text-red-600 hover:bg-red-50 rounded" title="Delete">
+                <button onClick={() => handleDelete(resource.id)} className="p-1.5 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 rounded" title="Delete">
                   <IconTrash className="h-4 w-4" />
                 </button>
               </>
             )}
             {isTextResource && (
-              <button onClick={() => toggleTextResourceExpanded(resource.id)} className="p-1.5 text-gray-400 hover:bg-gray-100 rounded ml-auto">
+              <button onClick={() => toggleTextResourceExpanded(resource.id)} className="p-1.5 text-gray-400 dark:text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 rounded ml-auto">
                 {isExpanded ? <IconChevronUp className="h-4 w-4" /> : <IconChevronDown className="h-4 w-4" />}
               </button>
             )}
           </div>
           {isTextResource && isExpanded && (
-            <div className="mt-3 pt-3 border-t border-gray-100 prose prose-sm max-w-none" onClick={(e) => e.stopPropagation()}>
+            <div className="mt-3 pt-3 border-t border-gray-100 dark:border-gray-700 prose prose-sm max-w-none" onClick={(e) => e.stopPropagation()}>
               <HTMLViewer content={resource.description} />
             </div>
           )}
@@ -817,45 +817,45 @@ export default function ResourcesClient() {
               </div>
             )}
             <div className="flex-1 min-w-0">
-              <h3 className="font-semibold text-gray-900 break-words">{resource.title}</h3>
-              <div className="flex flex-wrap items-center gap-2 text-xs text-gray-500 mt-1">
+              <h3 className="font-semibold text-gray-900 dark:text-white break-words">{resource.title}</h3>
+              <div className="flex flex-wrap items-center gap-2 text-xs text-gray-500 dark:text-gray-400 mt-1">
                 <span>{formatDate(resource.lastUpdated)}</span>
                 {resource.fileSize && <span>{resource.fileSize}</span>}
                 {resource.accessLevel && resource.accessLevel !== 'all' && (
-                  <span className="bg-blue-100 text-blue-800 px-2 py-0.5 rounded">{resource.accessLevel}</span>
+                  <span className="bg-blue-100 dark:bg-blue-900/40 text-blue-800 dark:text-blue-300 px-2 py-0.5 rounded">{resource.accessLevel}</span>
                 )}
               </div>
             </div>
             <div className="flex items-center gap-1 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
               {resource.fileUrl && (
-                <a href={resource.fileUrl} download className="p-2 text-green-600 hover:bg-green-50 rounded" title="Download">
+                <a href={resource.fileUrl} download className="p-2 text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/30 rounded" title="Download">
                   <IconDownload className="h-5 w-5" />
                 </a>
               )}
               {resource.externalLink && (
-                <a href={resource.externalLink} target="_blank" rel="noopener noreferrer" className="p-2 text-blue-600 hover:bg-blue-50 rounded" title="Open in new tab">
+                <a href={resource.externalLink} target="_blank" rel="noopener noreferrer" className="p-2 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded" title="Open in new tab">
                   <IconExternalLink className="h-5 w-5" />
                 </a>
               )}
               {canEdit && (
                 <>
-                  <button onClick={() => startEditing(resource)} className="p-2 text-gray-600 hover:bg-gray-100 rounded" title="Edit">
+                  <button onClick={() => startEditing(resource)} className="p-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded" title="Edit">
                     <IconEdit className="h-5 w-5" />
                   </button>
-                  <button onClick={() => handleDelete(resource.id)} className="p-2 text-red-600 hover:bg-red-50 rounded" title="Delete">
+                  <button onClick={() => handleDelete(resource.id)} className="p-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 rounded" title="Delete">
                     <IconTrash className="h-5 w-5" />
                   </button>
                 </>
               )}
               {isTextResource && (
-                <div className="p-2 cursor-pointer hover:bg-gray-100 rounded" onClick={() => toggleTextResourceExpanded(resource.id)}>
-                  {isExpanded ? <IconChevronUp className="h-5 w-5 text-gray-400" /> : <IconChevronDown className="h-5 w-5 text-gray-400" />}
+                <div className="p-2 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 rounded" onClick={() => toggleTextResourceExpanded(resource.id)}>
+                  {isExpanded ? <IconChevronUp className="h-5 w-5 text-gray-400 dark:text-gray-500" /> : <IconChevronDown className="h-5 w-5 text-gray-400 dark:text-gray-500" />}
                 </div>
               )}
             </div>
           </div>
           {isTextResource && isExpanded && (
-            <div className="px-4 pb-4 border-t border-gray-100" onClick={(e) => e.stopPropagation()}>
+            <div className="px-4 pb-4 border-t border-gray-100 dark:border-gray-700" onClick={(e) => e.stopPropagation()}>
               <div className="pt-4 prose prose-sm max-w-none">
                 <HTMLViewer content={resource.description} />
               </div>
@@ -871,8 +871,8 @@ export default function ResourcesClient() {
 
       <div className="mb-6 sm:mb-8 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Resources</h1>
-          <p className="mt-1 sm:mt-2 text-sm sm:text-base text-gray-600">Training materials, forms, and official documents</p>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">Resources</h1>
+          <p className="mt-1 sm:mt-2 text-sm sm:text-base text-gray-600 dark:text-gray-300">Training materials, forms, and official documents</p>
         </div>
         {canEdit && !isCreating && (
           <button
@@ -898,13 +898,13 @@ export default function ResourcesClient() {
 
       {/* Create New Resource Form */}
       {isCreating && (
-        <div className="mb-6 bg-white rounded-lg shadow-lg p-4 sm:p-6">
-          <h2 className="text-lg sm:text-xl font-semibold mb-4">Add New Resource</h2>
+        <div className="mb-6 bg-white dark:bg-gray-800 rounded-lg shadow-lg p-4 sm:p-6">
+          <h2 className="text-lg sm:text-xl font-semibold mb-4 text-gray-900 dark:text-white">Add New Resource</h2>
 
           <div className="space-y-4">
             {/* Resource Type Selector */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Resource Type *</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Resource Type *</label>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                 {resourceTypes.map((type) => {
                   const Icon = type.icon
@@ -917,7 +917,7 @@ export default function ResourcesClient() {
                       className={`p-3 rounded-lg border-2 transition-all flex flex-col items-center gap-1 ${
                         isSelected
                           ? 'border-orange-500 bg-orange-50 text-orange-700'
-                          : 'border-gray-200 hover:border-gray-300 text-gray-600'
+                          : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 text-gray-600 dark:text-gray-300'
                       }`}
                     >
                       <Icon className="h-6 w-6" />
@@ -926,22 +926,22 @@ export default function ResourcesClient() {
                   )
                 })}
               </div>
-              <p className="mt-1 text-xs text-gray-500">
+              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
                 {resourceTypes.find(t => t.value === newResource.resourceType)?.description}
               </p>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Title *</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Title *</label>
                 <input
                   type="text"
                   value={newResource.title}
                   onChange={(e) => setNewResource({ ...newResource, title: e.target.value })}
-                  className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 ${
+                  className={`w-full px-3 py-2 border rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 ${
                     getFieldError(validationErrors, 'title')
                       ? 'border-red-500 focus:ring-red-500'
-                      : 'border-gray-300 focus:ring-orange-500'
+                      : 'border-gray-300 dark:border-gray-700 focus:ring-orange-500'
                   }`}
                   placeholder="Resource title..."
                 />
@@ -953,11 +953,11 @@ export default function ResourcesClient() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Category *</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Category *</label>
                 <select
                   value={newResource.category}
                   onChange={(e) => setNewResource({ ...newResource, category: e.target.value as any })}
-                  className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                  className="w-full px-3 py-2 border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                 >
                   <option value="rulebooks">Rulebooks</option>
                   <option value="forms">Forms</option>
@@ -971,11 +971,11 @@ export default function ResourcesClient() {
 
             {/* Description/Content - TinyMCE for text type, textarea for others */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 {newResource.resourceType === 'text' ? 'Content *' : 'Description'}
               </label>
               {newResource.resourceType === 'text' ? (
-                <div className={`border rounded-lg ${getFieldError(validationErrors, 'description') ? 'border-red-500' : 'border-gray-300'}`}>
+                <div className={`border rounded-lg ${getFieldError(validationErrors, 'description') ? 'border-red-500' : 'border-gray-300 dark:border-gray-700'}`}>
                   <TinyMCEEditor
                     value={newResource.description || ''}
                     onChange={(value) => setNewResource({ ...newResource, description: value })}
@@ -987,10 +987,10 @@ export default function ResourcesClient() {
                 <textarea
                   value={newResource.description}
                   onChange={(e) => setNewResource({ ...newResource, description: e.target.value })}
-                  className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 ${
+                  className={`w-full px-3 py-2 border rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 ${
                     getFieldError(validationErrors, 'description')
                       ? 'border-red-500 focus:ring-red-500'
-                      : 'border-gray-300 focus:ring-orange-500'
+                      : 'border-gray-300 dark:border-gray-700 focus:ring-orange-500'
                   }`}
                   rows={3}
                   placeholder="Brief description of the resource..."
@@ -1006,7 +1006,7 @@ export default function ResourcesClient() {
             {/* File Upload - only for file type */}
             {newResource.resourceType === 'file' && (
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Resource File *</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Resource File *</label>
                 <div className="flex gap-2">
                   <input
                     type="file"
@@ -1054,7 +1054,7 @@ export default function ResourcesClient() {
                   )}
                 </div>
                 {newResource.fileSize && (
-                  <p className="mt-1 text-xs text-gray-500">File size: {newResource.fileSize}</p>
+                  <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">File size: {newResource.fileSize}</p>
                 )}
                 {getFieldError(validationErrors, 'file') && (
                   <p className="mt-1 text-sm text-red-600">{getFieldError(validationErrors, 'file')}</p>
@@ -1065,7 +1065,7 @@ export default function ResourcesClient() {
             {/* External Link - for link and video types */}
             {(newResource.resourceType === 'link' || newResource.resourceType === 'video') && (
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   {newResource.resourceType === 'video' ? 'Video URL *' : 'External Link *'}
                 </label>
                 <input
@@ -1087,7 +1087,7 @@ export default function ResourcesClient() {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Access Level</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Access Level</label>
                 <select
                   value={newResource.accessLevel}
                   onChange={(e) => setNewResource({ ...newResource, accessLevel: e.target.value as any })}
@@ -1110,7 +1110,7 @@ export default function ResourcesClient() {
                     onChange={(e) => setNewResource({ ...newResource, featured: e.target.checked })}
                     className="rounded text-orange-500 focus:ring-orange-500"
                   />
-                  <span className="text-sm font-medium text-gray-700">Featured Resource</span>
+                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Featured Resource</span>
                 </label>
               </div>
             </div>
@@ -1159,7 +1159,7 @@ export default function ResourcesClient() {
       )}
 
       {/* Search and Category Filter */}
-      <div className="mb-6 bg-white rounded-lg shadow p-3 sm:p-4">
+      <div className="mb-6 bg-white dark:bg-gray-800 rounded-lg shadow p-3 sm:p-4">
         <div className="flex flex-wrap gap-3 sm:gap-4">
           <div className="flex-1 min-w-0">
             <input
@@ -1193,10 +1193,10 @@ export default function ResourcesClient() {
         </div>
 
         {/* Sort and View Options */}
-        <div className="mt-3 pt-3 border-t border-gray-200 flex flex-wrap items-center justify-between gap-3">
+        <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700 flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-2 flex-wrap">
             {/* Sort By */}
-            <span className="text-xs text-gray-500">Sort by:</span>
+            <span className="text-xs text-gray-500 dark:text-gray-400">Sort by:</span>
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value as 'title' | 'date' | 'type')}
@@ -1220,7 +1220,7 @@ export default function ResourcesClient() {
 
             {/* Group by Category toggle - only show when viewing all */}
             {selectedCategory === 'all' && (
-              <label className="flex items-center gap-1.5 text-sm text-gray-600 ml-2">
+              <label className="flex items-center gap-1.5 text-sm text-gray-600 dark:text-gray-300 ml-2">
                 <input
                   type="checkbox"
                   checked={groupByCategory}
@@ -1255,7 +1255,7 @@ export default function ResourcesClient() {
       {/* Featured Resources */}
       {filteredResources.some(r => r.featured) && (
         <div className="mb-6">
-          <h2 className="text-base sm:text-lg font-semibold text-gray-900 mb-3">Featured Resources</h2>
+          <h2 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white mb-3">Featured Resources</h2>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4">
             {filteredResources.filter(r => r.featured).map(resource => {
               const resourceIcon = getResourceIcon(resource.resourceType || 'file')
@@ -1315,8 +1315,8 @@ export default function ResourcesClient() {
 
                     {/* Content */}
                     <div className="flex-1 min-w-0">
-                      <h3 className="font-semibold text-gray-900">{resource.title}</h3>
-                      <div className="text-xs text-gray-500 mt-1">
+                      <h3 className="font-semibold text-gray-900 dark:text-gray-900">{resource.title}</h3>
+                      <div className="text-xs text-gray-500 dark:text-gray-600 mt-1">
                         {formatDate(resource.lastUpdated)}
                         {resource.fileSize && <span className="ml-2">{resource.fileSize}</span>}
                       </div>
@@ -1378,14 +1378,14 @@ export default function ResourcesClient() {
         {groupedResources ? (
           Object.entries(groupedResources).map(([categoryKey, { label, resources: categoryResources }]) => (
             <div key={categoryKey}>
-              <h2 className="text-lg font-semibold text-gray-900 mb-3 flex items-center gap-2">
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-3 flex items-center gap-2">
                 {(() => {
                   const cat = categories.find(c => c.value === categoryKey)
                   const CatIcon = cat?.icon || IconFile
-                  return <CatIcon className="h-5 w-5 text-gray-500" />
+                  return <CatIcon className="h-5 w-5 text-gray-500 dark:text-gray-400" />
                 })()}
                 {label}
-                <span className="text-sm font-normal text-gray-500">({categoryResources.length})</span>
+                <span className="text-sm font-normal text-gray-500 dark:text-gray-400">({categoryResources.length})</span>
               </h2>
               <div className={viewMode === 'grid'
                 ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4'
@@ -1397,9 +1397,9 @@ export default function ResourcesClient() {
           ))
         ) : (
           <>
-            <h2 className="text-lg font-semibold text-gray-900">
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
               {selectedCategory === 'all' ? 'All Resources' : categories.find(c => c.value === selectedCategory)?.label}
-              <span className="text-sm font-normal text-gray-500 ml-2">
+              <span className="text-sm font-normal text-gray-500 dark:text-gray-400 ml-2">
                 ({filteredResources.length})
               </span>
             </h2>

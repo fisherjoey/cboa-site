@@ -18,7 +18,7 @@ export default function PDFViewer({ pdfUrl, title, onClose }: PDFViewerProps) {
     if (iframeError) {
       return (
         <div className="flex flex-col items-center justify-center h-full gap-4">
-          <p className="text-gray-600">Unable to preview PDF in browser</p>
+          <p className="text-gray-600 dark:text-gray-300">Unable to preview PDF in browser</p>
           <div className="flex gap-3">
             <a
               href={pdfUrl}
@@ -66,16 +66,16 @@ export default function PDFViewer({ pdfUrl, title, onClose }: PDFViewerProps) {
       size="full"
       showCloseButton={false}
     >
-      <div className={`flex flex-col ${isFullscreen ? 'fixed inset-0 z-[60] bg-white' : 'h-full'}`}>
+      <div className={`flex flex-col ${isFullscreen ? 'fixed inset-0 z-[60] bg-white dark:bg-gray-800' : 'h-full'}`}>
         {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-4 border-b -mx-6 -mt-6 px-6 pt-4">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-4 border-b border-gray-200 dark:border-gray-700 -mx-6 -mt-6 px-6 pt-4">
           <div className="flex-1 min-w-0">
-            <h2 className="text-lg sm:text-xl font-semibold truncate">{title}</h2>
+            <h2 className="text-lg sm:text-xl font-semibold truncate text-gray-900 dark:text-white">{title}</h2>
           </div>
           <div className="flex items-center gap-2 flex-shrink-0">
             <button
               onClick={() => setIsFullscreen(!isFullscreen)}
-              className="p-2 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded"
+              className="p-2 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
               title={isFullscreen ? "Exit fullscreen" : "Toggle fullscreen"}
             >
               {isFullscreen ? <IconMinimize className="h-5 w-5" /> : <IconMaximize className="h-5 w-5" />}
@@ -83,7 +83,7 @@ export default function PDFViewer({ pdfUrl, title, onClose }: PDFViewerProps) {
             <a
               href={pdfUrl}
               download
-              className="p-2 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded"
+              className="p-2 text-blue-600 hover:text-blue-800 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded"
               title="Download"
             >
               <IconDownload className="h-5 w-5" />
@@ -92,14 +92,14 @@ export default function PDFViewer({ pdfUrl, title, onClose }: PDFViewerProps) {
               href={pdfUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="p-2 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded"
+              className="p-2 text-blue-600 hover:text-blue-800 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded"
               title="Open in new tab"
             >
               <IconExternalLink className="h-5 w-5" />
             </a>
             <button
               onClick={onClose}
-              className="p-2 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded"
+              className="p-2 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
               title="Close"
             >
               <IconX className="h-5 w-5" />

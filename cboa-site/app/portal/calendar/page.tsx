@@ -213,8 +213,8 @@ export default function CalendarPage() {
       {/* Header */}
       <div className="mb-4 sm:mb-6 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">CBOA Calendar</h1>
-          <p className="text-sm sm:text-base text-gray-600 mt-1">
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">CBOA Calendar</h1>
+          <p className="text-sm sm:text-base text-gray-600 dark:text-gray-300 mt-1">
             {calendarMode === 'events'
               ? 'Training events, meetings, and important dates'
               : 'Game statistics and assignment data'}
@@ -222,13 +222,13 @@ export default function CalendarPage() {
         </div>
         <div className="flex items-center gap-3">
           {/* Calendar Mode Toggle */}
-          <div className="flex bg-gray-100 rounded-lg p-1">
+          <div className="flex bg-gray-100 dark:bg-gray-800/50 rounded-lg p-1">
             <button
               onClick={() => setCalendarMode('events')}
               className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors flex items-center gap-1.5 ${
                 calendarMode === 'events'
-                  ? 'bg-white shadow text-gray-900'
-                  : 'text-gray-600 hover:text-gray-900'
+                  ? 'bg-white dark:bg-gray-800 shadow text-gray-900 dark:text-white'
+                  : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white'
               }`}
             >
               <IconCalendarEvent className="h-4 w-4" />
@@ -238,8 +238,8 @@ export default function CalendarPage() {
               onClick={() => setCalendarMode('statistics')}
               className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors flex items-center gap-1.5 ${
                 calendarMode === 'statistics'
-                  ? 'bg-white shadow text-gray-900'
-                  : 'text-gray-600 hover:text-gray-900'
+                  ? 'bg-white dark:bg-gray-800 shadow text-gray-900 dark:text-white'
+                  : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white'
               }`}
             >
               <IconChartBar className="h-4 w-4" />
@@ -291,7 +291,7 @@ export default function CalendarPage() {
           </div>
 
           {/* FullCalendar */}
-          <div className="bg-white rounded-lg shadow p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4">
             <FullCalendar
               plugins={[dayGridPlugin, listPlugin, interactionPlugin]}
               initialView="dayGridMonth"
@@ -344,10 +344,10 @@ export default function CalendarPage() {
           </div>
 
           {/* Statistics Legend */}
-          <div className="mb-4 flex flex-wrap items-center gap-4 text-xs sm:text-sm text-gray-600">
+          <div className="mb-4 flex flex-wrap items-center gap-4 text-xs sm:text-sm text-gray-600 dark:text-gray-300">
             <span>Games:</span>
             <div className="flex items-center gap-1">
-              <span className="w-4 h-4 bg-gray-50 border rounded"></span>
+              <span className="w-4 h-4 bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 rounded"></span>
               <span>0</span>
             </div>
             <div className="flex items-center gap-1">
@@ -373,7 +373,7 @@ export default function CalendarPage() {
           </div>
 
           {/* Statistics placeholder */}
-          <div className="bg-white rounded-lg shadow p-8 text-center text-gray-500">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-8 text-center text-gray-500 dark:text-gray-400">
             <IconChartBar className="h-16 w-16 mx-auto mb-4 opacity-50" />
             <p className="text-lg font-medium">Statistics Calendar Coming Soon</p>
             <p className="text-sm mt-2">This feature will display game counts and assignment data by date.</p>
@@ -381,9 +381,9 @@ export default function CalendarPage() {
 
           {/* Selected Day Detail */}
           {selectedStatDate && selectedStatDayData && (
-            <div className="mt-4 p-4 bg-white rounded-lg shadow">
+            <div className="mt-4 p-4 bg-white dark:bg-gray-800 rounded-lg shadow">
               <div className="flex items-center justify-between mb-3">
-                <h3 className="font-semibold">
+                <h3 className="font-semibold text-gray-900 dark:text-white">
                   {new Date(selectedStatDate + 'T00:00:00').toLocaleDateString('en-US', {
                     weekday: 'long',
                     month: 'long',
@@ -393,19 +393,19 @@ export default function CalendarPage() {
                 </h3>
                 <button
                   onClick={() => setSelectedStatDate(null)}
-                  className="p-1 hover:bg-gray-200 rounded"
+                  className="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded"
                 >
                   <IconX className="h-4 w-4" />
                 </button>
               </div>
               <div className="flex gap-6 mb-3 text-sm">
                 <div>
-                  <span className="text-gray-500">Total Games:</span>
-                  <span className="ml-2 font-semibold">{selectedStatDayData.games}</span>
+                  <span className="text-gray-500 dark:text-gray-400">Total Games:</span>
+                  <span className="ml-2 font-semibold text-gray-900 dark:text-white">{selectedStatDayData.games}</span>
                 </div>
                 <div>
-                  <span className="text-gray-500">Assignments:</span>
-                  <span className="ml-2 font-semibold">{selectedStatDayData.assignments}</span>
+                  <span className="text-gray-500 dark:text-gray-400">Assignments:</span>
+                  <span className="ml-2 font-semibold text-gray-900 dark:text-white">{selectedStatDayData.assignments}</span>
                 </div>
               </div>
             </div>
@@ -470,14 +470,14 @@ function EventModal({
         <div className="space-y-3">
           {event.type && (
             <div className="flex items-center gap-2">
-              <IconCalendar className="h-5 w-5 text-gray-500" />
-              <span className="capitalize">{event.type}</span>
+              <IconCalendar className="h-5 w-5 text-gray-500 dark:text-gray-400" />
+              <span className="capitalize text-gray-900 dark:text-white">{event.type}</span>
             </div>
           )}
 
           <div className="flex items-center gap-2">
-            <IconClock className="h-5 w-5 text-gray-500" />
-            <span>
+            <IconClock className="h-5 w-5 text-gray-500 dark:text-gray-400" />
+            <span className="text-gray-900 dark:text-white">
               {moment(event.start).format('MMM DD, YYYY h:mm A')} -
               {moment(event.end).format('h:mm A')}
             </span>
@@ -485,21 +485,21 @@ function EventModal({
 
           {event.location && (
             <div className="flex items-center gap-2">
-              <IconMapPin className="h-5 w-5 text-gray-500" />
-              <span>{event.location}</span>
+              <IconMapPin className="h-5 w-5 text-gray-500 dark:text-gray-400" />
+              <span className="text-gray-900 dark:text-white">{event.location}</span>
             </div>
           )}
 
           {event.instructor && (
             <div className="flex items-center gap-2">
-              <IconUsers className="h-5 w-5 text-gray-500" />
-              <span>Instructor: {event.instructor}</span>
+              <IconUsers className="h-5 w-5 text-gray-500 dark:text-gray-400" />
+              <span className="text-gray-900 dark:text-white">Instructor: {event.instructor}</span>
             </div>
           )}
 
           {event.description && (
             <div className="mt-4">
-              <p className="text-gray-600">{event.description}</p>
+              <p className="text-gray-600 dark:text-gray-300">{event.description}</p>
             </div>
           )}
 
@@ -535,7 +535,7 @@ function EventModal({
           )}
           <button
             onClick={onClose}
-            className="flex-1 bg-gray-200 text-gray-800 px-4 py-2 rounded hover:bg-gray-300"
+            className="flex-1 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white px-4 py-2 rounded hover:bg-gray-300 dark:hover:bg-gray-600"
           >
             Close
           </button>
@@ -554,26 +554,26 @@ function EventModal({
     >
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
             Event Title *
           </label>
           <input
             type="text"
             value={formData.title}
             onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-            className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+            className="w-full px-3 py-2 border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
             required
           />
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
             Event Type *
           </label>
           <select
             value={formData.type}
             onChange={(e) => setFormData({ ...formData, type: e.target.value as CBOAEvent['type'] })}
-            className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+            className="w-full px-3 py-2 border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
             required
           >
             <option value="training">Training</option>
@@ -585,52 +585,52 @@ function EventModal({
 
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Start Date/Time *
             </label>
             <input
               type="datetime-local"
               value={moment(formData.start).format('YYYY-MM-DDTHH:mm')}
               onChange={(e) => setFormData({ ...formData, start: new Date(e.target.value) })}
-              className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+              className="w-full px-3 py-2 border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
               required
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               End Date/Time *
             </label>
             <input
               type="datetime-local"
               value={moment(formData.end).format('YYYY-MM-DDTHH:mm')}
               onChange={(e) => setFormData({ ...formData, end: new Date(e.target.value) })}
-              className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+              className="w-full px-3 py-2 border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
               required
             />
           </div>
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
             Location
           </label>
           <input
             type="text"
             value={formData.location || ''}
             onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-            className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+            className="w-full px-3 py-2 border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
           />
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
             Description
           </label>
           <textarea
             value={formData.description || ''}
             onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-            className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+            className="w-full px-3 py-2 border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
             rows={3}
           />
         </div>
@@ -638,38 +638,38 @@ function EventModal({
         {formData.type === 'training' && (
           <>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Instructor
               </label>
               <input
                 type="text"
                 value={formData.instructor || ''}
                 onChange={(e) => setFormData({ ...formData, instructor: e.target.value })}
-                className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                className="w-full px-3 py-2 border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Max Participants
               </label>
               <input
                 type="number"
                 value={formData.maxParticipants || ''}
                 onChange={(e) => setFormData({ ...formData, maxParticipants: parseInt(e.target.value) })}
-                className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                className="w-full px-3 py-2 border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Registration Link
               </label>
               <input
                 type="url"
                 value={formData.registrationLink || ''}
                 onChange={(e) => setFormData({ ...formData, registrationLink: e.target.value })}
-                className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                className="w-full px-3 py-2 border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
               />
             </div>
           </>
@@ -685,7 +685,7 @@ function EventModal({
           <button
             type="button"
             onClick={onClose}
-            className="flex-1 bg-gray-200 text-gray-800 px-4 py-2 rounded hover:bg-gray-300"
+            className="flex-1 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white px-4 py-2 rounded hover:bg-gray-300 dark:hover:bg-gray-600"
           >
             Cancel
           </button>

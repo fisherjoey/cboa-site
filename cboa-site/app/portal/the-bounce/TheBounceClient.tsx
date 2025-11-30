@@ -207,8 +207,8 @@ export default function TheBounceClient({ newsletters: initialNewsletters }: The
       {/* Header */}
       <div className="mb-6 sm:mb-8 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">The Bounce Newsletter</h1>
-          <p className="mt-1 sm:mt-2 text-sm sm:text-base text-gray-600">
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">The Bounce Newsletter</h1>
+          <p className="mt-1 sm:mt-2 text-sm sm:text-base text-gray-600 dark:text-gray-300">
             Your monthly source for CBOA news, officiating tips, and member updates
           </p>
         </div>
@@ -225,11 +225,11 @@ export default function TheBounceClient({ newsletters: initialNewsletters }: The
       
       {/* Upload Form */}
       {showUploadForm && (user.role === 'admin' || user.role === 'executive') && (
-        <div className="mb-6 bg-white rounded-lg shadow-lg p-4 sm:p-6">
-          <h2 className="text-lg sm:text-xl font-semibold mb-4">Upload New Newsletter</h2>
+        <div className="mb-6 bg-white dark:bg-gray-800 rounded-lg shadow-lg p-4 sm:p-6">
+          <h2 className="text-lg sm:text-xl font-semibold mb-4 text-gray-900 dark:text-white">Upload New Newsletter</h2>
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Title
               </label>
               <input
@@ -237,38 +237,38 @@ export default function TheBounceClient({ newsletters: initialNewsletters }: The
                 value={uploadForm.title}
                 onChange={(e) => setUploadForm({ ...uploadForm, title: e.target.value })}
                 placeholder="e.g., The Bounce - January 2025"
-                className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 ${
+                className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white ${
                   getFieldError(validationErrors, 'title')
                     ? 'border-red-500 focus:ring-red-500'
-                    : 'border-gray-300 focus:ring-orange-500'
+                    : 'border-gray-300 dark:border-gray-700 focus:ring-orange-500'
                 }`}
               />
               {getFieldError(validationErrors, 'title') && (
                 <p className="mt-1 text-sm text-red-600">{getFieldError(validationErrors, 'title')}</p>
               )}
             </div>
-            
+
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Date
               </label>
               <input
                 type="date"
                 value={uploadForm.date}
                 onChange={(e) => setUploadForm({ ...uploadForm, date: e.target.value })}
-                className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 ${
+                className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white ${
                   getFieldError(validationErrors, 'date')
                     ? 'border-red-500 focus:ring-red-500'
-                    : 'border-gray-300 focus:ring-orange-500'
+                    : 'border-gray-300 dark:border-gray-700 focus:ring-orange-500'
                 }`}
               />
               {getFieldError(validationErrors, 'date') && (
                 <p className="mt-1 text-sm text-red-600">{getFieldError(validationErrors, 'date')}</p>
               )}
             </div>
-            
+
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Description (optional)
               </label>
               <textarea
@@ -276,17 +276,17 @@ export default function TheBounceClient({ newsletters: initialNewsletters }: The
                 onChange={(e) => setUploadForm({ ...uploadForm, description: e.target.value })}
                 placeholder="Brief description of this issue's content"
                 rows={2}
-                className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 ${
+                className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white ${
                   getFieldError(validationErrors, 'description')
                     ? 'border-red-500 focus:ring-red-500'
-                    : 'border-gray-300 focus:ring-orange-500'
+                    : 'border-gray-300 dark:border-gray-700 focus:ring-orange-500'
                 }`}
               />
               {getFieldError(validationErrors, 'description') && (
                 <p className="mt-1 text-sm text-red-600">{getFieldError(validationErrors, 'description')}</p>
               )}
             </div>
-            
+
             <div className="flex items-center">
               <label className="flex items-center gap-2 cursor-pointer">
                 <input
@@ -295,12 +295,12 @@ export default function TheBounceClient({ newsletters: initialNewsletters }: The
                   onChange={(e) => setUploadForm({ ...uploadForm, featured: e.target.checked })}
                   className="rounded text-orange-500 focus:ring-orange-500"
                 />
-                <span className="text-sm font-medium text-gray-700">Feature this issue</span>
+                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Feature this issue</span>
               </label>
             </div>
-            
+
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 PDF File
               </label>
               <FileUpload
@@ -375,7 +375,7 @@ export default function TheBounceClient({ newsletters: initialNewsletters }: The
       )}
       
       {/* Search and View Mode */}
-      <div className="mb-6 bg-white rounded-lg shadow p-3 sm:p-4">
+      <div className="mb-6 bg-white dark:bg-gray-800 rounded-lg shadow p-3 sm:p-4">
         <div className="flex flex-wrap gap-4">
           <div className="flex-1 min-w-0">
             <input
@@ -383,7 +383,7 @@ export default function TheBounceClient({ newsletters: initialNewsletters }: The
               placeholder="Search newsletters..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full px-3 py-2 text-sm sm:text-base border border-gray-300 rounded-md focus:outline-none focus:ring-orange-500 focus:border-orange-500"
+              className="w-full px-3 py-2 text-sm sm:text-base border border-gray-300 dark:border-gray-700 rounded-md focus:outline-none focus:ring-orange-500 focus:border-orange-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
             />
           </div>
 
@@ -393,7 +393,7 @@ export default function TheBounceClient({ newsletters: initialNewsletters }: The
               className={`px-2 sm:px-3 py-1.5 sm:py-2 rounded-md text-xs sm:text-sm ${
                 viewMode === 'grid'
                   ? 'bg-orange-500 text-white'
-                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                  : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
               }`}
             >
               Grid View
@@ -403,7 +403,7 @@ export default function TheBounceClient({ newsletters: initialNewsletters }: The
               className={`px-2 sm:px-3 py-1.5 sm:py-2 rounded-md text-xs sm:text-sm ${
                 viewMode === 'list'
                   ? 'bg-orange-500 text-white'
-                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                  : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
               }`}
             >
               List View
@@ -414,10 +414,10 @@ export default function TheBounceClient({ newsletters: initialNewsletters }: The
       
       {/* Newsletter Archive */}
       {filteredNewsletters.length === 0 ? (
-        <div className="text-center py-12 bg-white rounded-lg shadow">
+        <div className="text-center py-12 bg-white dark:bg-gray-800 rounded-lg shadow">
           <IconNotebook className="mx-auto h-12 w-12 text-gray-400" />
-          <h3 className="mt-2 text-sm font-medium text-gray-900">No newsletters found</h3>
-          <p className="mt-1 text-sm text-gray-500">
+          <h3 className="mt-2 text-sm font-medium text-gray-900 dark:text-white">No newsletters found</h3>
+          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
             {searchTerm
               ? `No newsletters found matching "${searchTerm}"`
               : (user.role === 'admin' || user.role === 'executive')
@@ -432,7 +432,7 @@ export default function TheBounceClient({ newsletters: initialNewsletters }: The
               {filteredNewsletters.map((newsletter) => (
                 <Card key={newsletter.id} className="hover:shadow-lg transition-shadow">
                   <div className="p-6">
-                    <div className="flex items-center gap-2 text-sm text-gray-500 mb-3">
+                    <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 mb-3">
                       <IconCalendar className="h-4 w-4" />
                       <span>
                         {new Date(newsletter.date).toLocaleDateString('en-CA', {
@@ -442,17 +442,17 @@ export default function TheBounceClient({ newsletters: initialNewsletters }: The
                         })}
                       </span>
                     </div>
-                    
+
                     <h3 className="text-lg font-bold text-cboa-blue mb-2">
                       {newsletter.title}
                     </h3>
-                    
+
                     {newsletter.description && (
-                      <p className="text-gray-600 text-sm mb-4 line-clamp-2">
+                      <p className="text-gray-600 dark:text-gray-300 text-sm mb-4 line-clamp-2">
                         {newsletter.description}
                       </p>
                     )}
-                    
+
                     <div className="flex gap-2">
                       <button
                         onClick={() => handleView(newsletter)}
@@ -462,14 +462,14 @@ export default function TheBounceClient({ newsletters: initialNewsletters }: The
                       </button>
                       <button
                         onClick={() => handleDownload(newsletter)}
-                        className="flex-1 bg-gray-200 text-gray-700 px-3 py-2 rounded-lg text-sm font-medium hover:bg-gray-300 transition-colors"
+                        className="flex-1 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 px-3 py-2 rounded-lg text-sm font-medium hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
                       >
                         Download
                       </button>
                       {(user.role === 'admin' || user.role === 'executive') && (
                         <button
                           onClick={() => handleDelete(newsletter.id)}
-                          className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                          className="p-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
                           title="Delete newsletter"
                         >
                           <IconTrash className="h-4 w-4" />
@@ -482,16 +482,16 @@ export default function TheBounceClient({ newsletters: initialNewsletters }: The
             </div>
           ) : (
             <Card className="overflow-hidden">
-              <ul className="divide-y divide-gray-200">
+              <ul className="divide-y divide-gray-200 dark:divide-gray-700">
                 {filteredNewsletters.map((newsletter) => (
-                  <li key={newsletter.id} className="hover:bg-gray-50 p-4 sm:p-6">
+                  <li key={newsletter.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50 p-4 sm:p-6">
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                       <div className="flex-1 min-w-0">
                         <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 mb-1">
                           <h3 className="text-base sm:text-lg font-medium text-cboa-blue truncate">
                             {newsletter.title}
                           </h3>
-                          <span className="text-xs sm:text-sm text-gray-500">
+                          <span className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
                             {new Date(newsletter.date).toLocaleDateString('en-CA', {
                               year: 'numeric',
                               month: 'long',
@@ -500,7 +500,7 @@ export default function TheBounceClient({ newsletters: initialNewsletters }: The
                           </span>
                         </div>
                         {newsletter.description && (
-                          <p className="text-gray-600 text-sm line-clamp-2">
+                          <p className="text-gray-600 dark:text-gray-300 text-sm line-clamp-2">
                             {newsletter.description}
                           </p>
                         )}
@@ -513,16 +513,16 @@ export default function TheBounceClient({ newsletters: initialNewsletters }: The
                         >
                           View
                         </button>
-                        <span className="text-gray-300">|</span>
+                        <span className="text-gray-300 dark:text-gray-600">|</span>
                         <button
                           onClick={() => handleDownload(newsletter)}
-                          className="text-gray-600 hover:text-gray-800 font-medium text-sm"
+                          className="text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 font-medium text-sm"
                         >
                           Download
                         </button>
                         {(user.role === 'admin' || user.role === 'executive') && (
                           <>
-                            <span className="text-gray-300">|</span>
+                            <span className="text-gray-300 dark:text-gray-600">|</span>
                             <button
                               onClick={() => handleDelete(newsletter.id)}
                               className="text-red-600 hover:text-red-700 font-medium text-sm"
@@ -551,19 +551,19 @@ export default function TheBounceClient({ newsletters: initialNewsletters }: The
       )}
       
       {/* Newsletter Info */}
-      <div className="bg-orange-50 border border-orange-200 rounded-lg p-6">
-        <h3 className="text-lg font-semibold text-orange-900 mb-2">About The Bounce</h3>
-        <p className="text-sm text-orange-800 mb-3">
+      <div className="bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg p-6">
+        <h3 className="text-lg font-semibold text-orange-900 dark:text-orange-300 mb-2">About The Bounce</h3>
+        <p className="text-sm text-orange-800 dark:text-orange-300 mb-3">
           The Bounce is CBOA's monthly newsletter, featuring:
         </p>
-        <ul className="text-sm text-orange-800 space-y-1">
+        <ul className="text-sm text-orange-800 dark:text-orange-300 space-y-1">
           <li>• In-depth articles on officiating techniques</li>
           <li>• Rule interpretations and clarifications</li>
           <li>• Member spotlights and achievements</li>
           <li>• Training tips from experienced officials</li>
           <li>• Important dates and upcoming events</li>
         </ul>
-        <p className="text-sm text-orange-800 mt-3">
+        <p className="text-sm text-orange-800 dark:text-orange-300 mt-3">
           New issues are published on the first Monday of each month.
         </p>
       </div>
