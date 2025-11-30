@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRole } from '@/contexts/RoleContext'
 import { membersAPI, memberActivitiesAPI } from '@/lib/api'
 import { IconUser, IconSearch, IconPlus, IconEdit, IconTrash, IconCalendar, IconX, IconCheck, IconFilter } from '@tabler/icons-react'
+import Modal from '@/components/ui/Modal'
 import { useToast } from '@/hooks/useToast'
 import {
   validateMemberForm,
@@ -409,65 +410,65 @@ export default function MembersPage() {
       )}
 
       {/* Member Detail Modal */}
-      {showMemberModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="sticky top-0 bg-white border-b p-4 flex items-center justify-between">
-              <h2 className="text-2xl font-bold text-gray-900">
-                {isEditing ? (selectedMember ? 'Edit Member' : 'Add Member') : 'Member Details'}
-              </h2>
-              <div className="flex gap-2">
-                {!isEditing && selectedMember && (
-                  <>
-                    <button
-                      onClick={handleEditMember}
-                      className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-                    >
-                      <IconEdit size={20} />
-                      Edit
-                    </button>
-                    <button
-                      onClick={() => selectedMember.id && handleDeleteMember(selectedMember.id)}
-                      className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
-                    >
-                      <IconTrash size={20} />
-                      Delete
-                    </button>
-                  </>
-                )}
-                {isEditing && (
-                  <>
-                    <button
-                      onClick={handleSaveMember}
-                      disabled={isSaving}
-                      className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50"
-                    >
-                      <IconCheck size={20} />
-                      {isSaving ? 'Saving...' : 'Save'}
-                    </button>
-                    {selectedMember && (
-                      <button
-                        onClick={() => setIsEditing(false)}
-                        disabled={isSaving}
-                        className="flex items-center gap-2 px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 disabled:opacity-50"
-                      >
-                        <IconX size={20} />
-                        Cancel
-                      </button>
-                    )}
-                  </>
-                )}
+      <Modal
+        isOpen={showMemberModal}
+        onClose={() => setShowMemberModal(false)}
+        title={isEditing ? (selectedMember ? 'Edit Member' : 'Add Member') : 'Member Details'}
+        size="xl"
+        showCloseButton={false}
+      >
+        <div className="max-h-[70vh] overflow-y-auto -mx-6 px-6">
+          {/* Action buttons in header area */}
+          <div className="flex gap-2 justify-end mb-4 -mt-2">
+            {!isEditing && selectedMember && (
+              <>
                 <button
-                  onClick={() => setShowMemberModal(false)}
-                  className="p-2 text-gray-500 hover:text-gray-700"
+                  onClick={handleEditMember}
+                  className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
                 >
-                  <IconX size={24} />
+                  <IconEdit size={20} />
+                  Edit
                 </button>
-              </div>
-            </div>
+                <button
+                  onClick={() => selectedMember.id && handleDeleteMember(selectedMember.id)}
+                  className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+                >
+                  <IconTrash size={20} />
+                  Delete
+                </button>
+              </>
+            )}
+            {isEditing && (
+              <>
+                <button
+                  onClick={handleSaveMember}
+                  disabled={isSaving}
+                  className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50"
+                >
+                  <IconCheck size={20} />
+                  {isSaving ? 'Saving...' : 'Save'}
+                </button>
+                {selectedMember && (
+                  <button
+                    onClick={() => setIsEditing(false)}
+                    disabled={isSaving}
+                    className="flex items-center gap-2 px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 disabled:opacity-50"
+                  >
+                    <IconX size={20} />
+                    Cancel
+                  </button>
+                )}
+              </>
+            )}
+            <button
+              onClick={() => setShowMemberModal(false)}
+              className="p-2 text-gray-500 hover:text-gray-700"
+            >
+              <IconX size={24} />
+            </button>
+          </div>
 
-            <div className="p-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Basic Information */}
                 <div className="space-y-4">
                   <h3 className="text-lg font-semibold text-gray-900 border-b pb-2">Basic Information</h3>
@@ -750,86 +751,75 @@ export default function MembersPage() {
                   )}
                 </div>
               )}
-            </div>
-          </div>
         </div>
-      )}
+      </Modal>
 
       {/* Add Activity Modal */}
-      {showActivityModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg shadow-xl max-w-md w-full">
-            <div className="border-b p-4 flex items-center justify-between">
-              <h2 className="text-xl font-bold text-gray-900">Add Activity</h2>
-              <button
-                onClick={() => setShowActivityModal(false)}
-                className="p-2 text-gray-500 hover:text-gray-700"
-              >
-                <IconX size={24} />
-              </button>
-            </div>
+      <Modal
+        isOpen={showActivityModal}
+        onClose={() => setShowActivityModal(false)}
+        title="Add Activity"
+        size="sm"
+      >
+        <div className="space-y-4">
+          <div>
+            <label className="text-sm font-medium text-gray-700 mb-1 block">Activity Type *</label>
+            <select
+              value={activityForm.activity_type}
+              onChange={(e) => setActivityForm({ ...activityForm, activity_type: e.target.value })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="game">Regular Game</option>
+              <option value="special_game">Special Game (Finals, Zones, Provincials)</option>
+              <option value="training">Training</option>
+              <option value="evaluation">Evaluation</option>
+              <option value="suspension">Suspension</option>
+              <option value="meeting">Meeting</option>
+              <option value="certification">Certification</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
 
-            <div className="p-6 space-y-4">
-              <div>
-                <label className="text-sm font-medium text-gray-700 mb-1 block">Activity Type *</label>
-                <select
-                  value={activityForm.activity_type}
-                  onChange={(e) => setActivityForm({ ...activityForm, activity_type: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="game">Regular Game</option>
-                  <option value="special_game">Special Game (Finals, Zones, Provincials)</option>
-                  <option value="training">Training</option>
-                  <option value="evaluation">Evaluation</option>
-                  <option value="suspension">Suspension</option>
-                  <option value="meeting">Meeting</option>
-                  <option value="certification">Certification</option>
-                  <option value="other">Other</option>
-                </select>
-              </div>
+          <div>
+            <label className="text-sm font-medium text-gray-700 mb-1 block">Date *</label>
+            <input
+              type="date"
+              value={activityForm.activity_date}
+              onChange={(e) => setActivityForm({ ...activityForm, activity_date: e.target.value })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+              required
+            />
+          </div>
 
-              <div>
-                <label className="text-sm font-medium text-gray-700 mb-1 block">Date *</label>
-                <input
-                  type="date"
-                  value={activityForm.activity_date}
-                  onChange={(e) => setActivityForm({ ...activityForm, activity_date: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                  required
-                />
-              </div>
+          <div>
+            <label className="text-sm font-medium text-gray-700 mb-1 block">Notes</label>
+            <textarea
+              value={activityForm.notes || ''}
+              onChange={(e) => setActivityForm({ ...activityForm, notes: e.target.value })}
+              rows={3}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+              placeholder="Add details about this activity..."
+            />
+          </div>
 
-              <div>
-                <label className="text-sm font-medium text-gray-700 mb-1 block">Notes</label>
-                <textarea
-                  value={activityForm.notes || ''}
-                  onChange={(e) => setActivityForm({ ...activityForm, notes: e.target.value })}
-                  rows={3}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                  placeholder="Add details about this activity..."
-                />
-              </div>
-
-              <div className="flex gap-2 justify-end pt-4">
-                <button
-                  onClick={() => setShowActivityModal(false)}
-                  className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600"
-                  disabled={isSaving}
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleSaveActivity}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
-                  disabled={isSaving}
-                >
-                  {isSaving ? 'Saving...' : 'Save Activity'}
-                </button>
-              </div>
-            </div>
+          <div className="flex gap-2 justify-end pt-4">
+            <button
+              onClick={() => setShowActivityModal(false)}
+              className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600"
+              disabled={isSaving}
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleSaveActivity}
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+              disabled={isSaving}
+            >
+              {isSaving ? 'Saving...' : 'Save Activity'}
+            </button>
           </div>
         </div>
-      )}
+      </Modal>
     </div>
   )
 }

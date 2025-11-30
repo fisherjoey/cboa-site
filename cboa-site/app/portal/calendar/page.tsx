@@ -8,6 +8,7 @@ import interactionPlugin from '@fullcalendar/interaction'
 import { EventClickArg, DateSelectArg } from '@fullcalendar/core'
 import './calendar.css'
 import { IconPlus, IconEdit, IconTrash, IconCalendar, IconClock, IconMapPin, IconUsers, IconCalendarEvent, IconChartBar, IconX } from '@tabler/icons-react'
+import Modal from '@/components/ui/Modal'
 import { calendarAPI } from '@/lib/api'
 import { useRole } from '@/contexts/RoleContext'
 import moment from 'moment'
@@ -460,249 +461,236 @@ function EventModal({
   if (!isEditing) {
     // View mode
     return (
-      <div className="fixed inset-0 z-50 overflow-y-auto">
-        <div className="flex items-center justify-center min-h-screen px-4">
-          <div className="fixed inset-0 bg-black opacity-50" onClick={onClose}></div>
-
-          <div className="relative bg-white rounded-lg max-w-md w-full p-6 z-10">
-            <div className="flex justify-between items-start mb-4">
-              <h2 className="text-xl font-bold text-gray-900">{event.title}</h2>
-              <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
-                ✕
-              </button>
+      <Modal
+        isOpen={true}
+        onClose={onClose}
+        title={event.title}
+        size="sm"
+      >
+        <div className="space-y-3">
+          {event.type && (
+            <div className="flex items-center gap-2">
+              <IconCalendar className="h-5 w-5 text-gray-500" />
+              <span className="capitalize">{event.type}</span>
             </div>
+          )}
 
-            <div className="space-y-3">
-              {event.type && (
-                <div className="flex items-center gap-2">
-                  <IconCalendar className="h-5 w-5 text-gray-500" />
-                  <span className="capitalize">{event.type}</span>
-                </div>
-              )}
-
-              <div className="flex items-center gap-2">
-                <IconClock className="h-5 w-5 text-gray-500" />
-                <span>
-                  {moment(event.start).format('MMM DD, YYYY h:mm A')} -
-                  {moment(event.end).format('h:mm A')}
-                </span>
-              </div>
-
-              {event.location && (
-                <div className="flex items-center gap-2">
-                  <IconMapPin className="h-5 w-5 text-gray-500" />
-                  <span>{event.location}</span>
-                </div>
-              )}
-
-              {event.instructor && (
-                <div className="flex items-center gap-2">
-                  <IconUsers className="h-5 w-5 text-gray-500" />
-                  <span>Instructor: {event.instructor}</span>
-                </div>
-              )}
-
-              {event.description && (
-                <div className="mt-4">
-                  <p className="text-gray-600">{event.description}</p>
-                </div>
-              )}
-
-              {event.registrationLink && (
-                <a
-                  href={event.registrationLink}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-block mt-4 bg-orange-500 text-white px-4 py-2 rounded hover:bg-orange-600"
-                >
-                  Register Now
-                </a>
-              )}
-            </div>
-
-            <div className="mt-6 flex gap-2">
-              {canEdit && (
-                <>
-                  <button
-                    onClick={onEdit}
-                    className="flex-1 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 flex items-center justify-center gap-2"
-                  >
-                    <IconEdit className="h-4 w-4" />
-                    Edit
-                  </button>
-                  <button
-                    onClick={onDelete}
-                    className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 flex items-center justify-center gap-2"
-                  >
-                    <IconTrash className="h-4 w-4" />
-                  </button>
-                </>
-              )}
-              <button
-                onClick={onClose}
-                className="flex-1 bg-gray-200 text-gray-800 px-4 py-2 rounded hover:bg-gray-300"
-              >
-                Close
-              </button>
-            </div>
+          <div className="flex items-center gap-2">
+            <IconClock className="h-5 w-5 text-gray-500" />
+            <span>
+              {moment(event.start).format('MMM DD, YYYY h:mm A')} -
+              {moment(event.end).format('h:mm A')}
+            </span>
           </div>
+
+          {event.location && (
+            <div className="flex items-center gap-2">
+              <IconMapPin className="h-5 w-5 text-gray-500" />
+              <span>{event.location}</span>
+            </div>
+          )}
+
+          {event.instructor && (
+            <div className="flex items-center gap-2">
+              <IconUsers className="h-5 w-5 text-gray-500" />
+              <span>Instructor: {event.instructor}</span>
+            </div>
+          )}
+
+          {event.description && (
+            <div className="mt-4">
+              <p className="text-gray-600">{event.description}</p>
+            </div>
+          )}
+
+          {event.registrationLink && (
+            <a
+              href={event.registrationLink}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-block mt-4 bg-orange-500 text-white px-4 py-2 rounded hover:bg-orange-600"
+            >
+              Register Now
+            </a>
+          )}
         </div>
-      </div>
+
+        <div className="mt-6 flex gap-2">
+          {canEdit && (
+            <>
+              <button
+                onClick={onEdit}
+                className="flex-1 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 flex items-center justify-center gap-2"
+              >
+                <IconEdit className="h-4 w-4" />
+                Edit
+              </button>
+              <button
+                onClick={onDelete}
+                className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 flex items-center justify-center gap-2"
+              >
+                <IconTrash className="h-4 w-4" />
+              </button>
+            </>
+          )}
+          <button
+            onClick={onClose}
+            className="flex-1 bg-gray-200 text-gray-800 px-4 py-2 rounded hover:bg-gray-300"
+          >
+            Close
+          </button>
+        </div>
+      </Modal>
     )
   }
 
   // Edit mode
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto">
-      <div className="flex items-center justify-center min-h-screen px-4">
-        <div className="fixed inset-0 bg-black opacity-50" onClick={onClose}></div>
-
-        <div className="relative bg-white rounded-lg max-w-md w-full p-6 z-10">
-          <h2 className="text-xl font-bold text-gray-900 mb-4">
-            {event.id ? 'Edit Event' : 'Add New Event'}
-          </h2>
-
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Event Title *
-              </label>
-              <input
-                type="text"
-                value={formData.title}
-                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
-                required
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Event Type *
-              </label>
-              <select
-                value={formData.type}
-                onChange={(e) => setFormData({ ...formData, type: e.target.value as CBOAEvent['type'] })}
-                className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
-                required
-              >
-                <option value="training">Training</option>
-                <option value="meeting">Meeting</option>
-                <option value="league">League Date</option>
-                <option value="social">Social</option>
-              </select>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Start Date/Time *
-                </label>
-                <input
-                  type="datetime-local"
-                  value={moment(formData.start).format('YYYY-MM-DDTHH:mm')}
-                  onChange={(e) => setFormData({ ...formData, start: new Date(e.target.value) })}
-                  className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  End Date/Time *
-                </label>
-                <input
-                  type="datetime-local"
-                  value={moment(formData.end).format('YYYY-MM-DDTHH:mm')}
-                  onChange={(e) => setFormData({ ...formData, end: new Date(e.target.value) })}
-                  className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
-                  required
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Location
-              </label>
-              <input
-                type="text"
-                value={formData.location || ''}
-                onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Description
-              </label>
-              <textarea
-                value={formData.description || ''}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
-                rows={3}
-              />
-            </div>
-
-            {formData.type === 'training' && (
-              <>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Instructor
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.instructor || ''}
-                    onChange={(e) => setFormData({ ...formData, instructor: e.target.value })}
-                    className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Max Participants
-                  </label>
-                  <input
-                    type="number"
-                    value={formData.maxParticipants || ''}
-                    onChange={(e) => setFormData({ ...formData, maxParticipants: parseInt(e.target.value) })}
-                    className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Registration Link
-                  </label>
-                  <input
-                    type="url"
-                    value={formData.registrationLink || ''}
-                    onChange={(e) => setFormData({ ...formData, registrationLink: e.target.value })}
-                    className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
-                  />
-                </div>
-              </>
-            )}
-
-            <div className="flex gap-2 pt-4">
-              <button
-                type="submit"
-                className="flex-1 bg-orange-500 text-white px-4 py-2 rounded hover:bg-orange-600"
-              >
-                Save Event
-              </button>
-              <button
-                type="button"
-                onClick={onClose}
-                className="flex-1 bg-gray-200 text-gray-800 px-4 py-2 rounded hover:bg-gray-300"
-              >
-                Cancel
-              </button>
-            </div>
-          </form>
+    <Modal
+      isOpen={true}
+      onClose={onClose}
+      title={event.id ? 'Edit Event' : 'Add New Event'}
+      size="md"
+    >
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Event Title *
+          </label>
+          <input
+            type="text"
+            value={formData.title}
+            onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+            className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+            required
+          />
         </div>
-      </div>
-    </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Event Type *
+          </label>
+          <select
+            value={formData.type}
+            onChange={(e) => setFormData({ ...formData, type: e.target.value as CBOAEvent['type'] })}
+            className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+            required
+          >
+            <option value="training">Training</option>
+            <option value="meeting">Meeting</option>
+            <option value="league">League Date</option>
+            <option value="social">Social</option>
+          </select>
+        </div>
+
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Start Date/Time *
+            </label>
+            <input
+              type="datetime-local"
+              value={moment(formData.start).format('YYYY-MM-DDTHH:mm')}
+              onChange={(e) => setFormData({ ...formData, start: new Date(e.target.value) })}
+              className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+              required
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              End Date/Time *
+            </label>
+            <input
+              type="datetime-local"
+              value={moment(formData.end).format('YYYY-MM-DDTHH:mm')}
+              onChange={(e) => setFormData({ ...formData, end: new Date(e.target.value) })}
+              className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+              required
+            />
+          </div>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Location
+          </label>
+          <input
+            type="text"
+            value={formData.location || ''}
+            onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+            className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Description
+          </label>
+          <textarea
+            value={formData.description || ''}
+            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+            className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+            rows={3}
+          />
+        </div>
+
+        {formData.type === 'training' && (
+          <>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Instructor
+              </label>
+              <input
+                type="text"
+                value={formData.instructor || ''}
+                onChange={(e) => setFormData({ ...formData, instructor: e.target.value })}
+                className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Max Participants
+              </label>
+              <input
+                type="number"
+                value={formData.maxParticipants || ''}
+                onChange={(e) => setFormData({ ...formData, maxParticipants: parseInt(e.target.value) })}
+                className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Registration Link
+              </label>
+              <input
+                type="url"
+                value={formData.registrationLink || ''}
+                onChange={(e) => setFormData({ ...formData, registrationLink: e.target.value })}
+                className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+              />
+            </div>
+          </>
+        )}
+
+        <div className="flex gap-2 pt-4">
+          <button
+            type="submit"
+            className="flex-1 bg-orange-500 text-white px-4 py-2 rounded hover:bg-orange-600"
+          >
+            Save Event
+          </button>
+          <button
+            type="button"
+            onClick={onClose}
+            className="flex-1 bg-gray-200 text-gray-800 px-4 py-2 rounded hover:bg-gray-300"
+          >
+            Cancel
+          </button>
+        </div>
+      </form>
+    </Modal>
   )
 }

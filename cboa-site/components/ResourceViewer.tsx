@@ -1,8 +1,9 @@
 'use client'
 
 import { useState } from 'react'
-import { IconX, IconDownload, IconExternalLink, IconMaximize, IconLink, IconArticle } from '@tabler/icons-react'
+import { IconX, IconDownload, IconExternalLink, IconMaximize, IconMinimize, IconLink, IconArticle } from '@tabler/icons-react'
 import { HTMLViewer } from './TinyMCEEditor'
+import Modal from '@/components/ui/Modal'
 
 interface ResourceViewerProps {
   resource: {
@@ -22,7 +23,7 @@ export default function ResourceViewer({ resource, onClose }: ResourceViewerProp
 
   const getFileType = (url: string) => {
     const extension = url.split('.').pop()?.toLowerCase()
-    
+
     if (['pdf'].includes(extension || '')) return 'pdf'
     if (['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'].includes(extension || '')) return 'image'
     if (['mp4', 'webm', 'ogg', 'mov'].includes(extension || '')) return 'video'
@@ -30,12 +31,12 @@ export default function ResourceViewer({ resource, onClose }: ResourceViewerProp
     if (['doc', 'docx'].includes(extension || '')) return 'word'
     if (['xls', 'xlsx'].includes(extension || '')) return 'excel'
     if (['ppt', 'pptx'].includes(extension || '')) return 'powerpoint'
-    
+
     return 'other'
   }
-  
+
   const fileType = resource.fileUrl ? getFileType(resource.fileUrl) : null
-  
+
   const renderContent = () => {
     // Handle text type resources - show the HTML content
     if (resource.resourceType === 'text' && resource.description) {
@@ -217,9 +218,9 @@ export default function ResourceViewer({ resource, onClose }: ResourceViewerProp
         </div>
       )
     }
-    
+
     if (!resource.fileUrl) return null
-    
+
     switch (fileType) {
       case 'pdf':
         if (iframeError) {
@@ -263,7 +264,7 @@ export default function ResourceViewer({ resource, onClose }: ResourceViewerProp
             </object>
           </div>
         )
-        
+
       case 'image':
         return (
           <div className="flex items-center justify-center h-full bg-gray-100">
@@ -274,7 +275,7 @@ export default function ResourceViewer({ resource, onClose }: ResourceViewerProp
             />
           </div>
         )
-        
+
       case 'video':
         return (
           <video
@@ -286,7 +287,7 @@ export default function ResourceViewer({ resource, onClose }: ResourceViewerProp
             Your browser does not support the video tag.
           </video>
         )
-        
+
       case 'audio':
         return (
           <div className="flex items-center justify-center h-full">
@@ -299,7 +300,7 @@ export default function ResourceViewer({ resource, onClose }: ResourceViewerProp
             </audio>
           </div>
         )
-        
+
       case 'word':
       case 'excel':
       case 'powerpoint':
@@ -337,7 +338,7 @@ export default function ResourceViewer({ resource, onClose }: ResourceViewerProp
             </div>
           </div>
         )
-        
+
       default:
         return (
           <div className="flex flex-col items-center justify-center h-full gap-4">
@@ -354,15 +355,20 @@ export default function ResourceViewer({ resource, onClose }: ResourceViewerProp
         )
     }
   }
-  
+
   return (
-    <div className="fixed inset-0 z-50 bg-black bg-opacity-50 flex items-center justify-center p-4">
-      <div className={`bg-white rounded-lg shadow-xl ${isFullscreen ? 'w-full h-full' : 'w-full max-w-6xl h-[80vh]'} flex flex-col`}>
+    <Modal
+      isOpen={true}
+      onClose={onClose}
+      size="full"
+      showCloseButton={false}
+    >
+      <div className={`flex flex-col ${isFullscreen ? 'fixed inset-0 z-[60] bg-white' : 'h-full'}`}>
         {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4 border-b">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-4 border-b -mx-6 -mt-6 px-6 pt-4">
           <div className="flex-1 min-w-0">
             <h2 className="text-lg sm:text-xl font-semibold truncate">{resource.title}</h2>
-            {resource.description && (
+            {resource.description && resource.resourceType !== 'text' && (
               <p className="text-xs sm:text-sm text-gray-600 mt-1 line-clamp-2">{resource.description}</p>
             )}
           </div>
@@ -370,9 +376,9 @@ export default function ResourceViewer({ resource, onClose }: ResourceViewerProp
             <button
               onClick={() => setIsFullscreen(!isFullscreen)}
               className="p-2 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded"
-              title="Toggle fullscreen"
+              title={isFullscreen ? "Exit fullscreen" : "Toggle fullscreen"}
             >
-              <IconMaximize className="h-5 w-5" />
+              {isFullscreen ? <IconMinimize className="h-5 w-5" /> : <IconMaximize className="h-5 w-5" />}
             </button>
             {resource.fileUrl && (
               <a
@@ -404,19 +410,19 @@ export default function ResourceViewer({ resource, onClose }: ResourceViewerProp
             </button>
           </div>
         </div>
-        
+
         {/* Content */}
-        <div className="flex-1 overflow-hidden">
+        <div className="flex-1 overflow-hidden mt-4 -mx-6 px-0">
           {renderContent()}
         </div>
-        
+
         {/* Footer */}
         {resource.fileSize && (
-          <div className="px-4 py-2 border-t text-sm text-gray-500">
+          <div className="px-0 py-2 border-t text-sm text-gray-500 -mx-6 -mb-6 px-6">
             File size: {resource.fileSize}
           </div>
         )}
       </div>
-    </div>
+    </Modal>
   )
 }

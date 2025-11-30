@@ -27,6 +27,7 @@
     "@fullcalendar/interaction": "^6.1.19",
     "@fullcalendar/list": "^6.1.19",
     "@fullcalendar/react": "^6.1.19",
+    "@headlessui/react": "^2.2.9",
     "@netlify/functions": "^4.2.5",
     "@supabase/supabase-js": "^2.57.4",
     "@tabler/icons-react": "^3.34.1",

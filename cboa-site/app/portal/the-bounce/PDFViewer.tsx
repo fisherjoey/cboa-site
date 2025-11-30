@@ -1,7 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { IconX, IconDownload, IconExternalLink, IconMaximize } from '@tabler/icons-react';
+import { IconX, IconDownload, IconExternalLink, IconMaximize, IconMinimize } from '@tabler/icons-react';
+import Modal from '@/components/ui/Modal';
 
 interface PDFViewerProps {
   pdfUrl: string;
@@ -59,10 +60,15 @@ export default function PDFViewer({ pdfUrl, title, onClose }: PDFViewerProps) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black bg-opacity-50 flex items-center justify-center p-4">
-      <div className={`bg-white rounded-lg shadow-xl ${isFullscreen ? 'w-full h-full' : 'w-full max-w-6xl h-[80vh]'} flex flex-col`}>
+    <Modal
+      isOpen={true}
+      onClose={onClose}
+      size="full"
+      showCloseButton={false}
+    >
+      <div className={`flex flex-col ${isFullscreen ? 'fixed inset-0 z-[60] bg-white' : 'h-full'}`}>
         {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4 border-b">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-4 border-b -mx-6 -mt-6 px-6 pt-4">
           <div className="flex-1 min-w-0">
             <h2 className="text-lg sm:text-xl font-semibold truncate">{title}</h2>
           </div>
@@ -70,9 +76,9 @@ export default function PDFViewer({ pdfUrl, title, onClose }: PDFViewerProps) {
             <button
               onClick={() => setIsFullscreen(!isFullscreen)}
               className="p-2 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded"
-              title="Toggle fullscreen"
+              title={isFullscreen ? "Exit fullscreen" : "Toggle fullscreen"}
             >
-              <IconMaximize className="h-5 w-5" />
+              {isFullscreen ? <IconMinimize className="h-5 w-5" /> : <IconMaximize className="h-5 w-5" />}
             </button>
             <a
               href={pdfUrl}
@@ -102,10 +108,10 @@ export default function PDFViewer({ pdfUrl, title, onClose }: PDFViewerProps) {
         </div>
 
         {/* Content */}
-        <div className="flex-1 overflow-hidden">
+        <div className="flex-1 overflow-hidden mt-4 -mx-6 -mb-6 px-0">
           {renderContent()}
         </div>
       </div>
-    </div>
+    </Modal>
   );
 }
