@@ -22,6 +22,11 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "@fullcalendar/core": "^6.1.19",
+    "@fullcalendar/daygrid": "^6.1.19",
+    "@fullcalendar/interaction": "^6.1.19",
+    "@fullcalendar/list": "^6.1.19",
+    "@fullcalendar/react": "^6.1.19",
     "@netlify/functions": "^4.2.5",
     "@supabase/supabase-js": "^2.57.4",
     "@tabler/icons-react": "^3.34.1",

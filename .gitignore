@@ -38,3 +38,5 @@ yarn-error.log*
 .env.test.local
 *.env
 cboa-site/.env.netlify
+CLAUDE.md
+.gitignore
