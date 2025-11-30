@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { resourcesAPI } from '@/lib/api'
 import { uploadFile } from '@/lib/fileUpload'
 import ResourceViewer from '@/components/ResourceViewer'
@@ -16,6 +16,7 @@ import {
 } from '@/lib/portalValidation'
 import { parseAPIError, sanitize, ValidationError } from '@/lib/errorHandling'
 import { TinyMCEEditor, HTMLViewer } from '@/components/TinyMCEEditor'
+import FileUpload from '@/components/FileUpload'
 import {
   IconPlus,
   IconEdit,
@@ -30,7 +31,6 @@ import {
   IconDeviceFloppy,
   IconX,
   IconUpload,
-  IconFileUpload,
   IconLink,
   IconArticle,
   IconChevronDown,
@@ -85,7 +85,6 @@ export default function ResourcesClient() {
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc')
   const [groupByCategory, setGroupByCategory] = useState(true)
   const [viewMode, setViewMode] = useState<'list' | 'grid'>('list')
-  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const canEdit = user.role === 'admin' || user.role === 'executive'
 
@@ -370,7 +369,6 @@ export default function ResourcesClient() {
       setFileSearchTerm('')
       setShowFileDropdown(false)
       setValidationErrors([])
-      if (fileInputRef.current) fileInputRef.current.value = ''
       setIsCreating(false)
     } catch (err) {
       error('Failed to Create Resource', parseAPIError(err))
@@ -1007,55 +1005,26 @@ export default function ResourcesClient() {
             {newResource.resourceType === 'file' && (
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Resource File *</label>
-                <div className="flex gap-2">
-                  <input
-                    type="file"
-                    ref={fileInputRef}
-                    onChange={(e) => {
-                      const file = e.target.files?.[0]
-                      if (file) {
-                        setUploadedFile(file)
-                        const sizeInMB = (file.size / (1024 * 1024)).toFixed(2)
-                        setNewResource({
-                          ...newResource,
-                          fileSize: `${sizeInMB} MB`,
-                          fileUrl: ''
-                        })
-                        setFileSearchTerm('')
-                      }
-                    }}
-                    className="hidden"
-                    accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => fileInputRef.current?.click()}
-                    className={`flex-1 px-3 py-2 rounded-lg border flex items-center justify-center gap-2 transition-colors text-gray-700 dark:text-gray-300 ${
-                      getFieldError(validationErrors, 'file')
-                        ? 'border-red-500 bg-red-50 dark:bg-red-900/20'
-                        : 'border-gray-300 dark:border-gray-700 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600'
-                    }`}
-                  >
-                    <IconFileUpload className="h-5 w-5" />
-                    {uploadedFile ? uploadedFile.name : 'Upload File'}
-                  </button>
-                  {uploadedFile && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setUploadedFile(null)
-                        setNewResource({ ...newResource, fileSize: '', fileUrl: '' })
-                        if (fileInputRef.current) fileInputRef.current.value = ''
-                      }}
-                      className="px-3 py-2 bg-red-100 dark:bg-red-900/30 hover:bg-red-200 dark:hover:bg-red-900/50 text-red-600 dark:text-red-400 rounded-lg"
-                    >
-                      <IconX className="h-5 w-5" />
-                    </button>
-                  )}
-                </div>
-                {newResource.fileSize && (
-                  <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">File size: {newResource.fileSize}</p>
-                )}
+                <FileUpload
+                  onFileSelect={(file) => {
+                    setUploadedFile(file)
+                    if (file) {
+                      const sizeInMB = (file.size / (1024 * 1024)).toFixed(2)
+                      setNewResource({
+                        ...newResource,
+                        fileSize: `${sizeInMB} MB`,
+                        fileUrl: ''
+                      })
+                    } else {
+                      setNewResource({ ...newResource, fileSize: '', fileUrl: '' })
+                    }
+                    setFileSearchTerm('')
+                  }}
+                  selectedFile={uploadedFile}
+                  accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx"
+                  maxSize={10}
+                  buttonText="Upload File"
+                />
                 {getFieldError(validationErrors, 'file') && (
                   <p className="mt-1 text-sm text-red-600">{getFieldError(validationErrors, 'file')}</p>
                 )}
@@ -1146,7 +1115,6 @@ export default function ResourcesClient() {
                   setUploadedFile(null)
                   setFileSearchTerm('')
                   setShowFileDropdown(false)
-                  if (fileInputRef.current) fileInputRef.current.value = ''
                 }}
                 className="bg-gray-300 dark:bg-gray-600 text-gray-700 dark:text-gray-200 px-4 py-2 rounded-lg hover:bg-gray-400 dark:hover:bg-gray-500 flex items-center justify-center gap-2"
               >
