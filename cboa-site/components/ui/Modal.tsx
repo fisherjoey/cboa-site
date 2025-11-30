@@ -58,11 +58,11 @@ export default function Modal({
               leaveTo="opacity-0 scale-95"
             >
               <DialogPanel
-                className={`relative bg-white rounded-lg shadow-xl w-full ${sizeStyles[size]} ${size === 'full' ? 'flex flex-col' : ''}`}
+                className={`relative bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full ${sizeStyles[size]} ${size === 'full' ? 'flex flex-col' : ''}`}
               >
                 {title && (
-                  <div className="border-b px-6 py-4">
-                    <DialogTitle className="text-xl font-semibold text-gray-900">
+                  <div className="border-b border-gray-200 dark:border-gray-700 px-6 py-4">
+                    <DialogTitle className="text-xl font-semibold text-gray-900 dark:text-white">
                       {title}
                     </DialogTitle>
                   </div>
@@ -71,7 +71,7 @@ export default function Modal({
                 {showCloseButton && (
                   <button
                     onClick={onClose}
-                    className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors"
+                    className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors"
                     aria-label="Close modal"
                   >
                     <IconX className="w-6 h-6" />

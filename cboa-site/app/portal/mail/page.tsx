@@ -262,18 +262,18 @@ export default function MailPage() {
     <div className="px-4 py-5 sm:p-6">
       {/* Header */}
       <div className="mb-6 sm:mb-8">
-        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">The Bounce</h1>
-        <p className="mt-1 sm:mt-2 text-sm sm:text-base text-gray-600">
+        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">The Bounce</h1>
+        <p className="mt-1 sm:mt-2 text-sm sm:text-base text-gray-600 dark:text-gray-300">
           Send announcements and updates to members via email
         </p>
       </div>
 
       {/* Email Composer */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 space-y-6">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6 space-y-6">
 
         {/* Subject Line */}
         <div>
-          <label className="block text-sm font-semibold text-gray-700 mb-2">
+          <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
             Subject Line *
           </label>
           <input
@@ -281,20 +281,20 @@ export default function MailPage() {
             value={subject}
             onChange={(e) => setSubject(e.target.value)}
             placeholder="Enter email subject..."
-            className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+            className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400"
           />
         </div>
 
         {/* Recipient Groups */}
         <div>
-          <label className="block text-sm font-semibold text-gray-700 mb-3">
+          <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">
             <IconUsers className="inline h-4 w-4 mr-1" />
             Recipient Groups *
           </label>
           <div className="space-y-6">
             {Object.entries(groupedRecipients).map(([category, groups]) => (
               <div key={category}>
-                <h3 className="text-sm font-bold text-gray-800 mb-2 uppercase tracking-wide">
+                <h3 className="text-sm font-bold text-gray-800 dark:text-gray-200 mb-2 uppercase tracking-wide">
                   {category}
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -305,16 +305,16 @@ export default function MailPage() {
                       onClick={() => toggleRecipientGroup(group.id)}
                       className={`p-4 border-2 rounded-lg text-left transition-all ${
                         recipients.includes(group.id)
-                          ? 'border-orange-600 bg-orange-50'
-                          : 'border-gray-200 hover:border-gray-300'
+                          ? 'border-orange-600 bg-orange-50 dark:bg-orange-900/20'
+                          : 'border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500'
                       }`}
                     >
                       <div className="flex items-start justify-between">
                         <div className="flex-1">
-                          <div className="font-semibold text-gray-900 text-sm">
+                          <div className="font-semibold text-gray-900 dark:text-white text-sm">
                             {group.label}
                           </div>
-                          <div className="text-xs text-gray-600 mt-1">
+                          <div className="text-xs text-gray-600 dark:text-gray-400 mt-1">
                             {group.description}
                           </div>
                         </div>
@@ -332,13 +332,13 @@ export default function MailPage() {
 
         {/* Filter by Rank */}
         <div>
-          <label className="block text-sm font-semibold text-gray-700 mb-2">
+          <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
             Filter by Rank (Optional)
           </label>
           <select
             value={rankFilter}
             onChange={(e) => setRankFilter(e.target.value)}
-            className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+            className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
           >
             <option value="">No rank filter</option>
             <option value="150+">Rank 150+</option>
@@ -349,14 +349,14 @@ export default function MailPage() {
             <option value="275+">Rank 275+</option>
             <option value="300+">Rank 300+</option>
           </select>
-          <p className="text-xs text-gray-500 mt-1">
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
             Only send to officials with rank at or above this threshold
           </p>
         </div>
 
         {/* Custom Email Addresses */}
         <div>
-          <label className="block text-sm font-semibold text-gray-700 mb-2">
+          <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
             Additional Email Addresses (Optional)
           </label>
           <div className="relative" ref={dropdownRef}>
@@ -369,41 +369,41 @@ export default function MailPage() {
               }}
               onFocus={() => setShowEmailDropdown(true)}
               placeholder="Search members or enter email..."
-              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+              className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400"
             />
 
             {/* Dropdown */}
             {showEmailDropdown && emailSearch && (
-              <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-64 overflow-y-auto">
+              <div className="absolute z-10 w-full mt-1 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg max-h-64 overflow-y-auto">
                 {filteredMembers.length > 0 ? (
                   filteredMembers.slice(0, 10).map(member => (
                     <div
                       key={member.email}
                       onClick={() => toggleEmailSelection(member.email)}
-                      className="px-4 py-2.5 hover:bg-gray-50 cursor-pointer flex items-center gap-3 border-b border-gray-100 last:border-b-0"
+                      className="px-4 py-2.5 hover:bg-gray-50 dark:hover:bg-gray-600 cursor-pointer flex items-center gap-3 border-b border-gray-100 dark:border-gray-600 last:border-b-0"
                     >
                       <input
                         type="checkbox"
                         checked={customEmails.includes(member.email)}
                         onChange={() => {}}
-                        className="h-4 w-4 text-orange-600 rounded border-gray-300 focus:ring-orange-500"
+                        className="h-4 w-4 text-orange-600 rounded border-gray-300 dark:border-gray-500 focus:ring-orange-500"
                       />
                       <div className="flex-1">
-                        <div className="text-sm font-medium text-gray-900">{member.email}</div>
-                        <div className="text-xs text-gray-500">{member.name}</div>
+                        <div className="text-sm font-medium text-gray-900 dark:text-white">{member.email}</div>
+                        <div className="text-xs text-gray-500 dark:text-gray-400">{member.name}</div>
                       </div>
                     </div>
                   ))
                 ) : isValidEmail(emailSearch) ? (
                   <div
                     onClick={() => addCustomEmail(emailSearch)}
-                    className="px-4 py-3 hover:bg-gray-50 cursor-pointer flex items-center gap-2 text-sm"
+                    className="px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-600 cursor-pointer flex items-center gap-2 text-sm"
                   >
                     <span className="text-lg">➕</span>
-                    <span className="text-gray-700">Add "{emailSearch}"</span>
+                    <span className="text-gray-700 dark:text-gray-300">Add "{emailSearch}"</span>
                   </div>
                 ) : (
-                  <div className="px-4 py-3 text-sm text-gray-500">
+                  <div className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">
                     No members found. Enter a valid email address to add.
                   </div>
                 )}
@@ -414,20 +414,20 @@ export default function MailPage() {
           {/* Selected Emails */}
           {customEmails.length > 0 && (
             <div className="mt-3 space-y-2">
-              <div className="text-xs font-semibold text-gray-700 uppercase">
+              <div className="text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase">
                 Selected: {customEmails.length}
               </div>
               <div className="flex flex-wrap gap-2">
                 {customEmails.map(email => (
                   <div
                     key={email}
-                    className="inline-flex items-center gap-2 px-3 py-1.5 bg-orange-50 border border-orange-200 rounded-lg text-sm"
+                    className="inline-flex items-center gap-2 px-3 py-1.5 bg-orange-50 dark:bg-orange-900/30 border border-orange-200 dark:border-orange-700 rounded-lg text-sm"
                   >
-                    <span className="text-gray-900">{email}</span>
+                    <span className="text-gray-900 dark:text-white">{email}</span>
                     <button
                       type="button"
                       onClick={() => removeCustomEmail(email)}
-                      className="text-orange-600 hover:text-orange-800 transition-colors"
+                      className="text-orange-600 hover:text-orange-800 dark:text-orange-400 dark:hover:text-orange-300 transition-colors"
                     >
                       <IconX className="h-4 w-4" />
                     </button>
@@ -442,17 +442,17 @@ export default function MailPage() {
         <div>
           <div className="flex items-center justify-between mb-3">
             <div>
-              <label className="block text-sm font-semibold text-gray-700">
+              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300">
                 Email Content *
               </label>
-              <p className="text-xs text-gray-500 mt-1">
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                 Use Markdown formatting. The CBOA email template will be applied automatically.
               </p>
             </div>
             <button
               type="button"
               onClick={() => setShowPreview(!showPreview)}
-              className="flex items-center gap-2 px-3 py-1.5 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+              className="flex items-center gap-2 px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 transition-colors"
             >
               <IconEye className="h-4 w-4" />
               {showPreview ? 'Hide' : 'Show'} Preview
@@ -461,7 +461,7 @@ export default function MailPage() {
 
           <div className="flex flex-col gap-4">
             {/* Editor */}
-            <div className="border border-gray-300 rounded-lg overflow-hidden">
+            <div className="border border-gray-300 dark:border-gray-600 rounded-lg overflow-hidden">
               <TinyMCEEditor
                 value={content}
                 onChange={setContent}
@@ -473,8 +473,8 @@ export default function MailPage() {
 
             {/* Live Preview */}
             {showPreview && (
-              <div className="rounded-lg overflow-hidden">
-                <div className="bg-gray-700 text-white px-4 py-2 text-sm font-semibold flex items-center gap-2">
+              <div className="rounded-lg overflow-hidden border border-gray-300 dark:border-gray-600">
+                <div className="bg-gray-700 dark:bg-gray-900 text-white px-4 py-2 text-sm font-semibold flex items-center gap-2">
                   <IconEye className="h-4 w-4" />
                   Live Email Preview
                 </div>
@@ -492,37 +492,37 @@ export default function MailPage() {
         </div>
 
         {/* Save as Announcement Checkbox */}
-        <div className="border-t pt-4">
+        <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
           <label className="flex items-center gap-3 cursor-pointer">
             <input
               type="checkbox"
               checked={saveAsAnnouncement}
               onChange={(e) => setSaveAsAnnouncement(e.target.checked)}
-              className="h-5 w-5 text-orange-600 border-gray-300 rounded focus:ring-orange-500"
+              className="h-5 w-5 text-orange-600 border-gray-300 dark:border-gray-500 rounded focus:ring-orange-500"
             />
             <div>
-              <div className="font-medium text-gray-900">Also save as announcement</div>
-              <div className="text-sm text-gray-600">Post this email content to News & Announcements</div>
+              <div className="font-medium text-gray-900 dark:text-white">Also save as announcement</div>
+              <div className="text-sm text-gray-600 dark:text-gray-400">Post this email content to News & Announcements</div>
             </div>
           </label>
 
           {saveAsAnnouncement && (
-            <div className="mt-3 ml-8 p-3 bg-gray-50 rounded-lg">
-              <p className="text-sm text-gray-700 mb-1">This will be saved as:</p>
-              <ul className="text-xs text-gray-600 space-y-1 list-disc list-inside">
+            <div className="mt-3 ml-8 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+              <p className="text-sm text-gray-700 dark:text-gray-300 mb-1">This will be saved as:</p>
+              <ul className="text-xs text-gray-600 dark:text-gray-400 space-y-1 list-disc list-inside">
                 <li>Title: <span className="font-medium">{subject || '(Email Subject)'}</span></li>
                 <li>Category: <span className="font-medium">General</span></li>
                 <li>Priority: <span className="font-medium">Normal</span></li>
               </ul>
-              <p className="text-xs text-gray-500 mt-2">The content will be saved without the email template styling.</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">The content will be saved without the email template styling.</p>
             </div>
           )}
         </div>
 
         {/* Info Banner */}
-        <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 flex gap-3">
-          <IconAlertCircle className="h-5 w-5 text-orange-600 flex-shrink-0 mt-0.5" />
-          <div className="text-sm text-orange-800">
+        <div className="bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-700 rounded-lg p-4 flex gap-3">
+          <IconAlertCircle className="h-5 w-5 text-orange-600 dark:text-orange-400 flex-shrink-0 mt-0.5" />
+          <div className="text-sm text-orange-800 dark:text-orange-300">
             <p className="font-semibold mb-1">Email Sending Notes:</p>
             <ul className="list-disc list-inside space-y-1">
               <li>Emails will be sent from: announcements@cboa.ca</li>
@@ -534,11 +534,11 @@ export default function MailPage() {
         </div>
 
         {/* Send Button */}
-        <div className="flex flex-col sm:flex-row justify-end gap-2 pt-4 border-t">
+        <div className="flex flex-col sm:flex-row justify-end gap-2 pt-4 border-t border-gray-200 dark:border-gray-700">
           <button
             type="button"
             onClick={() => router.push('/portal')}
-            className="bg-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-400 flex items-center justify-center gap-2"
+            className="bg-gray-300 dark:bg-gray-600 text-gray-700 dark:text-gray-200 px-4 py-2 rounded-lg hover:bg-gray-400 dark:hover:bg-gray-500 flex items-center justify-center gap-2"
           >
             <IconX className="h-5 w-5" />
             Cancel

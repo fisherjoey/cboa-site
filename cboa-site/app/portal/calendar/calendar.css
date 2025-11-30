@@ -313,3 +313,125 @@
 .fc-theme-standard th {
   border-color: #e5e7eb;
 }
+
+/* ========================================
+   DARK MODE STYLES
+   ======================================== */
+
+/* Toolbar title */
+.dark .fc .fc-toolbar-title {
+  color: #f9fafb;
+}
+
+/* Buttons */
+.dark .fc .fc-button {
+  background-color: #374151;
+  border-color: #4b5563;
+  color: #e5e7eb;
+}
+
+.dark .fc .fc-button:hover {
+  background-color: #4b5563;
+  border-color: #6b7280;
+  color: #f9fafb;
+}
+
+.dark .fc .fc-button-primary:not(:disabled).fc-button-active,
+.dark .fc .fc-button-primary:not(:disabled):active {
+  background-color: #f97316;
+  border-color: #f97316;
+  color: white;
+}
+
+/* Table borders */
+.dark .fc .fc-scrollgrid {
+  border-color: #374151;
+}
+
+.dark .fc .fc-scrollgrid td,
+.dark .fc .fc-scrollgrid th {
+  border-color: #374151;
+}
+
+.dark .fc-theme-standard td,
+.dark .fc-theme-standard th {
+  border-color: #374151;
+}
+
+/* Header row (weekday names) */
+.dark .fc .fc-col-header-cell {
+  background-color: #1f2937;
+  color: #e5e7eb;
+}
+
+.dark .fc .fc-col-header-cell-cushion {
+  color: #e5e7eb;
+}
+
+/* Day numbers */
+.dark .fc .fc-daygrid-day-number {
+  color: #e5e7eb;
+}
+
+/* Today's cell */
+.dark .fc .fc-day-today {
+  background-color: rgba(249, 115, 22, 0.15) !important;
+}
+
+/* Other month days (grayed out) */
+.dark .fc .fc-day-other {
+  background-color: #111827;
+}
+
+.dark .fc .fc-day-other .fc-daygrid-day-number {
+  color: #6b7280;
+}
+
+/* Popover */
+.dark .fc .fc-popover {
+  background-color: #1f2937;
+  border-color: #374151;
+}
+
+.dark .fc .fc-popover-header {
+  background-color: #111827;
+  color: #e5e7eb;
+}
+
+.dark .fc .fc-popover-body {
+  background-color: #1f2937;
+}
+
+/* List view */
+.dark .fc .fc-list {
+  border-color: #374151;
+}
+
+.dark .fc .fc-list-event:hover td {
+  background-color: #374151;
+}
+
+.dark .fc .fc-list-event-time {
+  color: #e5e7eb;
+}
+
+.dark .fc .fc-list-event-title {
+  color: #f9fafb;
+}
+
+.dark .fc .fc-list-empty {
+  background-color: #1f2937;
+}
+
+.dark .fc .fc-list-empty-cushion {
+  color: #9ca3af;
+}
+
+/* More link */
+.dark .fc .fc-more-link {
+  color: #fb923c;
+}
+
+.dark .fc .fc-more-link:hover {
+  color: #f97316;
+}

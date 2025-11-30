@@ -48,14 +48,14 @@ export default function LatestNewsletterWidget() {
 
   if (isLoading) {
     return (
-      <div className="bg-gradient-to-r from-orange-50 to-orange-100 dark:from-orange-900/20 dark:to-orange-800/20 rounded-lg shadow p-6">
+      <div className="bg-gradient-to-r from-orange-50 to-orange-100 dark:from-slate-800 dark:to-slate-800/80 rounded-lg shadow p-6 border-l-4 border-orange-500">
         <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
           <IconNotebook className="h-5 w-5 text-orange-600 dark:text-orange-500" />
           Latest Newsletter
         </h2>
         <div className="animate-pulse">
-          <div className="h-4 bg-orange-200 dark:bg-orange-800/40 rounded w-3/4 mb-2"></div>
-          <div className="h-16 bg-orange-200 dark:bg-orange-800/40 rounded"></div>
+          <div className="h-4 bg-orange-200 dark:bg-slate-700 rounded w-3/4 mb-2"></div>
+          <div className="h-16 bg-orange-200 dark:bg-slate-700 rounded"></div>
         </div>
       </div>
     )
@@ -63,13 +63,13 @@ export default function LatestNewsletterWidget() {
 
   if (!newsletter) {
     return (
-      <div className="bg-gradient-to-r from-orange-50 to-orange-100 dark:from-orange-900/20 dark:to-orange-800/20 rounded-lg shadow p-4 sm:p-6">
+      <div className="bg-gradient-to-r from-orange-50 to-orange-100 dark:from-slate-800 dark:to-slate-800/80 rounded-lg shadow p-4 sm:p-6 border-l-4 border-orange-500">
         <h2 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
           <IconNotebook className="h-5 w-5 text-orange-600 dark:text-orange-500" />
           Latest Newsletter
         </h2>
         <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-          <IconNotebook className="h-12 w-12 mx-auto mb-2 text-orange-300 dark:text-orange-700" />
+          <IconNotebook className="h-12 w-12 mx-auto mb-2 text-orange-300 dark:text-orange-600" />
           <p className="text-sm">No newsletters yet</p>
         </div>
       </div>
@@ -77,7 +77,7 @@ export default function LatestNewsletterWidget() {
   }
 
   return (
-    <div className="bg-gradient-to-r from-orange-50 to-orange-100 dark:from-orange-900/20 dark:to-orange-800/20 rounded-lg shadow p-4 sm:p-6">
+    <div className="bg-gradient-to-r from-orange-50 to-orange-100 dark:from-slate-800 dark:to-slate-800/80 rounded-lg shadow p-4 sm:p-6 border-l-4 border-orange-500">
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
           <IconNotebook className="h-5 w-5 text-orange-600 dark:text-orange-500" />

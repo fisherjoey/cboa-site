@@ -435,12 +435,12 @@ export default function StatisticsClient() {
         <div className="h-80">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={data.distribution} layout="vertical" margin={{ left: 60, right: 30 }}>
-              <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} />
-              <XAxis type="number" />
-              <YAxis type="category" dataKey="range" tick={{ fontSize: 12 }} width={50} />
-              <Tooltip />
+              <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} className="dark:opacity-30" />
+              <XAxis type="number" tick={{ fill: 'currentColor' }} className="text-gray-600 dark:text-gray-400" />
+              <YAxis type="category" dataKey="range" tick={{ fontSize: 12, fill: 'currentColor' }} width={50} className="text-gray-600 dark:text-gray-400" />
+              <Tooltip contentStyle={{ backgroundColor: 'var(--tooltip-bg, white)', borderColor: 'var(--tooltip-border, #e5e7eb)', color: 'var(--tooltip-text, #1f2937)' }} />
               <Bar dataKey="count" fill="#3b82f6" radius={[0, 4, 4, 0]}>
-                <LabelList dataKey="count" position="right" fill="#374151" fontSize={12} />
+                <LabelList dataKey="count" position="right" className="fill-gray-700 dark:fill-gray-300" fontSize={12} />
               </Bar>
             </BarChart>
           </ResponsiveContainer>
@@ -455,14 +455,15 @@ export default function StatisticsClient() {
           <div className="h-80">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={mockSeasonData.cumulativeDistribution} margin={{ top: 20, right: 30, bottom: 5 }}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                <XAxis dataKey="label" tick={{ fontSize: 11 }} />
-                <YAxis />
+                <CartesianGrid strokeDasharray="3 3" vertical={false} className="dark:opacity-30" />
+                <XAxis dataKey="label" tick={{ fontSize: 11, fill: 'currentColor' }} className="text-gray-600 dark:text-gray-400" />
+                <YAxis tick={{ fill: 'currentColor' }} className="text-gray-600 dark:text-gray-400" />
                 <Tooltip
                   formatter={(value: number, name: string) => [
                     name === 'count' ? `${value} assignments` : `${value}%`,
                     name === 'count' ? 'Assignments' : 'Percentage'
                   ]}
+                  contentStyle={{ backgroundColor: 'var(--tooltip-bg, white)', borderColor: 'var(--tooltip-border, #e5e7eb)', color: 'var(--tooltip-text, #1f2937)' }}
                 />
                 <Bar dataKey="count" fill="#3b82f6" radius={[4, 4, 0, 0]}>
                   {mockSeasonData.cumulativeDistribution.map((entry, index) => (

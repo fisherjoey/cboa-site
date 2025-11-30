@@ -20,7 +20,7 @@ export default function Card({
     lg: 'p-8',
   }
   
-  const baseStyles = 'bg-white rounded-lg border border-gray-200'
+  const baseStyles = 'bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700'
   const shadowStyle = shadow ? 'shadow-md' : ''
   const hoverStyle = hover ? 'transition-all duration-200 hover:-translate-y-1 hover:shadow-lg' : ''
   

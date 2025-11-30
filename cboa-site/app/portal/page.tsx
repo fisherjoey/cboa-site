@@ -151,7 +151,7 @@ export default function PortalDashboard() {
       <LatestNewsletterWidget />
 
       {/* Quick Links Section */}
-      <div className="bg-gray-50 dark:bg-gray-800/50 rounded-lg shadow p-4 sm:p-6">
+      <div className="bg-gray-50 dark:bg-slate-800/70 rounded-lg shadow p-4 sm:p-6 dark:border dark:border-slate-700">
         <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white mb-4">Quick Links</h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
           {/* Portal Links */}

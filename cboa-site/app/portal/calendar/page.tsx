@@ -271,7 +271,7 @@ export default function CalendarPage() {
       {calendarMode === 'events' && (
         <>
           {/* Legend */}
-          <div className="mb-4 flex flex-wrap gap-2 sm:gap-4 text-xs sm:text-sm">
+          <div className="mb-4 flex flex-wrap gap-2 sm:gap-4 text-xs sm:text-sm text-gray-700 dark:text-gray-300">
             <div className="flex items-center gap-1 sm:gap-2">
               <div className="w-3 h-3 sm:w-4 sm:h-4 bg-green-500 rounded"></div>
               <span>Training</span>

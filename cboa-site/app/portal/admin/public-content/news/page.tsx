@@ -185,8 +185,8 @@ export default function PublicNewsAdmin() {
       {/* Header */}
       <div className="mb-6 sm:mb-8 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Public News Articles</h1>
-          <p className="mt-1 sm:mt-2 text-sm sm:text-base text-gray-600">
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">Public News Articles</h1>
+          <p className="mt-1 sm:mt-2 text-sm sm:text-base text-gray-600 dark:text-gray-300">
             Manage news articles displayed on the public website
           </p>
         </div>
@@ -217,49 +217,49 @@ export default function PublicNewsAdmin() {
       </div>
 
       {/* Search */}
-      <div className="mb-6 bg-white rounded-lg shadow p-3 sm:p-4">
+      <div className="mb-6 bg-white dark:bg-gray-800 rounded-lg shadow p-3 sm:p-4">
         <div className="flex-1 min-w-0">
           <input
             type="text"
             placeholder="Search news articles..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full px-3 py-2 text-sm sm:text-base border border-gray-300 rounded-md focus:outline-none focus:ring-orange-500 focus:border-orange-500"
+            className="w-full px-3 py-2 text-sm sm:text-base border border-gray-300 dark:border-gray-700 rounded-md focus:outline-none focus:ring-orange-500 focus:border-orange-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
           />
         </div>
       </div>
 
       {/* Create New Article Form */}
       {isCreating && (
-        <div className="mb-6 bg-white rounded-lg shadow-lg p-4 sm:p-6">
-          <h2 className="text-lg sm:text-xl font-semibold mb-4">Add New News Article</h2>
+        <div className="mb-6 bg-white dark:bg-gray-800 rounded-lg shadow-lg p-4 sm:p-6">
+          <h2 className="text-lg sm:text-xl font-semibold mb-4 text-gray-900 dark:text-white">Add New News Article</h2>
 
           <div className="space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Title *</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Title *</label>
                 <input
                   type="text"
                   value={newArticle.title}
                   onChange={(e) => {
                     setNewArticle({...newArticle, title: e.target.value, slug: generateSlug(e.target.value)})
                   }}
-                  className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 ${
+                  className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white ${
                     getFieldError(validationErrors, 'title')
                       ? 'border-red-500 focus:ring-red-500'
-                      : 'border-gray-300 focus:ring-orange-500'
+                      : 'border-gray-300 dark:border-gray-600 focus:ring-orange-500'
                   }`}
                   placeholder="Article title..."
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Slug (URL-friendly)</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Slug (URL-friendly)</label>
                 <input
                   type="text"
                   value={newArticle.slug}
                   onChange={(e) => setNewArticle({...newArticle, slug: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                   placeholder="auto-generated-from-title"
                 />
               </div>
@@ -267,51 +267,51 @@ export default function PublicNewsAdmin() {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Author *</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Author *</label>
                 <input
                   type="text"
                   value={newArticle.author}
                   onChange={(e) => setNewArticle({...newArticle, author: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                   placeholder="Author name..."
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Published Date *</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Published Date *</label>
                 <input
                   type="date"
                   value={newArticle.published_date}
                   onChange={(e) => setNewArticle({...newArticle, published_date: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Image URL</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Image URL</label>
               <input
                 type="text"
                 value={newArticle.image_url}
                 onChange={(e) => setNewArticle({...newArticle, image_url: e.target.value})}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                 placeholder="https://example.com/image.jpg"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Excerpt (Summary) *</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Excerpt (Summary) *</label>
               <textarea
                 value={newArticle.excerpt}
                 onChange={(e) => setNewArticle({...newArticle, excerpt: e.target.value})}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                 rows={3}
                 placeholder="Brief summary of the article..."
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Body Content *</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Body Content *</label>
               <TinyMCEEditor
                 value={newArticle.body}
                 onChange={(value) => setNewArticle({...newArticle, body: value || ''})}
@@ -320,23 +320,23 @@ export default function PublicNewsAdmin() {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Tags (comma-separated)</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tags (comma-separated)</label>
                 <input
                   type="text"
                   value={newArticle.tags}
                   onChange={(e) => setNewArticle({...newArticle, tags: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                   placeholder="news, basketball, training"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Priority</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Priority</label>
                 <input
                   type="number"
                   value={newArticle.priority}
                   onChange={(e) => setNewArticle({...newArticle, priority: parseInt(e.target.value)})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                   placeholder="0"
                 />
               </div>
@@ -350,7 +350,7 @@ export default function PublicNewsAdmin() {
                   onChange={(e) => setNewArticle({...newArticle, featured: e.target.checked})}
                   className="rounded border-gray-300 text-orange-500 focus:ring-orange-500"
                 />
-                <span className="text-sm font-medium text-gray-700">Featured Article</span>
+                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Featured Article</span>
               </label>
 
               <label className="flex items-center gap-2">
@@ -360,7 +360,7 @@ export default function PublicNewsAdmin() {
                   onChange={(e) => setNewArticle({...newArticle, active: e.target.checked})}
                   className="rounded border-gray-300 text-orange-500 focus:ring-orange-500"
                 />
-                <span className="text-sm font-medium text-gray-700">Active (Visible)</span>
+                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Active (Visible)</span>
               </label>
             </div>
 
@@ -402,7 +402,7 @@ export default function PublicNewsAdmin() {
       {/* News Articles List */}
       {filteredNews.length > 0 ? (
         <div className="space-y-3 sm:space-y-4">
-          <h2 className="text-lg font-semibold text-gray-900">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
             {newsItems.length} Article{newsItems.length !== 1 ? 's' : ''}
           </h2>
 
@@ -417,73 +417,73 @@ export default function PublicNewsAdmin() {
 
             if (isEditing) {
               return (
-                <div key={article.id} className="bg-white rounded-lg shadow p-4 sm:p-6">
-                  <h3 className="text-lg sm:text-xl font-semibold mb-4">Edit News Article</h3>
+                <div key={article.id} className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 sm:p-6">
+                  <h3 className="text-lg sm:text-xl font-semibold mb-4 text-gray-900 dark:text-white">Edit News Article</h3>
                   <div className="space-y-4">
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Title</label>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Title</label>
                         <input
                           type="text"
                           value={article.title}
                           onChange={(e) => handleUpdate(article.id, { title: e.target.value })}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Slug</label>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Slug</label>
                         <input
                           type="text"
                           value={article.slug}
                           onChange={(e) => handleUpdate(article.id, { slug: e.target.value })}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                         />
                       </div>
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Author</label>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Author</label>
                         <input
                           type="text"
                           value={article.author}
                           onChange={(e) => handleUpdate(article.id, { author: e.target.value })}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Published Date</label>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Published Date</label>
                         <input
                           type="date"
                           value={article.published_date ? new Date(article.published_date).toISOString().split('T')[0] : ''}
                           onChange={(e) => handleUpdate(article.id, { published_date: e.target.value })}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                         />
                       </div>
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Image URL</label>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Image URL</label>
                       <input
                         type="text"
                         value={article.image_url || ''}
                         onChange={(e) => handleUpdate(article.id, { image_url: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                       />
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Excerpt</label>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Excerpt</label>
                       <textarea
                         value={article.excerpt}
                         onChange={(e) => handleUpdate(article.id, { excerpt: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                         rows={3}
                       />
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Body Content</label>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Body Content</label>
                       <TinyMCEEditor
                         value={article.body}
                         onChange={(value) => handleUpdate(article.id, { body: value })}
@@ -492,21 +492,21 @@ export default function PublicNewsAdmin() {
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Tags (comma-separated)</label>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tags (comma-separated)</label>
                         <input
                           type="text"
                           value={article.tags?.join(', ') || ''}
                           onChange={(e) => handleUpdate(article.id, { tags: e.target.value })}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Priority</label>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Priority</label>
                         <input
                           type="number"
                           value={article.priority}
                           onChange={(e) => handleUpdate(article.id, { priority: parseInt(e.target.value) })}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                         />
                       </div>
                     </div>
@@ -519,7 +519,7 @@ export default function PublicNewsAdmin() {
                           onChange={(e) => handleUpdate(article.id, { featured: e.target.checked })}
                           className="rounded border-gray-300 text-orange-500 focus:ring-orange-500"
                         />
-                        <span className="text-sm font-medium text-gray-700">Featured</span>
+                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Featured</span>
                       </label>
                       <label className="flex items-center gap-2">
                         <input
@@ -528,7 +528,7 @@ export default function PublicNewsAdmin() {
                           onChange={(e) => handleUpdate(article.id, { active: e.target.checked })}
                           className="rounded border-gray-300 text-orange-500 focus:ring-orange-500"
                         />
-                        <span className="text-sm font-medium text-gray-700">Active</span>
+                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Active</span>
                       </label>
                     </div>
 
@@ -542,7 +542,7 @@ export default function PublicNewsAdmin() {
                       </button>
                       <button
                         onClick={() => setEditingId(null)}
-                        className="bg-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-400 flex items-center justify-center gap-2"
+                        className="bg-gray-300 dark:bg-gray-600 text-gray-700 dark:text-gray-200 px-4 py-2 rounded-lg hover:bg-gray-400 dark:hover:bg-gray-500 flex items-center justify-center gap-2"
                       >
                         <IconX className="h-5 w-5" />
                         Cancel
@@ -556,7 +556,7 @@ export default function PublicNewsAdmin() {
             return (
               <div
                 key={article.id}
-                className="bg-white border border-gray-200 rounded-lg hover:border-gray-300 transition-colors"
+                className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg hover:border-gray-300 dark:hover:border-gray-600 transition-colors"
               >
                 {/* Article Header */}
                 <div className="p-4">
@@ -573,28 +573,28 @@ export default function PublicNewsAdmin() {
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 flex-wrap mb-1">
                             {article.featured && (
-                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium bg-yellow-100 text-yellow-800">
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300">
                                 <IconStar className="h-3 w-3" />
                                 Featured
                               </span>
                             )}
                             {!article.active && (
-                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-800">
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300">
                                 <IconEyeOff className="h-3 w-3" />
                                 Hidden
                               </span>
                             )}
                           </div>
-                          <h3 className="font-semibold text-gray-900 text-base sm:text-lg">
+                          <h3 className="font-semibold text-gray-900 dark:text-white text-base sm:text-lg">
                             {article.title}
                           </h3>
-                          <p className="text-sm text-gray-600 mt-1">
+                          <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
                             By {article.author} on {publishedDate}
                           </p>
                           {article.tags && article.tags.length > 0 && (
                             <div className="flex flex-wrap gap-1 mt-2">
                               {article.tags.map((tag, idx) => (
-                                <span key={idx} className="px-2 py-0.5 bg-blue-100 text-blue-700 rounded text-xs">
+                                <span key={idx} className="px-2 py-0.5 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded text-xs">
                                   {tag}
                                 </span>
                               ))}
@@ -606,14 +606,14 @@ export default function PublicNewsAdmin() {
                           <div className="flex gap-1 flex-shrink-0">
                             <button
                               onClick={() => setEditingId(article.id)}
-                              className="p-1.5 text-gray-600 hover:bg-gray-100 rounded transition-colors"
+                              className="p-1.5 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"
                               title="Edit"
                             >
                               <IconEdit className="h-4 w-4" />
                             </button>
                             <button
                               onClick={() => handleDelete(article.id)}
-                              className="p-1.5 text-red-600 hover:bg-red-50 rounded transition-colors"
+                              className="p-1.5 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors"
                               title="Delete"
                             >
                               <IconTrash className="h-4 w-4" />
@@ -622,13 +622,13 @@ export default function PublicNewsAdmin() {
                         )}
                       </div>
 
-                      <p className="text-sm text-gray-600 mt-2">
+                      <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">
                         {article.excerpt}
                       </p>
 
                       <button
                         onClick={() => toggleExpanded(article.id)}
-                        className="mt-2 text-sm text-orange-600 hover:text-orange-700 font-medium"
+                        className="mt-2 text-sm text-orange-600 dark:text-orange-400 hover:text-orange-700 dark:hover:text-orange-300 font-medium"
                       >
                         {isExpanded ? 'Hide' : 'Show'} full article
                       </button>
@@ -637,8 +637,8 @@ export default function PublicNewsAdmin() {
 
                   {/* Expanded Content */}
                   {isExpanded && (
-                    <div className="mt-4 pt-4 border-t border-gray-200">
-                      <div className="prose prose-sm max-w-none">
+                    <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+                      <div className="prose prose-sm dark:prose-invert max-w-none">
                         <HTMLViewer content={article.body} />
                       </div>
                     </div>
@@ -649,10 +649,10 @@ export default function PublicNewsAdmin() {
           })}
         </div>
       ) : (
-        <div className="text-center py-12 bg-white rounded-lg shadow">
-          <IconArticle className="mx-auto h-12 w-12 text-gray-400" />
-          <h3 className="mt-2 text-sm font-medium text-gray-900">No news articles found</h3>
-          <p className="mt-1 text-sm text-gray-500">
+        <div className="text-center py-12 bg-white dark:bg-gray-800 rounded-lg shadow">
+          <IconArticle className="mx-auto h-12 w-12 text-gray-400 dark:text-gray-500" />
+          <h3 className="mt-2 text-sm font-medium text-gray-900 dark:text-white">No news articles found</h3>
+          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
             {searchTerm
               ? `No articles match "${searchTerm}"`
               : canEdit
