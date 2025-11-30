@@ -264,7 +264,7 @@ function StatCard({ label, value, icon: Icon, subtext }: {
   )
 }
 
-// Expandable League Row
+// Expandable League Row - uses useState since Disclosure doesn't work well with HTML tables
 function LeagueRow({ league }: { league: typeof mockSeasonData.leagues.breakdown[0] }) {
   const [expanded, setExpanded] = useState(false)
   const hasSubdivisions = league.subdivisions && league.subdivisions.length > 0

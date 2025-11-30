@@ -1,7 +1,8 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { IconGavel, IconCalendar, IconFilter, IconChevronRight, IconChevronDown, IconSearch, IconPlus, IconEdit, IconTrash, IconDeviceFloppy, IconX } from '@tabler/icons-react'
+import { IconGavel, IconCalendar, IconFilter, IconSearch, IconPlus, IconEdit, IconTrash, IconDeviceFloppy, IconX } from '@tabler/icons-react'
+import { Accordion, AccordionButton, AccordionPanel, AccordionChevron } from '@/components/ui/Accordion'
 import Card from '@/components/ui/Card'
 import { ContentItem } from '@/lib/content'
 import { useRole } from '@/contexts/RoleContext'
@@ -27,7 +28,6 @@ export default function RuleModificationsClient({ modifications: initialModifica
   const categories = modifications.length > 0
     ? Array.from(new Set(modifications.map(mod => mod.category))).filter(Boolean).sort() as string[]
     : initialCategories
-  const [expandedRules, setExpandedRules] = useState<Set<string>>(new Set())
   const [searchTerm, setSearchTerm] = useState('')
   const [isCreating, setIsCreating] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
@@ -69,16 +69,6 @@ export default function RuleModificationsClient({ modifications: initialModifica
       mod.body?.toLowerCase().includes(searchTerm.toLowerCase())
     return matchesCategory && matchesSearch && mod.active !== false
   })
-
-  const toggleExpanded = (slug: string) => {
-    const newExpanded = new Set(expandedRules)
-    if (newExpanded.has(slug)) {
-      newExpanded.delete(slug)
-    } else {
-      newExpanded.add(slug)
-    }
-    setExpandedRules(newExpanded)
-  }
 
   const getCategoryColor = (category: string) => {
     const colors: Record<string, string> = {
@@ -359,7 +349,6 @@ export default function RuleModificationsClient({ modifications: initialModifica
           </h2>
 
           {filteredModifications.map((modification) => {
-            const isExpanded = expandedRules.has(modification.id)
             const isEditing = editingId === modification.id
             const effectiveDate = modification.effectiveDate
               ? new Date(modification.effectiveDate).toLocaleDateString('en-CA', {
@@ -445,65 +434,56 @@ export default function RuleModificationsClient({ modifications: initialModifica
             }
 
             return (
-              <div
-                key={modification.id}
-                className="bg-white border border-gray-200 rounded-lg hover:border-gray-300 transition-colors"
-              >
-                {/* Accordion Header */}
-                <div className="flex items-center gap-3 py-3 pr-4">
-                  {/* Chevron Icon - clickable area */}
-                  <button
-                    onClick={() => toggleExpanded(modification.id)}
-                    className="pl-3 pr-0 focus:outline-none focus:ring-2 focus:ring-orange-500 rounded"
-                    aria-label="Toggle details"
-                  >
-                    <IconChevronRight className={`h-4 w-4 text-gray-400 flex-shrink-0 transition-transform duration-200 ${isExpanded ? 'rotate-90' : ''}`} />
-                  </button>
+              <Accordion key={modification.id}>
+                <div className="bg-white border border-gray-200 rounded-lg hover:border-gray-300 transition-colors">
+                  {/* Accordion Header */}
+                  <div className="flex items-center gap-3 py-3 pr-4">
+                    <AccordionButton className="flex items-center gap-3 flex-1 min-w-0 pl-3">
+                      {({ open }) => (
+                        <>
+                          <AccordionChevron open={open} className="flex-shrink-0" />
+                          <div className="flex-1 min-w-0 text-left">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className={`px-2 py-0.5 rounded text-xs font-medium ${getCategoryColor(modification.category)}`}>
+                                {modification.category}
+                              </span>
+                              <h3 className="font-semibold text-gray-900 text-sm sm:text-base">
+                                {modification.title}
+                              </h3>
+                            </div>
+                            {modification.summary && (
+                              <p className="text-sm text-gray-600 mt-1 line-clamp-1">
+                                {modification.summary}
+                              </p>
+                            )}
+                          </div>
+                        </>
+                      )}
+                    </AccordionButton>
 
-                  {/* Content - clickable area */}
-                  <div
-                    onClick={() => toggleExpanded(modification.id)}
-                    className="flex-1 min-w-0 cursor-pointer"
-                  >
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className={`px-2 py-0.5 rounded text-xs font-medium ${getCategoryColor(modification.category)}`}>
-                        {modification.category}
-                      </span>
-                      <h3 className="font-semibold text-gray-900 text-sm sm:text-base">
-                        {modification.title}
-                      </h3>
-                    </div>
-                    {modification.summary && (
-                      <p className="text-sm text-gray-600 mt-1 line-clamp-1">
-                        {modification.summary}
-                      </p>
+                    {/* Action buttons */}
+                    {canEdit && (
+                      <div className="flex gap-1 flex-shrink-0">
+                        <button
+                          onClick={() => startEditing(modification)}
+                          className="p-1.5 text-gray-600 hover:bg-gray-100 rounded transition-colors"
+                          title="Edit"
+                        >
+                          <IconEdit className="h-4 w-4" />
+                        </button>
+                        <button
+                          onClick={() => handleDelete(modification.id)}
+                          className="p-1.5 text-red-600 hover:bg-red-50 rounded transition-colors"
+                          title="Delete"
+                        >
+                          <IconTrash className="h-4 w-4" />
+                        </button>
+                      </div>
                     )}
                   </div>
 
-                  {/* Action buttons */}
-                  {canEdit && (
-                    <div className="flex gap-1 flex-shrink-0">
-                      <button
-                        onClick={() => startEditing(modification)}
-                        className="p-1.5 text-gray-600 hover:bg-gray-100 rounded transition-colors"
-                        title="Edit"
-                      >
-                        <IconEdit className="h-4 w-4" />
-                      </button>
-                      <button
-                        onClick={() => handleDelete(modification.id)}
-                        className="p-1.5 text-red-600 hover:bg-red-50 rounded transition-colors"
-                        title="Delete"
-                      >
-                        <IconTrash className="h-4 w-4" />
-                      </button>
-                    </div>
-                  )}
-                </div>
-
-                {/* Expanded Content */}
-                {isExpanded && (
-                  <div className="border-t border-gray-200 bg-gray-50">
+                  {/* Expanded Content */}
+                  <AccordionPanel className="border-t border-gray-200 bg-gray-50">
                     <div className="py-4 px-5">
                       <HTMLViewer content={modification.content || modification.body || ''} compact />
 
@@ -520,9 +500,9 @@ export default function RuleModificationsClient({ modifications: initialModifica
                         </div>
                       )}
                     </div>
-                  </div>
-                )}
-              </div>
+                  </AccordionPanel>
+                </div>
+              </Accordion>
             )
           })}
         </div>
