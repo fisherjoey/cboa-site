@@ -816,16 +816,7 @@ async function getIdentityToken(): Promise<string | null> {
   }
 }
 
-// Get the site URL for Identity API calls
-function getIdentityUrl(): string {
-  if (typeof window !== 'undefined') {
-    return window.location.origin
-  }
-  return process.env.URL || 'https://cboa.ca'
-}
-
-// Identity Admin API - calls Netlify Identity Admin API directly from browser
-// This avoids Cloudflare blocking server-side requests
+// Identity Admin API - uses serverless function with admin token
 export const identityAPI = {
   // List all identity users
   async listUsers(): Promise<IdentityUser[]> {
@@ -834,73 +825,29 @@ export const identityAPI = {
       throw new AppError('Not authenticated', 'AUTH_ERROR', 401)
     }
 
-    const users: IdentityUser[] = []
-    let page = 1
-    const perPage = 100
-    const baseUrl = getIdentityUrl()
-
-    while (true) {
-      const response = await fetch(`${baseUrl}/.netlify/identity/admin/users?page=${page}&per_page=${perPage}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      })
-
-      if (!response.ok) {
-        const text = await response.text()
-        throw new AppError(`Failed to fetch users: ${response.status}`, 'API_ERROR', response.status)
+    const res = await apiFetch(`${API_BASE}/identity-admin?action=list`, {
+      headers: {
+        'Authorization': `Bearer ${token}`
       }
-
-      const data = await response.json()
-
-      if (!data.users || data.users.length === 0) {
-        break
-      }
-
-      // Map to our IdentityUser format
-      for (const u of data.users) {
-        users.push({
-          id: u.id,
-          email: u.email,
-          name: u.user_metadata?.full_name,
-          confirmed: !!u.confirmed_at,
-          confirmed_at: u.confirmed_at,
-          invited_at: u.invited_at,
-          created_at: u.created_at,
-          roles: u.app_metadata?.roles || []
-        })
-      }
-
-      if (data.users.length < perPage) {
-        break
-      }
-
-      page++
-    }
-
-    return users
+    })
+    const data = await res.json()
+    return data.users || []
   },
 
   // Get identity status for a specific email
   async getStatus(email: string): Promise<IdentityStatus> {
+    const token = await getIdentityToken()
+    if (!token) {
+      return { exists: false }
+    }
+
     try {
-      const users = await this.listUsers()
-      const user = users.find(u => u.email.toLowerCase() === email.toLowerCase())
-
-      if (!user) {
-        return { exists: false }
-      }
-
-      return {
-        exists: true,
-        id: user.id,
-        email: user.email,
-        name: user.name,
-        confirmed: user.confirmed,
-        confirmed_at: user.confirmed_at,
-        invited_at: user.invited_at,
-        roles: user.roles
-      }
+      const res = await apiFetch(`${API_BASE}/identity-admin?email=${encodeURIComponent(email)}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      })
+      return await res.json()
     } catch {
       return { exists: false }
     }
@@ -913,70 +860,31 @@ export const identityAPI = {
       throw new AppError('Not authenticated', 'AUTH_ERROR', 401)
     }
 
-    const baseUrl = getIdentityUrl()
-
-    const response = await fetch(`${baseUrl}/.netlify/identity/admin/users`, {
+    const res = await apiFetch(`${API_BASE}/identity-admin`, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json'
+        'Authorization': `Bearer ${token}`
       },
-      body: JSON.stringify({
-        email: email,
-        confirm: false, // Send invitation email
-        user_metadata: name ? { full_name: name } : {}
-      })
+      body: JSON.stringify({ email, name })
     })
-
-    if (response.ok) {
-      return { success: true, message: 'Invite sent successfully' }
-    } else {
-      const text = await response.text()
-      if (response.status === 422 && text.includes('already')) {
-        return { success: false, error: 'User with this email already exists' }
-      }
-      return { success: false, error: text || `Failed with status ${response.status}` }
-    }
+    return res.json()
   },
 
-  // Resend invite for a pending user (delete and re-invite)
+  // Resend invite for a pending user
   async resendInvite(email: string, name?: string): Promise<{ success: boolean; message?: string; error?: string }> {
     const token = await getIdentityToken()
     if (!token) {
       throw new AppError('Not authenticated', 'AUTH_ERROR', 401)
     }
 
-    const baseUrl = getIdentityUrl()
-
-    // First find the user
-    const users = await this.listUsers()
-    const existingUser = users.find(u => u.email.toLowerCase() === email.toLowerCase())
-
-    if (!existingUser) {
-      return { success: false, error: 'User not found in Identity' }
-    }
-
-    if (existingUser.confirmed) {
-      return { success: false, error: 'User has already accepted their invite' }
-    }
-
-    // Delete the old invite
-    const deleteResponse = await fetch(`${baseUrl}/.netlify/identity/admin/users/${existingUser.id}`, {
-      method: 'DELETE',
+    const res = await apiFetch(`${API_BASE}/identity-admin`, {
+      method: 'POST',
       headers: {
         'Authorization': `Bearer ${token}`
-      }
+      },
+      body: JSON.stringify({ email, name, action: 'resend' })
     })
-
-    if (!deleteResponse.ok) {
-      return { success: false, error: 'Failed to delete old invite' }
-    }
-
-    // Wait a moment
-    await new Promise(resolve => setTimeout(resolve, 200))
-
-    // Re-invite
-    return this.sendInvite(email, name)
+    return res.json()
   },
 
   // Delete a user from Identity
@@ -986,28 +894,13 @@ export const identityAPI = {
       throw new AppError('Not authenticated', 'AUTH_ERROR', 401)
     }
 
-    const baseUrl = getIdentityUrl()
-
-    // First find the user
-    const users = await this.listUsers()
-    const existingUser = users.find(u => u.email.toLowerCase() === email.toLowerCase())
-
-    if (!existingUser) {
-      return { success: false, error: 'User not found' }
-    }
-
-    const response = await fetch(`${baseUrl}/.netlify/identity/admin/users/${existingUser.id}`, {
+    const res = await apiFetch(`${API_BASE}/identity-admin?email=${encodeURIComponent(email)}`, {
       method: 'DELETE',
       headers: {
         'Authorization': `Bearer ${token}`
       }
     })
-
-    if (response.ok) {
-      return { success: true, message: 'User deleted successfully' }
-    } else {
-      return { success: false, error: `Failed with status ${response.status}` }
-    }
+    return res.json()
   }
 }
 

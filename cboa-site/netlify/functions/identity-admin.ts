@@ -182,24 +182,34 @@ export const handler: Handler = async (event, context) => {
     return { statusCode: 200, headers, body: '' }
   }
 
-  // Get token from Authorization header
-  const authHeader = event.headers['authorization'] || event.headers['Authorization']
-  const adminToken = authHeader?.replace('Bearer ', '')
+  // Get admin token from environment variable
+  const adminToken = process.env.NETLIFY_IDENTITY_TOKEN
 
   if (!adminToken) {
     return {
-      statusCode: 401,
+      statusCode: 500,
       headers,
-      body: JSON.stringify({ error: 'Unauthorized - no token provided' })
+      body: JSON.stringify({ error: 'Server configuration error - Identity token not set' })
     }
   }
 
-  // Try to get user from clientContext first, fall back to decoding JWT
+  // Get user token from Authorization header to verify they're logged in with admin role
+  const authHeader = event.headers['authorization'] || event.headers['Authorization']
+  const userToken = authHeader?.replace('Bearer ', '')
+
+  if (!userToken) {
+    return {
+      statusCode: 401,
+      headers,
+      body: JSON.stringify({ error: 'Unauthorized - must be logged in' })
+    }
+  }
+
+  // Decode the user's JWT to check their role
   let user = context.clientContext?.user
 
   if (!user) {
-    // Decode the JWT payload to get user info
-    const decoded = decodeJwtPayload(adminToken)
+    const decoded = decodeJwtPayload(userToken)
     if (!decoded) {
       return {
         statusCode: 401,
@@ -233,7 +243,7 @@ export const handler: Handler = async (event, context) => {
     }
   }
 
-  // adminToken is already set from the Authorization header above
+  // Now use the admin token from env var for Identity API calls
   if (!adminToken) {
     return {
       statusCode: 400,
