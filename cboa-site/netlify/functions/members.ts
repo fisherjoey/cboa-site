@@ -20,9 +20,45 @@ export const handler: Handler = async (event) => {
   try {
     switch (event.httpMethod) {
       case 'GET': {
-        const { netlify_user_id, id } = event.queryStringParameters || {}
+        const { netlify_user_id, user_id, id, email } = event.queryStringParameters || {}
 
-        // Get member by Netlify user ID
+        // Get member by email
+        if (email) {
+          const { data, error } = await supabase
+            .from('members')
+            .select('*')
+            .eq('email', email)
+            .single()
+
+          // PGRST116 = no rows found - return null, not an error
+          if (error && error.code !== 'PGRST116') throw error
+
+          return {
+            statusCode: 200,
+            headers,
+            body: JSON.stringify(data || null)
+          }
+        }
+
+        // Get member by Supabase Auth user ID
+        if (user_id) {
+          const { data, error } = await supabase
+            .from('members')
+            .select('*')
+            .eq('user_id', user_id)
+            .single()
+
+          // PGRST116 = no rows found - return null, not an error
+          if (error && error.code !== 'PGRST116') throw error
+
+          return {
+            statusCode: 200,
+            headers,
+            body: JSON.stringify(data || null)
+          }
+        }
+
+        // Get member by Netlify user ID (legacy support)
         if (netlify_user_id) {
           const { data, error } = await supabase
             .from('members')
@@ -30,10 +66,11 @@ export const handler: Handler = async (event) => {
             .eq('netlify_user_id', netlify_user_id)
             .single()
 
+          // PGRST116 = no rows found - return null, not an error
           if (error && error.code !== 'PGRST116') throw error
 
           return {
-            statusCode: data ? 200 : 404,
+            statusCode: 200,
             headers,
             body: JSON.stringify(data || null)
           }
@@ -74,7 +111,24 @@ export const handler: Handler = async (event) => {
       case 'POST': {
         const body = JSON.parse(event.body || '{}')
 
-        // Check if member with this netlify_user_id already exists
+        // Check if member with this user_id already exists (Supabase Auth)
+        if (body.user_id) {
+          const { data: existing } = await supabase
+            .from('members')
+            .select('id')
+            .eq('user_id', body.user_id)
+            .single()
+
+          if (existing) {
+            return {
+              statusCode: 409,
+              headers,
+              body: JSON.stringify({ error: 'Member already exists' })
+            }
+          }
+        }
+
+        // Check if member with this netlify_user_id already exists (legacy)
         if (body.netlify_user_id) {
           const { data: existing } = await supabase
             .from('members')

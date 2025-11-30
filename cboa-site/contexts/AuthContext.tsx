@@ -1,10 +1,11 @@
 'use client'
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react'
-import netlifyIdentity from 'netlify-identity-widget'
+import { createBrowserClient } from '@supabase/ssr'
 import { membersAPI } from '@/lib/api'
+import type { User as SupabaseUser, Session } from '@supabase/supabase-js'
 
-type UserRole = 'official' | 'executive' | 'admin'
+type UserRole = 'official' | 'executive' | 'admin' | 'evaluator' | 'mentor'
 
 interface User {
   id: string
@@ -19,55 +20,71 @@ interface AuthContextType {
   user: User | null
   isAuthenticated: boolean
   isLoading: boolean
-  login: () => void
-  logout: () => void
-  signup: () => void
+  login: (email: string, password: string) => Promise<{ error?: string }>
+  logout: () => Promise<void>
+  signup: (email: string, password: string, name: string) => Promise<{ error?: string }>
+  resetPassword: (email: string) => Promise<{ error?: string }>
+  supabaseUser: SupabaseUser | null
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
-// Map Netlify Identity roles to our app roles
-function getUserRole(netlifyUser: any): UserRole {
-  // Check both app_metadata.roles and user_metadata.roles
-  // Also check if role is stored directly in user_metadata
-  const appRoles = netlifyUser?.app_metadata?.roles || []
-  const userRoles = netlifyUser?.user_metadata?.roles || []
-  const directRole = netlifyUser?.user_metadata?.role
+// Create Supabase browser client
+const supabase = createBrowserClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+)
+
+// Map Supabase user metadata to our app roles
+function getUserRole(supabaseUser: SupabaseUser | null): UserRole {
+  if (!supabaseUser) return 'official'
+
+  // Check both app_metadata.role and user_metadata.role
+  const appRole = supabaseUser.app_metadata?.role
+  const userRole = supabaseUser.user_metadata?.role
+  const appRoles = supabaseUser.app_metadata?.roles || []
+  const userRoles = supabaseUser.user_metadata?.roles || []
   const roles = [...appRoles, ...userRoles]
 
-  // Check direct role field first
+  // Check direct role field first (app_metadata takes precedence)
+  const directRole = appRole || userRole
   if (directRole) {
-    if (directRole === 'admin' || directRole === 'Admin') return 'admin'
-    if (directRole === 'executive' || directRole === 'Executive') return 'executive'
-    if (directRole === 'official' || directRole === 'Official') return 'official'
+    const roleLower = directRole.toLowerCase()
+    if (roleLower === 'admin') return 'admin'
+    if (roleLower === 'executive') return 'executive'
+    if (roleLower === 'evaluator') return 'evaluator'
+    if (roleLower === 'mentor') return 'mentor'
+    if (roleLower === 'official') return 'official'
   }
 
-  // Then check roles array
-  if (roles.includes('admin') || roles.includes('Admin')) return 'admin'
-  if (roles.includes('executive') || roles.includes('Executive')) return 'executive'
-  if (roles.includes('official') || roles.includes('Official')) return 'official'
+  // Then check roles array (case-insensitive)
+  const rolesLower = roles.map((r: string) => r.toLowerCase())
+  if (rolesLower.includes('admin')) return 'admin'
+  if (rolesLower.includes('executive')) return 'executive'
+  if (rolesLower.includes('evaluator')) return 'evaluator'
+  if (rolesLower.includes('mentor')) return 'mentor'
+  if (rolesLower.includes('official')) return 'official'
 
   // New users without roles get 'official' by default
-  // But they won't have admin panel access
   return 'official'
 }
 
-// Sync Netlify Identity user with Supabase members table
-async function syncUserToMembers(netlifyUser: any): Promise<void> {
+// Sync Supabase Auth user with members table
+async function syncUserToMembers(supabaseUser: SupabaseUser): Promise<void> {
   try {
-    // Check if member already exists by netlify_user_id
-    const existingMember = await membersAPI.getByNetlifyId(netlifyUser.id)
+    // Check if member already exists by user_id (Supabase auth id)
+    const existingMember = await membersAPI.getByUserId(supabaseUser.id)
 
     if (!existingMember) {
       // Create new member record
       await membersAPI.create({
-        netlify_user_id: netlifyUser.id,
-        email: netlifyUser.email,
-        name: netlifyUser.user_metadata?.full_name || netlifyUser.email,
-        role: getUserRole(netlifyUser),
+        user_id: supabaseUser.id,
+        email: supabaseUser.email!,
+        name: supabaseUser.user_metadata?.full_name || supabaseUser.user_metadata?.name || supabaseUser.email!,
+        role: getUserRole(supabaseUser),
         status: 'active'
       })
-      console.log('Created new member record for:', netlifyUser.email)
+      console.log('Created new member record for:', supabaseUser.email)
     }
   } catch (error) {
     // Don't block login if sync fails - just log the error
@@ -77,6 +94,7 @@ async function syncUserToMembers(netlifyUser: any): Promise<void> {
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
+  const [supabaseUser, setSupabaseUser] = useState<SupabaseUser | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [devRoleIndex, setDevRoleIndex] = useState(0)
 
@@ -113,6 +131,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   ]
 
+  // Convert Supabase user to our User type
+  const mapSupabaseUser = (sbUser: SupabaseUser): User => ({
+    id: sbUser.id,
+    email: sbUser.email!,
+    name: sbUser.user_metadata?.full_name || sbUser.user_metadata?.name || sbUser.email!,
+    role: getUserRole(sbUser),
+    user_metadata: sbUser.user_metadata,
+    app_metadata: sbUser.app_metadata
+  })
+
   useEffect(() => {
     // If authentication is bypassed in development, create a mock user
     if (shouldBypassAuth) {
@@ -121,75 +149,90 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return
     }
 
-    // Initialize Netlify Identity
-    netlifyIdentity.init({
-      container: 'body', // defaults to document.body
-      locale: 'en' // defaults to 'en'
-    })
+    // Check for existing session
+    const initializeAuth = async () => {
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession()
 
-    // Check for existing user
-    const currentUser = netlifyIdentity.currentUser()
-    if (currentUser) {
-      setUser({
-        id: currentUser.id,
-        email: currentUser.email,
-        name: currentUser.user_metadata?.full_name || currentUser.email,
-        role: getUserRole(currentUser),
-        user_metadata: currentUser.user_metadata,
-        app_metadata: currentUser.app_metadata
-      })
-      // Sync existing user to members table
-      syncUserToMembers(currentUser)
+        if (error) {
+          console.error('Error getting session:', error)
+          setIsLoading(false)
+          return
+        }
+
+        if (session?.user) {
+          setSupabaseUser(session.user)
+          setUser(mapSupabaseUser(session.user))
+          // Sync existing user to members table
+          syncUserToMembers(session.user)
+        }
+      } catch (error) {
+        console.error('Error initializing auth:', error)
+      } finally {
+        setIsLoading(false)
+      }
     }
 
-    setIsLoading(false)
+    initializeAuth()
 
-    // Set up event listeners
-    netlifyIdentity.on('login', (netlifyUser) => {
-      setUser({
-        id: netlifyUser.id,
-        email: netlifyUser.email,
-        name: netlifyUser.user_metadata?.full_name || netlifyUser.email,
-        role: getUserRole(netlifyUser),
-        user_metadata: netlifyUser.user_metadata,
-        app_metadata: netlifyUser.app_metadata
-      })
-      // Sync user to members table on login
-      syncUserToMembers(netlifyUser)
-      netlifyIdentity.close()
+    // Set up auth state change listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        console.log('Auth state changed:', event)
 
-      // Redirect to portal or stored path after login
-      const redirectPath = sessionStorage.getItem('redirectAfterLogin') || '/portal'
-      sessionStorage.removeItem('redirectAfterLogin')
-      window.location.href = redirectPath
-    })
+        if (event === 'SIGNED_IN' && session?.user) {
+          setSupabaseUser(session.user)
+          setUser(mapSupabaseUser(session.user))
+          // Sync user to members table on login
+          syncUserToMembers(session.user)
 
-    netlifyIdentity.on('logout', () => {
-      setUser(null)
-    })
-
-    netlifyIdentity.on('error', (err) => {
-      console.error('Netlify Identity error:', err)
-    })
-
-    // Cleanup (only if not bypassing auth)
-    return () => {
-      if (!shouldBypassAuth) {
-        netlifyIdentity.off('login')
-        netlifyIdentity.off('logout')
-        netlifyIdentity.off('error')
+          // Only redirect if there's a stored redirect path (indicating a fresh login)
+          const redirectPath = sessionStorage.getItem('redirectAfterLogin')
+          if (redirectPath) {
+            sessionStorage.removeItem('redirectAfterLogin')
+            window.location.href = redirectPath
+          }
+        } else if (event === 'SIGNED_OUT') {
+          setSupabaseUser(null)
+          setUser(null)
+        } else if (event === 'TOKEN_REFRESHED' && session?.user) {
+          setSupabaseUser(session.user)
+          setUser(mapSupabaseUser(session.user))
+        } else if (event === 'USER_UPDATED' && session?.user) {
+          setSupabaseUser(session.user)
+          setUser(mapSupabaseUser(session.user))
+        }
       }
+    )
+
+    // Cleanup subscription
+    return () => {
+      subscription.unsubscribe()
     }
   }, [shouldBypassAuth, devRoleIndex])
 
-  const login = () => {
+  const login = async (email: string, password: string): Promise<{ error?: string }> => {
     if (shouldBypassAuth) {
-      return
+      return {}
     }
-    netlifyIdentity.open('login')
+
+    try {
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password
+      })
+
+      if (error) {
+        return { error: error.message }
+      }
+
+      return {}
+    } catch (error: any) {
+      return { error: error.message || 'An unexpected error occurred' }
+    }
   }
 
-  const logout = () => {
+  const logout = async (): Promise<void> => {
     if (shouldBypassAuth) {
       // Cycle to next dev user role
       const nextIndex = (devRoleIndex + 1) % devUsers.length
@@ -197,27 +240,71 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(devUsers[nextIndex])
       return
     }
+
     // Set flag so AuthGuard knows not to open login modal
     sessionStorage.setItem('justLoggedOut', 'true')
-    netlifyIdentity.logout()
+    await supabase.auth.signOut()
   }
 
-  const signup = () => {
+  const signup = async (email: string, password: string, name: string): Promise<{ error?: string }> => {
     if (shouldBypassAuth) {
-      return
+      return {}
     }
-    netlifyIdentity.open('signup')
+
+    try {
+      const { error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            full_name: name,
+            name: name
+          }
+        }
+      })
+
+      if (error) {
+        return { error: error.message }
+      }
+
+      return {}
+    } catch (error: any) {
+      return { error: error.message || 'An unexpected error occurred' }
+    }
+  }
+
+  const resetPassword = async (email: string): Promise<{ error?: string }> => {
+    try {
+      // Use our custom endpoint that sends via Microsoft Graph
+      const response = await fetch('/.netlify/functions/auth-password-reset', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email })
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        return { error: data.error || 'Failed to send reset email' }
+      }
+
+      return {}
+    } catch (error: any) {
+      return { error: error.message || 'An unexpected error occurred' }
+    }
   }
 
   return (
-    <AuthContext.Provider 
-      value={{ 
-        user, 
+    <AuthContext.Provider
+      value={{
+        user,
         isAuthenticated: !!user,
         isLoading,
-        login, 
+        login,
         logout,
-        signup
+        signup,
+        resetPassword,
+        supabaseUser
       }}
     >
       {children}

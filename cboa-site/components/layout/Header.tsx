@@ -6,13 +6,10 @@ import Image from 'next/image'
 import { usePathname } from 'next/navigation'
 import SearchBox from '../ui/SearchBox'
 import { IconBrandFacebook, IconBrandInstagram } from '@tabler/icons-react'
-import netlifyIdentity from 'netlify-identity-widget'
 
 export default function Header() {
   const pathname = usePathname()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
-  const [isLoggedIn, setIsLoggedIn] = useState(false)
-  const [identityInitialized, setIdentityInitialized] = useState(false)
 
   // Helper function to check if a link is active
   const isActive = (href: string) => {
@@ -22,12 +19,12 @@ export default function Header() {
 
   // Check if we're on portal pages
   const isPortalPage = pathname?.startsWith('/portal')
-  
+
   // Close mobile menu when route changes
   useEffect(() => {
     setMobileMenuOpen(false)
   }, [pathname])
-  
+
   // Prevent body scroll when mobile menu is open (only if not on portal page)
   useEffect(() => {
     if (!isPortalPage && mobileMenuOpen) {
@@ -40,49 +37,6 @@ export default function Header() {
     }
   }, [mobileMenuOpen, isPortalPage])
 
-  // Initialize Netlify Identity and check login state
-  useEffect(() => {
-    if (!identityInitialized) {
-      netlifyIdentity.init({
-        container: 'body',
-        locale: 'en'
-      })
-      setIdentityInitialized(true)
-    }
-
-    // Check current user
-    const currentUser = netlifyIdentity.currentUser()
-    setIsLoggedIn(!!currentUser)
-
-    // Listen for login/logout events
-    const handleLogin = () => {
-      setIsLoggedIn(true)
-      // Redirect to portal after login
-      window.location.href = '/portal'
-    }
-
-    const handleLogout = () => {
-      setIsLoggedIn(false)
-    }
-
-    netlifyIdentity.on('login', handleLogin)
-    netlifyIdentity.on('logout', handleLogout)
-
-    return () => {
-      netlifyIdentity.off('login', handleLogin)
-      netlifyIdentity.off('logout', handleLogout)
-    }
-  }, [identityInitialized])
-
-  // Handle portal button click - open modal if not logged in
-  const handlePortalClick = (e: React.MouseEvent) => {
-    if (!isLoggedIn) {
-      e.preventDefault()
-      netlifyIdentity.open('login')
-    }
-    // If logged in, let the Link navigate normally
-  }
-  
   // Don't render main header on portal pages
   if (isPortalPage) {
     return null
@@ -135,7 +89,6 @@ export default function Header() {
               <SearchBox />
               <Link
                 href="/portal"
-                onClick={handlePortalClick}
                 className="text-white hover:text-cboa-orange transition-colors font-medium text-base px-4 py-2 border border-white/20 rounded hover:border-cboa-orange"
               >
                 Member Portal
@@ -215,7 +168,6 @@ export default function Header() {
               <div className="px-4 py-3 mt-4 border-t border-white/20">
                 <Link
                   href="/portal"
-                  onClick={handlePortalClick}
                   className="block text-center bg-cboa-orange text-white py-2 px-4 rounded font-medium hover:bg-orange-600 transition-colors"
                 >
                   Member Portal

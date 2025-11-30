@@ -517,7 +517,7 @@ export default function MembersPage() {
               className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
             >
               <IconUsers size={20} />
-              Identity Users
+              Portal Users
             </button>
             <button
               onClick={handleAddMember}
@@ -1140,18 +1140,18 @@ export default function MembersPage() {
         </div>
       </Modal>
 
-      {/* Identity Users Modal */}
+      {/* Auth Users Modal */}
       <Modal
         isOpen={showIdentityModal}
         onClose={() => setShowIdentityModal(false)}
-        title="Netlify Identity Users"
+        title="Portal Users"
         size="lg"
       >
         <div className="space-y-4">
           {/* Header with actions */}
           <div className="flex items-center justify-between pb-4 border-b border-gray-200 dark:border-gray-700">
             <p className="text-sm text-gray-600 dark:text-gray-400">
-              {identityUsers.length} users in Netlify Identity
+              {identityUsers.length} users with portal access
             </p>
             <div className="flex items-center gap-2">
               <button
@@ -1177,16 +1177,16 @@ export default function MembersPage() {
           {loadingIdentityUsers && identityUsers.length === 0 && (
             <div className="text-center py-8">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600 mx-auto"></div>
-              <p className="mt-2 text-gray-600 dark:text-gray-400">Loading identity users...</p>
+              <p className="mt-2 text-gray-600 dark:text-gray-400">Loading portal users...</p>
             </div>
           )}
 
           {/* Users list */}
           {!loadingIdentityUsers && identityUsers.length === 0 && (
             <div className="text-center py-8">
-              <p className="text-gray-600 dark:text-gray-400">No users found in Netlify Identity.</p>
+              <p className="text-gray-600 dark:text-gray-400">No users found.</p>
               <p className="text-sm text-gray-500 dark:text-gray-500 mt-1">
-                This feature only works on the deployed site, not locally.
+                Invite members to give them portal access.
               </p>
             </div>
           )}

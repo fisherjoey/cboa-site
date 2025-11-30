@@ -3,7 +3,7 @@
 import { createContext, useContext, ReactNode } from 'react'
 import { useAuth } from './AuthContext'
 
-type UserRole = 'official' | 'executive' | 'admin'
+type UserRole = 'official' | 'executive' | 'admin' | 'evaluator' | 'mentor'
 
 interface User {
   name: string
@@ -34,13 +34,13 @@ export function RoleProvider({ children }: { children: ReactNode }) {
     role: 'official'
   }
 
-  // These functions are no-ops in production since roles come from Netlify Identity
+  // These functions are no-ops in production since roles come from Supabase Auth
   const setUser = (user: User) => {
-    console.warn('setUser is disabled in production mode. User roles are managed by Netlify Identity.')
+    console.warn('setUser is disabled in production mode. User roles are managed by Supabase Auth.')
   }
-  
+
   const switchRole = (role: UserRole) => {
-    console.warn('switchRole is disabled in production mode. User roles are managed by Netlify Identity.')
+    console.warn('switchRole is disabled in production mode. User roles are managed by Supabase Auth.')
   }
 
   return (

@@ -21,7 +21,8 @@ import {
   IconShield,
   IconUsers,
   IconMail,
-  IconChartBar
+  IconChartBar,
+  IconClipboardCheck
 } from '@tabler/icons-react'
 import ThemeToggle from '../ui/ThemeToggle'
 
@@ -41,6 +42,8 @@ export default function PortalHeader() {
     switch(role) {
       case 'admin': return 'bg-red-500'
       case 'executive': return 'bg-purple-500'
+      case 'evaluator': return 'bg-green-500'
+      case 'mentor': return 'bg-yellow-500'
       default: return 'bg-blue-500'
     }
   }
@@ -49,6 +52,8 @@ export default function PortalHeader() {
     switch(role) {
       case 'admin': return 'Administrator'
       case 'executive': return 'Executive'
+      case 'evaluator': return 'Evaluator'
+      case 'mentor': return 'Mentor'
       default: return 'Official'
     }
   }
@@ -58,6 +63,7 @@ export default function PortalHeader() {
     { href: '/portal/calendar', label: 'Calendar', icon: IconCalendar },
     { href: '/portal/statistics', label: 'Statistics', icon: IconChartBar },
     { href: '/portal/resources', label: 'Resources', icon: IconBooks },
+    { href: '/portal/evaluations', label: 'Evaluations', icon: IconClipboardCheck },
     { href: '/portal/news', label: 'News & Announcements', icon: IconNews },
     { href: '/portal/rule-modifications', label: 'Rule Modifications', icon: IconGavel },
     { href: '/portal/the-bounce', label: 'The Bounce', icon: IconNotebook },

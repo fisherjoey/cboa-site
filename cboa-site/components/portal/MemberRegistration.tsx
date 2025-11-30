@@ -44,7 +44,7 @@ export default function MemberRegistration({ onComplete }: MemberRegistrationPro
       const fullName = `${data.first_name.trim()} ${data.last_name.trim()}`
 
       await membersAPI.create({
-        netlify_user_id: user?.id,
+        user_id: user?.id,  // Supabase Auth user ID
         email: user?.email,
         name: fullName,
         phone: data.phone.trim(),

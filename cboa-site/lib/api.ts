@@ -321,6 +321,37 @@ export const membersAPI = {
     }
   },
 
+  async getByUserId(userId: string) {
+    try {
+      return await retryAsync(async () => {
+        const res = await apiFetch(`${API_BASE}/members?user_id=${userId}`)
+        return res.json()
+      })
+    } catch (error) {
+      if (USE_MOCK_DATA) {
+        console.warn(`Using mock data for member with user_id: ${userId}`)
+        // Fall back to checking by netlify_user_id for backward compatibility
+        return getMemberByNetlifyId(userId)
+      }
+      throw error
+    }
+  },
+
+  async getByEmail(email: string) {
+    try {
+      return await retryAsync(async () => {
+        const res = await apiFetch(`${API_BASE}/members?email=${encodeURIComponent(email)}`)
+        return res.json()
+      })
+    } catch (error) {
+      if (USE_MOCK_DATA) {
+        console.warn(`Using mock data for member with email: ${email}`)
+        return null
+      }
+      throw error
+    }
+  },
+
   async getById(id: string) {
     try {
       return await retryAsync(async () => {
@@ -769,10 +800,21 @@ export const publicPagesAPI = {
 }
 
 // ============================================================================
-// Netlify Identity Admin API
+// Supabase Auth Admin API
 // ============================================================================
 
-export interface IdentityUser {
+import { createBrowserClient } from '@supabase/ssr'
+
+// Create Supabase browser client for getting auth token
+const getSupabaseClient = () => {
+  if (typeof window === 'undefined') return null
+  return createBrowserClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  )
+}
+
+export interface AuthUser {
   id: string
   email: string
   name?: string
@@ -780,10 +822,14 @@ export interface IdentityUser {
   confirmed_at?: string
   invited_at?: string
   created_at?: string
+  role?: string
   roles: string[]
 }
 
-export interface IdentityStatus {
+// Keep IdentityUser as alias for backward compatibility
+export type IdentityUser = AuthUser
+
+export interface AuthStatus {
   exists: boolean
   id?: string
   email?: string
@@ -792,40 +838,36 @@ export interface IdentityStatus {
   confirmed_at?: string
   invited_at?: string
   created_at?: string
+  role?: string
   roles?: string[]
 }
 
-// Helper to get the current user's JWT token (async - refreshes if needed)
-async function getIdentityToken(): Promise<string | null> {
-  if (typeof window === 'undefined') return null
+// Keep IdentityStatus as alias for backward compatibility
+export type IdentityStatus = AuthStatus
 
-  // Access netlifyIdentity from window
-  const netlifyIdentity = (window as any).netlifyIdentity
-  if (!netlifyIdentity) return null
+// Helper to get the current user's JWT token from Supabase
+async function getAuthToken(): Promise<string | null> {
+  const supabase = getSupabaseClient()
+  if (!supabase) return null
 
-  const currentUser = netlifyIdentity.currentUser()
-  if (!currentUser) return null
-
-  // Use jwt() method which auto-refreshes the token if expired
   try {
-    const token = await currentUser.jwt()
-    return token || null
+    const { data: { session } } = await supabase.auth.getSession()
+    return session?.access_token || null
   } catch {
-    // Fall back to stored token if jwt() fails
-    return currentUser.token?.access_token || null
+    return null
   }
 }
 
-// Identity Admin API - uses serverless function with admin token
-export const identityAPI = {
-  // List all identity users
-  async listUsers(): Promise<IdentityUser[]> {
-    const token = await getIdentityToken()
+// Supabase Auth Admin API - uses serverless function with service role
+export const supabaseAuthAPI = {
+  // List all auth users
+  async listUsers(): Promise<AuthUser[]> {
+    const token = await getAuthToken()
     if (!token) {
       throw new AppError('Not authenticated', 'AUTH_ERROR', 401)
     }
 
-    const res = await apiFetch(`${API_BASE}/identity-admin?action=list`, {
+    const res = await apiFetch(`${API_BASE}/supabase-auth-admin?action=list`, {
       headers: {
         'Authorization': `Bearer ${token}`
       }
@@ -834,15 +876,15 @@ export const identityAPI = {
     return data.users || []
   },
 
-  // Get identity status for a specific email
-  async getStatus(email: string): Promise<IdentityStatus> {
-    const token = await getIdentityToken()
+  // Get auth status for a specific email
+  async getStatus(email: string): Promise<AuthStatus> {
+    const token = await getAuthToken()
     if (!token) {
       return { exists: false }
     }
 
     try {
-      const res = await apiFetch(`${API_BASE}/identity-admin?email=${encodeURIComponent(email)}`, {
+      const res = await apiFetch(`${API_BASE}/supabase-auth-admin?email=${encodeURIComponent(email)}`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -854,53 +896,202 @@ export const identityAPI = {
   },
 
   // Send invite to a new user
-  async sendInvite(email: string, name?: string): Promise<{ success: boolean; message?: string; error?: string }> {
-    const token = await getIdentityToken()
+  async sendInvite(email: string, name?: string, role?: string): Promise<{ success: boolean; message?: string; error?: string }> {
+    const token = await getAuthToken()
     if (!token) {
       throw new AppError('Not authenticated', 'AUTH_ERROR', 401)
     }
 
-    const res = await apiFetch(`${API_BASE}/identity-admin`, {
+    const res = await apiFetch(`${API_BASE}/supabase-auth-admin`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${token}`
       },
-      body: JSON.stringify({ email, name })
+      body: JSON.stringify({ email, name, role })
     })
     return res.json()
   },
 
   // Resend invite for a pending user
-  async resendInvite(email: string, name?: string): Promise<{ success: boolean; message?: string; error?: string }> {
-    const token = await getIdentityToken()
+  async resendInvite(email: string, name?: string, role?: string): Promise<{ success: boolean; message?: string; error?: string }> {
+    const token = await getAuthToken()
     if (!token) {
       throw new AppError('Not authenticated', 'AUTH_ERROR', 401)
     }
 
-    const res = await apiFetch(`${API_BASE}/identity-admin`, {
+    const res = await apiFetch(`${API_BASE}/supabase-auth-admin`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${token}`
       },
-      body: JSON.stringify({ email, name, action: 'resend' })
+      body: JSON.stringify({ email, name, role, action: 'resend' })
     })
     return res.json()
   },
 
-  // Delete a user from Identity
-  async deleteUser(email: string): Promise<{ success: boolean; message?: string; error?: string }> {
-    const token = await getIdentityToken()
+  // Update user role/metadata
+  async updateUser(userId: string, data: { role?: string; name?: string }): Promise<{ success: boolean; message?: string; error?: string }> {
+    const token = await getAuthToken()
     if (!token) {
       throw new AppError('Not authenticated', 'AUTH_ERROR', 401)
     }
 
-    const res = await apiFetch(`${API_BASE}/identity-admin?email=${encodeURIComponent(email)}`, {
+    const res = await apiFetch(`${API_BASE}/supabase-auth-admin`, {
+      method: 'PUT',
+      headers: {
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({ userId, ...data })
+    })
+    return res.json()
+  },
+
+  // Delete a user from Auth
+  async deleteUser(email: string): Promise<{ success: boolean; message?: string; error?: string }> {
+    const token = await getAuthToken()
+    if (!token) {
+      throw new AppError('Not authenticated', 'AUTH_ERROR', 401)
+    }
+
+    const res = await apiFetch(`${API_BASE}/supabase-auth-admin?email=${encodeURIComponent(email)}`, {
       method: 'DELETE',
       headers: {
         'Authorization': `Bearer ${token}`
       }
     })
     return res.json()
+  }
+}
+
+// Keep identityAPI as alias for backward compatibility during migration
+export const identityAPI = supabaseAuthAPI
+
+// Evaluations API
+export interface Evaluation {
+  id: string
+  member_id: string
+  evaluator_id?: string
+  evaluation_date: string
+  file_url: string
+  file_name: string
+  title?: string
+  notes?: string
+  activity_id?: string
+  created_at: string
+  updated_at: string
+  member?: { id: string; name: string; email: string }
+  evaluator?: { id: string; name: string; email: string }
+}
+
+export const evaluationsAPI = {
+  async getAll(options?: { forceRefresh?: boolean }): Promise<Evaluation[]> {
+    const cacheKey = 'evaluations'
+
+    if (!options?.forceRefresh && isBrowser()) {
+      const cached = getFromCache<Evaluation[]>(cacheKey)
+      if (cached) return cached
+    }
+
+    const data = await retryAsync(async () => {
+      const res = await apiFetch(`${API_BASE}/evaluations`)
+      return res.json()
+    })
+
+    if (isBrowser()) {
+      saveToCache(cacheKey, data)
+    }
+
+    return data
+  },
+
+  async getByMemberId(memberId: string, options?: { forceRefresh?: boolean }): Promise<Evaluation[]> {
+    const cacheKey = `evaluations_member_${memberId}`
+
+    if (!options?.forceRefresh && isBrowser()) {
+      const cached = getFromCache<Evaluation[]>(cacheKey)
+      if (cached) return cached
+    }
+
+    const data = await retryAsync(async () => {
+      const res = await apiFetch(`${API_BASE}/evaluations?member_id=${memberId}`)
+      return res.json()
+    })
+
+    if (isBrowser()) {
+      saveToCache(cacheKey, data)
+    }
+
+    return data
+  },
+
+  async getByEvaluatorId(evaluatorId: string, options?: { forceRefresh?: boolean }): Promise<Evaluation[]> {
+    const cacheKey = `evaluations_evaluator_${evaluatorId}`
+
+    if (!options?.forceRefresh && isBrowser()) {
+      const cached = getFromCache<Evaluation[]>(cacheKey)
+      if (cached) return cached
+    }
+
+    const data = await retryAsync(async () => {
+      const res = await apiFetch(`${API_BASE}/evaluations?evaluator_id=${evaluatorId}`)
+      return res.json()
+    })
+
+    if (isBrowser()) {
+      saveToCache(cacheKey, data)
+    }
+
+    return data
+  },
+
+  async getById(id: string): Promise<Evaluation> {
+    return retryAsync(async () => {
+      const res = await apiFetch(`${API_BASE}/evaluations?id=${id}`)
+      return res.json()
+    })
+  },
+
+  async create(evaluation: Partial<Evaluation>): Promise<Evaluation> {
+    const res = await apiFetch(`${API_BASE}/evaluations`, {
+      method: 'POST',
+      body: JSON.stringify(evaluation)
+    })
+    invalidateCache('evaluations')
+    if (evaluation.member_id) {
+      invalidateCache(`evaluations_member_${evaluation.member_id}`)
+    }
+    if (evaluation.evaluator_id) {
+      invalidateCache(`evaluations_evaluator_${evaluation.evaluator_id}`)
+    }
+    return res.json()
+  },
+
+  async update(evaluation: Partial<Evaluation>): Promise<Evaluation> {
+    const res = await apiFetch(`${API_BASE}/evaluations`, {
+      method: 'PUT',
+      body: JSON.stringify(evaluation)
+    })
+    invalidateCache('evaluations')
+    if (evaluation.member_id) {
+      invalidateCache(`evaluations_member_${evaluation.member_id}`)
+    }
+    if (evaluation.evaluator_id) {
+      invalidateCache(`evaluations_evaluator_${evaluation.evaluator_id}`)
+    }
+    return res.json()
+  },
+
+  async delete(id: string, memberId?: string, evaluatorId?: string): Promise<void> {
+    await apiFetch(`${API_BASE}/evaluations?id=${id}`, {
+      method: 'DELETE'
+    })
+    invalidateCache('evaluations')
+    if (memberId) {
+      invalidateCache(`evaluations_member_${memberId}`)
+    }
+    if (evaluatorId) {
+      invalidateCache(`evaluations_evaluator_${evaluatorId}`)
+    }
   }
 }
 

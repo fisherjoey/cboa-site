@@ -118,6 +118,8 @@ export default function PortalDashboard() {
           You are logged in as: <span className="font-semibold">
             {user.role === 'admin' ? 'Administrator' :
              user.role === 'executive' ? 'Executive Member' :
+             user.role === 'evaluator' ? 'Evaluator' :
+             user.role === 'mentor' ? 'Mentor' :
              'Official'}
           </span>
         </p>

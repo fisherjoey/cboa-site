@@ -53,18 +53,56 @@ export function MemberProvider({ children }: { children: ReactNode }) {
     setError(null)
 
     try {
-      const memberData = await membersAPI.getByNetlifyId(user.id)
+      // Try user_id first (Supabase Auth), then fall back to netlify_user_id (legacy), then email
+      let memberData = null
+
+      try {
+        memberData = await membersAPI.getByUserId(user.id)
+      } catch (err: any) {
+        // 404 or API_ERROR means not found by user_id - try netlify_user_id
+        if (err.statusCode === 404 || err.message?.includes('404') || err.code === 'API_ERROR') {
+          // Continue to try netlify_user_id
+        } else {
+          throw err // Re-throw other errors
+        }
+      }
+
+      // If not found by user_id, try netlify_user_id for legacy records
+      if (!memberData) {
+        try {
+          memberData = await membersAPI.getByNetlifyId(user.id)
+        } catch (err: any) {
+          // 404 or API_ERROR is expected - try email next
+          if (!(err.statusCode === 404 || err.message?.includes('404') || err.code === 'API_ERROR')) {
+            throw err
+          }
+        }
+      }
+
+      // If still not found, try email lookup (for migrated users with old netlify_user_id)
+      if (!memberData && user.email) {
+        try {
+          memberData = await membersAPI.getByEmail(user.email)
+          // If found by email, update the member record with the new user_id
+          if (memberData && !memberData.user_id) {
+            console.log('Linking member to Supabase Auth user by email...')
+            await membersAPI.update({ id: memberData.id, user_id: user.id })
+            memberData.user_id = user.id
+          }
+        } catch (err: any) {
+          // 404 or API_ERROR is expected for new users
+          if (!(err.statusCode === 404 || err.message?.includes('404') || err.code === 'API_ERROR')) {
+            throw err
+          }
+        }
+      }
+
       // API returns null if member doesn't exist
       setMember(memberData || null)
     } catch (err: any) {
-      // 404 means member doesn't exist yet - that's expected for new users
-      if (err.statusCode === 404 || err.message?.includes('404') || err.code === 'API_ERROR') {
-        setMember(null)
-      } else {
-        console.error('Error fetching member:', err)
-        setError(err.message || 'Failed to load member data')
-        setMember(null)
-      }
+      console.error('Error fetching member:', err)
+      setError(err.message || 'Failed to load member data')
+      setMember(null)
     } finally {
       setIsLoading(false)
     }

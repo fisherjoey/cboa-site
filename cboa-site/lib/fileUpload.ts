@@ -59,6 +59,8 @@ export async function uploadFile(file: File, path?: string): Promise<{ url: stri
     ? 'newsletters'
     : path && path.includes('training')
     ? 'training-materials'
+    : path && path.includes('evaluation')
+    ? 'evaluations'
     : 'portal-resources'
 
   try {

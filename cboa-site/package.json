@@ -30,6 +30,7 @@
     "@headlessui/react": "^2.2.9",
     "@hookform/resolvers": "^5.2.2",
     "@netlify/functions": "^4.2.5",
+    "@supabase/ssr": "^0.8.0",
     "@supabase/supabase-js": "^2.57.4",
     "@tabler/icons-react": "^3.34.1",
     "@tanstack/react-table": "^8.21.3",
