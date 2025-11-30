@@ -157,6 +157,18 @@ async function resendInvite(
   return { success: result.success, error: result.error }
 }
 
+// Decode JWT payload without verification (we trust Netlify's token)
+function decodeJwtPayload(token: string): any {
+  try {
+    const parts = token.split('.')
+    if (parts.length !== 3) return null
+    const payload = Buffer.from(parts[1], 'base64').toString('utf8')
+    return JSON.parse(payload)
+  } catch {
+    return null
+  }
+}
+
 export const handler: Handler = async (event, context) => {
   const headers = {
     'Access-Control-Allow-Origin': '*',
@@ -170,14 +182,45 @@ export const handler: Handler = async (event, context) => {
     return { statusCode: 200, headers, body: '' }
   }
 
-  // Check authentication
-  const { identity, user } = context.clientContext || {}
+  // Get token from Authorization header
+  const authHeader = event.headers['authorization'] || event.headers['Authorization']
+  const adminToken = authHeader?.replace('Bearer ', '')
 
-  if (!identity || !user) {
+  if (!adminToken) {
     return {
       statusCode: 401,
       headers,
-      body: JSON.stringify({ error: 'Unauthorized - must be logged in' })
+      body: JSON.stringify({ error: 'Unauthorized - no token provided' })
+    }
+  }
+
+  // Try to get user from clientContext first, fall back to decoding JWT
+  let user = context.clientContext?.user
+
+  if (!user) {
+    // Decode the JWT payload to get user info
+    const decoded = decodeJwtPayload(adminToken)
+    if (!decoded) {
+      return {
+        statusCode: 401,
+        headers,
+        body: JSON.stringify({ error: 'Unauthorized - invalid token' })
+      }
+    }
+
+    // Check token expiration
+    if (decoded.exp && decoded.exp * 1000 < Date.now()) {
+      return {
+        statusCode: 401,
+        headers,
+        body: JSON.stringify({ error: 'Unauthorized - token expired' })
+      }
+    }
+
+    user = {
+      email: decoded.email,
+      app_metadata: decoded.app_metadata || {},
+      user_metadata: decoded.user_metadata || {}
     }
   }
 
@@ -190,11 +233,7 @@ export const handler: Handler = async (event, context) => {
     }
   }
 
-  // Get admin token from the identity context
-  // The token is passed in the Authorization header by the client
-  const authHeader = event.headers['authorization'] || event.headers['Authorization']
-  const adminToken = authHeader?.replace('Bearer ', '')
-
+  // adminToken is already set from the Authorization header above
   if (!adminToken) {
     return {
       statusCode: 400,

@@ -795,8 +795,8 @@ export interface IdentityStatus {
   roles?: string[]
 }
 
-// Helper to get the current user's JWT token
-function getIdentityToken(): string | null {
+// Helper to get the current user's JWT token (async - refreshes if needed)
+async function getIdentityToken(): Promise<string | null> {
   if (typeof window === 'undefined') return null
 
   // Access netlifyIdentity from window
@@ -806,14 +806,21 @@ function getIdentityToken(): string | null {
   const currentUser = netlifyIdentity.currentUser()
   if (!currentUser) return null
 
-  return currentUser.token?.access_token || null
+  // Use jwt() method which auto-refreshes the token if expired
+  try {
+    const token = await currentUser.jwt()
+    return token || null
+  } catch {
+    // Fall back to stored token if jwt() fails
+    return currentUser.token?.access_token || null
+  }
 }
 
 // Identity Admin API - requires admin/executive role
 export const identityAPI = {
   // List all identity users
   async listUsers(): Promise<IdentityUser[]> {
-    const token = getIdentityToken()
+    const token = await getIdentityToken()
     if (!token) {
       throw new AppError('Not authenticated', 'AUTH_ERROR', 401)
     }
@@ -829,7 +836,7 @@ export const identityAPI = {
 
   // Get identity status for a specific email
   async getStatus(email: string): Promise<IdentityStatus> {
-    const token = getIdentityToken()
+    const token = await getIdentityToken()
     if (!token) {
       throw new AppError('Not authenticated', 'AUTH_ERROR', 401)
     }
@@ -852,7 +859,7 @@ export const identityAPI = {
 
   // Send invite to a new user
   async sendInvite(email: string, name?: string): Promise<{ success: boolean; message?: string; error?: string }> {
-    const token = getIdentityToken()
+    const token = await getIdentityToken()
     if (!token) {
       throw new AppError('Not authenticated', 'AUTH_ERROR', 401)
     }
@@ -869,7 +876,7 @@ export const identityAPI = {
 
   // Resend invite for a pending user
   async resendInvite(email: string, name?: string): Promise<{ success: boolean; message?: string; error?: string }> {
-    const token = getIdentityToken()
+    const token = await getIdentityToken()
     if (!token) {
       throw new AppError('Not authenticated', 'AUTH_ERROR', 401)
     }
@@ -886,7 +893,7 @@ export const identityAPI = {
 
   // Delete a user from Identity
   async deleteUser(email: string): Promise<{ success: boolean; message?: string; error?: string }> {
-    const token = getIdentityToken()
+    const token = await getIdentityToken()
     if (!token) {
       throw new AppError('Not authenticated', 'AUTH_ERROR', 401)
     }
