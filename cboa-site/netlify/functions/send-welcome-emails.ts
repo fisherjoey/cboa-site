@@ -1,6 +1,5 @@
 import { Handler } from '@netlify/functions'
 import { createClient } from '@supabase/supabase-js'
-import { generateCBOAEmailTemplate } from '../../lib/emailTemplate'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
@@ -79,39 +78,63 @@ async function sendEmailViaGraph(
   }
 }
 
-// Generate welcome email content
-function generateWelcomeEmailContent(name: string, resetLink: string): string {
-  const firstName = name.split(' ')[0]
-
+// Generate invite email HTML (matches supabase-auth-admin.ts template)
+function generateInviteEmailHtml(inviteUrl: string, name?: string): string {
+  const siteUrl = process.env.URL || 'https://cboa.ca'
   return `
-    <h1>Welcome to the CBOA Member Portal!</h1>
-
-    <p>Hi ${firstName},</p>
-
-    <p>We've upgraded our member portal to provide you with a better experience. Your account has been migrated to our new system.</p>
-
-    <p>To get started, please set up your new password by clicking the button below:</p>
-
-    <p style="text-align: center;">
-      <a href="${resetLink}" class="button">Set Up Your Password</a>
-    </p>
-
-    <p><strong>This link will expire in 24 hours.</strong> If you need a new link, you can request one from the login page using "Forgot Password".</p>
-
-    <h2>What's New?</h2>
-    <ul>
-      <li><strong>Improved Dashboard:</strong> Quick access to your schedule, resources, and more</li>
-      <li><strong>Calendar Integration:</strong> View all your assignments in one place</li>
-      <li><strong>Mobile Friendly:</strong> Access the portal from any device</li>
-    </ul>
-
-    <p>If you have any questions or issues accessing your account, please contact us at <a href="mailto:webmaster@cboa.ca">webmaster@cboa.ca</a>.</p>
-
-    <p>See you on the court!</p>
-
-    <p>Best regards,<br>
-    <strong>CBOA Executive Board</strong></p>
-  `
+<table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: #f5f5f5; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;">
+  <tr>
+    <td style="padding: 20px 10px;">
+      <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="max-width: 600px; width: 100%; margin: 0 auto; background-color: #ffffff;" align="center">
+        <!-- Header -->
+        <tr>
+          <td style="background-color: #1f2937; padding: 24px 20px; border-bottom: 3px solid #F97316; text-align: center;">
+            <img src="https://i.imgur.com/BQe360J.png" alt="CBOA Logo" style="max-width: 70px; height: auto; display: inline-block; margin-bottom: 12px;">
+            <h1 style="color: #ffffff; margin: 0 0 4px 0; font-size: 18px; font-weight: 700; letter-spacing: -0.5px; line-height: 1.3;">Calgary Basketball Officials Association</h1>
+            <p style="color: #ffffff; margin: 0; font-size: 14px; font-weight: 500; opacity: 0.95;">Excellence in Basketball Officiating</p>
+          </td>
+        </tr>
+        <!-- Main Content -->
+        <tr>
+          <td style="padding: 30px 20px; color: #333333; font-size: 16px; line-height: 1.6;">
+            <h1 style="color: #003DA5; font-size: 24px; margin-top: 0; margin-bottom: 16px; font-weight: 700; line-height: 1.3;">You're Invited to Join CBOA!</h1>
+            <p style="margin: 0 0 16px 0; font-size: 16px; line-height: 1.6;">${name ? `Hi ${name.split(' ')[0]},` : 'Hello,'}</p>
+            <p style="margin: 0 0 16px 0; font-size: 16px; line-height: 1.6;">You have been invited to create an account on the <strong style="color: #003DA5; font-weight: 600;">Calgary Basketball Officials Association</strong> member portal.</p>
+            <p style="margin: 0 0 16px 0; font-size: 16px; line-height: 1.6;">As a member, you'll have access to:</p>
+            <ul style="margin: 0 0 16px 0; padding-left: 20px;">
+              <li style="margin-bottom: 8px; font-size: 16px; line-height: 1.5;"><strong style="color: #003DA5;">Resources</strong> - Training materials, rulebooks, and guides</li>
+              <li style="margin-bottom: 8px; font-size: 16px; line-height: 1.5;"><strong style="color: #003DA5;">The Bounce</strong> - Our official newsletter</li>
+              <li style="margin-bottom: 8px; font-size: 16px; line-height: 1.5;"><strong style="color: #003DA5;">Calendar</strong> - Upcoming events and training sessions</li>
+              <li style="margin-bottom: 8px; font-size: 16px; line-height: 1.5;"><strong style="color: #003DA5;">Rule Modifications</strong> - League-specific rule changes</li>
+            </ul>
+            <p style="text-align: center; margin: 24px 0;">
+              <a href="${inviteUrl}" style="display: inline-block; padding: 14px 28px; min-height: 44px; background-color: #F97316; color: #ffffff !important; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px;">Accept Invitation</a>
+            </p>
+            <p style="margin: 0 0 16px 0; font-size: 16px; line-height: 1.6;">If you have any questions about your membership, please don't hesitate to contact us.</p>
+            <p style="margin: 0 0 16px 0; font-size: 16px; line-height: 1.6;">We look forward to having you on our team!</p>
+            <p style="margin: 0; font-size: 16px; line-height: 1.6;">Best regards,<br><strong style="color: #003DA5; font-weight: 600;">CBOA Executive Board</strong></p>
+          </td>
+        </tr>
+        <!-- Footer -->
+        <tr>
+          <td style="background-color: #1F2937; color: #D1D5DB; padding: 30px 20px; text-align: center; font-size: 14px; line-height: 1.7; border-top: 3px solid #F97316;">
+            <p style="margin: 0 0 10px 0; font-weight: 600; color: #ffffff;">Calgary Basketball Officials Association</p>
+            <p style="margin: 0 0 15px 0;">Calgary, Alberta, Canada</p>
+            <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin: 20px auto;">
+              <tr>
+                <td style="padding: 0 8px;"><a href="${siteUrl}" style="color: #F97316; text-decoration: none; font-size: 14px;">Website</a></td>
+                <td style="padding: 0 8px;"><a href="${siteUrl}/portal" style="color: #F97316; text-decoration: none; font-size: 14px;">Member Portal</a></td>
+                <td style="padding: 0 8px;"><a href="mailto:info@cboa.ca" style="color: #F97316; text-decoration: none; font-size: 14px;">Contact Us</a></td>
+              </tr>
+            </table>
+            <p style="margin: 20px 0 0 0; font-size: 13px; color: #9ca3af;">&copy; 2025 Calgary Basketball Officials Association. All rights reserved.</p>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+</table>
+  `.trim()
 }
 
 const handler: Handler = async (event) => {
@@ -207,18 +230,13 @@ const handler: Handler = async (event) => {
           continue
         }
 
-        const resetLink = linkData.properties.action_link
+        const inviteLink = linkData.properties.action_link
 
-        // Generate email content with CBOA template
-        const emailContent = generateWelcomeEmailContent(user.name, resetLink)
-        const emailHtml = generateCBOAEmailTemplate({
-          subject: 'Welcome to the New CBOA Member Portal',
-          content: emailContent,
-          previewText: 'Set up your password to access the new CBOA Member Portal'
-        })
+        // Generate email HTML
+        const emailHtml = generateInviteEmailHtml(inviteLink, user.name)
 
         // Send via Microsoft Graph
-        await sendEmailViaGraph(accessToken!, user.email, 'Welcome to the New CBOA Member Portal', emailHtml)
+        await sendEmailViaGraph(accessToken!, user.email, "You're Invited to Join CBOA!", emailHtml)
         results.push({ email: user.email, status: 'sent' })
 
         // Rate limiting
