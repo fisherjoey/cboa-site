@@ -81,7 +81,6 @@ export default function MembersPage() {
   // Identity integration state
   const [identityStatusMap, setIdentityStatusMap] = useState<Record<string, IdentityStatus>>({})
   const [loadingIdentityStatus, setLoadingIdentityStatus] = useState(false)
-  const [sendInviteOnCreate, setSendInviteOnCreate] = useState(true)
   const [sendingInvite, setSendingInvite] = useState(false)
 
   // Identity users modal state
@@ -377,20 +376,7 @@ export default function MembersPage() {
         await membersAPI.create(sanitizedForm)
         success('Member created successfully')
 
-        // Send invite if checkbox is checked
-        if (sendInviteOnCreate) {
-          try {
-            const inviteResult = await identityAPI.sendInvite(sanitizedForm.email, sanitizedForm.name)
-            if (inviteResult.success) {
-              success(`Portal invite sent to ${sanitizedForm.email}`)
-            } else {
-              warning(`Member created but invite failed: ${inviteResult.error}`)
-            }
-          } catch (inviteErr) {
-            warning('Member created but failed to send portal invite')
-            console.error('Invite error:', inviteErr)
-          }
-        }
+        // Note: Invite is now sent automatically by the members API
       }
 
       await loadMembers()
@@ -784,19 +770,11 @@ export default function MembersPage() {
                             {getFieldError(validationErrors, 'email')}
                           </p>
                         )}
-                        {/* Send invite checkbox - only shown when adding new member */}
+                        {/* Portal invite is sent automatically when creating a member */}
                         {!selectedMember && (
-                          <label className="flex items-center gap-2 mt-3 cursor-pointer">
-                            <input
-                              type="checkbox"
-                              checked={sendInviteOnCreate}
-                              onChange={(e) => setSendInviteOnCreate(e.target.checked)}
-                              className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                            />
-                            <span className="text-sm text-gray-700 dark:text-gray-300">
-                              Send portal invite to this email
-                            </span>
-                          </label>
+                          <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
+                            A portal invite will be sent automatically to this email.
+                          </p>
                         )}
                       </>
                     ) : (

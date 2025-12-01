@@ -3,7 +3,119 @@ import { createClient } from '@supabase/supabase-js'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
-const supabase = createClient(supabaseUrl, supabaseServiceKey)
+const supabase = createClient(supabaseUrl, supabaseServiceKey, {
+  auth: { autoRefreshToken: false, persistSession: false }
+})
+
+// Microsoft Graph API for sending emails
+async function getMicrosoftAccessToken(): Promise<string> {
+  const tokenEndpoint = `https://login.microsoftonline.com/${process.env.MICROSOFT_TENANT_ID}/oauth2/v2.0/token`
+  const params = new URLSearchParams({
+    client_id: process.env.MICROSOFT_CLIENT_ID || '',
+    client_secret: process.env.MICROSOFT_CLIENT_SECRET || '',
+    scope: 'https://graph.microsoft.com/.default',
+    grant_type: 'client_credentials'
+  })
+
+  const response = await fetch(tokenEndpoint, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: params
+  })
+
+  if (!response.ok) {
+    throw new Error('Failed to get Microsoft access token')
+  }
+
+  const data = await response.json()
+  return data.access_token
+}
+
+async function sendEmailViaMicrosoftGraph(
+  accessToken: string,
+  toEmail: string,
+  subject: string,
+  htmlContent: string
+): Promise<void> {
+  const senderEmail = 'announcements@cboa.ca'
+  const graphEndpoint = `https://graph.microsoft.com/v1.0/users/${senderEmail}/sendMail`
+
+  const emailMessage = {
+    message: {
+      subject,
+      body: { contentType: 'HTML', content: htmlContent },
+      from: { emailAddress: { address: senderEmail } },
+      toRecipients: [{ emailAddress: { address: toEmail } }]
+    },
+    saveToSentItems: true
+  }
+
+  const response = await fetch(graphEndpoint, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${accessToken}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(emailMessage)
+  })
+
+  if (!response.ok) {
+    throw new Error('Failed to send email')
+  }
+}
+
+function generateInviteEmailHtml(inviteUrl: string, name?: string): string {
+  const siteUrl = 'https://cboa.ca'
+  return `
+<table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: #f5f5f5; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;">
+  <tr>
+    <td style="padding: 20px 10px;">
+      <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="max-width: 600px; width: 100%; margin: 0 auto; background-color: #ffffff;" align="center">
+        <tr>
+          <td style="background-color: #1f2937; padding: 24px 20px; border-bottom: 3px solid #F97316; text-align: center;">
+            <img src="https://i.imgur.com/BQe360J.png" alt="CBOA Logo" style="max-width: 70px; height: auto; display: inline-block; margin-bottom: 12px;">
+            <h1 style="color: #ffffff; margin: 0 0 4px 0; font-size: 18px; font-weight: 700;">Calgary Basketball Officials Association</h1>
+            <p style="color: #ffffff; margin: 0; font-size: 14px; opacity: 0.95;">Excellence in Basketball Officiating</p>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding: 30px 20px; color: #333333; font-size: 16px; line-height: 1.6;">
+            <h1 style="color: #003DA5; font-size: 24px; margin-top: 0; margin-bottom: 16px;">You're Invited to Join CBOA!</h1>
+            <p style="margin: 0 0 16px 0;">${name ? `Hi ${name.split(' ')[0]},` : 'Hello,'}</p>
+            <p style="margin: 0 0 16px 0;">You have been invited to create an account on the <strong style="color: #003DA5;">Calgary Basketball Officials Association</strong> member portal.</p>
+            <p style="margin: 0 0 16px 0;">As a member, you'll have access to:</p>
+            <ul style="margin: 0 0 16px 0; padding-left: 20px;">
+              <li style="margin-bottom: 8px;"><strong style="color: #003DA5;">Resources</strong> - Training materials, rulebooks, and guides</li>
+              <li style="margin-bottom: 8px;"><strong style="color: #003DA5;">The Bounce</strong> - Our official newsletter</li>
+              <li style="margin-bottom: 8px;"><strong style="color: #003DA5;">Calendar</strong> - Upcoming events and training sessions</li>
+              <li style="margin-bottom: 8px;"><strong style="color: #003DA5;">Rule Modifications</strong> - League-specific rule changes</li>
+            </ul>
+            <p style="text-align: center; margin: 24px 0;">
+              <a href="${inviteUrl}" style="display: inline-block; padding: 14px 28px; background-color: #F97316; color: #ffffff !important; text-decoration: none; border-radius: 8px; font-weight: 600;">Accept Invitation</a>
+            </p>
+            <p style="margin: 0;">Best regards,<br><strong style="color: #003DA5;">CBOA Executive Board</strong></p>
+          </td>
+        </tr>
+        <tr>
+          <td style="background-color: #1F2937; color: #D1D5DB; padding: 30px 20px; text-align: center; font-size: 14px; border-top: 3px solid #F97316;">
+            <p style="margin: 0 0 10px 0; font-weight: 600; color: #ffffff;">Calgary Basketball Officials Association</p>
+            <p style="margin: 0 0 15px 0;">Calgary, Alberta, Canada</p>
+            <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin: 20px auto;">
+              <tr>
+                <td style="padding: 0 8px;"><a href="${siteUrl}" style="color: #F97316; text-decoration: none;">Website</a></td>
+                <td style="padding: 0 8px;"><a href="${siteUrl}/portal" style="color: #F97316; text-decoration: none;">Member Portal</a></td>
+                <td style="padding: 0 8px;"><a href="mailto:info@cboa.ca" style="color: #F97316; text-decoration: none;">Contact Us</a></td>
+              </tr>
+            </table>
+            <p style="margin: 20px 0 0 0; font-size: 13px; color: #9ca3af;">&copy; 2025 Calgary Basketball Officials Association. All rights reserved.</p>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+</table>
+  `.trim()
+}
 
 export const handler: Handler = async (event) => {
   const headers = {
@@ -110,44 +222,98 @@ export const handler: Handler = async (event) => {
 
       case 'POST': {
         const body = JSON.parse(event.body || '{}')
+        const { email, name, role, skipInvite, ...memberData } = body
 
-        // Check if member with this user_id already exists (Supabase Auth)
-        if (body.user_id) {
-          const { data: existing } = await supabase
-            .from('members')
-            .select('id')
-            .eq('user_id', body.user_id)
-            .single()
-
-          if (existing) {
-            return {
-              statusCode: 409,
-              headers,
-              body: JSON.stringify({ error: 'Member already exists' })
-            }
+        if (!email) {
+          return {
+            statusCode: 400,
+            headers,
+            body: JSON.stringify({ error: 'Email is required' })
           }
         }
 
-        // Check if member with this netlify_user_id already exists (legacy)
-        if (body.netlify_user_id) {
-          const { data: existing } = await supabase
-            .from('members')
-            .select('id')
-            .eq('netlify_user_id', body.netlify_user_id)
-            .single()
+        // Check if member with this email already exists
+        const { data: existingMember } = await supabase
+          .from('members')
+          .select('id')
+          .eq('email', email.toLowerCase())
+          .single()
 
-          if (existing) {
-            return {
-              statusCode: 409,
-              headers,
-              body: JSON.stringify({ error: 'Member already exists' })
-            }
+        if (existingMember) {
+          return {
+            statusCode: 409,
+            headers,
+            body: JSON.stringify({ error: 'Member with this email already exists' })
           }
         }
 
+        // Check if auth user already exists
+        const { data: authData } = await supabase.auth.admin.listUsers()
+        const existingUsers = authData?.users || []
+        const existingAuthUser = existingUsers.find((u: any) => u.email?.toLowerCase() === email.toLowerCase())
+
+        let authUserId: string | null = null
+        let inviteSent = false
+
+        if (existingAuthUser) {
+          // Auth user exists - link to them
+          authUserId = existingAuthUser.id
+        } else if (!skipInvite) {
+          // Create auth user and send invite
+          try {
+            const siteUrl = 'https://cboa.ca'
+            const { data: linkData, error: linkError } = await supabase.auth.admin.generateLink({
+              type: 'invite',
+              email: email.toLowerCase(),
+              options: {
+                data: {
+                  full_name: name,
+                  name: name,
+                  role: role || 'official'
+                },
+                redirectTo: `${siteUrl}/auth/callback`
+              }
+            })
+
+            if (linkError) {
+              return {
+                statusCode: 400,
+                headers,
+                body: JSON.stringify({ error: `Failed to create auth user: ${linkError.message}` })
+              }
+            }
+
+            authUserId = linkData.user?.id || null
+            const inviteUrl = linkData.properties?.action_link
+
+            // Send invite email via Microsoft Graph
+            if (inviteUrl) {
+              try {
+                const msToken = await getMicrosoftAccessToken()
+                const emailHtml = generateInviteEmailHtml(inviteUrl, name)
+                await sendEmailViaMicrosoftGraph(msToken, email, "You're Invited to Join CBOA!", emailHtml)
+                inviteSent = true
+              } catch (emailErr) {
+                console.error('Failed to send invite email:', emailErr)
+                // Continue - auth user is created, email just didn't send
+              }
+            }
+          } catch (authErr) {
+            console.error('Auth user creation failed:', authErr)
+            // Continue without auth user
+          }
+        }
+
+        // Create member record with user_id link
         const { data, error } = await supabase
           .from('members')
-          .insert([body])
+          .insert([{
+            ...memberData,
+            email: email.toLowerCase(),
+            name,
+            role: role || 'official',
+            user_id: authUserId
+          }])
           .select()
           .single()
 
@@ -156,7 +322,7 @@ export const handler: Handler = async (event) => {
         return {
           statusCode: 201,
           headers,
-          body: JSON.stringify(data)
+          body: JSON.stringify({ ...data, inviteSent })
         }
       }
 
@@ -199,12 +365,30 @@ export const handler: Handler = async (event) => {
           }
         }
 
+        // First get the member to find their user_id
+        const { data: member } = await supabase
+          .from('members')
+          .select('user_id, email')
+          .eq('id', id)
+          .single()
+
+        // Delete the member record
         const { error } = await supabase
           .from('members')
           .delete()
           .eq('id', id)
 
         if (error) throw error
+
+        // Also delete the auth user if they have one
+        if (member?.user_id) {
+          try {
+            await supabase.auth.admin.deleteUser(member.user_id)
+          } catch (authErr) {
+            console.error('Failed to delete auth user:', authErr)
+            // Continue - member is deleted, auth cleanup failed
+          }
+        }
 
         return {
           statusCode: 204,
