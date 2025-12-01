@@ -10,7 +10,7 @@
 [build.environment]
   NODE_VERSION = "18"
   NEXT_TELEMETRY_DISABLED = "1"
-  SECRETS_SCAN_OMIT_PATHS = ".next/**,.netlify/**,out/**,content/**,public/content/**"
+  SECRETS_SCAN_OMIT_PATHS = ".next/**,.netlify/**,out/**,content/**,public/content/**,netlify/functions/**"
 
 [[plugins]]
   package = "@netlify/plugin-nextjs"
