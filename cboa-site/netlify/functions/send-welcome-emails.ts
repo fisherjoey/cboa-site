@@ -44,7 +44,7 @@ async function sendEmailViaGraph(
   subject: string,
   htmlContent: string
 ): Promise<void> {
-  const senderEmail = process.env.MICROSOFT_SENDER_EMAIL || 'announcements@cboa.ca'
+  const senderEmail = 'announcements@cboa.ca'
   const graphEndpoint = `https://graph.microsoft.com/v1.0/users/${senderEmail}/sendMail`
 
   const emailMessage = {
