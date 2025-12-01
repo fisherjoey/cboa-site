@@ -221,7 +221,7 @@ const handler: Handler = async (event) => {
           type: 'recovery',
           email: emailLower,
           options: {
-            redirectTo: `${siteUrl}/auth/reset-password`
+            redirectTo: `${siteUrl}/auth/callback`
           }
         })
 
@@ -230,7 +230,10 @@ const handler: Handler = async (event) => {
           continue
         }
 
+        // Fix localhost URLs from Supabase config - replace with production URL
         const inviteLink = linkData.properties.action_link
+          .replace(/http:\/\/localhost:\d+/g, 'https://cboa.ca')
+          .replace(/http:\/\/127\.0\.0\.1:\d+/g, 'https://cboa.ca')
 
         // Generate email HTML
         const emailHtml = generateInviteEmailHtml(inviteLink, user.name)
