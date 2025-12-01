@@ -5,9 +5,10 @@ import { useAuth } from '@/contexts/AuthContext'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { IconMail, IconLock, IconLoader2, IconAlertCircle, IconCheck } from '@tabler/icons-react'
+import PasswordChangeModal from '@/components/PasswordChangeModal'
 
 function LoginForm() {
-  const { login, isAuthenticated, isLoading: authLoading } = useAuth()
+  const { login, isAuthenticated, isLoading: authLoading, supabaseUser } = useAuth()
   const router = useRouter()
   const searchParams = useSearchParams()
   const [email, setEmail] = useState('')
@@ -15,6 +16,8 @@ function LoginForm() {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [message, setMessage] = useState<string | null>(null)
+  const [showPasswordChangeModal, setShowPasswordChangeModal] = useState(false)
+  const [isMigratedUserFlow, setIsMigratedUserFlow] = useState(false) // true when showing modal for non-logged-in migrated user
 
   // Get redirect URL from query params
   const redirectTo = searchParams.get('redirect') || '/portal'
@@ -27,12 +30,17 @@ function LoginForm() {
     }
   }, [searchParams])
 
-  // Redirect if already authenticated
+  // Check if user needs to change password after authentication
   useEffect(() => {
-    if (isAuthenticated && !authLoading) {
-      router.push(redirectTo)
+    if (isAuthenticated && !authLoading && supabaseUser) {
+      const needsPasswordChange = supabaseUser.user_metadata?.needs_password_change
+      if (needsPasswordChange) {
+        setShowPasswordChangeModal(true)
+      } else {
+        router.push(redirectTo)
+      }
     }
-  }, [isAuthenticated, authLoading, router, redirectTo])
+  }, [isAuthenticated, authLoading, supabaseUser, router, redirectTo])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -43,14 +51,59 @@ function LoginForm() {
       const result = await login(email, password)
 
       if (result.error) {
+        // Check if this is a migrated user who needs to set their password
+        if (result.error.includes('Invalid login credentials')) {
+          const isMigrated = await checkIfMigratedUser(email)
+          if (isMigrated) {
+            // Show password setup modal for migrated users
+            setIsMigratedUserFlow(true)
+            setShowPasswordChangeModal(true)
+            setIsLoading(false)
+            return
+          }
+        }
         setError(result.error)
       }
-      // Redirect is handled by AuthContext on SIGNED_IN event
+      // Password change check and redirect handled by useEffect above
     } catch (err: any) {
       setError(err.message || 'An unexpected error occurred')
     } finally {
       setIsLoading(false)
     }
+  }
+
+  // Check if email belongs to a migrated user without password
+  const checkIfMigratedUser = async (email: string): Promise<boolean> => {
+    try {
+      const response = await fetch(`/.netlify/functions/check-migrated-user?email=${encodeURIComponent(email)}`)
+      if (response.ok) {
+        const data = await response.json()
+        return data.isMigrated === true
+      }
+      return false
+    } catch {
+      return false
+    }
+  }
+
+  const handlePasswordChangeSuccess = async () => {
+    setShowPasswordChangeModal(false)
+
+    if (isMigratedUserFlow) {
+      // For migrated users, prompt them to log in with new password
+      setMessage('Password set successfully! Please log in with your new password.')
+      setPassword('') // Clear password field so they enter the new one
+      setIsMigratedUserFlow(false)
+    } else {
+      setMessage('Password updated successfully!')
+      router.push(redirectTo)
+    }
+  }
+
+  const handlePasswordChangeClose = () => {
+    // Allow skipping but remind them
+    setShowPasswordChangeModal(false)
+    router.push(redirectTo)
   }
 
   // Show loading while checking auth state
@@ -173,6 +226,14 @@ function LoginForm() {
           </Link>
         </div>
       </div>
+
+      <PasswordChangeModal
+        isOpen={showPasswordChangeModal}
+        onClose={handlePasswordChangeClose}
+        onSuccess={handlePasswordChangeSuccess}
+        userEmail={supabaseUser?.email || email}
+        isLoggedIn={!isMigratedUserFlow}
+      />
     </div>
   )
 }
