@@ -278,6 +278,8 @@ export const handler: Handler = async (event) => {
             confirmed_at: user.email_confirmed_at || undefined,
             invited_at: user.invited_at || undefined,
             created_at: user.created_at,
+            last_sign_in_at: user.last_sign_in_at || undefined,
+            has_logged_in: !!user.last_sign_in_at,
             role: user.app_metadata?.role || user.user_metadata?.role,
             roles: user.app_metadata?.roles || user.user_metadata?.roles || []
           }))
@@ -317,6 +319,8 @@ export const handler: Handler = async (event) => {
               confirmed_at: user.email_confirmed_at,
               invited_at: user.invited_at,
               created_at: user.created_at,
+              last_sign_in_at: user.last_sign_in_at,
+              has_logged_in: !!user.last_sign_in_at,
               role: user.app_metadata?.role || user.user_metadata?.role,
               roles: user.app_metadata?.roles || user.user_metadata?.roles || []
             })
