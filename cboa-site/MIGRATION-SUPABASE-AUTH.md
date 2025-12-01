@@ -113,7 +113,7 @@ Public password reset (no auth required):
 
 Auth emails are sent via your existing Microsoft Graph setup instead of Supabase's built-in emails. This provides:
 - Branded CBOA email templates
-- Emails from your own domain (announcements@cboa.ca)
+- Emails from your own domain (configured via MICROSOFT_SENDER_EMAIL)
 - Better deliverability
 
 **Required Environment Variables** (already configured):

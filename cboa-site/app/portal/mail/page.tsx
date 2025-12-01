@@ -525,7 +525,7 @@ export default function MailPage() {
           <div className="text-sm text-orange-800 dark:text-orange-300">
             <p className="font-semibold mb-1">Email Sending Notes:</p>
             <ul className="list-disc list-inside space-y-1">
-              <li>Emails will be sent from: announcements@cboa.ca</li>
+              <li>Emails will be sent from the configured CBOA sender address</li>
               <li>All sent emails will appear in the shared mailbox Sent Items</li>
               <li>Recipients are determined by their portal role and certification level</li>
               <li>Please review your content carefully before sending</li>
