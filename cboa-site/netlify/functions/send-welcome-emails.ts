@@ -80,7 +80,7 @@ async function sendEmailViaGraph(
 
 // Generate invite email HTML (matches supabase-auth-admin.ts template)
 function generateInviteEmailHtml(inviteUrl: string, name?: string): string {
-  const siteUrl = process.env.URL || 'https://cboa.ca'
+  const siteUrl = 'https://cboa.ca'
   return `
 <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: #f5f5f5; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;">
   <tr>
@@ -189,7 +189,7 @@ const handler: Handler = async (event) => {
 
     const supabaseUserMap = new Map(allSupabaseUsers.map(u => [u.email?.toLowerCase(), u]))
     const results: { email: string; status: string; error?: string }[] = []
-    const siteUrl = process.env.URL || 'https://cboa.ca'
+    const siteUrl = 'https://cboa.ca'
 
     // Get Graph API access token (only if not dry run)
     let accessToken: string | null = null
