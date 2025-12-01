@@ -46,12 +46,26 @@ export const handler: Handler = async (event) => {
       }
     }
 
-    // Find user by email
-    const { data: { users }, error: listError } = await supabaseAdmin.auth.admin.listUsers()
+    // Find user by email (with pagination to handle all users)
+    let allUsers: any[] = []
+    let page = 1
+    const perPage = 1000
 
-    if (listError) throw listError
+    while (true) {
+      const { data: { users: pageUsers }, error: listError } = await supabaseAdmin.auth.admin.listUsers({
+        page,
+        perPage
+      })
 
-    const user = users.find(u => u.email?.toLowerCase() === email.toLowerCase())
+      if (listError) throw listError
+
+      if (!pageUsers || pageUsers.length === 0) break
+      allUsers = allUsers.concat(pageUsers)
+      if (pageUsers.length < perPage) break
+      page++
+    }
+
+    const user = allUsers.find(u => u.email?.toLowerCase() === email.toLowerCase())
 
     if (!user) {
       return {
