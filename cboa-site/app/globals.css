@@ -112,16 +112,6 @@ body {
   }
 }
 
-/* Hide Netlify Identity Widget branding */
-.netlifyIdentity .callOut,
-.netlifyIdentity .poweredBy,
-[class*="netlify"] .callOut,
-[class*="netlify"] .poweredBy,
-.ReactModal__Content .poweredBy,
-.ReactModal__Content a[href*="netlify"] {
-  display: none !important;
-}
-
 /* TinyMCE Editor Styling */
 .tinymce-wrapper .tox-tinymce {
   border: none !important;

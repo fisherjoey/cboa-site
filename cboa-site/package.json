@@ -52,7 +52,6 @@
     "marked": "^17.0.0",
     "moment": "^2.30.1",
     "multer": "^2.0.2",
-    "netlify-identity-widget": "^1.9.2",
     "next": "^15.5.2",
     "pdfjs-dist": "^5.3.93",
     "react": "^19.1.1",
