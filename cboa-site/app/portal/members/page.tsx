@@ -1,9 +1,9 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useRole } from '@/contexts/RoleContext'
 import { membersAPI, memberActivitiesAPI, identityAPI, type IdentityStatus } from '@/lib/api'
-import { IconUser, IconSearch, IconPlus, IconEdit, IconTrash, IconCalendar, IconX, IconCheck, IconFilter, IconMail, IconMailForward, IconCircleCheck, IconClock, IconUsers, IconUserPlus, IconRefresh } from '@tabler/icons-react'
+import { IconUser, IconSearch, IconPlus, IconEdit, IconTrash, IconCalendar, IconX, IconCheck, IconFilter, IconMail, IconMailForward, IconCircleCheck, IconClock, IconUsers, IconUserPlus, IconRefresh, IconLayoutGrid, IconTable } from '@tabler/icons-react'
 import type { IdentityUser } from '@/lib/api'
 import Modal from '@/components/ui/Modal'
 import { useToast } from '@/hooks/useToast'
@@ -15,6 +15,8 @@ import {
   formatValidationErrors
 } from '@/lib/portalValidation'
 import { parseAPIError, sanitize, ValidationError } from '@/lib/errorHandling'
+import { DataTable } from '@/components/ui/DataTable'
+import { ColumnDef } from '@tanstack/react-table'
 
 interface Member {
   id?: string
@@ -54,6 +56,7 @@ export default function MembersPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState<string>('all')
+  const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid')
   const [selectedMember, setSelectedMember] = useState<Member | null>(null)
   const [memberActivities, setMemberActivities] = useState<Activity[]>([])
   const [showMemberModal, setShowMemberModal] = useState(false)
@@ -331,6 +334,100 @@ export default function MembersPage() {
     setFilteredMembers(filtered)
   }
 
+  // Table columns definition
+  const tableColumns = useMemo<ColumnDef<Member>[]>(() => [
+    {
+      accessorKey: 'name',
+      header: 'Name',
+      cell: ({ row }) => (
+        <span className="font-medium text-gray-900 dark:text-white">{row.original.name}</span>
+      ),
+    },
+    {
+      accessorKey: 'email',
+      header: 'Email',
+      cell: ({ row }) => (
+        <span className="text-gray-600 dark:text-gray-400">{row.original.email}</span>
+      ),
+    },
+    {
+      accessorKey: 'phone',
+      header: 'Phone',
+      cell: ({ row }) => (
+        <span className="text-gray-600 dark:text-gray-400">{row.original.phone || '-'}</span>
+      ),
+    },
+    {
+      accessorKey: 'certification_level',
+      header: 'NOCP Level',
+      cell: ({ row }) => (
+        row.original.certification_level ? (
+          <span className="px-2 py-1 text-xs bg-blue-100 dark:bg-blue-900/40 text-blue-800 dark:text-blue-300 rounded-full">
+            {row.original.certification_level}
+          </span>
+        ) : <span className="text-gray-400 dark:text-gray-500">-</span>
+      ),
+    },
+    {
+      accessorKey: 'rank',
+      header: 'Rank',
+      cell: ({ row }) => (
+        <span className="text-gray-600 dark:text-gray-400">{row.original.rank || '-'}</span>
+      ),
+      meta: { align: 'center' as const },
+    },
+    {
+      accessorKey: 'city',
+      header: 'City',
+      cell: ({ row }) => (
+        <span className="text-gray-600 dark:text-gray-400">{row.original.city || '-'}</span>
+      ),
+    },
+    {
+      accessorKey: 'status',
+      header: 'Status',
+      cell: ({ row }) => (
+        <span className={`px-2 py-1 text-xs rounded-full ${
+          row.original.status === 'active'
+            ? 'bg-green-100 dark:bg-green-900/40 text-green-800 dark:text-green-300'
+            : 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300'
+        }`}>
+          {row.original.status || 'active'}
+        </span>
+      ),
+    },
+    {
+      id: 'portal',
+      header: 'Portal',
+      cell: ({ row }) => {
+        const identityStatus = getIdentityStatus(row.original.email)
+        if (!identityStatus) return null
+        if (!identityStatus.exists) {
+          return (
+            <span className="px-2 py-1 text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 rounded-full flex items-center gap-1 w-fit" title="Not invited to portal">
+              <IconMail size={12} />
+              No invite
+            </span>
+          )
+        }
+        if (identityStatus.has_logged_in) {
+          return (
+            <span className="px-2 py-1 text-xs bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300 rounded-full flex items-center gap-1 w-fit" title="User has logged in">
+              <IconCircleCheck size={12} />
+              Active
+            </span>
+          )
+        }
+        return (
+          <span className="px-2 py-1 text-xs bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 rounded-full flex items-center gap-1 w-fit" title="User has not logged in yet">
+            <IconClock size={12} />
+            Pending
+          </span>
+        )
+      },
+    },
+  ], [identityStatusMap])
+
   const handleViewMember = async (member: Member) => {
     setSelectedMember(member)
     setEditForm(member)
@@ -579,17 +676,37 @@ export default function MembersPage() {
               </div>
             </div>
 
-            <div className="flex items-center gap-2">
-              <IconFilter size={20} className="text-gray-600 dark:text-gray-400" />
-              <select
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
-                className="px-4 py-2 border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              >
-                <option value="all">All Status</option>
-                <option value="active">Active</option>
-                <option value="inactive">Inactive</option>
-              </select>
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2">
+                <IconFilter size={20} className="text-gray-600 dark:text-gray-400" />
+                <select
+                  value={statusFilter}
+                  onChange={(e) => setStatusFilter(e.target.value)}
+                  className="px-4 py-2 border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                >
+                  <option value="all">All Status</option>
+                  <option value="active">Active</option>
+                  <option value="inactive">Inactive</option>
+                </select>
+              </div>
+
+              {/* View Toggle */}
+              <div className="flex items-center border border-gray-300 dark:border-gray-600 rounded-lg overflow-hidden">
+                <button
+                  onClick={() => setViewMode('grid')}
+                  className={`p-2 ${viewMode === 'grid' ? 'bg-blue-600 text-white' : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'}`}
+                  title="Grid view"
+                >
+                  <IconLayoutGrid size={20} />
+                </button>
+                <button
+                  onClick={() => setViewMode('table')}
+                  className={`p-2 ${viewMode === 'table' ? 'bg-blue-600 text-white' : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'}`}
+                  title="Table view"
+                >
+                  <IconTable size={20} />
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -600,74 +717,88 @@ export default function MembersPage() {
         </p>
       </div>
 
-      {/* Members Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {filteredMembers.map((member) => (
-          <div
-            key={member.id}
-            onClick={() => handleViewMember(member)}
-            className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4 hover:shadow-lg transition-shadow cursor-pointer"
-          >
-            <div className="flex items-start gap-3">
-              <div className="bg-blue-100 dark:bg-blue-900/40 p-3 rounded-full">
-                <IconUser size={24} className="text-blue-600 dark:text-blue-400" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <h3 className="font-semibold text-gray-900 dark:text-white truncate">{member.name}</h3>
-                <p className="text-sm text-gray-600 dark:text-gray-400 truncate">{member.email}</p>
-                {member.phone && (
-                  <p className="text-sm text-gray-600 dark:text-gray-400">{member.phone}</p>
-                )}
-                <div className="flex flex-wrap items-center gap-2 mt-2">
-                  <span className={`px-2 py-1 text-xs rounded-full ${
-                    member.status === 'active'
-                      ? 'bg-green-100 dark:bg-green-900/40 text-green-800 dark:text-green-300'
-                      : 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300'
-                  }`}>
-                    {member.status || 'active'}
-                  </span>
-                  {member.certification_level && (
-                    <span className="px-2 py-1 text-xs bg-blue-100 dark:bg-blue-900/40 text-blue-800 dark:text-blue-300 rounded-full">
-                      {member.certification_level}
-                    </span>
-                  )}
-                  {/* Identity Status Badge */}
-                  {(() => {
-                    const identityStatus = getIdentityStatus(member.email)
-                    if (!identityStatus) return null
-                    if (!identityStatus.exists) {
-                      return (
-                        <span className="px-2 py-1 text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 rounded-full flex items-center gap-1" title="Not invited to portal">
-                          <IconMail size={12} />
-                          No invite
-                        </span>
-                      )
-                    }
-                    if (identityStatus.has_logged_in) {
-                      return (
-                        <span className="px-2 py-1 text-xs bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300 rounded-full flex items-center gap-1" title="User has logged in and set up their account">
-                          <IconCircleCheck size={12} />
-                          Portal active
-                        </span>
-                      )
-                    }
-                    return (
-                      <span className="px-2 py-1 text-xs bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 rounded-full flex items-center gap-1" title="User has not logged in yet">
-                        <IconClock size={12} />
-                        Needs setup
+      {/* Members Display - Grid or Table */}
+      {viewMode === 'grid' ? (
+        <>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {filteredMembers.map((member) => (
+              <div
+                key={member.id}
+                onClick={() => handleViewMember(member)}
+                className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4 hover:shadow-lg transition-shadow cursor-pointer"
+              >
+                <div className="flex items-start gap-3">
+                  <div className="bg-blue-100 dark:bg-blue-900/40 p-3 rounded-full">
+                    <IconUser size={24} className="text-blue-600 dark:text-blue-400" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-semibold text-gray-900 dark:text-white truncate">{member.name}</h3>
+                    <p className="text-sm text-gray-600 dark:text-gray-400 truncate">{member.email}</p>
+                    {member.phone && (
+                      <p className="text-sm text-gray-600 dark:text-gray-400">{member.phone}</p>
+                    )}
+                    <div className="flex flex-wrap items-center gap-2 mt-2">
+                      <span className={`px-2 py-1 text-xs rounded-full ${
+                        member.status === 'active'
+                          ? 'bg-green-100 dark:bg-green-900/40 text-green-800 dark:text-green-300'
+                          : 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300'
+                      }`}>
+                        {member.status || 'active'}
                       </span>
-                    )
-                  })()}
+                      {member.certification_level && (
+                        <span className="px-2 py-1 text-xs bg-blue-100 dark:bg-blue-900/40 text-blue-800 dark:text-blue-300 rounded-full">
+                          {member.certification_level}
+                        </span>
+                      )}
+                      {/* Identity Status Badge */}
+                      {(() => {
+                        const identityStatus = getIdentityStatus(member.email)
+                        if (!identityStatus) return null
+                        if (!identityStatus.exists) {
+                          return (
+                            <span className="px-2 py-1 text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 rounded-full flex items-center gap-1" title="Not invited to portal">
+                              <IconMail size={12} />
+                              No invite
+                            </span>
+                          )
+                        }
+                        if (identityStatus.has_logged_in) {
+                          return (
+                            <span className="px-2 py-1 text-xs bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300 rounded-full flex items-center gap-1" title="User has logged in and set up their account">
+                              <IconCircleCheck size={12} />
+                              Portal active
+                            </span>
+                          )
+                        }
+                        return (
+                          <span className="px-2 py-1 text-xs bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 rounded-full flex items-center gap-1" title="User has not logged in yet">
+                            <IconClock size={12} />
+                            Needs setup
+                          </span>
+                        )
+                      })()}
+                    </div>
+                  </div>
                 </div>
               </div>
-            </div>
+            ))}
           </div>
-        ))}
-      </div>
 
-      {filteredMembers.length === 0 && (
-        <div className="text-center py-12 bg-white dark:bg-gray-800 rounded-lg shadow-md">
-          <p className="text-gray-600 dark:text-gray-400">No members found.</p>
+          {filteredMembers.length === 0 && (
+            <div className="text-center py-12 bg-white dark:bg-gray-800 rounded-lg shadow-md">
+              <p className="text-gray-600 dark:text-gray-400">No members found.</p>
+            </div>
+          )}
+        </>
+      ) : (
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden">
+          <DataTable
+            data={filteredMembers}
+            columns={tableColumns}
+            onRowClick={handleViewMember}
+            stickyHeader
+            maxHeight="calc(100vh - 300px)"
+          />
         </div>
       )}
 

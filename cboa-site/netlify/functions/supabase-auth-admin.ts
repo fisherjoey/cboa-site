@@ -355,84 +355,37 @@ export const handler: Handler = async (event) => {
           }
         }
 
-        // Resend invite - delete existing user and re-invite
-        if (postAction === 'resend') {
-          // Find and delete existing user
-          const { data: { users } } = await supabaseAdmin.auth.admin.listUsers()
-          const existingUser = users.find(u => u.email?.toLowerCase() === email.toLowerCase())
-
-          if (existingUser) {
-            await supabaseAdmin.auth.admin.deleteUser(existingUser.id)
-          }
-
-          // Generate new invite link (without sending Supabase's email)
-          const { data: linkData, error: linkError } = await supabaseAdmin.auth.admin.generateLink({
-            type: 'invite',
-            email,
-            options: {
-              data: {
-                full_name: name,
-                name: name,
-                role: role || 'official'
-              },
-              redirectTo: `${siteUrl}/auth/callback`
-            }
-          })
-
-          if (linkError) {
-            return {
-              statusCode: 400,
-              headers,
-              body: JSON.stringify({ success: false, error: linkError.message })
-            }
-          }
-
-          // Send email via Microsoft Graph
-          const msToken = await getMicrosoftAccessToken()
-          const inviteUrl = linkData.properties?.action_link || ''
-          const emailHtml = generateInviteEmailHtml(inviteUrl, name)
-
-          await sendEmailViaMicrosoftGraph(
-            msToken,
-            email,
-            "You're Invited to Join CBOA!",
-            emailHtml
-          )
-
-          return {
-            statusCode: 200,
-            headers,
-            body: JSON.stringify({
-              success: true,
-              message: `Invite resent to ${email}`,
-              user: linkData.user
-            })
-          }
-        }
-
-        // Send new invite
-        // First check if user already exists
+        // Check if user already exists
         const { data: { users: existingUsers } } = await supabaseAdmin.auth.admin.listUsers()
-        const existingUser = existingUsers.find(u => u.email?.toLowerCase() === email.toLowerCase())
+        let user = existingUsers.find(u => u.email?.toLowerCase() === email.toLowerCase())
 
-        if (existingUser) {
-          return {
-            statusCode: 400,
-            headers,
-            body: JSON.stringify({ success: false, error: 'User already exists' })
-          }
-        }
-
-        // Generate invite link (without sending Supabase's email)
-        const { data: linkData, error: linkError } = await supabaseAdmin.auth.admin.generateLink({
-          type: 'invite',
-          email,
-          options: {
-            data: {
+        // Create user if they don't exist
+        if (!user) {
+          const { data: createData, error: createError } = await supabaseAdmin.auth.admin.createUser({
+            email,
+            email_confirm: true,
+            user_metadata: {
               full_name: name,
               name: name,
               role: role || 'official'
-            },
+            }
+          })
+
+          if (createError) {
+            return {
+              statusCode: 400,
+              headers,
+              body: JSON.stringify({ success: false, error: createError.message })
+            }
+          }
+          user = createData.user
+        }
+
+        // Generate password reset link
+        const { data: linkData, error: linkError } = await supabaseAdmin.auth.admin.generateLink({
+          type: 'recovery',
+          email,
+          options: {
             redirectTo: `${siteUrl}/auth/callback`
           }
         })
@@ -445,15 +398,15 @@ export const handler: Handler = async (event) => {
           }
         }
 
-        // Send email via Microsoft Graph
+        // Send invite email via Microsoft Graph (using password reset link)
         const msToken = await getMicrosoftAccessToken()
-        const inviteUrl = linkData.properties?.action_link || ''
-        const emailHtml = generateInviteEmailHtml(inviteUrl, name)
+        const resetUrl = linkData.properties?.action_link || ''
+        const emailHtml = generateInviteEmailHtml(resetUrl, name)
 
         await sendEmailViaMicrosoftGraph(
           msToken,
           email,
-          "You're Invited to Join CBOA!",
+          "You're Invited to the CBOA Portal!",
           emailHtml
         )
 
@@ -462,8 +415,8 @@ export const handler: Handler = async (event) => {
           headers,
           body: JSON.stringify({
             success: true,
-            message: `Invite sent to ${email}`,
-            user: linkData.user
+            message: postAction === 'resend' ? `Welcome email resent to ${email}` : `Welcome email sent to ${email}`,
+            user
           })
         }
       }
