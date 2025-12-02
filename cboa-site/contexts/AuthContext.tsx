@@ -26,6 +26,7 @@ interface AuthContextType {
   signup: (email: string, password: string, name: string) => Promise<{ error?: string }>
   resetPassword: (email: string) => Promise<{ error?: string }>
   supabaseUser: SupabaseUser | null
+  getAccessToken: () => Promise<string | undefined>
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
@@ -121,6 +122,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       role: 'executive' as UserRole,
       user_metadata: { full_name: 'Dev Executive User' },
       app_metadata: { roles: ['executive'] }
+    },
+    {
+      id: 'dev-user-evaluator',
+      email: 'evaluator@example.com',
+      name: 'Dev Evaluator User',
+      role: 'evaluator' as UserRole,
+      user_metadata: { full_name: 'Dev Evaluator User' },
+      app_metadata: { roles: ['evaluator'] }
     },
     {
       id: 'dev-user-official',
@@ -311,6 +320,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }
 
+  const getAccessToken = async (): Promise<string | undefined> => {
+    if (shouldBypassAuth) {
+      // Return a mock token for dev mode
+      return 'dev-mock-token'
+    }
+    try {
+      const { data: { session }, error } = await supabase.auth.getSession()
+      if (error) {
+        console.error('Error getting access token:', error)
+        return undefined
+      }
+      return session?.access_token
+    } catch (error) {
+      console.error('Error getting access token:', error)
+      return undefined
+    }
+  }
+
   return (
     <AuthContext.Provider
       value={{
@@ -321,7 +348,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         logout,
         signup,
         resetPassword,
-        supabaseUser
+        supabaseUser,
+        getAccessToken
       }}
     >
       {children}

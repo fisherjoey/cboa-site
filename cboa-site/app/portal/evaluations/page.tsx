@@ -5,6 +5,7 @@ import { evaluationsAPI, membersAPI, memberActivitiesAPI, type Evaluation } from
 import { uploadFile } from '@/lib/fileUpload'
 import { useRole } from '@/contexts/RoleContext'
 import { useMember } from '@/contexts/MemberContext'
+import { useAuth } from '@/contexts/AuthContext'
 import { useToast } from '@/hooks/useToast'
 import { parseAPIError, sanitize } from '@/lib/errorHandling'
 import FileUpload from '@/components/FileUpload'
@@ -21,7 +22,8 @@ import {
   IconCalendar,
   IconSearch,
   IconFileText,
-  IconChevronDown
+  IconChevronDown,
+  IconClipboardCheck
 } from '@tabler/icons-react'
 import { Accordion, AccordionButton, AccordionPanel } from '@/components/ui/Accordion'
 
@@ -42,12 +44,15 @@ interface Activity {
 export default function EvaluationsPage() {
   const { user } = useRole()
   const { member } = useMember()
+  const { getAccessToken } = useAuth()
   const { success, error } = useToast()
 
   const [evaluations, setEvaluations] = useState<Evaluation[]>([])
+  const [myEvaluations, setMyEvaluations] = useState<Evaluation[]>([]) // Evaluations created by current user
   const [members, setMembers] = useState<Member[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
+  const [activeTab, setActiveTab] = useState<'my' | 'all'>('my') // For evaluator view
 
   // Create evaluation modal state
   const [showCreateModal, setShowCreateModal] = useState(false)
@@ -66,30 +71,38 @@ export default function EvaluationsPage() {
   // Check role permissions
   const canCreate = user.role === 'admin' || user.role === 'executive' || user.role === 'evaluator'
   const canViewAll = user.role === 'admin' || user.role === 'executive' || user.role === 'evaluator'
+  const canDelete = user.role === 'admin' || user.role === 'executive' // Only admin/executive can delete
+  const isEvaluator = user.role === 'evaluator' // Show two-section view for evaluators
 
   // Load evaluations
   const loadEvaluations = useCallback(async () => {
     try {
       setIsLoading(true)
-      let data: Evaluation[]
+      const token = await getAccessToken()
 
       if (canViewAll) {
         // Admins, executives, and evaluators see all evaluations
-        data = await evaluationsAPI.getAll()
+        const allData = await evaluationsAPI.getAll(token)
+        setEvaluations(allData)
+
+        // For evaluators, also load their own created evaluations separately
+        if (isEvaluator && member?.id) {
+          const myData = await evaluationsAPI.getByEvaluatorId(member.id, token)
+          setMyEvaluations(myData)
+        }
       } else if (member?.id) {
         // Regular officials only see their own evaluations
-        data = await evaluationsAPI.getByMemberId(member.id)
+        const data = await evaluationsAPI.getByMemberId(member.id, token)
+        setEvaluations(data)
       } else {
-        data = []
+        setEvaluations([])
       }
-
-      setEvaluations(data)
     } catch (err) {
       error('Failed to load evaluations', parseAPIError(err))
     } finally {
       setIsLoading(false)
     }
-  }, [canViewAll, member?.id, error])
+  }, [canViewAll, isEvaluator, member?.id, error, getAccessToken])
 
   // Load members for the dropdown (only for those who can create)
   const loadMembers = useCallback(async () => {
@@ -152,6 +165,7 @@ export default function EvaluationsPage() {
 
     try {
       setIsUploading(true)
+      const token = await getAccessToken()
 
       // Upload the file
       const uploadResult = await uploadFile(uploadedFile, 'evaluation')
@@ -160,7 +174,6 @@ export default function EvaluationsPage() {
 
       // If no existing activity is selected, create a new evaluation activity
       if (!activityId) {
-        const selectedMember = members.find(m => m.id === selectedMemberId)
         const activityNotes = title
           ? `${title}${notes ? ' - ' + notes : ''}`
           : notes || 'Evaluation submitted'
@@ -186,7 +199,7 @@ export default function EvaluationsPage() {
         activity_id: activityId || undefined
       }
 
-      await evaluationsAPI.create(evaluationData)
+      await evaluationsAPI.create(evaluationData, token)
       success('Evaluation created successfully')
 
       // Reset form and close modal
@@ -205,7 +218,8 @@ export default function EvaluationsPage() {
     if (!confirm('Are you sure you want to delete this evaluation?')) return
 
     try {
-      await evaluationsAPI.delete(evaluation.id, evaluation.member_id, evaluation.evaluator_id)
+      const token = await getAccessToken()
+      await evaluationsAPI.delete(evaluation.id, token, evaluation.member_id, evaluation.evaluator_id)
       success('Evaluation deleted successfully')
       loadEvaluations()
     } catch (err) {
@@ -309,8 +323,46 @@ export default function EvaluationsPage() {
         )}
       </div>
 
-      {/* Search */}
-      {canViewAll && evaluations.length > 0 && (
+      {/* Tabs for evaluators */}
+      {isEvaluator && (
+        <div className="mb-6">
+          <div className="border-b border-gray-200 dark:border-gray-700">
+            <nav className="-mb-px flex space-x-8">
+              <button
+                onClick={() => setActiveTab('my')}
+                className={`py-4 px-1 border-b-2 font-medium text-sm flex items-center gap-2 ${
+                  activeTab === 'my'
+                    ? 'border-orange-500 text-orange-600 dark:text-orange-400'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
+                }`}
+              >
+                <IconClipboardCheck className="h-5 w-5" />
+                My Evaluations
+                <span className="ml-2 px-2 py-0.5 text-xs rounded-full bg-orange-100 dark:bg-orange-900/40 text-orange-600 dark:text-orange-400">
+                  {myEvaluations.length}
+                </span>
+              </button>
+              <button
+                onClick={() => setActiveTab('all')}
+                className={`py-4 px-1 border-b-2 font-medium text-sm flex items-center gap-2 ${
+                  activeTab === 'all'
+                    ? 'border-orange-500 text-orange-600 dark:text-orange-400'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
+                }`}
+              >
+                <IconUser className="h-5 w-5" />
+                All Member Evaluations
+                <span className="ml-2 px-2 py-0.5 text-xs rounded-full bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400">
+                  {evaluations.length}
+                </span>
+              </button>
+            </nav>
+          </div>
+        </div>
+      )}
+
+      {/* Search - only show for all evaluations view or non-evaluators */}
+      {canViewAll && evaluations.length > 0 && (!isEvaluator || activeTab === 'all') && (
         <div className="mb-6 bg-white dark:bg-gray-800 rounded-lg shadow p-4">
           <div className="relative">
             <IconSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
@@ -326,7 +378,77 @@ export default function EvaluationsPage() {
       )}
 
       {/* Evaluations List */}
-      {filteredEvaluations.length === 0 ? (
+      {/* My Evaluations view for evaluators */}
+      {isEvaluator && activeTab === 'my' ? (
+        myEvaluations.length === 0 ? (
+          <div className="text-center py-12 bg-white dark:bg-gray-800 rounded-lg shadow">
+            <IconClipboardCheck className="mx-auto h-12 w-12 text-gray-400 dark:text-gray-500" />
+            <h3 className="mt-2 text-sm font-medium text-gray-900 dark:text-white">No evaluations created yet</h3>
+            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+              Click "Add Evaluation" to create your first evaluation.
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {myEvaluations
+              .sort((a, b) => new Date(b.evaluation_date).getTime() - new Date(a.evaluation_date).getTime())
+              .map((evaluation) => (
+                <div
+                  key={evaluation.id}
+                  className="bg-white dark:bg-gray-800 rounded-lg shadow hover:shadow-md transition-shadow p-4"
+                >
+                  <div className="flex items-start gap-4">
+                    <div className="w-12 h-12 rounded-lg bg-orange-100 dark:bg-orange-900/40 flex items-center justify-center flex-shrink-0">
+                      <IconFile className="h-6 w-6 text-orange-600 dark:text-orange-400" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-start justify-between gap-2">
+                        <div>
+                          <h3 className="font-semibold text-gray-900 dark:text-white">
+                            {evaluation.title || `Evaluation - ${formatDate(evaluation.evaluation_date)}`}
+                          </h3>
+                          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                            For: {evaluation.member?.name || 'Unknown Member'}
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-1 flex-shrink-0">
+                          <a
+                            href={evaluation.file_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="p-2 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded"
+                            title="View PDF"
+                          >
+                            <IconExternalLink className="h-5 w-5" />
+                          </a>
+                          <a
+                            href={evaluation.file_url}
+                            download
+                            className="p-2 text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/30 rounded"
+                            title="Download"
+                          >
+                            <IconDownload className="h-5 w-5" />
+                          </a>
+                        </div>
+                      </div>
+                      <div className="flex flex-wrap items-center gap-3 text-sm text-gray-500 dark:text-gray-400 mt-2">
+                        <span className="flex items-center gap-1">
+                          <IconCalendar className="h-4 w-4" />
+                          {formatDate(evaluation.evaluation_date)}
+                        </span>
+                      </div>
+                      {evaluation.notes && (
+                        <p className="mt-2 text-sm text-gray-700 dark:text-gray-300">
+                          {evaluation.notes}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
+          </div>
+        )
+      ) : filteredEvaluations.length === 0 ? (
         <div className="text-center py-12 bg-white dark:bg-gray-800 rounded-lg shadow">
           <IconFileText className="mx-auto h-12 w-12 text-gray-400 dark:text-gray-500" />
           <h3 className="mt-2 text-sm font-medium text-gray-900 dark:text-white">No evaluations found</h3>
@@ -412,7 +534,7 @@ export default function EvaluationsPage() {
                                     >
                                       <IconDownload className="h-5 w-5" />
                                     </a>
-                                    {canCreate && (
+                                    {canDelete && (
                                       <button
                                         onClick={() => handleDelete(evaluation)}
                                         className="p-2 text-red-500 dark:text-red-400/70 hover:bg-red-50 dark:hover:bg-red-900/30 rounded"

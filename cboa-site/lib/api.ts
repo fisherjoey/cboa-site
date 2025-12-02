@@ -1023,7 +1023,7 @@ export interface Evaluation {
 }
 
 export const evaluationsAPI = {
-  async getAll(options?: { forceRefresh?: boolean }): Promise<Evaluation[]> {
+  async getAll(token?: string, options?: { forceRefresh?: boolean }): Promise<Evaluation[]> {
     const cacheKey = 'evaluations'
 
     if (!options?.forceRefresh && isBrowser()) {
@@ -1031,8 +1031,13 @@ export const evaluationsAPI = {
       if (cached) return cached
     }
 
+    const headers: Record<string, string> = {}
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`
+    }
+
     const data = await retryAsync(async () => {
-      const res = await apiFetch(`${API_BASE}/evaluations`)
+      const res = await apiFetch(`${API_BASE}/evaluations`, { headers })
       return res.json()
     })
 
@@ -1043,7 +1048,7 @@ export const evaluationsAPI = {
     return data
   },
 
-  async getByMemberId(memberId: string, options?: { forceRefresh?: boolean }): Promise<Evaluation[]> {
+  async getByMemberId(memberId: string, token?: string, options?: { forceRefresh?: boolean }): Promise<Evaluation[]> {
     const cacheKey = `evaluations_member_${memberId}`
 
     if (!options?.forceRefresh && isBrowser()) {
@@ -1051,8 +1056,13 @@ export const evaluationsAPI = {
       if (cached) return cached
     }
 
+    const headers: Record<string, string> = {}
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`
+    }
+
     const data = await retryAsync(async () => {
-      const res = await apiFetch(`${API_BASE}/evaluations?member_id=${memberId}`)
+      const res = await apiFetch(`${API_BASE}/evaluations?member_id=${memberId}`, { headers })
       return res.json()
     })
 
@@ -1063,7 +1073,7 @@ export const evaluationsAPI = {
     return data
   },
 
-  async getByEvaluatorId(evaluatorId: string, options?: { forceRefresh?: boolean }): Promise<Evaluation[]> {
+  async getByEvaluatorId(evaluatorId: string, token?: string, options?: { forceRefresh?: boolean }): Promise<Evaluation[]> {
     const cacheKey = `evaluations_evaluator_${evaluatorId}`
 
     if (!options?.forceRefresh && isBrowser()) {
@@ -1071,8 +1081,13 @@ export const evaluationsAPI = {
       if (cached) return cached
     }
 
+    const headers: Record<string, string> = {}
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`
+    }
+
     const data = await retryAsync(async () => {
-      const res = await apiFetch(`${API_BASE}/evaluations?evaluator_id=${evaluatorId}`)
+      const res = await apiFetch(`${API_BASE}/evaluations?evaluator_id=${evaluatorId}`, { headers })
       return res.json()
     })
 
@@ -1083,16 +1098,27 @@ export const evaluationsAPI = {
     return data
   },
 
-  async getById(id: string): Promise<Evaluation> {
+  async getById(id: string, token?: string): Promise<Evaluation> {
+    const headers: Record<string, string> = {}
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`
+    }
+
     return retryAsync(async () => {
-      const res = await apiFetch(`${API_BASE}/evaluations?id=${id}`)
+      const res = await apiFetch(`${API_BASE}/evaluations?id=${id}`, { headers })
       return res.json()
     })
   },
 
-  async create(evaluation: Partial<Evaluation>): Promise<Evaluation> {
+  async create(evaluation: Partial<Evaluation>, token?: string): Promise<Evaluation> {
+    const headers: Record<string, string> = {}
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`
+    }
+
     const res = await apiFetch(`${API_BASE}/evaluations`, {
       method: 'POST',
+      headers,
       body: JSON.stringify(evaluation)
     })
     invalidateCache('evaluations')
@@ -1105,9 +1131,15 @@ export const evaluationsAPI = {
     return res.json()
   },
 
-  async update(evaluation: Partial<Evaluation>): Promise<Evaluation> {
+  async update(evaluation: Partial<Evaluation>, token?: string): Promise<Evaluation> {
+    const headers: Record<string, string> = {}
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`
+    }
+
     const res = await apiFetch(`${API_BASE}/evaluations`, {
       method: 'PUT',
+      headers,
       body: JSON.stringify(evaluation)
     })
     invalidateCache('evaluations')
@@ -1120,9 +1152,15 @@ export const evaluationsAPI = {
     return res.json()
   },
 
-  async delete(id: string, memberId?: string, evaluatorId?: string): Promise<void> {
+  async delete(id: string, token?: string, memberId?: string, evaluatorId?: string): Promise<void> {
+    const headers: Record<string, string> = {}
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`
+    }
+
     await apiFetch(`${API_BASE}/evaluations?id=${id}`, {
-      method: 'DELETE'
+      method: 'DELETE',
+      headers
     })
     invalidateCache('evaluations')
     if (memberId) {

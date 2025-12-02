@@ -6,6 +6,50 @@ const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
 const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
+// Valid roles for authorization
+type UserRole = 'official' | 'executive' | 'admin' | 'evaluator' | 'mentor'
+
+// Extract user role from Supabase user metadata
+function getUserRole(user: any): UserRole {
+  const appRole = user?.app_metadata?.role
+  const userRole = user?.user_metadata?.role
+  const appRoles = user?.app_metadata?.roles || []
+  const userRoles = user?.user_metadata?.roles || []
+
+  // Check direct role field first (app_metadata takes precedence)
+  const directRole = appRole || userRole
+  if (directRole) {
+    const normalizedRole = directRole.toLowerCase()
+    if (['admin', 'executive', 'evaluator', 'mentor', 'official'].includes(normalizedRole)) {
+      return normalizedRole as UserRole
+    }
+  }
+
+  // Check roles arrays
+  const allRoles = [...appRoles, ...userRoles].map((r: string) => r.toLowerCase())
+  if (allRoles.includes('admin')) return 'admin'
+  if (allRoles.includes('executive')) return 'executive'
+  if (allRoles.includes('evaluator')) return 'evaluator'
+  if (allRoles.includes('mentor')) return 'mentor'
+
+  return 'official'
+}
+
+// Check if user can view all evaluations
+function canViewAllEvaluations(role: UserRole): boolean {
+  return ['admin', 'executive', 'evaluator'].includes(role)
+}
+
+// Check if user can create evaluations
+function canCreateEvaluations(role: UserRole): boolean {
+  return ['admin', 'executive', 'evaluator'].includes(role)
+}
+
+// Check if user can modify (edit/delete) evaluations
+function canModifyEvaluations(role: UserRole): boolean {
+  return ['admin', 'executive'].includes(role)
+}
+
 export const handler: Handler = async (event) => {
   const logger = Logger.fromEvent('evaluations', event)
 
@@ -19,6 +63,30 @@ export const handler: Handler = async (event) => {
   if (event.httpMethod === 'OPTIONS') {
     return { statusCode: 200, headers, body: '' }
   }
+
+  // Verify authorization
+  const authHeader = event.headers.authorization || event.headers.Authorization
+  if (!authHeader?.startsWith('Bearer ')) {
+    return {
+      statusCode: 401,
+      headers,
+      body: JSON.stringify({ error: 'Unauthorized - Missing or invalid token' })
+    }
+  }
+
+  const token = authHeader.replace('Bearer ', '')
+  const { data: { user: authUser }, error: authError } = await supabase.auth.getUser(token)
+
+  if (authError || !authUser) {
+    return {
+      statusCode: 401,
+      headers,
+      body: JSON.stringify({ error: 'Unauthorized - Invalid token' })
+    }
+  }
+
+  const userRole = getUserRole(authUser)
+  const userEmail = authUser.email || 'unknown'
 
   try {
     switch (event.httpMethod) {
@@ -39,6 +107,24 @@ export const handler: Handler = async (event) => {
 
           if (error) throw error
 
+          // Officials can only view their own evaluations
+          if (!canViewAllEvaluations(userRole)) {
+            // Get the user's member record to check ownership
+            const { data: memberData } = await supabase
+              .from('members')
+              .select('id')
+              .eq('user_id', authUser.id)
+              .single()
+
+            if (!memberData || data.member_id !== memberData.id) {
+              return {
+                statusCode: 403,
+                headers,
+                body: JSON.stringify({ error: 'Forbidden - You can only view your own evaluations' })
+              }
+            }
+          }
+
           return {
             statusCode: 200,
             headers,
@@ -46,8 +132,25 @@ export const handler: Handler = async (event) => {
           }
         }
 
-        // Get evaluations for a specific member (official viewing their own)
+        // Get evaluations for a specific member
         if (member_id) {
+          // Officials can only view their own evaluations
+          if (!canViewAllEvaluations(userRole)) {
+            const { data: memberData } = await supabase
+              .from('members')
+              .select('id')
+              .eq('user_id', authUser.id)
+              .single()
+
+            if (!memberData || member_id !== memberData.id) {
+              return {
+                statusCode: 403,
+                headers,
+                body: JSON.stringify({ error: 'Forbidden - You can only view your own evaluations' })
+              }
+            }
+          }
+
           const { data, error } = await supabase
             .from('evaluations')
             .select(`
@@ -69,6 +172,15 @@ export const handler: Handler = async (event) => {
 
         // Get evaluations created by a specific evaluator
         if (evaluator_id) {
+          // Only evaluators/admins/executives can view by evaluator_id
+          if (!canViewAllEvaluations(userRole)) {
+            return {
+              statusCode: 403,
+              headers,
+              body: JSON.stringify({ error: 'Forbidden - Insufficient permissions' })
+            }
+          }
+
           const { data, error } = await supabase
             .from('evaluations')
             .select(`
@@ -88,7 +200,15 @@ export const handler: Handler = async (event) => {
           }
         }
 
-        // Get all evaluations (for admin/evaluator view)
+        // Get all evaluations - only for admin/executive/evaluator
+        if (!canViewAllEvaluations(userRole)) {
+          return {
+            statusCode: 403,
+            headers,
+            body: JSON.stringify({ error: 'Forbidden - You can only view your own evaluations' })
+          }
+        }
+
         const { data, error } = await supabase
           .from('evaluations')
           .select(`
@@ -108,9 +228,18 @@ export const handler: Handler = async (event) => {
       }
 
       case 'POST': {
+        // Only evaluators/admins/executives can create evaluations
+        if (!canCreateEvaluations(userRole)) {
+          return {
+            statusCode: 403,
+            headers,
+            body: JSON.stringify({ error: 'Forbidden - You do not have permission to create evaluations' })
+          }
+        }
+
         const body = JSON.parse(event.body || '{}')
-        logger.info('crud', 'create_evaluation', `Creating evaluation for member ${body.member_id}`, {
-          metadata: { member_id: body.member_id, evaluator_id: body.evaluator_id, title: body.title }
+        logger.info('crud', 'create_evaluation', `Creating evaluation for member ${body.member_id} by ${userEmail} (${userRole})`, {
+          metadata: { member_id: body.member_id, evaluator_id: body.evaluator_id, title: body.title, actor_role: userRole }
         })
 
         // Validate required fields
@@ -144,11 +273,11 @@ export const handler: Handler = async (event) => {
         if (error) throw error
 
         await logger.audit('CREATE', 'evaluation', data.id, {
-          actorId: body.evaluator_id || 'system',
-          actorEmail: 'system',
+          actorId: body.evaluator_id || authUser.id,
+          actorEmail: userEmail,
           targetUserId: body.member_id,
           newValues: { title: body.title, file_name: body.file_name },
-          description: `Created evaluation for member ${body.member_id}`
+          description: `Created evaluation for member ${body.member_id} by ${userEmail} (${userRole})`
         })
 
         return {
@@ -159,6 +288,15 @@ export const handler: Handler = async (event) => {
       }
 
       case 'PUT': {
+        // Only admins/executives can edit evaluations
+        if (!canModifyEvaluations(userRole)) {
+          return {
+            statusCode: 403,
+            headers,
+            body: JSON.stringify({ error: 'Forbidden - Only administrators and executives can edit evaluations' })
+          }
+        }
+
         const body = JSON.parse(event.body || '{}')
         const { id, ...updateData } = body
 
@@ -170,8 +308,8 @@ export const handler: Handler = async (event) => {
           }
         }
 
-        logger.info('crud', 'update_evaluation', `Updating evaluation ${id}`, {
-          metadata: { id, updates: Object.keys(updateData) }
+        logger.info('crud', 'update_evaluation', `Updating evaluation ${id} by ${userEmail} (${userRole})`, {
+          metadata: { id, updates: Object.keys(updateData), actor_role: userRole }
         })
 
         const { data, error } = await supabase
@@ -188,10 +326,10 @@ export const handler: Handler = async (event) => {
         if (error) throw error
 
         await logger.audit('UPDATE', 'evaluation', id, {
-          actorId: 'system',
-          actorEmail: 'system',
+          actorId: authUser.id,
+          actorEmail: userEmail,
           newValues: updateData,
-          description: `Updated evaluation ${id}`
+          description: `Updated evaluation ${id} by ${userEmail} (${userRole})`
         })
 
         return {
@@ -202,6 +340,15 @@ export const handler: Handler = async (event) => {
       }
 
       case 'DELETE': {
+        // Only admins/executives can delete evaluations
+        if (!canModifyEvaluations(userRole)) {
+          return {
+            statusCode: 403,
+            headers,
+            body: JSON.stringify({ error: 'Forbidden - Only administrators and executives can delete evaluations' })
+          }
+        }
+
         const { id } = event.queryStringParameters || {}
 
         if (!id) {
@@ -212,7 +359,7 @@ export const handler: Handler = async (event) => {
           }
         }
 
-        logger.info('crud', 'delete_evaluation', `Deleting evaluation ${id}`, { metadata: { id } })
+        logger.info('crud', 'delete_evaluation', `Deleting evaluation ${id} by ${userEmail} (${userRole})`, { metadata: { id, actor_role: userRole } })
 
         const { error } = await supabase
           .from('evaluations')
@@ -222,9 +369,9 @@ export const handler: Handler = async (event) => {
         if (error) throw error
 
         await logger.audit('DELETE', 'evaluation', id, {
-          actorId: 'system',
-          actorEmail: 'system',
-          description: `Deleted evaluation ${id}`
+          actorId: authUser.id,
+          actorEmail: userEmail,
+          description: `Deleted evaluation ${id} by ${userEmail} (${userRole})`
         })
 
         return {
