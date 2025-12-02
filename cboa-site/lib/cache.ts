@@ -24,6 +24,7 @@ export const CACHE_TTL = {
   publicResources: 30 * 60 * 1000,   // 30 minutes
   publicPages: 30 * 60 * 1000,       // 30 minutes
   officials: 30 * 60 * 1000,         // 30 minutes
+  executiveTeam: 30 * 60 * 1000,     // 30 minutes
 } as const
 
 export type CacheKey = keyof typeof CACHE_TTL

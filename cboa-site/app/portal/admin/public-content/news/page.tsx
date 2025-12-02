@@ -18,6 +18,19 @@ export default function PublicNewsAdmin() {
   const [searchTerm, setSearchTerm] = useState('')
   const [isCreating, setIsCreating] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
+  const [editingArticle, setEditingArticle] = useState<{
+    title: string
+    slug: string
+    published_date: string
+    author: string
+    image_url: string
+    excerpt: string
+    body: string
+    featured: boolean
+    tags: string
+    active: boolean
+    priority: number
+  } | null>(null)
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set())
   const [newArticle, setNewArticle] = useState({
     title: '',
@@ -82,6 +95,28 @@ export default function PublicNewsAdmin() {
     setExpandedItems(newExpanded)
   }
 
+  const startEditing = (article: PublicNewsItem) => {
+    setEditingId(article.id)
+    setEditingArticle({
+      title: article.title || '',
+      slug: article.slug || '',
+      published_date: article.published_date ? new Date(article.published_date).toISOString().split('T')[0] : '',
+      author: article.author || '',
+      image_url: article.image_url || '',
+      excerpt: article.excerpt || '',
+      body: article.body || '',
+      featured: article.featured || false,
+      tags: article.tags?.join(', ') || '',
+      active: article.active ?? true,
+      priority: article.priority || 0
+    })
+  }
+
+  const cancelEditing = () => {
+    setEditingId(null)
+    setEditingArticle(null)
+  }
+
   const handleCreate = async () => {
     if (!newArticle.title || !newArticle.excerpt || !newArticle.body) {
       error('Please fill in all required fields (title, excerpt, and body)')
@@ -132,33 +167,37 @@ export default function PublicNewsAdmin() {
     }
   }
 
-  const handleUpdate = async (id: string, updates: any) => {
+  const handleSaveEdit = async () => {
+    if (!editingId || !editingArticle) return
+
+    if (!editingArticle.title || !editingArticle.excerpt || !editingArticle.body) {
+      error('Please fill in all required fields (title, excerpt, and body)')
+      return
+    }
+
     // Sanitize inputs
-    const sanitizedUpdates = { ...updates }
-    if (updates.title) {
-      sanitizedUpdates.title = sanitize.text(updates.title)
-    }
-    if (updates.author) {
-      sanitizedUpdates.author = sanitize.text(updates.author)
-    }
-    if (updates.excerpt) {
-      sanitizedUpdates.excerpt = sanitize.text(updates.excerpt)
-    }
-    if (updates.body) {
-      sanitizedUpdates.body = sanitize.html(updates.body)
-    }
-    if (updates.image_url) {
-      sanitizedUpdates.image_url = sanitize.text(updates.image_url)
-    }
-    if (updates.tags && typeof updates.tags === 'string') {
-      sanitizedUpdates.tags = updates.tags.split(',').map((t: string) => t.trim())
+    const sanitizedData = {
+      id: editingId,
+      title: sanitize.text(editingArticle.title),
+      slug: editingArticle.slug || generateSlug(editingArticle.title),
+      published_date: editingArticle.published_date,
+      author: sanitize.text(editingArticle.author),
+      image_url: editingArticle.image_url ? sanitize.text(editingArticle.image_url) : undefined,
+      excerpt: sanitize.text(editingArticle.excerpt),
+      body: sanitize.html(editingArticle.body),
+      featured: editingArticle.featured,
+      tags: editingArticle.tags ? editingArticle.tags.split(',').map((t: string) => t.trim()) : [],
+      active: editingArticle.active,
+      priority: editingArticle.priority
     }
 
     try {
-      const updated = await publicNewsAPI.update({ id, ...sanitizedUpdates })
+      const updated = await publicNewsAPI.update(sanitizedData)
       setNewsItems(prev => prev.map(item =>
-        item.id === id ? updated : item
+        item.id === editingId ? updated : item
       ))
+      setEditingId(null)
+      setEditingArticle(null)
       success('News article updated successfully!')
     } catch (err) {
       const errorMessage = parseAPIError(err)
@@ -415,18 +454,18 @@ export default function PublicNewsAdmin() {
               day: 'numeric'
             })
 
-            if (isEditing) {
+            if (isEditing && editingArticle) {
               return (
                 <div key={article.id} className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 sm:p-6">
                   <h3 className="text-lg sm:text-xl font-semibold mb-4 text-gray-900 dark:text-white">Edit News Article</h3>
                   <div className="space-y-4">
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Title</label>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Title *</label>
                         <input
                           type="text"
-                          value={article.title}
-                          onChange={(e) => handleUpdate(article.id, { title: e.target.value })}
+                          value={editingArticle.title}
+                          onChange={(e) => setEditingArticle({...editingArticle, title: e.target.value, slug: generateSlug(e.target.value)})}
                           className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                         />
                       </div>
@@ -434,8 +473,8 @@ export default function PublicNewsAdmin() {
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Slug</label>
                         <input
                           type="text"
-                          value={article.slug}
-                          onChange={(e) => handleUpdate(article.id, { slug: e.target.value })}
+                          value={editingArticle.slug}
+                          onChange={(e) => setEditingArticle({...editingArticle, slug: e.target.value})}
                           className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                         />
                       </div>
@@ -443,20 +482,20 @@ export default function PublicNewsAdmin() {
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Author</label>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Author *</label>
                         <input
                           type="text"
-                          value={article.author}
-                          onChange={(e) => handleUpdate(article.id, { author: e.target.value })}
+                          value={editingArticle.author}
+                          onChange={(e) => setEditingArticle({...editingArticle, author: e.target.value})}
                           className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Published Date</label>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Published Date *</label>
                         <input
                           type="date"
-                          value={article.published_date ? new Date(article.published_date).toISOString().split('T')[0] : ''}
-                          onChange={(e) => handleUpdate(article.id, { published_date: e.target.value })}
+                          value={editingArticle.published_date}
+                          onChange={(e) => setEditingArticle({...editingArticle, published_date: e.target.value})}
                           className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                         />
                       </div>
@@ -466,27 +505,27 @@ export default function PublicNewsAdmin() {
                       <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Image URL</label>
                       <input
                         type="text"
-                        value={article.image_url || ''}
-                        onChange={(e) => handleUpdate(article.id, { image_url: e.target.value })}
+                        value={editingArticle.image_url}
+                        onChange={(e) => setEditingArticle({...editingArticle, image_url: e.target.value})}
                         className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                       />
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Excerpt</label>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Excerpt *</label>
                       <textarea
-                        value={article.excerpt}
-                        onChange={(e) => handleUpdate(article.id, { excerpt: e.target.value })}
+                        value={editingArticle.excerpt}
+                        onChange={(e) => setEditingArticle({...editingArticle, excerpt: e.target.value})}
                         className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                         rows={3}
                       />
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Body Content</label>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Body Content *</label>
                       <TinyMCEEditor
-                        value={article.body}
-                        onChange={(value) => handleUpdate(article.id, { body: value })}
+                        value={editingArticle.body}
+                        onChange={(value) => setEditingArticle({...editingArticle, body: value || ''})}
                       />
                     </div>
 
@@ -495,8 +534,8 @@ export default function PublicNewsAdmin() {
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tags (comma-separated)</label>
                         <input
                           type="text"
-                          value={article.tags?.join(', ') || ''}
-                          onChange={(e) => handleUpdate(article.id, { tags: e.target.value })}
+                          value={editingArticle.tags}
+                          onChange={(e) => setEditingArticle({...editingArticle, tags: e.target.value})}
                           className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                         />
                       </div>
@@ -504,8 +543,8 @@ export default function PublicNewsAdmin() {
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Priority</label>
                         <input
                           type="number"
-                          value={article.priority}
-                          onChange={(e) => handleUpdate(article.id, { priority: parseInt(e.target.value) })}
+                          value={editingArticle.priority}
+                          onChange={(e) => setEditingArticle({...editingArticle, priority: parseInt(e.target.value) || 0})}
                           className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                         />
                       </div>
@@ -515,8 +554,8 @@ export default function PublicNewsAdmin() {
                       <label className="flex items-center gap-2">
                         <input
                           type="checkbox"
-                          checked={article.featured}
-                          onChange={(e) => handleUpdate(article.id, { featured: e.target.checked })}
+                          checked={editingArticle.featured}
+                          onChange={(e) => setEditingArticle({...editingArticle, featured: e.target.checked})}
                           className="rounded border-gray-300 text-orange-500 focus:ring-orange-500"
                         />
                         <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Featured</span>
@@ -524,8 +563,8 @@ export default function PublicNewsAdmin() {
                       <label className="flex items-center gap-2">
                         <input
                           type="checkbox"
-                          checked={article.active}
-                          onChange={(e) => handleUpdate(article.id, { active: e.target.checked })}
+                          checked={editingArticle.active}
+                          onChange={(e) => setEditingArticle({...editingArticle, active: e.target.checked})}
                           className="rounded border-gray-300 text-orange-500 focus:ring-orange-500"
                         />
                         <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Active</span>
@@ -534,14 +573,14 @@ export default function PublicNewsAdmin() {
 
                     <div className="flex flex-col sm:flex-row gap-2">
                       <button
-                        onClick={() => setEditingId(null)}
+                        onClick={handleSaveEdit}
                         className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 flex items-center justify-center gap-2"
                       >
                         <IconDeviceFloppy className="h-5 w-5" />
                         Save Changes
                       </button>
                       <button
-                        onClick={() => setEditingId(null)}
+                        onClick={cancelEditing}
                         className="bg-gray-300 dark:bg-gray-600 text-gray-700 dark:text-gray-200 px-4 py-2 rounded-lg hover:bg-gray-400 dark:hover:bg-gray-500 flex items-center justify-center gap-2"
                       >
                         <IconX className="h-5 w-5" />
@@ -605,7 +644,7 @@ export default function PublicNewsAdmin() {
                         {canEdit && (
                           <div className="flex gap-1 flex-shrink-0">
                             <button
-                              onClick={() => setEditingId(article.id)}
+                              onClick={() => startEditing(article)}
                               className="p-1.5 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"
                               title="Edit"
                             >

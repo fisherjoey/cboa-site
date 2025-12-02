@@ -1,14 +1,11 @@
 import Hero from '@/components/content/Hero'
 import Card from '@/components/ui/Card'
 import CTASection from '@/components/ui/CTASection'
-import { getSiteSettings } from '@/lib/settings'
 import AboutContent from './about-content'
+import ExecutiveTeamSection from './executive-team-section'
 import { IconStar, IconScale, IconTrendingUp, IconUsers, IconBallBasketball, IconTrophy, IconCheck } from '@tabler/icons-react'
-import Image from 'next/image'
 
 export default function AboutPage() {
-  const settings = getSiteSettings()
-  const executiveTeam = settings.executiveTeam || []
 
   const values = [
     {
@@ -139,36 +136,8 @@ export default function AboutPage() {
         </div>
       </section>
 
-      {/* Executive Team Section */}
-      <section className="py-16 bg-gray-50">
-        <div className="container mx-auto px-4">
-          <h2 className="text-3xl font-bold text-cboa-blue mb-12 text-center">Executive Team</h2>
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl mx-auto">
-            {executiveTeam.map((member, index) => (
-              <Card key={index}>
-                <div className="text-center">
-                  <div className="w-24 h-24 mx-auto mb-4 relative rounded-full overflow-hidden bg-gray-100 border-2 border-gray-300">
-                    <div className="absolute inset-0 flex items-end justify-center">
-                      <Image
-                        src={member.image || "/images/executive-placeholder.svg"}
-                        alt={`${member.name} - ${member.position}`}
-                        width={120}
-                        height={120}
-                        className="object-cover translate-y-2"
-                      />
-                    </div>
-                  </div>
-                  <h3 className="font-bold text-lg text-cboa-blue">{member.name}</h3>
-                  <p className="text-cboa-orange font-medium mb-2">{member.position}</p>
-                  <a href={`mailto:${member.email}`} className="text-sm text-gray-600 hover:text-cboa-blue transition-colors">
-                    {member.email}
-                  </a>
-                </div>
-              </Card>
-            ))}
-          </div>
-        </div>
-      </section>
+      {/* Executive Team Section - fetched from database */}
+      <ExecutiveTeamSection />
 
       {/* CTA Section */}
       <section className="py-16">

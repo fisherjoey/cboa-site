@@ -16,7 +16,8 @@ import {
   IconCalendarEvent,
   IconBallBasketball,
   IconBrandDiscord,
-  IconArchive
+  IconArchive,
+  IconReportAnalytics
 } from '@tabler/icons-react';
 import UpcomingEventsWidget from '@/components/dashboard/UpcomingEventsWidget';
 import LatestAnnouncementWidget from '@/components/dashboard/LatestAnnouncementWidget';
@@ -92,10 +93,17 @@ export default function PortalDashboard() {
   const adminSections = [
     ...executiveSections,
     {
-      href: '/admin',
-      title: 'CMS Admin',
-      description: 'Manage website content, news articles, and resources',
+      href: '/portal/admin',
+      title: 'Portal Admin',
+      description: 'Manage public website content and system settings',
       icon: IconSettings,
+      badge: 'ADMIN'
+    },
+    {
+      href: '/portal/admin/logs',
+      title: 'System Logs',
+      description: 'View application logs and audit trail',
+      icon: IconReportAnalytics,
       badge: 'ADMIN'
     }
   ];
@@ -214,6 +222,24 @@ export default function PortalDashboard() {
               >
                 <IconClipboard className="h-5 w-5 text-orange-600 dark:text-orange-500 flex-shrink-0" />
                 <span className="text-sm font-medium text-gray-900 dark:text-white">Reports</span>
+              </Link>
+            </>
+          )}
+          {user.role === 'admin' && (
+            <>
+              <Link
+                href="/portal/admin"
+                className="flex items-center gap-2 p-3 bg-white dark:bg-gray-800 rounded-lg hover:shadow-md transition-shadow border border-gray-200 dark:border-gray-700"
+              >
+                <IconSettings className="h-5 w-5 text-orange-600 dark:text-orange-500 flex-shrink-0" />
+                <span className="text-sm font-medium text-gray-900 dark:text-white">Portal Admin</span>
+              </Link>
+              <Link
+                href="/portal/admin/logs"
+                className="flex items-center gap-2 p-3 bg-white dark:bg-gray-800 rounded-lg hover:shadow-md transition-shadow border border-gray-200 dark:border-gray-700"
+              >
+                <IconReportAnalytics className="h-5 w-5 text-orange-600 dark:text-orange-500 flex-shrink-0" />
+                <span className="text-sm font-medium text-gray-900 dark:text-white">System Logs</span>
               </Link>
             </>
           )}

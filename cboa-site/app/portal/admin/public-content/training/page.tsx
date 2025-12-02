@@ -18,6 +18,20 @@ export default function PublicTrainingAdmin() {
   const [searchTerm, setSearchTerm] = useState('')
   const [isCreating, setIsCreating] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
+  const [editingEvent, setEditingEvent] = useState<{
+    title: string
+    slug: string
+    event_date: string
+    event_time: string
+    location: string
+    description: string
+    details: string
+    registration_url: string
+    capacity: number
+    instructor: string
+    active: boolean
+    priority: number
+  } | null>(null)
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set())
   const [newEvent, setNewEvent] = useState({
     title: '',
@@ -83,6 +97,29 @@ export default function PublicTrainingAdmin() {
     setExpandedItems(newExpanded)
   }
 
+  const startEditing = (event: PublicTrainingEvent) => {
+    setEditingId(event.id)
+    setEditingEvent({
+      title: event.title || '',
+      slug: event.slug || '',
+      event_date: event.event_date ? new Date(event.event_date).toISOString().split('T')[0] : '',
+      event_time: event.event_time || '',
+      location: event.location || '',
+      description: event.description || '',
+      details: event.details || '',
+      registration_url: event.registration_url || '',
+      capacity: event.capacity || 0,
+      instructor: event.instructor || '',
+      active: event.active ?? true,
+      priority: event.priority || 0
+    })
+  }
+
+  const cancelEditing = () => {
+    setEditingId(null)
+    setEditingEvent(null)
+  }
+
   const handleCreate = async () => {
     if (!newEvent.title || !newEvent.event_date || !newEvent.description) {
       error('Please fill in all required fields (title, event date, and description)')
@@ -136,33 +173,38 @@ export default function PublicTrainingAdmin() {
     }
   }
 
-  const handleUpdate = async (id: string, updates: any) => {
+  const handleSaveEdit = async () => {
+    if (!editingId || !editingEvent) return
+
+    if (!editingEvent.title || !editingEvent.event_date || !editingEvent.description) {
+      error('Please fill in all required fields (title, event date, and description)')
+      return
+    }
+
     // Sanitize inputs
-    const sanitizedUpdates = { ...updates }
-    if (updates.title) {
-      sanitizedUpdates.title = sanitize.text(updates.title)
-    }
-    if (updates.location) {
-      sanitizedUpdates.location = sanitize.text(updates.location)
-    }
-    if (updates.description) {
-      sanitizedUpdates.description = sanitize.text(updates.description)
-    }
-    if (updates.details) {
-      sanitizedUpdates.details = sanitize.html(updates.details)
-    }
-    if (updates.instructor) {
-      sanitizedUpdates.instructor = sanitize.text(updates.instructor)
-    }
-    if (updates.registration_url) {
-      sanitizedUpdates.registration_url = sanitize.text(updates.registration_url)
+    const sanitizedData = {
+      id: editingId,
+      title: sanitize.text(editingEvent.title),
+      slug: editingEvent.slug || generateSlug(editingEvent.title),
+      event_date: editingEvent.event_date,
+      event_time: editingEvent.event_time || undefined,
+      location: sanitize.text(editingEvent.location),
+      description: sanitize.text(editingEvent.description),
+      details: sanitize.html(editingEvent.details),
+      registration_url: editingEvent.registration_url ? sanitize.text(editingEvent.registration_url) : undefined,
+      capacity: editingEvent.capacity || undefined,
+      instructor: editingEvent.instructor ? sanitize.text(editingEvent.instructor) : undefined,
+      active: editingEvent.active,
+      priority: editingEvent.priority
     }
 
     try {
-      const updated = await publicTrainingAPI.update({ id, ...sanitizedUpdates })
+      const updated = await publicTrainingAPI.update(sanitizedData)
       setEvents(prev => prev.map(item =>
-        item.id === id ? updated : item
+        item.id === editingId ? updated : item
       ))
+      setEditingId(null)
+      setEditingEvent(null)
       success('Training event updated successfully!')
     } catch (err) {
       const errorMessage = parseAPIError(err)
@@ -431,18 +473,18 @@ export default function PublicTrainingAdmin() {
             })
             const isPast = new Date(event.event_date) < new Date()
 
-            if (isEditing) {
+            if (isEditing && editingEvent) {
               return (
                 <div key={event.id} className="bg-white rounded-lg shadow p-4 sm:p-6">
                   <h3 className="text-lg sm:text-xl font-semibold mb-4">Edit Training Event</h3>
                   <div className="space-y-4">
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Title</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Title *</label>
                         <input
                           type="text"
-                          value={event.title}
-                          onChange={(e) => handleUpdate(event.id, { title: e.target.value })}
+                          value={editingEvent.title}
+                          onChange={(e) => setEditingEvent({...editingEvent, title: e.target.value, slug: generateSlug(e.target.value)})}
                           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                         />
                       </div>
@@ -450,8 +492,8 @@ export default function PublicTrainingAdmin() {
                         <label className="block text-sm font-medium text-gray-700 mb-1">Slug</label>
                         <input
                           type="text"
-                          value={event.slug}
-                          onChange={(e) => handleUpdate(event.id, { slug: e.target.value })}
+                          value={editingEvent.slug}
+                          onChange={(e) => setEditingEvent({...editingEvent, slug: e.target.value})}
                           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                         />
                       </div>
@@ -459,11 +501,11 @@ export default function PublicTrainingAdmin() {
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Event Date</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Event Date *</label>
                         <input
                           type="date"
-                          value={event.event_date ? new Date(event.event_date).toISOString().split('T')[0] : ''}
-                          onChange={(e) => handleUpdate(event.id, { event_date: e.target.value })}
+                          value={editingEvent.event_date}
+                          onChange={(e) => setEditingEvent({...editingEvent, event_date: e.target.value})}
                           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                         />
                       </div>
@@ -471,8 +513,8 @@ export default function PublicTrainingAdmin() {
                         <label className="block text-sm font-medium text-gray-700 mb-1">Event Time</label>
                         <input
                           type="time"
-                          value={event.event_time || ''}
-                          onChange={(e) => handleUpdate(event.id, { event_time: e.target.value })}
+                          value={editingEvent.event_time}
+                          onChange={(e) => setEditingEvent({...editingEvent, event_time: e.target.value})}
                           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                         />
                       </div>
@@ -482,8 +524,8 @@ export default function PublicTrainingAdmin() {
                       <label className="block text-sm font-medium text-gray-700 mb-1">Location</label>
                       <input
                         type="text"
-                        value={event.location || ''}
-                        onChange={(e) => handleUpdate(event.id, { location: e.target.value })}
+                        value={editingEvent.location}
+                        onChange={(e) => setEditingEvent({...editingEvent, location: e.target.value})}
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                       />
                     </div>
@@ -493,8 +535,8 @@ export default function PublicTrainingAdmin() {
                         <label className="block text-sm font-medium text-gray-700 mb-1">Instructor</label>
                         <input
                           type="text"
-                          value={event.instructor || ''}
-                          onChange={(e) => handleUpdate(event.id, { instructor: e.target.value })}
+                          value={editingEvent.instructor}
+                          onChange={(e) => setEditingEvent({...editingEvent, instructor: e.target.value})}
                           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                         />
                       </div>
@@ -502,18 +544,18 @@ export default function PublicTrainingAdmin() {
                         <label className="block text-sm font-medium text-gray-700 mb-1">Capacity</label>
                         <input
                           type="number"
-                          value={event.capacity || ''}
-                          onChange={(e) => handleUpdate(event.id, { capacity: parseInt(e.target.value) || 0 })}
+                          value={editingEvent.capacity || ''}
+                          onChange={(e) => setEditingEvent({...editingEvent, capacity: parseInt(e.target.value) || 0})}
                           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                         />
                       </div>
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Description *</label>
                       <textarea
-                        value={event.description}
-                        onChange={(e) => handleUpdate(event.id, { description: e.target.value })}
+                        value={editingEvent.description}
+                        onChange={(e) => setEditingEvent({...editingEvent, description: e.target.value})}
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                         rows={3}
                       />
@@ -523,8 +565,8 @@ export default function PublicTrainingAdmin() {
                       <label className="block text-sm font-medium text-gray-700 mb-1">Registration URL</label>
                       <input
                         type="url"
-                        value={event.registration_url || ''}
-                        onChange={(e) => handleUpdate(event.id, { registration_url: e.target.value })}
+                        value={editingEvent.registration_url}
+                        onChange={(e) => setEditingEvent({...editingEvent, registration_url: e.target.value})}
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                       />
                     </div>
@@ -532,8 +574,8 @@ export default function PublicTrainingAdmin() {
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">Full Details</label>
                       <TinyMCEEditor
-                        value={event.details || ''}
-                        onChange={(value) => handleUpdate(event.id, { details: value })}
+                        value={editingEvent.details}
+                        onChange={(value) => setEditingEvent({...editingEvent, details: value || ''})}
                       />
                     </div>
 
@@ -542,8 +584,8 @@ export default function PublicTrainingAdmin() {
                         <label className="block text-sm font-medium text-gray-700 mb-1">Priority</label>
                         <input
                           type="number"
-                          value={event.priority}
-                          onChange={(e) => handleUpdate(event.id, { priority: parseInt(e.target.value) })}
+                          value={editingEvent.priority}
+                          onChange={(e) => setEditingEvent({...editingEvent, priority: parseInt(e.target.value) || 0})}
                           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                         />
                       </div>
@@ -552,8 +594,8 @@ export default function PublicTrainingAdmin() {
                         <label className="flex items-center gap-2">
                           <input
                             type="checkbox"
-                            checked={event.active}
-                            onChange={(e) => handleUpdate(event.id, { active: e.target.checked })}
+                            checked={editingEvent.active}
+                            onChange={(e) => setEditingEvent({...editingEvent, active: e.target.checked})}
                             className="rounded border-gray-300 text-orange-500 focus:ring-orange-500"
                           />
                           <span className="text-sm font-medium text-gray-700">Active</span>
@@ -563,14 +605,14 @@ export default function PublicTrainingAdmin() {
 
                     <div className="flex flex-col sm:flex-row gap-2">
                       <button
-                        onClick={() => setEditingId(null)}
+                        onClick={handleSaveEdit}
                         className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 flex items-center justify-center gap-2"
                       >
                         <IconDeviceFloppy className="h-5 w-5" />
                         Save Changes
                       </button>
                       <button
-                        onClick={() => setEditingId(null)}
+                        onClick={cancelEditing}
                         className="bg-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-400 flex items-center justify-center gap-2"
                       >
                         <IconX className="h-5 w-5" />
@@ -636,7 +678,7 @@ export default function PublicTrainingAdmin() {
                     {canEdit && (
                       <div className="flex gap-1 flex-shrink-0">
                         <button
-                          onClick={() => setEditingId(event.id)}
+                          onClick={() => startEditing(event)}
                           className="p-1.5 text-gray-600 hover:bg-gray-100 rounded transition-colors"
                           title="Edit"
                         >

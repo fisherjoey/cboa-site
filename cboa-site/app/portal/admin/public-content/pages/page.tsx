@@ -16,6 +16,11 @@ export default function PublicPagesAdmin() {
   const [pages, setPages] = useState<PublicPage[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [editingId, setEditingId] = useState<string | null>(null)
+  const [editingPage, setEditingPage] = useState<{
+    title: string
+    meta_description: string
+    content: string
+  } | null>(null)
   const [expandedPages, setExpandedPages] = useState<Set<string>>(new Set())
   const [validationErrors, setValidationErrors] = useState<ValidationError[]>([])
 
@@ -48,6 +53,20 @@ export default function PublicPagesAdmin() {
     setExpandedPages(newExpanded)
   }
 
+  const startEditing = (page: PublicPage) => {
+    setEditingId(page.id)
+    setEditingPage({
+      title: page.title || '',
+      meta_description: page.meta_description || '',
+      content: page.content || ''
+    })
+  }
+
+  const cancelEditing = () => {
+    setEditingId(null)
+    setEditingPage(null)
+  }
+
   const getPageIcon = (pageName: string) => {
     const icons: Record<string, string> = {
       'home': '🏠',
@@ -68,24 +87,24 @@ export default function PublicPagesAdmin() {
     return descriptions[pageName] || 'Website page content'
   }
 
-  const handleUpdate = async (id: string, updates: any) => {
+  const handleSaveEdit = async () => {
+    if (!editingId || !editingPage) return
+
     // Sanitize inputs
-    const sanitizedUpdates = { ...updates }
-    if (updates.title) {
-      sanitizedUpdates.title = sanitize.text(updates.title)
-    }
-    if (updates.meta_description) {
-      sanitizedUpdates.meta_description = sanitize.text(updates.meta_description)
-    }
-    if (updates.content) {
-      sanitizedUpdates.content = sanitize.html(updates.content)
+    const sanitizedData = {
+      id: editingId,
+      title: sanitize.text(editingPage.title),
+      meta_description: editingPage.meta_description ? sanitize.text(editingPage.meta_description) : undefined,
+      content: sanitize.html(editingPage.content)
     }
 
     try {
-      const updated = await publicPagesAPI.update({ id, ...sanitizedUpdates })
+      const updated = await publicPagesAPI.update(sanitizedData)
       setPages(prev => prev.map(item =>
-        item.id === id ? updated : item
+        item.id === editingId ? updated : item
       ))
+      setEditingId(null)
+      setEditingPage(null)
       success('Page updated successfully!')
     } catch (err) {
       const errorMessage = parseAPIError(err)
@@ -125,7 +144,7 @@ export default function PublicPagesAdmin() {
             const isExpanded = expandedPages.has(page.id)
             const isEditing = editingId === page.id
 
-            if (isEditing) {
+            if (isEditing && editingPage) {
               return (
                 <div key={page.id} className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-4 sm:p-6">
                   <div className="flex items-center gap-2 mb-4">
@@ -140,8 +159,8 @@ export default function PublicPagesAdmin() {
                       <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Page Title</label>
                       <input
                         type="text"
-                        value={page.title}
-                        onChange={(e) => handleUpdate(page.id, { title: e.target.value })}
+                        value={editingPage.title}
+                        onChange={(e) => setEditingPage({...editingPage, title: e.target.value})}
                         className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                         placeholder="Page title (shown in browser tab)"
                       />
@@ -151,8 +170,8 @@ export default function PublicPagesAdmin() {
                     <div>
                       <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Meta Description (SEO)</label>
                       <textarea
-                        value={page.meta_description || ''}
-                        onChange={(e) => handleUpdate(page.id, { meta_description: e.target.value })}
+                        value={editingPage.meta_description}
+                        onChange={(e) => setEditingPage({...editingPage, meta_description: e.target.value})}
                         className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                         rows={2}
                         placeholder="Brief description for search engines..."
@@ -165,8 +184,8 @@ export default function PublicPagesAdmin() {
                     <div>
                       <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Page Content</label>
                       <TinyMCEEditor
-                        value={page.content}
-                        onChange={(value) => handleUpdate(page.id, { content: value })}
+                        value={editingPage.content}
+                        onChange={(value) => setEditingPage({...editingPage, content: value || ''})}
                       />
                       <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
                         Use the editor to format your content with headings, lists, images, and links.
@@ -175,14 +194,14 @@ export default function PublicPagesAdmin() {
 
                     <div className="flex flex-col sm:flex-row gap-2 pt-4 border-t border-gray-200 dark:border-gray-700">
                       <button
-                        onClick={() => setEditingId(null)}
+                        onClick={handleSaveEdit}
                         className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 flex items-center justify-center gap-2"
                       >
                         <IconDeviceFloppy className="h-5 w-5" />
-                        Done Editing
+                        Save Changes
                       </button>
                       <button
-                        onClick={() => setEditingId(null)}
+                        onClick={cancelEditing}
                         className="bg-gray-300 dark:bg-gray-600 text-gray-700 dark:text-gray-200 px-4 py-2 rounded-lg hover:bg-gray-400 dark:hover:bg-gray-500 flex items-center justify-center gap-2"
                       >
                         <IconX className="h-5 w-5" />
@@ -260,7 +279,7 @@ export default function PublicPagesAdmin() {
 
                     {canEdit && (
                       <button
-                        onClick={() => setEditingId(page.id)}
+                        onClick={() => startEditing(page)}
                         className="px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 flex items-center gap-2 flex-shrink-0"
                       >
                         <IconEdit className="h-4 w-4" />

@@ -181,7 +181,7 @@ export default function AdminLogsPage() {
         cell: ({ getValue }) => {
           const date = new Date(getValue() as string)
           return (
-            <span className="text-xs whitespace-nowrap">
+            <span className="text-xs whitespace-nowrap text-gray-700 dark:text-gray-300">
               {date.toLocaleDateString()} {date.toLocaleTimeString()}
             </span>
           )
@@ -194,10 +194,10 @@ export default function AdminLogsPage() {
         cell: ({ getValue }) => {
           const level = getValue() as string
           const config = {
-            ERROR: { icon: IconAlertCircle, color: 'text-red-600 bg-red-100' },
-            WARN: { icon: IconAlertTriangle, color: 'text-yellow-600 bg-yellow-100' },
-            INFO: { icon: IconInfoCircle, color: 'text-blue-600 bg-blue-100' },
-          }[level] || { icon: IconInfoCircle, color: 'text-gray-600 bg-gray-100' }
+            ERROR: { icon: IconAlertCircle, color: 'text-red-600 bg-red-100 dark:text-red-400 dark:bg-red-900/40' },
+            WARN: { icon: IconAlertTriangle, color: 'text-yellow-600 bg-yellow-100 dark:text-yellow-400 dark:bg-yellow-900/40' },
+            INFO: { icon: IconInfoCircle, color: 'text-blue-600 bg-blue-100 dark:text-blue-400 dark:bg-blue-900/40' },
+          }[level] || { icon: IconInfoCircle, color: 'text-gray-600 bg-gray-100 dark:text-gray-400 dark:bg-gray-700' }
           const Icon = config.icon
           return (
             <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium ${config.color}`}>
@@ -212,7 +212,7 @@ export default function AdminLogsPage() {
         accessorKey: 'source',
         header: 'Source',
         cell: ({ getValue }) => (
-          <span className={`text-xs px-2 py-0.5 rounded ${getValue() === 'server' ? 'bg-purple-100 text-purple-700' : 'bg-green-100 text-green-700'}`}>
+          <span className={`text-xs px-2 py-0.5 rounded ${getValue() === 'server' ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-400' : 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-400'}`}>
             {getValue() as string}
           </span>
         ),
@@ -222,7 +222,7 @@ export default function AdminLogsPage() {
         accessorKey: 'function_name',
         header: 'Function',
         cell: ({ getValue }) => (
-          <span className="font-mono text-xs">{getValue() as string}</span>
+          <span className="font-mono text-xs text-gray-800 dark:text-gray-200">{getValue() as string}</span>
         ),
         size: 150,
       },
@@ -240,7 +240,7 @@ export default function AdminLogsPage() {
         accessorKey: 'message',
         header: 'Message',
         cell: ({ getValue }) => (
-          <span className="text-sm max-w-md truncate block" title={getValue() as string}>
+          <span className="text-sm max-w-md truncate block text-gray-800 dark:text-gray-200" title={getValue() as string}>
             {getValue() as string}
           </span>
         ),
@@ -250,7 +250,7 @@ export default function AdminLogsPage() {
         accessorKey: 'user_email',
         header: 'User',
         cell: ({ getValue }) => (
-          <span className="text-xs text-gray-600">{(getValue() as string) || '-'}</span>
+          <span className="text-xs text-gray-600 dark:text-gray-400">{(getValue() as string) || '-'}</span>
         ),
         size: 150,
       },
@@ -267,7 +267,7 @@ export default function AdminLogsPage() {
         cell: ({ getValue }) => {
           const date = new Date(getValue() as string)
           return (
-            <span className="text-xs whitespace-nowrap">
+            <span className="text-xs whitespace-nowrap text-gray-700 dark:text-gray-300">
               {date.toLocaleDateString()} {date.toLocaleTimeString()}
             </span>
           )
@@ -280,17 +280,17 @@ export default function AdminLogsPage() {
         cell: ({ getValue }) => {
           const action = getValue() as string
           const colors: Record<string, string> = {
-            CREATE: 'bg-green-100 text-green-700',
-            UPDATE: 'bg-blue-100 text-blue-700',
-            DELETE: 'bg-red-100 text-red-700',
-            LOGIN: 'bg-purple-100 text-purple-700',
-            INVITE: 'bg-orange-100 text-orange-700',
-            PASSWORD_RESET: 'bg-yellow-100 text-yellow-700',
-            ROLE_CHANGE: 'bg-pink-100 text-pink-700',
-            EMAIL_SENT: 'bg-cyan-100 text-cyan-700',
+            CREATE: 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-400',
+            UPDATE: 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-400',
+            DELETE: 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400',
+            LOGIN: 'bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-400',
+            INVITE: 'bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-400',
+            PASSWORD_RESET: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-400',
+            ROLE_CHANGE: 'bg-pink-100 text-pink-700 dark:bg-pink-900/40 dark:text-pink-400',
+            EMAIL_SENT: 'bg-cyan-100 text-cyan-700 dark:bg-cyan-900/40 dark:text-cyan-400',
           }
           return (
-            <span className={`text-xs px-2 py-0.5 rounded font-medium ${colors[action] || 'bg-gray-100 text-gray-700'}`}>
+            <span className={`text-xs px-2 py-0.5 rounded font-medium ${colors[action] || 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300'}`}>
               {action}
             </span>
           )
@@ -306,7 +306,7 @@ export default function AdminLogsPage() {
         accessorKey: 'actor_email',
         header: 'Actor',
         cell: ({ getValue }) => (
-          <span className="text-xs">{(getValue() as string) || 'System'}</span>
+          <span className="text-xs text-gray-800 dark:text-gray-200">{(getValue() as string) || 'System'}</span>
         ),
         size: 150,
       },
@@ -314,7 +314,7 @@ export default function AdminLogsPage() {
         accessorKey: 'target_user_email',
         header: 'Target',
         cell: ({ getValue }) => (
-          <span className="text-xs text-gray-600">{(getValue() as string) || '-'}</span>
+          <span className="text-xs text-gray-600 dark:text-gray-400">{(getValue() as string) || '-'}</span>
         ),
         size: 150,
       },
@@ -322,7 +322,7 @@ export default function AdminLogsPage() {
         accessorKey: 'description',
         header: 'Description',
         cell: ({ getValue }) => (
-          <span className="text-sm max-w-md truncate block" title={getValue() as string}>
+          <span className="text-sm max-w-md truncate block text-gray-800 dark:text-gray-200" title={getValue() as string}>
             {(getValue() as string) || '-'}
           </span>
         ),
@@ -332,7 +332,7 @@ export default function AdminLogsPage() {
         accessorKey: 'actor_role',
         header: 'Role',
         cell: ({ getValue }) => (
-          <span className="text-xs text-gray-500">{(getValue() as string) || '-'}</span>
+          <span className="text-xs text-gray-500 dark:text-gray-400">{(getValue() as string) || '-'}</span>
         ),
         size: 80,
       },
@@ -370,8 +370,8 @@ export default function AdminLogsPage() {
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">System Logs</h1>
-          <p className="text-gray-600 text-sm">Monitor application activity and audit trail</p>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">System Logs</h1>
+          <p className="text-gray-600 dark:text-gray-400 text-sm">Monitor application activity and audit trail</p>
         </div>
         <button
           onClick={() => fetchLogs(pagination.page)}
@@ -384,13 +384,13 @@ export default function AdminLogsPage() {
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-2 mb-4 border-b">
+      <div className="flex gap-2 mb-4 border-b border-gray-200 dark:border-gray-700">
         <button
           onClick={() => setActiveTab('app')}
           className={`px-4 py-2 font-medium border-b-2 transition-colors ${
             activeTab === 'app'
-              ? 'border-blue-600 text-blue-600'
-              : 'border-transparent text-gray-600 hover:text-gray-900'
+              ? 'border-blue-600 text-blue-600 dark:border-blue-400 dark:text-blue-400'
+              : 'border-transparent text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200'
           }`}
         >
           App Logs
@@ -399,8 +399,8 @@ export default function AdminLogsPage() {
           onClick={() => setActiveTab('audit')}
           className={`px-4 py-2 font-medium border-b-2 transition-colors ${
             activeTab === 'audit'
-              ? 'border-blue-600 text-blue-600'
-              : 'border-transparent text-gray-600 hover:text-gray-900'
+              ? 'border-blue-600 text-blue-600 dark:border-blue-400 dark:text-blue-400'
+              : 'border-transparent text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200'
           }`}
         >
           Audit Logs
@@ -408,7 +408,7 @@ export default function AdminLogsPage() {
       </div>
 
       {/* Filters */}
-      <div className="bg-white rounded-lg shadow mb-4">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow mb-4">
         <div className="p-4 flex items-center gap-4">
           {/* Search */}
           <div className="relative flex-1 max-w-md">
@@ -418,7 +418,7 @@ export default function AdminLogsPage() {
               placeholder="Search logs..."
               value={filters.search}
               onChange={(e) => setFilters({ ...filters, search: e.target.value })}
-              className="w-full pl-9 pr-3 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full pl-9 pr-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
 
@@ -426,7 +426,9 @@ export default function AdminLogsPage() {
           <button
             onClick={() => setShowFilters(!showFilters)}
             className={`flex items-center gap-2 px-3 py-2 border rounded-lg text-sm ${
-              hasActiveFilters ? 'bg-blue-50 border-blue-300 text-blue-700' : 'hover:bg-gray-50'
+              hasActiveFilters
+                ? 'bg-blue-50 dark:bg-blue-900/30 border-blue-300 dark:border-blue-700 text-blue-700 dark:text-blue-300'
+                : 'border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
             }`}
           >
             <IconFilter className="h-4 w-4" />
@@ -441,7 +443,7 @@ export default function AdminLogsPage() {
           {hasActiveFilters && (
             <button
               onClick={clearFilters}
-              className="flex items-center gap-1 text-sm text-gray-600 hover:text-gray-900"
+              className="flex items-center gap-1 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200"
             >
               <IconX className="h-4 w-4" />
               Clear
@@ -451,15 +453,15 @@ export default function AdminLogsPage() {
 
         {/* Filter panel */}
         {showFilters && (
-          <div className="px-4 pb-4 pt-2 border-t grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="px-4 pb-4 pt-2 border-t border-gray-200 dark:border-gray-700 grid grid-cols-2 md:grid-cols-4 gap-4">
             {activeTab === 'app' && (
               <>
                 <div>
-                  <label className="block text-xs font-medium text-gray-700 mb-1">Level</label>
+                  <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Level</label>
                   <select
                     value={filters.level}
                     onChange={(e) => setFilters({ ...filters, level: e.target.value })}
-                    className="w-full px-3 py-2 text-sm border rounded-lg"
+                    className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                   >
                     <option value="">All</option>
                     <option value="ERROR">ERROR</option>
@@ -468,11 +470,11 @@ export default function AdminLogsPage() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-gray-700 mb-1">Source</label>
+                  <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Source</label>
                   <select
                     value={filters.source}
                     onChange={(e) => setFilters({ ...filters, source: e.target.value })}
-                    className="w-full px-3 py-2 text-sm border rounded-lg"
+                    className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                   >
                     <option value="">All</option>
                     <option value="server">Server</option>
@@ -483,11 +485,11 @@ export default function AdminLogsPage() {
             )}
             {activeTab === 'audit' && (
               <div>
-                <label className="block text-xs font-medium text-gray-700 mb-1">Action</label>
+                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Action</label>
                 <select
                   value={filters.action}
                   onChange={(e) => setFilters({ ...filters, action: e.target.value })}
-                  className="w-full px-3 py-2 text-sm border rounded-lg"
+                  className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                 >
                   <option value="">All</option>
                   <option value="CREATE">CREATE</option>
@@ -502,21 +504,21 @@ export default function AdminLogsPage() {
               </div>
             )}
             <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1">Start Date</label>
+              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Start Date</label>
               <input
                 type="date"
                 value={filters.startDate}
                 onChange={(e) => setFilters({ ...filters, startDate: e.target.value })}
-                className="w-full px-3 py-2 text-sm border rounded-lg"
+                className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
               />
             </div>
             <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1">End Date</label>
+              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">End Date</label>
               <input
                 type="date"
                 value={filters.endDate}
                 onChange={(e) => setFilters({ ...filters, endDate: e.target.value })}
-                className="w-full px-3 py-2 text-sm border rounded-lg"
+                className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
               />
             </div>
           </div>
@@ -525,22 +527,22 @@ export default function AdminLogsPage() {
 
       {/* Error */}
       {error && (
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-4">
+        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 px-4 py-3 rounded-lg mb-4">
           {error}
         </div>
       )}
 
       {/* Table */}
-      <div className="bg-white rounded-lg shadow overflow-hidden">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
-            <thead className="bg-gray-50 border-b">
+            <thead className="bg-gray-50 dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700">
               {currentTable.getHeaderGroups().map((headerGroup) => (
                 <tr key={headerGroup.id}>
                   {headerGroup.headers.map((header) => (
                     <th
                       key={header.id}
-                      className="px-4 py-3 text-left font-medium text-gray-600 cursor-pointer hover:bg-gray-100"
+                      className="px-4 py-3 text-left font-medium text-gray-600 dark:text-gray-300 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800"
                       onClick={header.column.getToggleSortingHandler()}
                       style={{ width: header.column.getSize() }}
                     >
@@ -559,23 +561,23 @@ export default function AdminLogsPage() {
                 </tr>
               ))}
             </thead>
-            <tbody>
+            <tbody className="text-gray-900 dark:text-gray-100">
               {loading ? (
                 <tr>
-                  <td colSpan={currentColumns.length} className="px-4 py-12 text-center text-gray-500">
+                  <td colSpan={currentColumns.length} className="px-4 py-12 text-center text-gray-500 dark:text-gray-400">
                     <IconRefresh className="h-6 w-6 animate-spin mx-auto mb-2" />
                     Loading logs...
                   </td>
                 </tr>
               ) : currentTable.getRowModel().rows.length === 0 ? (
                 <tr>
-                  <td colSpan={currentColumns.length} className="px-4 py-12 text-center text-gray-500">
+                  <td colSpan={currentColumns.length} className="px-4 py-12 text-center text-gray-500 dark:text-gray-400">
                     No logs found
                   </td>
                 </tr>
               ) : (
                 currentTable.getRowModel().rows.map((row) => (
-                  <tr key={row.id} className="border-b hover:bg-gray-50">
+                  <tr key={row.id} className="border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50">
                     {row.getVisibleCells().map((cell) => (
                       <td key={cell.id} className="px-4 py-3">
                         {flexRender(cell.column.columnDef.cell, cell.getContext())}
@@ -589,8 +591,8 @@ export default function AdminLogsPage() {
         </div>
 
         {/* Pagination */}
-        <div className="flex items-center justify-between px-4 py-3 border-t bg-gray-50">
-          <div className="text-sm text-gray-600">
+        <div className="flex items-center justify-between px-4 py-3 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
+          <div className="text-sm text-gray-600 dark:text-gray-400">
             Showing {((pagination.page - 1) * pagination.pageSize) + 1} to{' '}
             {Math.min(pagination.page * pagination.pageSize, pagination.total)} of{' '}
             {pagination.total} results
@@ -599,31 +601,31 @@ export default function AdminLogsPage() {
             <button
               onClick={() => fetchLogs(1)}
               disabled={pagination.page === 1 || loading}
-              className="p-2 rounded hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="p-2 rounded text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <IconChevronsLeft className="h-4 w-4" />
             </button>
             <button
               onClick={() => fetchLogs(pagination.page - 1)}
               disabled={pagination.page === 1 || loading}
-              className="p-2 rounded hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="p-2 rounded text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <IconChevronLeft className="h-4 w-4" />
             </button>
-            <span className="px-3 py-1 text-sm">
+            <span className="px-3 py-1 text-sm text-gray-700 dark:text-gray-300">
               Page {pagination.page} of {pagination.totalPages || 1}
             </span>
             <button
               onClick={() => fetchLogs(pagination.page + 1)}
               disabled={pagination.page >= pagination.totalPages || loading}
-              className="p-2 rounded hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="p-2 rounded text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <IconChevronRight className="h-4 w-4" />
             </button>
             <button
               onClick={() => fetchLogs(pagination.totalPages)}
               disabled={pagination.page >= pagination.totalPages || loading}
-              className="p-2 rounded hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="p-2 rounded text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <IconChevronsRight className="h-4 w-4" />
             </button>

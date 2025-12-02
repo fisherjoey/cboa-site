@@ -564,7 +564,8 @@ import type {
   PublicTrainingEvent,
   PublicResource,
   PublicPage,
-  Official
+  Official,
+  ExecutiveMember
 } from '@/types/publicContent'
 
 // Public News API
@@ -1190,5 +1191,59 @@ export const officialsAPI = {
       method: 'DELETE'
     })
     invalidateCache('officials')
+  }
+}
+
+// Executive Team API
+export const executiveTeamAPI = {
+  async getAll(options?: { forceRefresh?: boolean; includeInactive?: boolean }): Promise<ExecutiveMember[]> {
+    const cacheKey = 'executiveTeam'
+
+    if (!options?.forceRefresh && isBrowser()) {
+      const cached = getFromCache<ExecutiveMember[]>(cacheKey)
+      if (cached) return cached
+    }
+
+    const params = options?.includeInactive ? '?active=false' : ''
+    const data = await retryAsync(async () => {
+      const res = await apiFetch(`${API_BASE}/executive-team${params}`)
+      return res.json()
+    })
+
+    if (isBrowser()) {
+      saveToCache(cacheKey, data)
+    }
+
+    return data
+  },
+
+  async getActive(): Promise<ExecutiveMember[]> {
+    const all = await this.getAll()
+    return all.filter(item => item.active)
+  },
+
+  async create(item: Partial<ExecutiveMember>): Promise<ExecutiveMember> {
+    const res = await apiFetch(`${API_BASE}/executive-team`, {
+      method: 'POST',
+      body: JSON.stringify(item)
+    })
+    invalidateCache('executiveTeam')
+    return res.json()
+  },
+
+  async update(item: Partial<ExecutiveMember>): Promise<ExecutiveMember> {
+    const res = await apiFetch(`${API_BASE}/executive-team`, {
+      method: 'PUT',
+      body: JSON.stringify(item)
+    })
+    invalidateCache('executiveTeam')
+    return res.json()
+  },
+
+  async delete(id: string): Promise<void> {
+    await apiFetch(`${API_BASE}/executive-team?id=${id}`, {
+      method: 'DELETE'
+    })
+    invalidateCache('executiveTeam')
   }
 }

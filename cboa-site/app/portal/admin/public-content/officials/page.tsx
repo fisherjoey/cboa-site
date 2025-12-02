@@ -19,6 +19,18 @@ export default function PublicOfficialsAdmin() {
   const [selectedLevel, setSelectedLevel] = useState<number | 'all'>('all')
   const [isCreating, setIsCreating] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
+  const [editingOfficial, setEditingOfficial] = useState<{
+    name: string
+    email: string
+    phone: string
+    photo_url: string
+    level: number
+    years_experience: number
+    bio: string
+    certifications: string
+    active: boolean
+    priority: number
+  } | null>(null)
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set())
   const [newOfficial, setNewOfficial] = useState({
     name: '',
@@ -74,6 +86,27 @@ export default function PublicOfficialsAdmin() {
       newExpanded.add(id)
     }
     setExpandedItems(newExpanded)
+  }
+
+  const startEditing = (official: Official) => {
+    setEditingId(official.id)
+    setEditingOfficial({
+      name: official.name || '',
+      email: official.email || '',
+      phone: official.phone || '',
+      photo_url: official.photo_url || '',
+      level: official.level || 1,
+      years_experience: official.years_experience || 0,
+      bio: official.bio || '',
+      certifications: official.certifications?.join(', ') || '',
+      active: official.active ?? true,
+      priority: official.priority || 0
+    })
+  }
+
+  const cancelEditing = () => {
+    setEditingId(null)
+    setEditingOfficial(null)
   }
 
   const getLevelColor = (level: number) => {
@@ -134,33 +167,36 @@ export default function PublicOfficialsAdmin() {
     }
   }
 
-  const handleUpdate = async (id: string, updates: any) => {
+  const handleSaveEdit = async () => {
+    if (!editingId || !editingOfficial) return
+
+    if (!editingOfficial.name) {
+      error('Please fill in the required field: name')
+      return
+    }
+
     // Sanitize inputs
-    const sanitizedUpdates = { ...updates }
-    if (updates.name) {
-      sanitizedUpdates.name = sanitize.text(updates.name)
-    }
-    if (updates.email) {
-      sanitizedUpdates.email = sanitize.text(updates.email)
-    }
-    if (updates.phone) {
-      sanitizedUpdates.phone = sanitize.text(updates.phone)
-    }
-    if (updates.photo_url) {
-      sanitizedUpdates.photo_url = sanitize.text(updates.photo_url)
-    }
-    if (updates.bio) {
-      sanitizedUpdates.bio = sanitize.html(updates.bio)
-    }
-    if (updates.certifications && typeof updates.certifications === 'string') {
-      sanitizedUpdates.certifications = updates.certifications.split(',').map((c: string) => c.trim())
+    const sanitizedData = {
+      id: editingId,
+      name: sanitize.text(editingOfficial.name),
+      email: editingOfficial.email ? sanitize.text(editingOfficial.email) : undefined,
+      phone: editingOfficial.phone ? sanitize.text(editingOfficial.phone) : undefined,
+      photo_url: editingOfficial.photo_url ? sanitize.text(editingOfficial.photo_url) : undefined,
+      level: editingOfficial.level,
+      years_experience: editingOfficial.years_experience || 0,
+      bio: editingOfficial.bio ? sanitize.html(editingOfficial.bio) : undefined,
+      certifications: editingOfficial.certifications ? editingOfficial.certifications.split(',').map((c: string) => c.trim()) : [],
+      active: editingOfficial.active,
+      priority: editingOfficial.priority
     }
 
     try {
-      const updated = await officialsAPI.update({ id, ...sanitizedUpdates })
+      const updated = await officialsAPI.update(sanitizedData)
       setOfficials(prev => prev.map(item =>
-        item.id === id ? updated : item
+        item.id === editingId ? updated : item
       ))
+      setEditingId(null)
+      setEditingOfficial(null)
       success('Official updated successfully!')
     } catch (err) {
       const errorMessage = parseAPIError(err)
@@ -427,26 +463,26 @@ export default function PublicOfficialsAdmin() {
             const isExpanded = expandedItems.has(official.id)
             const isEditing = editingId === official.id
 
-            if (isEditing) {
+            if (isEditing && editingOfficial) {
               return (
                 <div key={official.id} className="bg-white rounded-lg shadow p-4 sm:p-6">
                   <h3 className="text-lg sm:text-xl font-semibold mb-4">Edit Official</h3>
                   <div className="space-y-4">
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Name *</label>
                         <input
                           type="text"
-                          value={official.name}
-                          onChange={(e) => handleUpdate(official.id, { name: e.target.value })}
+                          value={editingOfficial.name}
+                          onChange={(e) => setEditingOfficial({...editingOfficial, name: e.target.value})}
                           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                         />
                       </div>
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Level</label>
                         <select
-                          value={official.level}
-                          onChange={(e) => handleUpdate(official.id, { level: parseInt(e.target.value) })}
+                          value={editingOfficial.level}
+                          onChange={(e) => setEditingOfficial({...editingOfficial, level: parseInt(e.target.value)})}
                           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                         >
                           {levels.map(level => (
@@ -461,8 +497,8 @@ export default function PublicOfficialsAdmin() {
                         <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
                         <input
                           type="email"
-                          value={official.email || ''}
-                          onChange={(e) => handleUpdate(official.id, { email: e.target.value })}
+                          value={editingOfficial.email}
+                          onChange={(e) => setEditingOfficial({...editingOfficial, email: e.target.value})}
                           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                         />
                       </div>
@@ -470,8 +506,8 @@ export default function PublicOfficialsAdmin() {
                         <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
                         <input
                           type="tel"
-                          value={official.phone || ''}
-                          onChange={(e) => handleUpdate(official.id, { phone: e.target.value })}
+                          value={editingOfficial.phone}
+                          onChange={(e) => setEditingOfficial({...editingOfficial, phone: e.target.value})}
                           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                         />
                       </div>
@@ -482,8 +518,8 @@ export default function PublicOfficialsAdmin() {
                         <label className="block text-sm font-medium text-gray-700 mb-1">Photo URL</label>
                         <input
                           type="url"
-                          value={official.photo_url || ''}
-                          onChange={(e) => handleUpdate(official.id, { photo_url: e.target.value })}
+                          value={editingOfficial.photo_url}
+                          onChange={(e) => setEditingOfficial({...editingOfficial, photo_url: e.target.value})}
                           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                         />
                       </div>
@@ -491,8 +527,8 @@ export default function PublicOfficialsAdmin() {
                         <label className="block text-sm font-medium text-gray-700 mb-1">Years of Experience</label>
                         <input
                           type="number"
-                          value={official.years_experience || ''}
-                          onChange={(e) => handleUpdate(official.id, { years_experience: parseInt(e.target.value) || 0 })}
+                          value={editingOfficial.years_experience || ''}
+                          onChange={(e) => setEditingOfficial({...editingOfficial, years_experience: parseInt(e.target.value) || 0})}
                           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                         />
                       </div>
@@ -502,8 +538,8 @@ export default function PublicOfficialsAdmin() {
                       <label className="block text-sm font-medium text-gray-700 mb-1">Certifications (comma-separated)</label>
                       <input
                         type="text"
-                        value={official.certifications?.join(', ') || ''}
-                        onChange={(e) => handleUpdate(official.id, { certifications: e.target.value })}
+                        value={editingOfficial.certifications}
+                        onChange={(e) => setEditingOfficial({...editingOfficial, certifications: e.target.value})}
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                       />
                     </div>
@@ -511,8 +547,8 @@ export default function PublicOfficialsAdmin() {
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">Bio</label>
                       <TinyMCEEditor
-                        value={official.bio || ''}
-                        onChange={(value) => handleUpdate(official.id, { bio: value })}
+                        value={editingOfficial.bio}
+                        onChange={(value) => setEditingOfficial({...editingOfficial, bio: value || ''})}
                       />
                     </div>
 
@@ -521,8 +557,8 @@ export default function PublicOfficialsAdmin() {
                         <label className="block text-sm font-medium text-gray-700 mb-1">Priority</label>
                         <input
                           type="number"
-                          value={official.priority}
-                          onChange={(e) => handleUpdate(official.id, { priority: parseInt(e.target.value) })}
+                          value={editingOfficial.priority}
+                          onChange={(e) => setEditingOfficial({...editingOfficial, priority: parseInt(e.target.value) || 0})}
                           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                         />
                       </div>
@@ -531,8 +567,8 @@ export default function PublicOfficialsAdmin() {
                         <label className="flex items-center gap-2">
                           <input
                             type="checkbox"
-                            checked={official.active}
-                            onChange={(e) => handleUpdate(official.id, { active: e.target.checked })}
+                            checked={editingOfficial.active}
+                            onChange={(e) => setEditingOfficial({...editingOfficial, active: e.target.checked})}
                             className="rounded border-gray-300 text-orange-500 focus:ring-orange-500"
                           />
                           <span className="text-sm font-medium text-gray-700">Active</span>
@@ -542,14 +578,14 @@ export default function PublicOfficialsAdmin() {
 
                     <div className="flex flex-col sm:flex-row gap-2">
                       <button
-                        onClick={() => setEditingId(null)}
+                        onClick={handleSaveEdit}
                         className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 flex items-center justify-center gap-2"
                       >
                         <IconDeviceFloppy className="h-5 w-5" />
                         Save Changes
                       </button>
                       <button
-                        onClick={() => setEditingId(null)}
+                        onClick={cancelEditing}
                         className="bg-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-400 flex items-center justify-center gap-2"
                       >
                         <IconX className="h-5 w-5" />
@@ -627,7 +663,7 @@ export default function PublicOfficialsAdmin() {
                         {canEdit && (
                           <div className="flex gap-1 flex-shrink-0">
                             <button
-                              onClick={() => setEditingId(official.id)}
+                              onClick={() => startEditing(official)}
                               className="p-1.5 text-gray-600 hover:bg-gray-100 rounded transition-colors"
                               title="Edit"
                             >

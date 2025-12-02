@@ -102,9 +102,23 @@ export interface Official {
   updated_at: string
 }
 
+export interface ExecutiveMember {
+  id: string
+  name: string
+  position: string
+  email: string
+  image_url?: string
+  bio?: string
+  active: boolean
+  priority: number
+  created_at: string
+  updated_at: string
+}
+
 // Form input types (without auto-generated fields)
 export type PublicNewsItemInput = Omit<PublicNewsItem, 'id' | 'created_at' | 'updated_at'>
 export type PublicTrainingEventInput = Omit<PublicTrainingEvent, 'id' | 'created_at' | 'updated_at'>
 export type PublicResourceInput = Omit<PublicResource, 'id' | 'created_at' | 'updated_at'>
 export type PublicPageInput = Omit<PublicPage, 'id' | 'created_at' | 'updated_at'>
 export type OfficialInput = Omit<Official, 'id' | 'created_at' | 'updated_at'>
+export type ExecutiveMemberInput = Omit<ExecutiveMember, 'id' | 'created_at' | 'updated_at'>

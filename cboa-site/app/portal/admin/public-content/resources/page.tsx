@@ -19,6 +19,17 @@ export default function PublicResourcesAdmin() {
   const [selectedCategory, setSelectedCategory] = useState('all')
   const [isCreating, setIsCreating] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
+  const [editingResource, setEditingResource] = useState<{
+    title: string
+    slug: string
+    category: string
+    description: string
+    file_url: string
+    file_type: string
+    file_size: string
+    active: boolean
+    priority: number
+  } | null>(null)
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set())
   const [newResource, setNewResource] = useState({
     title: '',
@@ -88,6 +99,26 @@ export default function PublicResourcesAdmin() {
     setExpandedItems(newExpanded)
   }
 
+  const startEditing = (resource: PublicResource) => {
+    setEditingId(resource.id)
+    setEditingResource({
+      title: resource.title || '',
+      slug: resource.slug || '',
+      category: resource.category || 'Rules & Regulations',
+      description: resource.description || '',
+      file_url: resource.file_url || '',
+      file_type: resource.file_type || 'PDF',
+      file_size: resource.file_size || '',
+      active: resource.active ?? true,
+      priority: resource.priority || 0
+    })
+  }
+
+  const cancelEditing = () => {
+    setEditingId(null)
+    setEditingResource(null)
+  }
+
   const getCategoryColor = (category: string) => {
     const colors: Record<string, string> = {
       'Rules & Regulations': 'bg-blue-100 text-blue-800',
@@ -144,27 +175,35 @@ export default function PublicResourcesAdmin() {
     }
   }
 
-  const handleUpdate = async (id: string, updates: any) => {
+  const handleSaveEdit = async () => {
+    if (!editingId || !editingResource) return
+
+    if (!editingResource.title || !editingResource.file_url) {
+      error('Please fill in all required fields (title and file URL)')
+      return
+    }
+
     // Sanitize inputs
-    const sanitizedUpdates = { ...updates }
-    if (updates.title) {
-      sanitizedUpdates.title = sanitize.text(updates.title)
-    }
-    if (updates.description) {
-      sanitizedUpdates.description = sanitize.html(updates.description)
-    }
-    if (updates.file_url) {
-      sanitizedUpdates.file_url = sanitize.text(updates.file_url)
-    }
-    if (updates.file_size) {
-      sanitizedUpdates.file_size = sanitize.text(updates.file_size)
+    const sanitizedData = {
+      id: editingId,
+      title: sanitize.text(editingResource.title),
+      slug: editingResource.slug || generateSlug(editingResource.title),
+      category: editingResource.category,
+      description: sanitize.html(editingResource.description),
+      file_url: sanitize.text(editingResource.file_url),
+      file_type: editingResource.file_type,
+      file_size: editingResource.file_size ? sanitize.text(editingResource.file_size) : undefined,
+      active: editingResource.active,
+      priority: editingResource.priority
     }
 
     try {
-      const updated = await publicResourcesAPI.update({ id, ...sanitizedUpdates })
+      const updated = await publicResourcesAPI.update(sanitizedData)
       setResources(prev => prev.map(item =>
-        item.id === id ? updated : item
+        item.id === editingId ? updated : item
       ))
+      setEditingId(null)
+      setEditingResource(null)
       success('Resource updated successfully!')
     } catch (err) {
       const errorMessage = parseAPIError(err)
@@ -424,18 +463,18 @@ export default function PublicResourcesAdmin() {
             const isExpanded = expandedItems.has(resource.id)
             const isEditing = editingId === resource.id
 
-            if (isEditing) {
+            if (isEditing && editingResource) {
               return (
                 <div key={resource.id} className="bg-white rounded-lg shadow p-4 sm:p-6">
                   <h3 className="text-lg sm:text-xl font-semibold mb-4">Edit Resource</h3>
                   <div className="space-y-4">
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Title</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Title *</label>
                         <input
                           type="text"
-                          value={resource.title}
-                          onChange={(e) => handleUpdate(resource.id, { title: e.target.value })}
+                          value={editingResource.title}
+                          onChange={(e) => setEditingResource({...editingResource, title: e.target.value, slug: generateSlug(e.target.value)})}
                           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                         />
                       </div>
@@ -443,8 +482,8 @@ export default function PublicResourcesAdmin() {
                         <label className="block text-sm font-medium text-gray-700 mb-1">Slug</label>
                         <input
                           type="text"
-                          value={resource.slug}
-                          onChange={(e) => handleUpdate(resource.id, { slug: e.target.value })}
+                          value={editingResource.slug}
+                          onChange={(e) => setEditingResource({...editingResource, slug: e.target.value})}
                           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                         />
                       </div>
@@ -454,8 +493,8 @@ export default function PublicResourcesAdmin() {
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
                         <select
-                          value={resource.category}
-                          onChange={(e) => handleUpdate(resource.id, { category: e.target.value })}
+                          value={editingResource.category}
+                          onChange={(e) => setEditingResource({...editingResource, category: e.target.value})}
                           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                         >
                           {categories.map(cat => (
@@ -466,8 +505,8 @@ export default function PublicResourcesAdmin() {
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">File Type</label>
                         <select
-                          value={resource.file_type}
-                          onChange={(e) => handleUpdate(resource.id, { file_type: e.target.value })}
+                          value={editingResource.file_type}
+                          onChange={(e) => setEditingResource({...editingResource, file_type: e.target.value})}
                           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                         >
                           <option value="PDF">PDF</option>
@@ -481,11 +520,11 @@ export default function PublicResourcesAdmin() {
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">File URL</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">File URL *</label>
                       <input
                         type="url"
-                        value={resource.file_url}
-                        onChange={(e) => handleUpdate(resource.id, { file_url: e.target.value })}
+                        value={editingResource.file_url}
+                        onChange={(e) => setEditingResource({...editingResource, file_url: e.target.value})}
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                       />
                     </div>
@@ -494,8 +533,8 @@ export default function PublicResourcesAdmin() {
                       <label className="block text-sm font-medium text-gray-700 mb-1">File Size</label>
                       <input
                         type="text"
-                        value={resource.file_size || ''}
-                        onChange={(e) => handleUpdate(resource.id, { file_size: e.target.value })}
+                        value={editingResource.file_size}
+                        onChange={(e) => setEditingResource({...editingResource, file_size: e.target.value})}
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                       />
                     </div>
@@ -503,8 +542,8 @@ export default function PublicResourcesAdmin() {
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
                       <TinyMCEEditor
-                        value={resource.description || ''}
-                        onChange={(value) => handleUpdate(resource.id, { description: value })}
+                        value={editingResource.description}
+                        onChange={(value) => setEditingResource({...editingResource, description: value || ''})}
                       />
                     </div>
 
@@ -513,8 +552,8 @@ export default function PublicResourcesAdmin() {
                         <label className="block text-sm font-medium text-gray-700 mb-1">Priority</label>
                         <input
                           type="number"
-                          value={resource.priority}
-                          onChange={(e) => handleUpdate(resource.id, { priority: parseInt(e.target.value) })}
+                          value={editingResource.priority}
+                          onChange={(e) => setEditingResource({...editingResource, priority: parseInt(e.target.value) || 0})}
                           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                         />
                       </div>
@@ -523,8 +562,8 @@ export default function PublicResourcesAdmin() {
                         <label className="flex items-center gap-2">
                           <input
                             type="checkbox"
-                            checked={resource.active}
-                            onChange={(e) => handleUpdate(resource.id, { active: e.target.checked })}
+                            checked={editingResource.active}
+                            onChange={(e) => setEditingResource({...editingResource, active: e.target.checked})}
                             className="rounded border-gray-300 text-orange-500 focus:ring-orange-500"
                           />
                           <span className="text-sm font-medium text-gray-700">Active</span>
@@ -534,14 +573,14 @@ export default function PublicResourcesAdmin() {
 
                     <div className="flex flex-col sm:flex-row gap-2">
                       <button
-                        onClick={() => setEditingId(null)}
+                        onClick={handleSaveEdit}
                         className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 flex items-center justify-center gap-2"
                       >
                         <IconDeviceFloppy className="h-5 w-5" />
                         Save Changes
                       </button>
                       <button
-                        onClick={() => setEditingId(null)}
+                        onClick={cancelEditing}
                         className="bg-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-400 flex items-center justify-center gap-2"
                       >
                         <IconX className="h-5 w-5" />
@@ -619,7 +658,7 @@ export default function PublicResourcesAdmin() {
                     {canEdit && (
                       <div className="flex gap-1 flex-shrink-0">
                         <button
-                          onClick={() => setEditingId(resource.id)}
+                          onClick={() => startEditing(resource)}
                           className="p-1.5 text-gray-600 hover:bg-gray-100 rounded transition-colors"
                           title="Edit"
                         >
