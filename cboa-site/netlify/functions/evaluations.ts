@@ -1,11 +1,14 @@
 import { Handler } from '@netlify/functions'
 import { createClient } from '@supabase/supabase-js'
+import { Logger } from '../../lib/logger'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
 const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
 export const handler: Handler = async (event) => {
+  const logger = Logger.fromEvent('evaluations', event)
+
   const headers = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Headers': 'Content-Type, Authorization',
@@ -106,6 +109,9 @@ export const handler: Handler = async (event) => {
 
       case 'POST': {
         const body = JSON.parse(event.body || '{}')
+        logger.info('crud', 'create_evaluation', `Creating evaluation for member ${body.member_id}`, {
+          metadata: { member_id: body.member_id, evaluator_id: body.evaluator_id, title: body.title }
+        })
 
         // Validate required fields
         if (!body.member_id || !body.file_url || !body.file_name) {
@@ -137,6 +143,14 @@ export const handler: Handler = async (event) => {
 
         if (error) throw error
 
+        await logger.audit('CREATE', 'evaluation', data.id, {
+          actorId: body.evaluator_id || 'system',
+          actorEmail: 'system',
+          targetUserId: body.member_id,
+          newValues: { title: body.title, file_name: body.file_name },
+          description: `Created evaluation for member ${body.member_id}`
+        })
+
         return {
           statusCode: 201,
           headers,
@@ -156,6 +170,10 @@ export const handler: Handler = async (event) => {
           }
         }
 
+        logger.info('crud', 'update_evaluation', `Updating evaluation ${id}`, {
+          metadata: { id, updates: Object.keys(updateData) }
+        })
+
         const { data, error } = await supabase
           .from('evaluations')
           .update({ ...updateData, updated_at: new Date().toISOString() })
@@ -168,6 +186,13 @@ export const handler: Handler = async (event) => {
           .single()
 
         if (error) throw error
+
+        await logger.audit('UPDATE', 'evaluation', id, {
+          actorId: 'system',
+          actorEmail: 'system',
+          newValues: updateData,
+          description: `Updated evaluation ${id}`
+        })
 
         return {
           statusCode: 200,
@@ -187,12 +212,20 @@ export const handler: Handler = async (event) => {
           }
         }
 
+        logger.info('crud', 'delete_evaluation', `Deleting evaluation ${id}`, { metadata: { id } })
+
         const { error } = await supabase
           .from('evaluations')
           .delete()
           .eq('id', id)
 
         if (error) throw error
+
+        await logger.audit('DELETE', 'evaluation', id, {
+          actorId: 'system',
+          actorEmail: 'system',
+          description: `Deleted evaluation ${id}`
+        })
 
         return {
           statusCode: 204,
@@ -209,7 +242,7 @@ export const handler: Handler = async (event) => {
         }
     }
   } catch (error) {
-    console.error('Evaluations API Error:', error)
+    logger.error('crud', 'evaluations_api_error', 'Evaluations API error', error instanceof Error ? error : new Error(String(error)))
     return {
       statusCode: 500,
       headers,

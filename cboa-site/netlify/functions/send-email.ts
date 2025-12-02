@@ -1,5 +1,6 @@
 import { Handler, HandlerEvent, HandlerContext } from '@netlify/functions'
 import { generateCBOAEmailTemplate } from '../../lib/emailTemplate'
+import { Logger } from '../../lib/logger'
 
 interface EmailRequest {
   subject: string
@@ -217,6 +218,8 @@ export const handler: Handler = async (
   event: HandlerEvent,
   context: HandlerContext
 ) => {
+  const logger = Logger.fromEvent('send-email', event)
+
   // Only allow POST
   if (event.httpMethod !== 'POST') {
     return {
@@ -229,6 +232,10 @@ export const handler: Handler = async (
     // Parse request body
     const requestBody: EmailRequest = JSON.parse(event.body || '{}')
     const { subject, recipientGroups, customEmails, htmlContent, rankFilter } = requestBody
+
+    logger.info('email', 'send_email_start', `Sending bulk email: ${subject}`, {
+      metadata: { subject, recipientGroups, customEmailCount: customEmails?.length || 0, rankFilter }
+    })
 
     // Validation
     if (!subject || !subject.trim()) {
@@ -256,6 +263,7 @@ export const handler: Handler = async (
     if (!process.env.MICROSOFT_TENANT_ID ||
         !process.env.MICROSOFT_CLIENT_ID ||
         !process.env.MICROSOFT_CLIENT_SECRET) {
+      logger.error('email', 'send_email_config_error', 'Microsoft Graph credentials not configured')
       return {
         statusCode: 500,
         body: JSON.stringify({ error: 'Microsoft Graph credentials not configured' })
@@ -270,11 +278,18 @@ export const handler: Handler = async (
     )
 
     if (recipientEmails.length === 0) {
+      logger.warn('email', 'send_email_no_recipients', 'No valid recipients found', {
+        metadata: { recipientGroups, customEmailCount: customEmails?.length || 0 }
+      })
       return {
         statusCode: 400,
         body: JSON.stringify({ error: 'No valid recipients found' })
       }
     }
+
+    logger.info('email', 'send_email_recipients', `Found ${recipientEmails.length} recipients`, {
+      metadata: { recipientCount: recipientEmails.length, recipientGroups }
+    })
 
     // Get access token
     const accessToken = await getAccessToken()
@@ -289,6 +304,18 @@ export const handler: Handler = async (
     // Send email
     await sendEmail(accessToken, recipientEmails, subject, emailHtml)
 
+    // Audit log for bulk email
+    await logger.audit('EMAIL_SENT', 'email', null, {
+      actorId: 'system',
+      actorEmail: 'system',
+      newValues: { subject, recipientCount: recipientEmails.length, recipientGroups },
+      description: `Bulk email sent: "${subject}" to ${recipientEmails.length} recipients`
+    })
+
+    logger.info('email', 'send_email_success', `Email sent to ${recipientEmails.length} recipients`, {
+      metadata: { subject, recipientCount: recipientEmails.length }
+    })
+
     return {
       statusCode: 200,
       body: JSON.stringify({
@@ -299,7 +326,7 @@ export const handler: Handler = async (
     }
 
   } catch (error: any) {
-    console.error('Error sending email:', error)
+    logger.error('email', 'send_email_error', 'Error sending email', error instanceof Error ? error : new Error(String(error)))
     return {
       statusCode: 500,
       body: JSON.stringify({

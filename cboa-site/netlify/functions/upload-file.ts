@@ -1,12 +1,15 @@
 import { Handler } from '@netlify/functions'
 import { createClient } from '@supabase/supabase-js'
 import busboy from 'busboy'
+import { Logger } from '../../lib/logger'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
 const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
 export const handler: Handler = async (event) => {
+  const logger = Logger.fromEvent('upload-file', event)
+
   const headers = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Headers': 'Content-Type',
@@ -27,17 +30,17 @@ export const handler: Handler = async (event) => {
   }
 
   return new Promise((resolve) => {
-    const bb = busboy({ 
-      headers: { 
+    const bb = busboy({
+      headers: {
         'content-type': event.headers['content-type'] || ''
-      } 
+      }
     })
-    
+
     let fileName = ''
     let filePath = ''
     let fileBuffer: Buffer[] = []
     let fileSize = 0
-    
+
     let originalFileName = ''
     let detectedMimeType = ''
 
@@ -45,7 +48,9 @@ export const handler: Handler = async (event) => {
       const { filename, mimeType } = info
       originalFileName = filename
       detectedMimeType = mimeType
-      console.log(`Receiving file: ${filename}, type: ${mimeType}`)
+      logger.info('file', 'file_receiving', `Receiving file: ${filename}`, {
+        metadata: { filename, mimeType }
+      })
 
       // Generate safe filename with timestamp
       const timestamp = Date.now()
@@ -59,6 +64,9 @@ export const handler: Handler = async (event) => {
         // Limit file size to 10MB
         if (fileSize > 10 * 1024 * 1024) {
           file.destroy()
+          logger.warn('file', 'file_too_large', `File too large: ${originalFileName}`, {
+            metadata: { filename: originalFileName, size: fileSize }
+          })
           resolve({
             statusCode: 413,
             headers,
@@ -66,9 +74,11 @@ export const handler: Handler = async (event) => {
           })
         }
       })
-      
+
       file.on('end', () => {
-        console.log(`File received: ${fileName}, size: ${fileSize} bytes`)
+        logger.info('file', 'file_received', `File received: ${fileName}`, {
+          metadata: { filename: fileName, size: fileSize }
+        })
       })
     })
     
@@ -130,7 +140,9 @@ export const handler: Handler = async (event) => {
           })
 
         if (error) {
-          console.error('Supabase upload error:', error)
+          logger.error('file', 'upload_failed', `Upload failed: ${originalFileName}`, new Error(error.message), {
+            metadata: { filename: originalFileName, bucket }
+          })
           resolve({
             statusCode: 500,
             headers,
@@ -143,6 +155,18 @@ export const handler: Handler = async (event) => {
         const { data: { publicUrl } } = supabase.storage
           .from(bucket)
           .getPublicUrl(data.path)
+
+        // Audit log for file upload
+        await logger.audit('CREATE', 'file', data.path, {
+          actorId: 'system',
+          actorEmail: 'system',
+          newValues: { filename: fileName, bucket, size: fileSize, path: data.path },
+          description: `Uploaded file: ${fileName} to ${bucket}`
+        })
+
+        logger.info('file', 'upload_success', `File uploaded: ${fileName}`, {
+          metadata: { filename: fileName, bucket, size: fileSize, path: data.path }
+        })
 
         resolve({
           statusCode: 200,
@@ -158,7 +182,9 @@ export const handler: Handler = async (event) => {
           })
         })
       } catch (error) {
-        console.error('Error uploading file:', error)
+        logger.error('file', 'upload_error', 'Error uploading file', error instanceof Error ? error : new Error(String(error)), {
+          metadata: { filename: originalFileName }
+        })
         resolve({
           statusCode: 500,
           headers,
@@ -166,9 +192,9 @@ export const handler: Handler = async (event) => {
         })
       }
     })
-    
+
     bb.on('error', (error) => {
-      console.error('Busboy error:', error)
+      logger.error('file', 'busboy_error', 'File parsing error', error instanceof Error ? error : new Error(String(error)))
       resolve({
         statusCode: 500,
         headers,

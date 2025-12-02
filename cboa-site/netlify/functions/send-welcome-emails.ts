@@ -1,5 +1,6 @@
 import { Handler } from '@netlify/functions'
 import { createClient } from '@supabase/supabase-js'
+import { Logger } from '../../lib/logger'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
@@ -138,6 +139,8 @@ function generateInviteEmailHtml(inviteUrl: string, name?: string): string {
 }
 
 const handler: Handler = async (event) => {
+  const logger = Logger.fromEvent('send-welcome-emails', event)
+
   const headers = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Headers': 'Content-Type, Authorization',
@@ -156,6 +159,7 @@ const handler: Handler = async (event) => {
   // Verify migration secret
   const authHeader = event.headers.authorization
   if (!authHeader || authHeader !== `Bearer ${migrationSecret}`) {
+    logger.warn('auth', 'unauthorized_request', 'Unauthorized welcome email request')
     return { statusCode: 401, headers, body: JSON.stringify({ error: 'Unauthorized' }) }
   }
 
@@ -166,6 +170,10 @@ const handler: Handler = async (event) => {
   try {
     const body = JSON.parse(event.body || '{}')
     const { users, dryRun = false } = body as { users: UserToEmail[], dryRun?: boolean }
+
+    logger.info('email', 'welcome_emails_start', `Starting welcome email batch (dryRun: ${dryRun})`, {
+      metadata: { userCount: users?.length || 0, dryRun }
+    })
 
     if (!users || !Array.isArray(users)) {
       return { statusCode: 400, headers, body: JSON.stringify({ error: 'users array is required' }) }
@@ -255,6 +263,21 @@ const handler: Handler = async (event) => {
     const skipped = results.filter(r => r.status === 'skipped').length
     const dryRunCount = results.filter(r => r.status === 'dry_run').length
 
+    // Log summary
+    logger.info('email', 'welcome_emails_complete', `Welcome emails batch complete`, {
+      metadata: { total: users.length, sent, errors, skipped, dryRun: dryRunCount }
+    })
+
+    // Audit log if emails were actually sent
+    if (sent > 0) {
+      await logger.audit('EMAIL_SENT', 'email', null, {
+        actorId: 'system',
+        actorEmail: 'system',
+        newValues: { type: 'welcome_emails', sent, errors, skipped },
+        description: `Sent ${sent} welcome emails`
+      })
+    }
+
     return {
       statusCode: 200,
       headers,
@@ -266,7 +289,7 @@ const handler: Handler = async (event) => {
     }
 
   } catch (error: any) {
-    console.error('Error sending emails:', error)
+    logger.error('email', 'welcome_emails_error', 'Error sending welcome emails', error instanceof Error ? error : new Error(String(error)))
     return { statusCode: 500, headers, body: JSON.stringify({ error: error.message }) }
   }
 }

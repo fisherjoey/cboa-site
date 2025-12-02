@@ -1,5 +1,6 @@
 import { Handler } from '@netlify/functions'
 import { createClient } from '@supabase/supabase-js'
+import { Logger } from '../../lib/logger'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
@@ -125,6 +126,8 @@ function generatePasswordResetEmailHtml(resetUrl: string, email: string): string
 }
 
 export const handler: Handler = async (event) => {
+  const logger = Logger.fromEvent('auth-password-reset', event)
+
   const headers = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Headers': 'Content-Type',
@@ -145,6 +148,9 @@ export const handler: Handler = async (event) => {
 
   try {
     const { email } = JSON.parse(event.body || '{}')
+    logger.info('auth', 'password_reset_request', `Password reset requested for ${email}`, {
+      metadata: { email }
+    })
 
     if (!email) {
       return {
@@ -169,6 +175,9 @@ export const handler: Handler = async (event) => {
 
     if (!user) {
       // Don't reveal if user exists or not - return success anyway
+      logger.info('auth', 'password_reset_no_user', `Password reset request for non-existent user`, {
+        metadata: { email }
+      })
       return {
         statusCode: 200,
         headers,
@@ -186,7 +195,7 @@ export const handler: Handler = async (event) => {
     })
 
     if (linkError) {
-      console.error('Failed to generate reset link:', linkError)
+      logger.error('auth', 'password_reset_link_failed', `Failed to generate reset link for ${email}`, new Error(linkError.message))
       return {
         statusCode: 200,
         headers,
@@ -206,6 +215,18 @@ export const handler: Handler = async (event) => {
       emailHtml
     )
 
+    // Audit log
+    await logger.audit('PASSWORD_RESET', 'auth_user', user.id, {
+      actorId: user.id,
+      actorEmail: email,
+      targetUserEmail: email,
+      description: `Password reset email sent to ${email}`
+    })
+
+    logger.info('auth', 'password_reset_success', `Password reset email sent to ${email}`, {
+      metadata: { email, userId: user.id }
+    })
+
     return {
       statusCode: 200,
       headers,
@@ -213,7 +234,7 @@ export const handler: Handler = async (event) => {
     }
 
   } catch (error) {
-    console.error('Password reset error:', error)
+    logger.error('auth', 'password_reset_error', 'Password reset error', error instanceof Error ? error : new Error(String(error)))
     return {
       statusCode: 500,
       headers,

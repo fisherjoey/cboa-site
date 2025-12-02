@@ -1,5 +1,6 @@
 import { Handler } from '@netlify/functions'
 import { createClient } from '@supabase/supabase-js'
+import { Logger } from '../../lib/logger'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
@@ -12,6 +13,8 @@ const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
 })
 
 export const handler: Handler = async (event) => {
+  const logger = Logger.fromEvent('set-migrated-user-password', event)
+
   const headers = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Headers': 'Content-Type',
@@ -29,6 +32,9 @@ export const handler: Handler = async (event) => {
 
   try {
     const { email, password } = JSON.parse(event.body || '{}')
+    logger.info('auth', 'set_migrated_password_start', `Setting password for migrated user`, {
+      metadata: { email }
+    })
 
     if (!email || !password) {
       return {
@@ -80,6 +86,9 @@ export const handler: Handler = async (event) => {
     const needsPasswordChange = user.user_metadata?.needs_password_change === true
 
     if (!isMigrated || !needsPasswordChange) {
+      logger.warn('auth', 'set_migrated_password_not_needed', `User ${email} does not need password setup`, {
+        metadata: { email, isMigrated, needsPasswordChange }
+      })
       return {
         statusCode: 403,
         headers,
@@ -97,12 +106,25 @@ export const handler: Handler = async (event) => {
     })
 
     if (updateError) {
+      logger.error('auth', 'set_migrated_password_failed', `Failed to set password for ${email}`, new Error(updateError.message))
       return {
         statusCode: 400,
         headers,
         body: JSON.stringify({ error: updateError.message })
       }
     }
+
+    // Audit log
+    await logger.audit('PASSWORD_RESET', 'auth_user', user.id, {
+      actorId: user.id,
+      actorEmail: email,
+      targetUserEmail: email,
+      description: `Migrated user ${email} set their password`
+    })
+
+    logger.info('auth', 'set_migrated_password_success', `Password set for migrated user ${email}`, {
+      metadata: { email, userId: user.id }
+    })
 
     return {
       statusCode: 200,
@@ -113,7 +135,7 @@ export const handler: Handler = async (event) => {
       })
     }
   } catch (error: any) {
-    console.error('Set password error:', error)
+    logger.error('auth', 'set_migrated_password_error', 'Set password error', error instanceof Error ? error : new Error(String(error)))
     return {
       statusCode: 500,
       headers,

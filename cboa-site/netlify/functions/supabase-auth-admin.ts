@@ -1,5 +1,6 @@
 import { Handler } from '@netlify/functions'
 import { createClient } from '@supabase/supabase-js'
+import { Logger } from '../../lib/logger'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
@@ -215,6 +216,8 @@ function generatePasswordResetEmailHtml(resetUrl: string, email: string): string
 // ============================================================================
 
 export const handler: Handler = async (event) => {
+  const logger = Logger.fromEvent('supabase-auth-admin', event)
+
   const headers = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Headers': 'Content-Type, Authorization',
@@ -229,6 +232,7 @@ export const handler: Handler = async (event) => {
   // Verify authorization - require a valid JWT token
   const authHeader = event.headers.authorization || event.headers.Authorization
   if (!authHeader?.startsWith('Bearer ')) {
+    logger.warn('auth', 'unauthorized_request', 'Request without token')
     return {
       statusCode: 401,
       headers,
@@ -243,6 +247,7 @@ export const handler: Handler = async (event) => {
     const { data: { user: callerUser }, error: authError } = await supabaseAdmin.auth.getUser(token)
 
     if (authError || !callerUser) {
+      logger.warn('auth', 'invalid_token', 'Invalid or expired token')
       return {
         statusCode: 401,
         headers,
@@ -253,12 +258,22 @@ export const handler: Handler = async (event) => {
     // Check if caller has admin role
     const callerRole = callerUser.app_metadata?.role || callerUser.user_metadata?.role
     if (callerRole !== 'admin' && callerRole !== 'Admin') {
+      logger.warn('auth', 'forbidden_access', 'Non-admin attempted admin operation', {
+        userEmail: callerUser.email,
+        metadata: { role: callerRole }
+      })
       return {
         statusCode: 403,
         headers,
         body: JSON.stringify({ error: 'Forbidden - Admin access required' })
       }
     }
+
+    // Set caller context for subsequent logs
+    logger.info('auth', 'admin_request', `Admin request: ${event.httpMethod}`, {
+      userEmail: callerUser.email,
+      userId: callerUser.id
+    })
 
     switch (event.httpMethod) {
       case 'GET': {
@@ -353,6 +368,11 @@ export const handler: Handler = async (event) => {
 
         // Resend invite - delete existing user and re-invite
         if (postAction === 'resend') {
+          logger.info('auth', 'resend_invite_start', `Resending invite to ${email}`, {
+            userEmail: callerUser.email,
+            metadata: { targetEmail: email, name }
+          })
+
           // Find and delete existing user
           const { data: { users } } = await supabaseAdmin.auth.admin.listUsers()
           const existingUser = users.find(u => u.email?.toLowerCase() === email.toLowerCase())
@@ -376,6 +396,7 @@ export const handler: Handler = async (event) => {
           })
 
           if (linkError) {
+            logger.error('auth', 'resend_invite_failed', `Failed to generate invite link for ${email}`, new Error(linkError.message))
             return {
               statusCode: 400,
               headers,
@@ -395,6 +416,21 @@ export const handler: Handler = async (event) => {
             emailHtml
           )
 
+          // Audit log
+          await logger.audit('INVITE', 'auth_user', linkData.user?.id || null, {
+            actorId: callerUser.id,
+            actorEmail: callerUser.email!,
+            actorRole: callerRole,
+            targetUserEmail: email,
+            newValues: { email, name, role: role || 'official' },
+            description: `Resent invite to ${email}`
+          })
+
+          logger.info('auth', 'resend_invite_success', `Invite resent to ${email}`, {
+            userEmail: callerUser.email,
+            metadata: { targetEmail: email }
+          })
+
           return {
             statusCode: 200,
             headers,
@@ -407,11 +443,20 @@ export const handler: Handler = async (event) => {
         }
 
         // Send new invite
+        logger.info('auth', 'invite_user_start', `Inviting new user ${email}`, {
+          userEmail: callerUser.email,
+          metadata: { targetEmail: email, name, role: role || 'official' }
+        })
+
         // First check if user already exists
         const { data: { users: existingUsers } } = await supabaseAdmin.auth.admin.listUsers()
         const existingUser = existingUsers.find(u => u.email?.toLowerCase() === email.toLowerCase())
 
         if (existingUser) {
+          logger.warn('auth', 'invite_user_exists', `User already exists: ${email}`, {
+            userEmail: callerUser.email,
+            metadata: { targetEmail: email }
+          })
           return {
             statusCode: 400,
             headers,
@@ -434,6 +479,7 @@ export const handler: Handler = async (event) => {
         })
 
         if (linkError) {
+          logger.error('auth', 'invite_user_failed', `Failed to generate invite for ${email}`, new Error(linkError.message))
           return {
             statusCode: 400,
             headers,
@@ -453,6 +499,21 @@ export const handler: Handler = async (event) => {
           emailHtml
         )
 
+        // Audit log
+        await logger.audit('INVITE', 'auth_user', linkData.user?.id || null, {
+          actorId: callerUser.id,
+          actorEmail: callerUser.email!,
+          actorRole: callerRole,
+          targetUserEmail: email,
+          newValues: { email, name, role: role || 'official' },
+          description: `Invited new user ${email}`
+        })
+
+        logger.info('auth', 'invite_user_success', `Invite sent to ${email}`, {
+          userEmail: callerUser.email,
+          metadata: { targetEmail: email, userId: linkData.user?.id }
+        })
+
         return {
           statusCode: 200,
           headers,
@@ -470,8 +531,14 @@ export const handler: Handler = async (event) => {
 
         // Handle password reset request
         if (putAction === 'reset_password' && email) {
+          logger.info('auth', 'password_reset_start', `Initiating password reset for ${email}`, {
+            userEmail: callerUser.email,
+            metadata: { targetEmail: email }
+          })
+
           // Check Microsoft Graph credentials
           if (!process.env.MICROSOFT_TENANT_ID || !process.env.MICROSOFT_CLIENT_ID || !process.env.MICROSOFT_CLIENT_SECRET) {
+            logger.error('auth', 'password_reset_config_error', 'Microsoft Graph credentials not configured')
             return {
               statusCode: 500,
               headers,
@@ -489,6 +556,7 @@ export const handler: Handler = async (event) => {
           })
 
           if (linkError) {
+            logger.error('auth', 'password_reset_failed', `Failed to generate reset link for ${email}`, new Error(linkError.message))
             return {
               statusCode: 400,
               headers,
@@ -507,6 +575,20 @@ export const handler: Handler = async (event) => {
             'Reset Your CBOA Portal Password',
             emailHtml
           )
+
+          // Audit log
+          await logger.audit('PASSWORD_RESET', 'auth_user', linkData.user?.id || null, {
+            actorId: callerUser.id,
+            actorEmail: callerUser.email!,
+            actorRole: callerRole,
+            targetUserEmail: email,
+            description: `Password reset email sent to ${email}`
+          })
+
+          logger.info('auth', 'password_reset_success', `Password reset email sent to ${email}`, {
+            userEmail: callerUser.email,
+            metadata: { targetEmail: email }
+          })
 
           return {
             statusCode: 200,
@@ -527,6 +609,11 @@ export const handler: Handler = async (event) => {
           }
         }
 
+        logger.info('auth', 'update_user_start', `Updating user ${userId}`, {
+          userEmail: callerUser.email,
+          metadata: { targetUserId: userId, role, name }
+        })
+
         const updates: any = {}
 
         if (role) {
@@ -540,12 +627,44 @@ export const handler: Handler = async (event) => {
         const { data, error } = await supabaseAdmin.auth.admin.updateUserById(userId, updates)
 
         if (error) {
+          logger.error('auth', 'update_user_failed', `Failed to update user ${userId}`, new Error(error.message))
           return {
             statusCode: 400,
             headers,
             body: JSON.stringify({ success: false, error: error.message })
           }
         }
+
+        // Audit log for role change
+        if (role) {
+          await logger.audit('ROLE_CHANGE', 'auth_user', userId, {
+            actorId: callerUser.id,
+            actorEmail: callerUser.email!,
+            actorRole: callerRole,
+            targetUserId: userId,
+            targetUserEmail: data.user?.email,
+            newValues: { role },
+            description: `Changed role to ${role} for user ${data.user?.email || userId}`
+          })
+        }
+
+        // Audit log for name update
+        if (name) {
+          await logger.audit('UPDATE', 'auth_user', userId, {
+            actorId: callerUser.id,
+            actorEmail: callerUser.email!,
+            actorRole: callerRole,
+            targetUserId: userId,
+            targetUserEmail: data.user?.email,
+            newValues: { name },
+            description: `Updated name to ${name} for user ${data.user?.email || userId}`
+          })
+        }
+
+        logger.info('auth', 'update_user_success', `User ${userId} updated`, {
+          userEmail: callerUser.email,
+          metadata: { targetUserId: userId, targetEmail: data.user?.email }
+        })
 
         return {
           statusCode: 200,
@@ -569,11 +688,20 @@ export const handler: Handler = async (event) => {
           }
         }
 
+        logger.info('auth', 'delete_user_start', `Deleting user ${email}`, {
+          userEmail: callerUser.email,
+          metadata: { targetEmail: email }
+        })
+
         // Find user by email
         const { data: { users } } = await supabaseAdmin.auth.admin.listUsers()
         const user = users.find(u => u.email?.toLowerCase() === email.toLowerCase())
 
         if (!user) {
+          logger.warn('auth', 'delete_user_not_found', `User not found: ${email}`, {
+            userEmail: callerUser.email,
+            metadata: { targetEmail: email }
+          })
           return {
             statusCode: 404,
             headers,
@@ -584,12 +712,29 @@ export const handler: Handler = async (event) => {
         const { error } = await supabaseAdmin.auth.admin.deleteUser(user.id)
 
         if (error) {
+          logger.error('auth', 'delete_user_failed', `Failed to delete user ${email}`, new Error(error.message))
           return {
             statusCode: 400,
             headers,
             body: JSON.stringify({ success: false, error: error.message })
           }
         }
+
+        // Audit log
+        await logger.audit('DELETE', 'auth_user', user.id, {
+          actorId: callerUser.id,
+          actorEmail: callerUser.email!,
+          actorRole: callerRole,
+          targetUserId: user.id,
+          targetUserEmail: email,
+          oldValues: { email, name: user.user_metadata?.name, role: user.app_metadata?.role },
+          description: `Deleted user ${email}`
+        })
+
+        logger.info('auth', 'delete_user_success', `User ${email} deleted`, {
+          userEmail: callerUser.email,
+          metadata: { targetEmail: email, targetUserId: user.id }
+        })
 
         return {
           statusCode: 200,
@@ -609,7 +754,7 @@ export const handler: Handler = async (event) => {
         }
     }
   } catch (error) {
-    console.error('Supabase Auth Admin API error:', error)
+    logger.error('auth', 'api_error', 'Supabase Auth Admin API error', error instanceof Error ? error : new Error(String(error)))
     return {
       statusCode: 500,
       headers,

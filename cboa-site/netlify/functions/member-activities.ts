@@ -1,11 +1,14 @@
 import { Handler } from '@netlify/functions'
 import { createClient } from '@supabase/supabase-js'
+import { Logger } from '../../lib/logger'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
 const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
 export const handler: Handler = async (event) => {
+  const logger = Logger.fromEvent('member-activities', event)
+
   const headers = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Headers': 'Content-Type',
@@ -45,6 +48,10 @@ export const handler: Handler = async (event) => {
 
       case 'POST': {
         const body = JSON.parse(event.body || '{}')
+        logger.info('crud', 'create_member_activity', `Creating member activity for member ${body.member_id}`, {
+          metadata: { member_id: body.member_id, activity_type: body.activity_type }
+        })
+
         const { data, error } = await supabase
           .from('member_activities')
           .insert([body])
@@ -52,6 +59,14 @@ export const handler: Handler = async (event) => {
           .single()
 
         if (error) throw error
+
+        await logger.audit('CREATE', 'member_activity', data.id, {
+          actorId: 'system',
+          actorEmail: 'system',
+          targetUserId: body.member_id,
+          newValues: { activity_type: body.activity_type, activity_date: body.activity_date },
+          description: `Created activity for member ${body.member_id}`
+        })
 
         return {
           statusCode: 201,
@@ -72,6 +87,10 @@ export const handler: Handler = async (event) => {
           }
         }
 
+        logger.info('crud', 'update_member_activity', `Updating member activity ${id}`, {
+          metadata: { id, updates: Object.keys(updates) }
+        })
+
         const { data, error } = await supabase
           .from('member_activities')
           .update(updates)
@@ -80,6 +99,13 @@ export const handler: Handler = async (event) => {
           .single()
 
         if (error) throw error
+
+        await logger.audit('UPDATE', 'member_activity', id, {
+          actorId: 'system',
+          actorEmail: 'system',
+          newValues: updates,
+          description: `Updated member activity ${id}`
+        })
 
         return {
           statusCode: 200,
@@ -99,12 +125,20 @@ export const handler: Handler = async (event) => {
           }
         }
 
+        logger.info('crud', 'delete_member_activity', `Deleting member activity ${id}`, { metadata: { id } })
+
         const { error } = await supabase
           .from('member_activities')
           .delete()
           .eq('id', id)
 
         if (error) throw error
+
+        await logger.audit('DELETE', 'member_activity', id, {
+          actorId: 'system',
+          actorEmail: 'system',
+          description: `Deleted member activity ${id}`
+        })
 
         return {
           statusCode: 204,
@@ -121,7 +155,7 @@ export const handler: Handler = async (event) => {
         }
     }
   } catch (error) {
-    console.error('Member Activities API error:', error)
+    logger.error('crud', 'member_activities_api_error', 'Member activities API error', error instanceof Error ? error : new Error(String(error)))
     return {
       statusCode: 500,
       headers,

@@ -17,7 +17,8 @@ import {
   IconCalendarEvent,
   IconFileDescription,
   IconUserCheck,
-  IconLayoutDashboard
+  IconLayoutDashboard,
+  IconReportAnalytics
 } from '@tabler/icons-react'
 
 export default function PortalAdmin() {
@@ -96,6 +97,14 @@ export default function PortalAdmin() {
         { label: 'Resources', href: '/portal/admin/public-content/resources', icon: IconFileDescription },
         { label: 'Officials Profiles', href: '/portal/admin/public-content/officials', icon: IconUserCheck },
         { label: 'Page Content (Home/About)', href: '/portal/admin/public-content/pages', icon: IconLayoutDashboard },
+      ]
+    },
+    {
+      title: 'System Logs',
+      description: 'Monitor application activity and audit trail',
+      icon: IconReportAnalytics,
+      links: [
+        { label: 'View All Logs', href: '/portal/admin/logs' },
       ]
     },
   ]

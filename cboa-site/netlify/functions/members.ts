@@ -1,11 +1,14 @@
 import { Handler } from '@netlify/functions'
 import { createClient } from '@supabase/supabase-js'
+import { Logger } from '../../lib/logger'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
 const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
 export const handler: Handler = async (event) => {
+  const logger = Logger.fromEvent('members', event)
+
   const headers = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Headers': 'Content-Type',
@@ -111,6 +114,10 @@ export const handler: Handler = async (event) => {
       case 'POST': {
         const body = JSON.parse(event.body || '{}')
 
+        logger.info('crud', 'create_member_start', `Creating member: ${body.email || body.name || 'unknown'}`, {
+          metadata: { email: body.email, name: body.name, user_id: body.user_id }
+        })
+
         // Check if member with this user_id already exists (Supabase Auth)
         if (body.user_id) {
           const { data: existing } = await supabase
@@ -120,6 +127,9 @@ export const handler: Handler = async (event) => {
             .single()
 
           if (existing) {
+            logger.warn('crud', 'create_member_exists', `Member already exists with user_id: ${body.user_id}`, {
+              metadata: { user_id: body.user_id }
+            })
             return {
               statusCode: 409,
               headers,
@@ -137,6 +147,9 @@ export const handler: Handler = async (event) => {
             .single()
 
           if (existing) {
+            logger.warn('crud', 'create_member_exists', `Member already exists with netlify_user_id: ${body.netlify_user_id}`, {
+              metadata: { netlify_user_id: body.netlify_user_id }
+            })
             return {
               statusCode: 409,
               headers,
@@ -152,6 +165,18 @@ export const handler: Handler = async (event) => {
           .single()
 
         if (error) throw error
+
+        // Audit log
+        await logger.audit('CREATE', 'member', data.id, {
+          actorId: body.user_id || 'system',
+          actorEmail: body.email || 'system',
+          newValues: { email: body.email, name: body.name, role: body.role },
+          description: `Created member ${body.email || body.name}`
+        })
+
+        logger.info('crud', 'create_member_success', `Member created: ${data.email || data.name}`, {
+          metadata: { memberId: data.id, email: data.email }
+        })
 
         return {
           statusCode: 201,
@@ -172,6 +197,17 @@ export const handler: Handler = async (event) => {
           }
         }
 
+        logger.info('crud', 'update_member_start', `Updating member ${id}`, {
+          metadata: { memberId: id, updates: Object.keys(updates) }
+        })
+
+        // Get old values for audit
+        const { data: oldData } = await supabase
+          .from('members')
+          .select('*')
+          .eq('id', id)
+          .single()
+
         const { data, error } = await supabase
           .from('members')
           .update(updates)
@@ -180,6 +216,19 @@ export const handler: Handler = async (event) => {
           .single()
 
         if (error) throw error
+
+        // Audit log
+        await logger.audit('UPDATE', 'member', id, {
+          actorId: data.user_id || 'system',
+          actorEmail: data.email || 'system',
+          oldValues: oldData || undefined,
+          newValues: updates,
+          description: `Updated member ${data.email || data.name || id}`
+        })
+
+        logger.info('crud', 'update_member_success', `Member ${id} updated`, {
+          metadata: { memberId: id, email: data.email }
+        })
 
         return {
           statusCode: 200,
@@ -199,12 +248,35 @@ export const handler: Handler = async (event) => {
           }
         }
 
+        logger.info('crud', 'delete_member_start', `Deleting member ${id}`, {
+          metadata: { memberId: id }
+        })
+
+        // Get member info for audit before deletion
+        const { data: memberData } = await supabase
+          .from('members')
+          .select('*')
+          .eq('id', id)
+          .single()
+
         const { error } = await supabase
           .from('members')
           .delete()
           .eq('id', id)
 
         if (error) throw error
+
+        // Audit log
+        await logger.audit('DELETE', 'member', id, {
+          actorId: 'system',
+          actorEmail: 'system',
+          oldValues: memberData || undefined,
+          description: `Deleted member ${memberData?.email || memberData?.name || id}`
+        })
+
+        logger.info('crud', 'delete_member_success', `Member ${id} deleted`, {
+          metadata: { memberId: id, email: memberData?.email }
+        })
 
         return {
           statusCode: 204,
@@ -221,7 +293,7 @@ export const handler: Handler = async (event) => {
         }
     }
   } catch (error) {
-    console.error('Members API error:', error)
+    logger.error('crud', 'members_api_error', 'Members API error', error instanceof Error ? error : new Error(String(error)))
     return {
       statusCode: 500,
       headers,

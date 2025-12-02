@@ -3,6 +3,7 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react'
 import { createBrowserClient } from '@supabase/ssr'
 import { membersAPI } from '@/lib/api'
+import { clientLogger } from '@/lib/clientLogger'
 import type { User as SupabaseUser, Session } from '@supabase/supabase-js'
 
 type UserRole = 'official' | 'executive' | 'admin' | 'evaluator' | 'mentor'
@@ -163,11 +164,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (session?.user) {
           setSupabaseUser(session.user)
           setUser(mapSupabaseUser(session.user))
+          // Set user context for logging
+          clientLogger.setUser(session.user.id, session.user.email!)
           // Sync existing user to members table
           syncUserToMembers(session.user)
         }
       } catch (error) {
         console.error('Error initializing auth:', error)
+        clientLogger.error('auth', 'init_error', 'Error initializing auth', error instanceof Error ? error : undefined)
       } finally {
         setIsLoading(false)
       }
@@ -183,6 +187,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (event === 'SIGNED_IN' && session?.user) {
           setSupabaseUser(session.user)
           setUser(mapSupabaseUser(session.user))
+          // Set user context for logging
+          clientLogger.setUser(session.user.id, session.user.email!)
+          clientLogger.info('auth', 'signed_in', `User signed in: ${session.user.email}`)
           // Sync user to members table on login
           syncUserToMembers(session.user)
 
@@ -193,6 +200,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             window.location.href = redirectPath
           }
         } else if (event === 'SIGNED_OUT') {
+          clientLogger.info('auth', 'signed_out', 'User signed out')
+          clientLogger.clearUser()
           setSupabaseUser(null)
           setUser(null)
         } else if (event === 'TOKEN_REFRESHED' && session?.user) {
@@ -223,11 +232,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       })
 
       if (error) {
+        clientLogger.warn('auth', 'login_failed', `Login failed: ${error.message}`, { email })
         return { error: error.message }
       }
 
       return {}
     } catch (error: any) {
+      clientLogger.error('auth', 'login_error', 'Login error', error instanceof Error ? error : undefined, { email })
       return { error: error.message || 'An unexpected error occurred' }
     }
   }
@@ -264,11 +275,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       })
 
       if (error) {
+        clientLogger.warn('auth', 'signup_failed', `Signup failed: ${error.message}`, { email })
         return { error: error.message }
       }
 
+      clientLogger.info('auth', 'signup_success', `User signed up: ${email}`)
       return {}
     } catch (error: any) {
+      clientLogger.error('auth', 'signup_error', 'Signup error', error instanceof Error ? error : undefined, { email })
       return { error: error.message || 'An unexpected error occurred' }
     }
   }
@@ -285,11 +299,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const data = await response.json()
 
       if (!response.ok) {
+        clientLogger.warn('auth', 'reset_password_failed', `Password reset failed: ${data.error}`, { email })
         return { error: data.error || 'Failed to send reset email' }
       }
 
+      clientLogger.info('auth', 'reset_password_requested', `Password reset requested for: ${email}`)
       return {}
     } catch (error: any) {
+      clientLogger.error('auth', 'reset_password_error', 'Password reset error', error instanceof Error ? error : undefined, { email })
       return { error: error.message || 'An unexpected error occurred' }
     }
   }
