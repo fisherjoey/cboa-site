@@ -82,9 +82,9 @@ export default function PortalDashboard() {
       badge: 'EXEC'
     },
     {
-      href: '/portal/reports',
-      title: 'Reports & Analytics',
-      description: 'View performance metrics, attendance, and statistical reports',
+      href: '/portal/evaluations',
+      title: 'Evaluations',
+      description: 'View and manage official evaluations and performance assessments',
       icon: IconClipboard,
       badge: 'EXEC'
     }
@@ -217,11 +217,11 @@ export default function PortalDashboard() {
                 <span className="text-sm font-medium text-gray-900 dark:text-white">Members</span>
               </Link>
               <Link
-                href="/portal/reports"
+                href="/portal/evaluations"
                 className="flex items-center gap-2 p-3 bg-white dark:bg-gray-800 rounded-lg hover:shadow-md transition-shadow border border-gray-200 dark:border-gray-700"
               >
                 <IconClipboard className="h-5 w-5 text-orange-600 dark:text-orange-500 flex-shrink-0" />
-                <span className="text-sm font-medium text-gray-900 dark:text-white">Reports</span>
+                <span className="text-sm font-medium text-gray-900 dark:text-white">Evaluations</span>
               </Link>
             </>
           )}

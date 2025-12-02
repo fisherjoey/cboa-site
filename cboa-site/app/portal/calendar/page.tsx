@@ -224,8 +224,8 @@ export default function CalendarPage() {
           </p>
         </div>
         <div className="flex items-center gap-3">
-          {/* Calendar Mode Toggle */}
-          <div className="flex bg-gray-100 dark:bg-gray-800/50 rounded-lg p-1">
+          {/* Calendar Mode Toggle - Statistics tab commented out */}
+          {/* <div className="flex bg-gray-100 dark:bg-gray-800/50 rounded-lg p-1">
             <button
               onClick={() => setCalendarMode('events')}
               className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors flex items-center gap-1.5 ${
@@ -248,7 +248,7 @@ export default function CalendarPage() {
               <IconChartBar className="h-4 w-4" />
               Statistics
             </button>
-          </div>
+          </div> */}
           {canEdit && calendarMode === 'events' && (
             <button
               onClick={() => {
