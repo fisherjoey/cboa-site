@@ -822,6 +822,8 @@ export interface AuthUser {
   confirmed_at?: string
   invited_at?: string
   created_at?: string
+  last_sign_in_at?: string
+  has_logged_in?: boolean
   role?: string
   roles: string[]
 }
@@ -838,6 +840,8 @@ export interface AuthStatus {
   confirmed_at?: string
   invited_at?: string
   created_at?: string
+  last_sign_in_at?: string
+  has_logged_in?: boolean
   role?: string
   roles?: string[]
 }
@@ -958,6 +962,40 @@ export const supabaseAuthAPI = {
       headers: {
         'Authorization': `Bearer ${token}`
       }
+    })
+    return res.json()
+  },
+
+  // Sync members and auth users
+  async syncMembersAuth(dryRun: boolean = false): Promise<{
+    success: boolean
+    dryRun: boolean
+    summary: {
+      totalMembers: number
+      totalAuthUsers: number
+      authUsersImported: number
+      membersInvited: number
+      membersLinked: number
+      errors: number
+    }
+    details: {
+      authUsersImported: string[]
+      membersInvited: string[]
+      membersLinked: string[]
+      errors: { email: string; error: string }[]
+    }
+  }> {
+    const token = await getAuthToken()
+    if (!token) {
+      throw new AppError('Not authenticated', 'AUTH_ERROR', 401)
+    }
+
+    const res = await apiFetch(`${API_BASE}/sync-members-auth`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({ dryRun })
     })
     return res.json()
   }

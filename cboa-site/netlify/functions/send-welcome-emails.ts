@@ -212,23 +212,22 @@ const handler: Handler = async (event) => {
     for (const user of users) {
       try {
         const emailLower = user.email.toLowerCase()
-        const supabaseUser = supabaseUserMap.get(emailLower)
-
-        if (!supabaseUser) {
-          results.push({ email: user.email, status: 'skipped', error: 'User not found in Supabase' })
-          continue
-        }
 
         if (dryRun) {
           results.push({ email: user.email, status: 'dry_run' })
           continue
         }
 
-        // Generate password reset link via Supabase
+        // Generate invite link via Supabase (matching supabase-auth-admin.ts)
         const { data: linkData, error: linkError } = await supabaseAdmin.auth.admin.generateLink({
-          type: 'recovery',
+          type: 'invite',
           email: emailLower,
           options: {
+            data: {
+              full_name: user.name,
+              name: user.name,
+              role: 'official'
+            },
             redirectTo: `${siteUrl}/auth/callback`
           }
         })
@@ -238,10 +237,8 @@ const handler: Handler = async (event) => {
           continue
         }
 
-        // Fix localhost URLs from Supabase config - replace with production URL
+        // Use the action link directly (no localhost replacement needed on production)
         const inviteLink = linkData.properties.action_link
-          .replace(/http:\/\/localhost:\d+/g, 'https://cboa.ca')
-          .replace(/http:\/\/127\.0\.0\.1:\d+/g, 'https://cboa.ca')
 
         // Generate email HTML
         const emailHtml = generateInviteEmailHtml(inviteLink, user.name)
