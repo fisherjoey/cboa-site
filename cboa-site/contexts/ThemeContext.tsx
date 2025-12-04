@@ -19,7 +19,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     setMounted(true)
     // Check localStorage first, then system preference
-    const stored = localStorage.getItem('theme') as Theme | null
+    const stored = localStorage.getItem('portal-theme') as Theme | null
     if (stored) {
       setThemeState(stored)
     } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
@@ -29,14 +29,9 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (!mounted) return
-
-    const root = document.documentElement
-    if (theme === 'dark') {
-      root.classList.add('dark')
-    } else {
-      root.classList.remove('dark')
-    }
-    localStorage.setItem('theme', theme)
+    // Only store the preference, don't apply to document root
+    // The dark class will be applied via the wrapper div in portal layout
+    localStorage.setItem('portal-theme', theme)
   }, [theme, mounted])
 
   const toggleTheme = () => {
@@ -54,7 +49,9 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
 
   return (
     <ThemeContext.Provider value={{ theme, toggleTheme, setTheme }}>
-      {children}
+      <div className={theme === 'dark' ? 'dark' : ''}>
+        {children}
+      </div>
     </ThemeContext.Provider>
   )
 }
