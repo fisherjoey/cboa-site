@@ -80,8 +80,14 @@ function SetPasswordForm() {
         return
       }
 
-      // Success - redirect to portal
-      router.push('/portal')
+      // Success - redirect based on type
+      if (type === 'invite') {
+        // New user - redirect to complete profile
+        router.push('/auth/complete-profile')
+      } else {
+        // Password reset - redirect to portal
+        router.push('/portal')
+      }
     } catch (err: any) {
       console.error('Password update error:', err)
       if (err.message?.includes('fetch') || err.message?.includes('network')) {

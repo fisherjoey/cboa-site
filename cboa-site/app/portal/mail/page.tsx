@@ -14,17 +14,18 @@ export default function MailPage() {
   const { addToast } = useToast()
 
   const [subject, setSubject] = useState('')
-  const [recipients, setRecipients] = useState<string[]>([])
-  const [customEmails, setCustomEmails] = useState<string[]>([])
+  const [selectedGroups, setSelectedGroups] = useState<string[]>([])
+  const [manuallySelected, setManuallySelected] = useState<string[]>([])
+  const [excludedFromGroups, setExcludedFromGroups] = useState<string[]>([])
+  const [externalEmails, setExternalEmails] = useState<string[]>([])
   const [content, setContent] = useState('')
   const [isSending, setIsSending] = useState(false)
   const [showPreview, setShowPreview] = useState(true)
   const [rankFilter, setRankFilter] = useState('')
-  const [emailSearch, setEmailSearch] = useState('')
-  const [allMembers, setAllMembers] = useState<Array<{email: string, name: string}>>([])
-  const [showEmailDropdown, setShowEmailDropdown] = useState(false)
+  const [memberSearch, setMemberSearch] = useState('')
+  const [externalEmailInput, setExternalEmailInput] = useState('')
+  const [allMembers, setAllMembers] = useState<Array<{email: string, name: string, role: string}>>([])
   const [saveAsAnnouncement, setSaveAsAnnouncement] = useState(false)
-  const dropdownRef = useRef<HTMLDivElement>(null)
   const iframeRef = useRef<HTMLIFrameElement>(null)
   const [previewInitialized, setPreviewInitialized] = useState(false)
 
@@ -68,7 +69,7 @@ export default function MailPage() {
     }
   }, [user, router])
 
-  // Fetch all members for email search
+  // Fetch all members for email selection
   useEffect(() => {
     const fetchMembers = async () => {
       try {
@@ -81,7 +82,8 @@ export default function MailPage() {
           const data = await response.json()
           setAllMembers(data.map((m: any) => ({
             email: m.email,
-            name: `${m.first_name || ''} ${m.last_name || ''}`.trim() || m.email
+            name: `${m.first_name || ''} ${m.last_name || ''}`.trim() || m.name || m.email,
+            role: m.role || 'official'
           })))
         }
       } catch (error) {
@@ -91,21 +93,13 @@ export default function MailPage() {
     fetchMembers()
   }, [])
 
-  // Click outside to close dropdown
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setShowEmailDropdown(false)
-      }
-    }
-    document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [])
-
   const recipientGroups = [
-    { id: 'all', label: 'All Members', description: 'Send to all portal users', category: 'General' },
-    { id: 'officials', label: 'All Officials', description: 'Officials only', category: 'General' },
-    { id: 'executives', label: 'All Executives', description: 'Executive board members only', category: 'General' },
+    { id: 'all', label: 'All Members', description: 'Everyone in the portal', category: 'General' },
+    { id: 'officials', label: 'Officials', description: 'All official members', category: 'By Role' },
+    { id: 'executives', label: 'Executives', description: 'All executive members', category: 'By Role' },
+    { id: 'admins', label: 'Admins', description: 'All admin members', category: 'By Role' },
+    { id: 'evaluators', label: 'Evaluators', description: 'All evaluator members', category: 'By Role' },
+    { id: 'mentors', label: 'Mentors', description: 'All mentor members', category: 'By Role' },
   ]
 
   // Group recipients by category
@@ -117,18 +111,79 @@ export default function MailPage() {
     return acc
   }, {} as Record<string, typeof recipientGroups>)
 
+  // Helper to check if a member belongs to a group based on role
+  const memberBelongsToGroup = (member: {role: string}, groupId: string): boolean => {
+    if (groupId === 'all') return true
+    if (groupId === 'officials' && member.role === 'official') return true
+    if (groupId === 'executives' && member.role === 'executive') return true
+    if (groupId === 'admins' && member.role === 'admin') return true
+    if (groupId === 'evaluators' && member.role === 'evaluator') return true
+    if (groupId === 'mentors' && member.role === 'mentor') return true
+    return false
+  }
+
+  // Check if member is selected via any group
+  const isMemberSelectedViaGroup = (member: {email: string, role: string}): boolean => {
+    if (excludedFromGroups.includes(member.email)) return false
+    return selectedGroups.some(groupId => memberBelongsToGroup(member, groupId))
+  }
+
+  // Check if member is selected (either via group or manually)
+  const isMemberSelected = (member: {email: string, role: string}): boolean => {
+    return isMemberSelectedViaGroup(member) || manuallySelected.includes(member.email)
+  }
+
+  // Get groups that a member belongs to (for display)
+  const getMemberGroups = (member: {role: string}): string[] => {
+    const groups: string[] = []
+    if (member.role === 'official') groups.push('Official')
+    if (member.role === 'executive') groups.push('Executive')
+    if (member.role === 'admin') groups.push('Admin')
+    if (member.role === 'evaluator') groups.push('Evaluator')
+    if (member.role === 'mentor') groups.push('Mentor')
+    return groups
+  }
+
+  // Compute final selected emails
+  const computedSelectedEmails = useMemo(() => {
+    const emails = new Set<string>()
+
+    // Add members selected via groups (excluding overrides)
+    allMembers.forEach(member => {
+      if (isMemberSelectedViaGroup(member)) {
+        emails.add(member.email)
+      }
+    })
+
+    // Add manually selected members
+    manuallySelected.forEach(email => emails.add(email))
+
+    // Add external emails
+    externalEmails.forEach(email => emails.add(email))
+
+    return Array.from(emails)
+  }, [allMembers, selectedGroups, manuallySelected, excludedFromGroups, externalEmails])
+
   const toggleRecipientGroup = (groupId: string) => {
-    setRecipients(prev =>
+    setSelectedGroups(prev =>
       prev.includes(groupId)
         ? prev.filter(id => id !== groupId)
         : [...prev, groupId]
     )
+    // Clear exclusions when group is toggled off
+    if (selectedGroups.includes(groupId)) {
+      // Group is being removed, clear exclusions for members of that group
+      const membersOfGroup = allMembers.filter(m => memberBelongsToGroup(m, groupId))
+      setExcludedFromGroups(prev =>
+        prev.filter(email => !membersOfGroup.some(m => m.email === email))
+      )
+    }
   }
 
   // Filter members based on search
   const filteredMembers = allMembers.filter(member =>
-    member.email.toLowerCase().includes(emailSearch.toLowerCase()) ||
-    member.name.toLowerCase().includes(emailSearch.toLowerCase())
+    member.email.toLowerCase().includes(memberSearch.toLowerCase()) ||
+    member.name.toLowerCase().includes(memberSearch.toLowerCase())
   )
 
   // Check if search text is a valid email format
@@ -136,24 +191,69 @@ export default function MailPage() {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
   }
 
-  const toggleEmailSelection = (email: string) => {
-    setCustomEmails(prev =>
-      prev.includes(email)
-        ? prev.filter(e => e !== email)
-        : [...prev, email]
-    )
-  }
+  // Toggle individual member selection
+  const toggleMemberSelection = (member: {email: string, role: string}) => {
+    const isSelected = isMemberSelected(member)
+    const isExcluded = excludedFromGroups.includes(member.email)
+    const belongsToSelectedGroup = selectedGroups.some(groupId => memberBelongsToGroup(member, groupId))
+    const isManuallySelected = manuallySelected.includes(member.email)
 
-  const addCustomEmail = (email: string) => {
-    if (isValidEmail(email) && !customEmails.includes(email)) {
-      setCustomEmails(prev => [...prev, email])
-      setEmailSearch('')
-      setShowEmailDropdown(false)
+    if (isSelected) {
+      // Currently selected - need to deselect
+      if (isManuallySelected) {
+        // Remove from manual selection
+        setManuallySelected(prev => prev.filter(e => e !== member.email))
+      }
+      if (belongsToSelectedGroup && !isExcluded) {
+        // Add to exclusions if they belong to a selected group
+        setExcludedFromGroups(prev => [...prev, member.email])
+      }
+    } else {
+      // Currently not selected - need to select
+      if (isExcluded) {
+        // Remove from exclusions (will be selected via group again)
+        setExcludedFromGroups(prev => prev.filter(e => e !== member.email))
+      } else {
+        // Add to manual selection
+        setManuallySelected(prev => [...prev, member.email])
+      }
     }
   }
 
-  const removeCustomEmail = (email: string) => {
-    setCustomEmails(prev => prev.filter(e => e !== email))
+  // Add external email
+  const addExternalEmail = () => {
+    const email = externalEmailInput.trim()
+    if (isValidEmail(email) && !externalEmails.includes(email) && !allMembers.some(m => m.email === email)) {
+      setExternalEmails(prev => [...prev, email])
+      setExternalEmailInput('')
+    }
+  }
+
+  // Remove external email
+  const removeExternalEmail = (email: string) => {
+    setExternalEmails(prev => prev.filter(e => e !== email))
+  }
+
+  // Select all visible members
+  const selectAllMembers = () => {
+    const emailsToAdd = filteredMembers
+      .filter(m => !isMemberSelected(m))
+      .map(m => m.email)
+    setManuallySelected(prev => [...prev, ...emailsToAdd])
+    // Clear any exclusions for filtered members
+    setExcludedFromGroups(prev =>
+      prev.filter(email => !filteredMembers.some(m => m.email === email))
+    )
+  }
+
+  // Deselect all members
+  const deselectAllMembers = () => {
+    setManuallySelected([])
+    // Add all group-selected members to exclusions
+    const groupSelectedEmails = allMembers
+      .filter(m => selectedGroups.some(g => memberBelongsToGroup(m, g)))
+      .map(m => m.email)
+    setExcludedFromGroups(groupSelectedEmails)
   }
 
   const handleSend = async () => {
@@ -163,8 +263,8 @@ export default function MailPage() {
       return
     }
 
-    if (recipients.length === 0 && customEmails.length === 0) {
-      addToast('Please select at least one recipient group or enter email addresses', 'error')
+    if (computedSelectedEmails.length === 0) {
+      addToast('Please select at least one recipient', 'error')
       return
     }
 
@@ -183,6 +283,7 @@ export default function MailPage() {
         ? '/.netlify/functions'
         : 'http://localhost:9000/.netlify/functions'
 
+      // Send computed email list directly instead of groups
       const response = await fetch(`${API_BASE}/send-email`, {
         method: 'POST',
         headers: {
@@ -190,8 +291,8 @@ export default function MailPage() {
         },
         body: JSON.stringify({
           subject,
-          recipientGroups: recipients,
-          customEmails: customEmails,
+          recipientGroups: [], // Not using groups anymore, sending direct list
+          customEmails: computedSelectedEmails,
           htmlContent,
           rankFilter: rankFilter || undefined
         })
@@ -218,8 +319,10 @@ export default function MailPage() {
 
       // Reset form
       setSubject('')
-      setRecipients([])
-      setCustomEmails([])
+      setSelectedGroups([])
+      setManuallySelected([])
+      setExcludedFromGroups([])
+      setExternalEmails([])
       setContent('')
       setRankFilter('')
       setSaveAsAnnouncement(false)
@@ -304,7 +407,7 @@ export default function MailPage() {
                       type="button"
                       onClick={() => toggleRecipientGroup(group.id)}
                       className={`p-4 border-2 rounded-lg text-left transition-all ${
-                        recipients.includes(group.id)
+                        selectedGroups.includes(group.id)
                           ? 'border-orange-600 bg-orange-50 dark:bg-orange-900/20'
                           : 'border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500'
                       }`}
@@ -318,7 +421,7 @@ export default function MailPage() {
                             {group.description}
                           </div>
                         </div>
-                        {recipients.includes(group.id) && (
+                        {selectedGroups.includes(group.id) && (
                           <IconCheck className="h-5 w-5 text-orange-600 flex-shrink-0 ml-2" />
                         )}
                       </div>
@@ -354,86 +457,164 @@ export default function MailPage() {
           </p>
         </div>
 
-        {/* Custom Email Addresses */}
+        {/* Individual Member Selection */}
         <div>
           <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-            Additional Email Addresses (Optional)
+            <IconUsers className="inline h-4 w-4 mr-1" />
+            Individual Recipients
           </label>
-          <div className="relative" ref={dropdownRef}>
+
+          {/* Search and Actions Bar */}
+          <div className="flex flex-col sm:flex-row gap-2 mb-3">
             <input
               type="text"
-              value={emailSearch}
-              onChange={(e) => {
-                setEmailSearch(e.target.value)
-                setShowEmailDropdown(true)
-              }}
-              onFocus={() => setShowEmailDropdown(true)}
-              placeholder="Search members or enter email..."
-              className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400"
+              value={memberSearch}
+              onChange={(e) => setMemberSearch(e.target.value)}
+              placeholder="Search members by name or email..."
+              className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400"
             />
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={selectAllMembers}
+                className="px-3 py-2 text-sm bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+              >
+                Select All
+              </button>
+              <button
+                type="button"
+                onClick={deselectAllMembers}
+                className="px-3 py-2 text-sm bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+              >
+                Clear
+              </button>
+            </div>
+          </div>
 
-            {/* Dropdown */}
-            {showEmailDropdown && emailSearch && (
-              <div className="absolute z-10 w-full mt-1 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg max-h-64 overflow-y-auto">
-                {filteredMembers.length > 0 ? (
-                  filteredMembers.slice(0, 10).map(member => (
+          {/* Member List */}
+          <div className="border border-gray-300 dark:border-gray-600 rounded-lg overflow-hidden">
+            <div className="max-h-64 overflow-y-auto">
+              {filteredMembers.length > 0 ? (
+                filteredMembers.map(member => {
+                  const isSelected = isMemberSelected(member)
+                  const isViaGroup = isMemberSelectedViaGroup(member)
+                  const isExcluded = excludedFromGroups.includes(member.email)
+                  const memberGroups = getMemberGroups(member)
+
+                  return (
                     <div
                       key={member.email}
-                      onClick={() => toggleEmailSelection(member.email)}
-                      className="px-4 py-2.5 hover:bg-gray-50 dark:hover:bg-gray-600 cursor-pointer flex items-center gap-3 border-b border-gray-100 dark:border-gray-600 last:border-b-0"
+                      onClick={() => toggleMemberSelection(member)}
+                      className={`px-4 py-2.5 cursor-pointer flex items-center gap-3 border-b border-gray-100 dark:border-gray-700 last:border-b-0 transition-colors ${
+                        isSelected
+                          ? 'bg-orange-50 dark:bg-orange-900/20'
+                          : 'hover:bg-gray-50 dark:hover:bg-gray-700'
+                      } ${isExcluded ? 'opacity-60' : ''}`}
                     >
                       <input
                         type="checkbox"
-                        checked={customEmails.includes(member.email)}
+                        checked={isSelected}
                         onChange={() => {}}
                         className="h-4 w-4 text-orange-600 rounded border-gray-300 dark:border-gray-500 focus:ring-orange-500"
                       />
-                      <div className="flex-1">
-                        <div className="text-sm font-medium text-gray-900 dark:text-white">{member.email}</div>
-                        <div className="text-xs text-gray-500 dark:text-gray-400">{member.name}</div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                            {member.name}
+                          </span>
+                          {memberGroups.map(group => (
+                            <span
+                              key={group}
+                              className={`text-xs px-1.5 py-0.5 rounded ${
+                                isViaGroup && selectedGroups.some(g =>
+                                  (g === 'officials' && group === 'Official') ||
+                                  (g === 'executives' && group === 'Executive') ||
+                                  (g === 'admins' && group === 'Admin') ||
+                                  (g === 'evaluators' && group === 'Evaluator') ||
+                                  (g === 'mentors' && group === 'Mentor') ||
+                                  (g === 'all')
+                                )
+                                  ? 'bg-orange-200 dark:bg-orange-800 text-orange-800 dark:text-orange-200'
+                                  : 'bg-gray-200 dark:bg-gray-600 text-gray-600 dark:text-gray-300'
+                              }`}
+                            >
+                              {group}
+                            </span>
+                          ))}
+                          {isExcluded && (
+                            <span className="text-xs text-red-500 dark:text-red-400">excluded</span>
+                          )}
+                        </div>
+                        <div className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                          {member.email}
+                        </div>
                       </div>
                     </div>
-                  ))
-                ) : isValidEmail(emailSearch) ? (
-                  <div
-                    onClick={() => addCustomEmail(emailSearch)}
-                    className="px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-600 cursor-pointer flex items-center gap-2 text-sm"
-                  >
-                    <span className="text-lg">➕</span>
-                    <span className="text-gray-700 dark:text-gray-300">Add "{emailSearch}"</span>
-                  </div>
-                ) : (
-                  <div className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">
-                    No members found. Enter a valid email address to add.
-                  </div>
-                )}
-              </div>
-            )}
+                  )
+                })
+              ) : (
+                <div className="px-4 py-8 text-center text-gray-500 dark:text-gray-400">
+                  {memberSearch ? 'No members match your search' : 'No members available'}
+                </div>
+              )}
+            </div>
           </div>
 
-          {/* Selected Emails */}
-          {customEmails.length > 0 && (
-            <div className="mt-3 space-y-2">
-              <div className="text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase">
-                Selected: {customEmails.length}
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {customEmails.map(email => (
-                  <div
-                    key={email}
-                    className="inline-flex items-center gap-2 px-3 py-1.5 bg-orange-50 dark:bg-orange-900/30 border border-orange-200 dark:border-orange-700 rounded-lg text-sm"
+          {/* Selected Count */}
+          <div className="mt-2 text-sm text-gray-600 dark:text-gray-400">
+            {computedSelectedEmails.length} recipient{computedSelectedEmails.length !== 1 ? 's' : ''} selected
+            {externalEmails.length > 0 && ` (including ${externalEmails.length} external)`}
+          </div>
+        </div>
+
+        {/* External Email Addresses */}
+        <div>
+          <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+            <IconMail className="inline h-4 w-4 mr-1" />
+            External Email Addresses (Optional)
+          </label>
+          <div className="flex gap-2">
+            <input
+              type="email"
+              value={externalEmailInput}
+              onChange={(e) => setExternalEmailInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault()
+                  addExternalEmail()
+                }
+              }}
+              placeholder="Enter non-member email address..."
+              className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400"
+            />
+            <button
+              type="button"
+              onClick={addExternalEmail}
+              disabled={!isValidEmail(externalEmailInput)}
+              className="px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Add
+            </button>
+          </div>
+
+          {/* External Emails List */}
+          {externalEmails.length > 0 && (
+            <div className="mt-3 flex flex-wrap gap-2">
+              {externalEmails.map(email => (
+                <div
+                  key={email}
+                  className="inline-flex items-center gap-2 px-3 py-1.5 bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-700 rounded-lg text-sm"
+                >
+                  <span className="text-gray-900 dark:text-white">{email}</span>
+                  <button
+                    type="button"
+                    onClick={() => removeExternalEmail(email)}
+                    className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 transition-colors"
                   >
-                    <span className="text-gray-900 dark:text-white">{email}</span>
-                    <button
-                      type="button"
-                      onClick={() => removeCustomEmail(email)}
-                      className="text-orange-600 hover:text-orange-800 dark:text-orange-400 dark:hover:text-orange-300 transition-colors"
-                    >
-                      <IconX className="h-4 w-4" />
-                    </button>
-                  </div>
-                ))}
-              </div>
+                    <IconX className="h-4 w-4" />
+                  </button>
+                </div>
+              ))}
             </div>
           )}
         </div>

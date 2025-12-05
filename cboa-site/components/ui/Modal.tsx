@@ -1,6 +1,6 @@
 'use client'
 
-import { Fragment, ReactNode } from 'react'
+import { Fragment, ReactNode, useEffect, useState } from 'react'
 import { Dialog, DialogPanel, DialogTitle, Transition, TransitionChild } from '@headlessui/react'
 import { IconX } from '@tabler/icons-react'
 
@@ -29,9 +29,26 @@ export default function Modal({
   size = 'md',
   showCloseButton = true,
 }: ModalProps) {
+  // Check if dark mode is enabled by looking at localStorage or parent dark class
+  const [isDark, setIsDark] = useState(false)
+
+  useEffect(() => {
+    // Check localStorage for portal theme
+    const storedTheme = localStorage.getItem('portal-theme')
+    setIsDark(storedTheme === 'dark')
+
+    // Also listen for changes
+    const handleStorage = () => {
+      const theme = localStorage.getItem('portal-theme')
+      setIsDark(theme === 'dark')
+    }
+    window.addEventListener('storage', handleStorage)
+    return () => window.removeEventListener('storage', handleStorage)
+  }, [isOpen])
+
   return (
     <Transition show={isOpen} as={Fragment}>
-      <Dialog onClose={onClose} className="relative z-50">
+      <Dialog onClose={onClose} className={`relative z-50 ${isDark ? 'dark' : ''}`}>
         {/* Backdrop */}
         <TransitionChild
           as={Fragment}

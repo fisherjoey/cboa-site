@@ -173,7 +173,22 @@ async function getRecipientEmails(
           break
         }
 
-        if (group === 'executives' && (member.role === 'executive' || member.role === 'admin')) {
+        if (group === 'executives' && member.role === 'executive') {
+          shouldInclude = true
+          break
+        }
+
+        if (group === 'admins' && member.role === 'admin') {
+          shouldInclude = true
+          break
+        }
+
+        if (group === 'evaluators' && member.role === 'evaluator') {
+          shouldInclude = true
+          break
+        }
+
+        if (group === 'mentors' && member.role === 'mentor') {
           shouldInclude = true
           break
         }
