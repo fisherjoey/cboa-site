@@ -53,29 +53,49 @@ function CompleteProfileForm() {
 
         setUserEmail(session.user.email || null)
 
-        // Fetch member data by user_id
         const API_BASE = process.env.NODE_ENV === 'production'
           ? '/.netlify/functions'
           : 'http://localhost:9000/.netlify/functions'
 
-        const response = await fetch(`${API_BASE}/members?user_id=${session.user.id}`)
+        // First try to fetch member by user_id
+        let member = null
+        const userIdResponse = await fetch(`${API_BASE}/members?user_id=${session.user.id}`)
+        if (userIdResponse.ok) {
+          member = await userIdResponse.json()
+        }
 
-        if (response.ok) {
-          const member = await response.json()
-          if (member) {
-            setMemberId(member.id)
-            // Pre-fill form with existing data
-            setForm({
-              name: member.name || '',
-              phone: member.phone || '',
-              address: member.address || '',
-              city: member.city || '',
-              province: member.province || 'AB',
-              postal_code: member.postal_code || '',
-              emergency_contact_name: member.emergency_contact_name || '',
-              emergency_contact_phone: member.emergency_contact_phone || ''
-            })
+        // If not found by user_id, try by email (handles cases where user_id wasn't linked properly)
+        if (!member && session.user.email) {
+          const emailResponse = await fetch(`${API_BASE}/members?email=${encodeURIComponent(session.user.email)}`)
+          if (emailResponse.ok) {
+            member = await emailResponse.json()
+            // If found by email, update the user_id link for future lookups
+            if (member) {
+              await fetch(`${API_BASE}/members`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  id: member.id,
+                  user_id: session.user.id
+                })
+              })
+            }
           }
+        }
+
+        if (member) {
+          setMemberId(member.id)
+          // Pre-fill form with existing data
+          setForm({
+            name: member.name || '',
+            phone: member.phone || '',
+            address: member.address || '',
+            city: member.city || '',
+            province: member.province || 'AB',
+            postal_code: member.postal_code || '',
+            emergency_contact_name: member.emergency_contact_name || '',
+            emergency_contact_phone: member.emergency_contact_phone || ''
+          })
         }
 
         setCheckingAuth(false)
@@ -95,6 +115,11 @@ function CompleteProfileForm() {
     // Validation
     if (!form.name.trim()) {
       setError('Please enter your name')
+      return
+    }
+
+    if (!memberId) {
+      setError('Unable to find your member record. Please contact support or try requesting a new invite.')
       return
     }
 

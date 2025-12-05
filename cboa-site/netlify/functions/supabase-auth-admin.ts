@@ -404,6 +404,28 @@ export const handler: Handler = async (event) => {
             }
           }
 
+          // Update the member record's user_id to match the new auth user
+          if (linkData.user?.id) {
+            const { error: updateError } = await supabaseAdmin
+              .from('members')
+              .update({ user_id: linkData.user.id })
+              .eq('email', email.toLowerCase())
+
+            if (updateError) {
+              logger.warn('auth', 'resend_invite_member_update_failed',
+                `Failed to update member user_id for ${email}`, {
+                userEmail: callerUser.email,
+                metadata: { targetEmail: email, error: updateError.message }
+              })
+            } else {
+              logger.info('auth', 'resend_invite_member_updated',
+                `Updated member user_id for ${email}`, {
+                userEmail: callerUser.email,
+                metadata: { targetEmail: email, newUserId: linkData.user.id }
+              })
+            }
+          }
+
           // Send email via Microsoft Graph
           const msToken = await getMicrosoftAccessToken()
           const inviteUrl = linkData.properties?.action_link || ''
