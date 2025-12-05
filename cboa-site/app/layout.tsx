@@ -3,6 +3,7 @@ import './globals.css'
 import './tinymce-content.css'
 import Header from '@/components/layout/Header'
 import Footer from '@/components/layout/Footer'
+import AuthErrorHandler from '@/components/AuthErrorHandler'
 
 export const metadata: Metadata = {
   title: 'Calgary Basketball Officials Association',
@@ -63,6 +64,7 @@ export default function RootLayout({
         <link rel="shortcut icon" href="/images/icons/favicon.ico" />
       </head>
       <body className="min-h-screen flex flex-col">
+        <AuthErrorHandler />
         <Header />
         <main className="flex-grow">
           {children}

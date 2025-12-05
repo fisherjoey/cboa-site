@@ -1633,7 +1633,7 @@ export default function MembersPage() {
                   onChange={(e) => setBulkEmails(e.target.value)}
                   rows={10}
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 font-mono text-sm"
-                  placeholder="john@example.com&#10;jane@example.com&#10;bob@example.com"
+                  placeholder={"john@example.com\njane@example.com\nbob@example.com"}
                   disabled={isBulkAdding}
                 />
                 <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
