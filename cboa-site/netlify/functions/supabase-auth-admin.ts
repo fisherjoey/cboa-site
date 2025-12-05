@@ -349,6 +349,132 @@ export const handler: Handler = async (event) => {
         const body = JSON.parse(event.body || '{}')
         const { email, name, role, action: postAction } = body
 
+        // Bulk resend invites to all members who haven't signed in yet
+        if (postAction === 'resend_pending') {
+          logger.info('auth', 'resend_pending_start', 'Starting bulk resend of pending invites', {
+            userEmail: callerUser.email
+          })
+
+          // Check Microsoft Graph credentials
+          if (!process.env.MICROSOFT_TENANT_ID || !process.env.MICROSOFT_CLIENT_ID || !process.env.MICROSOFT_CLIENT_SECRET) {
+            return {
+              statusCode: 500,
+              headers,
+              body: JSON.stringify({ error: 'Microsoft Graph credentials not configured' })
+            }
+          }
+
+          // Get all members who haven't signed in yet
+          const { data: pendingMembers, error: queryError } = await supabaseAdmin
+            .from('members')
+            .select('id, name, email, role, user_id')
+            .eq('status', 'active')
+            .not('user_id', 'is', null)
+
+          if (queryError) {
+            logger.error('auth', 'resend_pending_query_failed', 'Failed to query pending members', new Error(queryError.message))
+            return {
+              statusCode: 500,
+              headers,
+              body: JSON.stringify({ error: 'Failed to query members' })
+            }
+          }
+
+          // Get all auth users to check who hasn't signed in
+          const { data: { users: authUsers } } = await supabaseAdmin.auth.admin.listUsers()
+
+          // Filter to members whose auth user has never signed in
+          const pendingInvites = pendingMembers?.filter(member => {
+            const authUser = authUsers.find(u => u.id === member.user_id)
+            return authUser && !authUser.last_sign_in_at
+          }) || []
+
+          if (pendingInvites.length === 0) {
+            return {
+              statusCode: 200,
+              headers,
+              body: JSON.stringify({
+                success: true,
+                message: 'No pending invites to resend',
+                results: []
+              })
+            }
+          }
+
+          const results: Array<{ email: string; success: boolean; message: string }> = []
+          const msToken = await getMicrosoftAccessToken()
+
+          for (const member of pendingInvites) {
+            try {
+              // Find and delete existing auth user
+              const existingUser = authUsers.find(u => u.email?.toLowerCase() === member.email.toLowerCase())
+              if (existingUser) {
+                await supabaseAdmin.auth.admin.deleteUser(existingUser.id)
+              }
+
+              // Generate new invite link
+              const { data: linkData, error: linkError } = await supabaseAdmin.auth.admin.generateLink({
+                type: 'invite',
+                email: member.email,
+                options: {
+                  data: {
+                    full_name: member.name,
+                    name: member.name,
+                    role: member.role || 'official'
+                  },
+                  redirectTo: `${siteUrl}/auth/callback`
+                }
+              })
+
+              if (linkError) {
+                results.push({ email: member.email, success: false, message: linkError.message })
+                continue
+              }
+
+              // Update member's user_id
+              if (linkData.user?.id) {
+                await supabaseAdmin
+                  .from('members')
+                  .update({ user_id: linkData.user.id })
+                  .eq('id', member.id)
+              }
+
+              // Send email
+              const inviteUrl = linkData.properties?.action_link || ''
+              const emailHtml = generateInviteEmailHtml(inviteUrl, member.name)
+              await sendEmailViaMicrosoftGraph(msToken, member.email, "You're Invited to Join CBOA!", emailHtml)
+
+              results.push({ email: member.email, success: true, message: 'Invite resent' })
+            } catch (err: any) {
+              results.push({ email: member.email, success: false, message: err.message || 'Unknown error' })
+            }
+          }
+
+          // Audit log
+          const successCount = results.filter(r => r.success).length
+          await logger.audit('INVITE', 'auth_user', null, {
+            actorId: callerUser.id,
+            actorEmail: callerUser.email!,
+            actorRole: callerRole,
+            description: `Bulk resent ${successCount}/${results.length} pending invites`
+          })
+
+          logger.info('auth', 'resend_pending_complete', `Bulk resend complete: ${successCount}/${results.length} successful`, {
+            userEmail: callerUser.email,
+            metadata: { total: results.length, successful: successCount }
+          })
+
+          return {
+            statusCode: 200,
+            headers,
+            body: JSON.stringify({
+              success: true,
+              message: `Resent ${successCount} of ${results.length} invites`,
+              results
+            })
+          }
+        }
+
         if (!email) {
           return {
             statusCode: 400,

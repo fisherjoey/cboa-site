@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useRole } from '@/contexts/RoleContext'
 import { membersAPI, memberActivitiesAPI } from '@/lib/api'
-import { IconUser, IconSearch, IconPlus, IconEdit, IconTrash, IconCalendar, IconX, IconCheck, IconFilter, IconLayoutGrid, IconTable, IconUsersPlus, IconLoader2, IconAlertCircle } from '@tabler/icons-react'
+import { IconUser, IconSearch, IconPlus, IconEdit, IconTrash, IconCalendar, IconX, IconCheck, IconFilter, IconLayoutGrid, IconTable, IconUsersPlus, IconLoader2, IconAlertCircle, IconMail, IconKey } from '@tabler/icons-react'
 import Modal from '@/components/ui/Modal'
 import { useToast } from '@/hooks/useToast'
 import {
@@ -20,6 +20,7 @@ import { ColumnDef } from '@tanstack/react-table'
 interface Member {
   id?: string
   netlify_user_id?: string
+  user_id?: string // Supabase auth user ID - if present, account is fully set up
   name: string
   email: string
   phone?: string
@@ -82,6 +83,12 @@ export default function MembersPage() {
   const { success, error, warning, info } = useToast()
   const [validationErrors, setValidationErrors] = useState<ValidationError[]>([])
   const [activityValidationErrors, setActivityValidationErrors] = useState<ValidationError[]>([])
+  const [isSendingInvite, setIsSendingInvite] = useState(false)
+
+  // Resend pending invites state
+  const [showResendPendingModal, setShowResendPendingModal] = useState(false)
+  const [isResendingPending, setIsResendingPending] = useState(false)
+  const [resendPendingResults, setResendPendingResults] = useState<Array<{ email: string; success: boolean; message: string }> | null>(null)
 
 
   // Bulk add members state
@@ -559,6 +566,74 @@ export default function MembersPage() {
     }
   }
 
+  const handleResendInvite = async () => {
+    if (!selectedMember) return
+
+    try {
+      setIsSendingInvite(true)
+      await membersAPI.resendInvite({
+        email: selectedMember.email,
+        name: selectedMember.name,
+        role: selectedMember.role
+      })
+      success(`Invite resent to ${selectedMember.email}`)
+      await loadMembers(true)
+    } catch (err) {
+      const errorMessage = parseAPIError(err)
+      error(errorMessage)
+    } finally {
+      setIsSendingInvite(false)
+    }
+  }
+
+  const handleSendPasswordReset = async () => {
+    if (!selectedMember) return
+
+    try {
+      setIsSendingInvite(true)
+      await membersAPI.sendPasswordReset(selectedMember.email)
+      success(`Password reset email sent to ${selectedMember.email}`)
+    } catch (err) {
+      const errorMessage = parseAPIError(err)
+      error(errorMessage)
+    } finally {
+      setIsSendingInvite(false)
+    }
+  }
+
+  const handleResendPendingInvites = async () => {
+    try {
+      setIsResendingPending(true)
+      setResendPendingResults(null)
+      const result = await membersAPI.resendPendingInvites()
+      setResendPendingResults(result.results || [])
+
+      const successCount = result.results?.filter((r: any) => r.success).length || 0
+      const totalCount = result.results?.length || 0
+
+      if (totalCount === 0) {
+        info('No pending invites to resend - all members have already signed in')
+      } else if (successCount === totalCount) {
+        success(`Successfully resent ${successCount} invite${successCount > 1 ? 's' : ''}`)
+      } else {
+        warning(`Resent ${successCount} of ${totalCount} invites`)
+      }
+
+      await loadMembers(true)
+    } catch (err) {
+      const errorMessage = parseAPIError(err)
+      error(errorMessage)
+    } finally {
+      setIsResendingPending(false)
+    }
+  }
+
+  const handleCloseResendPendingModal = () => {
+    setShowResendPendingModal(false)
+    setResendPendingResults(null)
+    setIsResendingPending(false)
+  }
+
   if (!hasAccess) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -586,6 +661,13 @@ export default function MembersPage() {
         <div className="flex items-center justify-between mb-4">
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Members Directory</h1>
           <div className="flex items-center gap-2">
+            <button
+              onClick={() => setShowResendPendingModal(true)}
+              className="flex items-center gap-2 px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors"
+            >
+              <IconMail size={20} />
+              Resend Pending
+            </button>
             <button
               onClick={() => setShowBulkAddModal(true)}
               className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors"
@@ -791,6 +873,34 @@ export default function MembersPage() {
         <div className="flex flex-wrap gap-2 justify-end mb-4 -mt-2">
           {!isEditing && selectedMember && (
             <>
+              {/* Show Reinvite if account not set up, Password Reset if account exists */}
+              {selectedMember.user_id ? (
+                <button
+                  onClick={handleSendPasswordReset}
+                  disabled={isSendingInvite}
+                  className="flex items-center gap-2 px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 disabled:opacity-50"
+                >
+                  {isSendingInvite ? (
+                    <IconLoader2 size={20} className="animate-spin" />
+                  ) : (
+                    <IconKey size={20} />
+                  )}
+                  {isSendingInvite ? 'Sending...' : 'Reset Password'}
+                </button>
+              ) : (
+                <button
+                  onClick={handleResendInvite}
+                  disabled={isSendingInvite}
+                  className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 disabled:opacity-50"
+                >
+                  {isSendingInvite ? (
+                    <IconLoader2 size={20} className="animate-spin" />
+                  ) : (
+                    <IconMail size={20} />
+                  )}
+                  {isSendingInvite ? 'Sending...' : 'Reinvite Member'}
+                </button>
+              )}
               <button
                 onClick={handleEditMember}
                 className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
@@ -1359,6 +1469,121 @@ export default function MembersPage() {
                     </button>
                   </div>
                 )}
+              </div>
+            </>
+          )}
+        </div>
+      </Modal>
+
+      {/* Resend Pending Invites Modal */}
+      <Modal
+        isOpen={showResendPendingModal}
+        onClose={handleCloseResendPendingModal}
+        title="Resend Pending Invites"
+        size="lg"
+      >
+        <div className="space-y-4">
+          {!resendPendingResults ? (
+            <>
+              <p className="text-gray-600 dark:text-gray-400">
+                This will resend invite emails to all members who haven't signed in yet. Their previous invite links will be invalidated and new ones will be sent.
+              </p>
+
+              <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-4">
+                <div className="flex items-start gap-3">
+                  <IconAlertCircle className="text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" size={20} />
+                  <div className="text-sm text-amber-800 dark:text-amber-200">
+                    <p className="font-medium">Note:</p>
+                    <p>This may take a moment if there are many pending invites. Each member will receive a fresh invite email.</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex gap-3 justify-end pt-4 border-t border-gray-200 dark:border-gray-700">
+                <button
+                  onClick={handleCloseResendPendingModal}
+                  className="px-4 py-2 bg-gray-500 dark:bg-gray-600 text-white rounded-lg hover:bg-gray-600 dark:hover:bg-gray-500"
+                  disabled={isResendingPending}
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleResendPendingInvites}
+                  disabled={isResendingPending}
+                  className="flex items-center gap-2 px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 disabled:opacity-50"
+                >
+                  {isResendingPending ? (
+                    <>
+                      <IconLoader2 size={20} className="animate-spin" />
+                      Sending Invites...
+                    </>
+                  ) : (
+                    <>
+                      <IconMail size={20} />
+                      Resend All Pending Invites
+                    </>
+                  )}
+                </button>
+              </div>
+            </>
+          ) : (
+            <>
+              {/* Results display */}
+              <div className="space-y-4">
+                <div className="text-center py-2">
+                  <p className="text-lg font-medium text-gray-900 dark:text-white">
+                    {resendPendingResults.length === 0 ? 'No Pending Invites' : 'Resend Complete'}
+                  </p>
+                  {resendPendingResults.length > 0 && (
+                    <p className="text-gray-600 dark:text-gray-400">
+                      {resendPendingResults.filter(r => r.success).length} successful, {resendPendingResults.filter(r => !r.success).length} failed
+                    </p>
+                  )}
+                </div>
+
+                {resendPendingResults.length === 0 ? (
+                  <p className="text-center text-gray-600 dark:text-gray-400">
+                    All members have already signed in to the portal.
+                  </p>
+                ) : (
+                  <div className="max-h-80 overflow-y-auto space-y-2">
+                    {resendPendingResults.map((result, index) => (
+                      <div
+                        key={index}
+                        className={`flex items-center justify-between p-3 rounded-lg ${
+                          result.success
+                            ? 'bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800'
+                            : 'bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2 min-w-0">
+                          {result.success ? (
+                            <IconCheck size={18} className="text-green-600 dark:text-green-400 flex-shrink-0" />
+                          ) : (
+                            <IconAlertCircle size={18} className="text-red-600 dark:text-red-400 flex-shrink-0" />
+                          )}
+                          <span className="text-gray-900 dark:text-white truncate">
+                            {result.email}
+                          </span>
+                        </div>
+                        <span className={`text-sm flex-shrink-0 ml-2 ${
+                          result.success ? 'text-green-700 dark:text-green-300' : 'text-red-700 dark:text-red-300'
+                        }`}>
+                          {result.message}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                <div className="flex gap-3 justify-end pt-4 border-t border-gray-200 dark:border-gray-700">
+                  <button
+                    onClick={handleCloseResendPendingModal}
+                    className="px-4 py-2 bg-gray-500 dark:bg-gray-600 text-white rounded-lg hover:bg-gray-600 dark:hover:bg-gray-500"
+                  >
+                    Close
+                  </button>
+                </div>
               </div>
             </>
           )}

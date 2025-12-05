@@ -415,6 +415,42 @@ export const membersAPI = {
       }
       throw error
     }
+  },
+
+  async resendInvite(member: { email: string; name: string; role?: string }) {
+    const res = await apiFetch(`${API_BASE}/supabase-auth-admin`, {
+      method: 'POST',
+      body: JSON.stringify({
+        action: 'resend',
+        email: member.email,
+        name: member.name,
+        role: member.role || 'official'
+      })
+    })
+    invalidateCache('members')
+    return res.json()
+  },
+
+  async sendPasswordReset(email: string) {
+    const res = await apiFetch(`${API_BASE}/supabase-auth-admin`, {
+      method: 'PUT',
+      body: JSON.stringify({
+        action: 'reset_password',
+        email
+      })
+    })
+    return res.json()
+  },
+
+  async resendPendingInvites() {
+    const res = await apiFetch(`${API_BASE}/supabase-auth-admin`, {
+      method: 'POST',
+      body: JSON.stringify({
+        action: 'resend_pending'
+      })
+    })
+    invalidateCache('members')
+    return res.json()
   }
 }
 
