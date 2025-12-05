@@ -16,6 +16,10 @@ export default function AuthErrorHandler() {
       // Check for auth params in URL hash
       if (typeof window === 'undefined' || !window.location.hash) return
 
+      // Don't process on auth pages - they handle their own auth
+      const pathname = window.location.pathname
+      if (pathname.startsWith('/auth/') || pathname.startsWith('/login')) return
+
       const hashParams = new URLSearchParams(window.location.hash.substring(1))
       const errorCode = hashParams.get('error')
       const errorCodeAlt = hashParams.get('error_code')
