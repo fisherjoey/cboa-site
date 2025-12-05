@@ -101,6 +101,18 @@ async function sendEmailViaMicrosoftGraph(
 // ============================================================================
 
 function generateInviteEmailHtml(inviteUrl: string, name?: string): string {
+  // Calculate expiration time (24 hours from now) in Mountain Time
+  const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000)
+  const expiresFormatted = expiresAt.toLocaleString('en-US', {
+    timeZone: 'America/Edmonton',
+    weekday: 'long',
+    month: 'long',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true
+  })
+
   return `
 <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: #f5f5f5; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;">
   <tr>
@@ -130,6 +142,7 @@ function generateInviteEmailHtml(inviteUrl: string, name?: string): string {
             <p style="text-align: center; margin: 24px 0;">
               <a href="${inviteUrl}" style="display: inline-block; padding: 14px 28px; min-height: 44px; background-color: #F97316; color: #ffffff !important; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px;">Accept Invitation</a>
             </p>
+            <p style="margin: 0 0 16px 0; font-size: 14px; line-height: 1.6; color: #666666; text-align: center;"><em>This link expires on ${expiresFormatted} (Mountain Time).</em></p>
             <p style="margin: 0 0 16px 0; font-size: 16px; line-height: 1.6;">If you have any questions about your membership, please don't hesitate to contact us.</p>
             <p style="margin: 0 0 16px 0; font-size: 16px; line-height: 1.6;">We look forward to having you on our team!</p>
             <p style="margin: 0; font-size: 16px; line-height: 1.6;">Best regards,<br><strong style="color: #003DA5; font-weight: 600;">CBOA Executive Board</strong></p>
