@@ -96,6 +96,28 @@ export default function MembersPage() {
   // Check if user has admin/executive access
   const hasAccess = user.role === 'admin' || user.role === 'executive'
 
+  // Only admins can modify user roles
+  const canModifyRoles = user.role === 'admin'
+
+  // Format role for display (capitalize first letter)
+  const formatRole = (role: string) => {
+    return role.charAt(0).toUpperCase() + role.slice(1)
+  }
+
+  // Get role badge color
+  const getRoleBadgeColor = (role: string) => {
+    switch (role) {
+      case 'admin':
+        return 'bg-red-100 dark:bg-red-900/40 text-red-800 dark:text-red-300'
+      case 'executive':
+        return 'bg-purple-100 dark:bg-purple-900/40 text-purple-800 dark:text-purple-300'
+      case 'evaluator':
+        return 'bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-300'
+      default:
+        return 'bg-blue-100 dark:bg-blue-900/40 text-blue-800 dark:text-blue-300'
+    }
+  }
+
   useEffect(() => {
     if (hasAccess) {
       loadMembers()
@@ -1065,6 +1087,26 @@ export default function MembersPage() {
                       </select>
                     ) : (
                       <p className="text-gray-900 dark:text-white">{selectedMember?.status || 'active'}</p>
+                    )}
+                  </div>
+
+                  <div>
+                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 block">Role</label>
+                    {isEditing && canModifyRoles ? (
+                      <select
+                        value={editForm.role || 'official'}
+                        onChange={(e) => setEditForm({ ...editForm, role: e.target.value })}
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500"
+                      >
+                        <option value="official">Official</option>
+                        <option value="evaluator">Evaluator</option>
+                        <option value="executive">Executive</option>
+                        <option value="admin">Admin</option>
+                      </select>
+                    ) : (
+                      <span className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${getRoleBadgeColor(selectedMember?.role || 'official')}`}>
+                        {formatRole(selectedMember?.role || 'official')}
+                      </span>
                     )}
                   </div>
                 </div>

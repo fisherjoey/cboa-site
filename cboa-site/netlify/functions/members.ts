@@ -384,6 +384,21 @@ export const handler: Handler = async (event) => {
 
         if (error) throw error
 
+        // If role was updated, sync to Supabase Auth user metadata
+        if (updates.role && data.user_id) {
+          try {
+            await supabase.auth.admin.updateUserById(data.user_id, {
+              app_metadata: { role: updates.role }
+            })
+            logger.info('crud', 'role_sync_success', `Synced role to auth for user ${data.user_id}`, {
+              metadata: { userId: data.user_id, newRole: updates.role }
+            })
+          } catch (authError) {
+            // Log but don't fail the request - members table was already updated
+            logger.error('crud', 'role_sync_failed', `Failed to sync role to auth for user ${data.user_id}`, authError instanceof Error ? authError : new Error(String(authError)))
+          }
+        }
+
         // Audit log
         await logger.audit('UPDATE', 'member', id, {
           actorId: data.user_id || 'system',

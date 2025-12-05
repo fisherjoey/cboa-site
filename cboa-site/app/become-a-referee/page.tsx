@@ -125,14 +125,16 @@ export default function BecomeARefereePage() {
           </p>
           <div className="max-w-2xl mx-auto">
             <Card>
-              {/* Google Form for Referee Applications */}
+              {/* Microsoft Form for Referee Applications */}
               <iframe
-                src="https://docs.google.com/forms/d/e/1FAIpQLSdQoZbLh6hS5WSJev2Jxt7Pzkjie_le3Zx1VzgNOa0plgsQ3w/viewform?embedded=true"
+                src="https://forms.office.com/r/f035RNeGpN?embed=true"
                 width="100%"
                 height="1400"
                 frameBorder="0"
                 marginHeight={0}
                 marginWidth={0}
+                style={{ border: 'none', maxWidth: '100%', maxHeight: '100vh' }}
+                allowFullScreen
               >
                 Loading…
               </iframe>
