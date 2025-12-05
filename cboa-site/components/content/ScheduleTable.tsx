@@ -23,7 +23,7 @@ export default function ScheduleTable({ games, showOfficials = true }: ScheduleT
       case 'cancelled':
         return 'text-red-600'
       default:
-        return 'text-blue-600'
+        return 'text-blue-400'
     }
   }
   

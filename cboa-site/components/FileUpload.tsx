@@ -112,8 +112,8 @@ export default function FileUpload({
         {selectedFile && showFileName ? (
           // File selected state
           <div className="flex items-center gap-3">
-            <div className="flex-shrink-0 w-10 h-10 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center">
-              <IconFile className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+            <div className="flex-shrink-0 w-10 h-10 bg-blue-900/30 rounded-lg flex items-center justify-center">
+              <IconFile className="h-5 w-5 text-blue-400" />
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium text-gray-900 dark:text-white truncate">

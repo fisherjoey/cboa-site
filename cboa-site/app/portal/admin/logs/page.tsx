@@ -196,7 +196,7 @@ export default function AdminLogsPage() {
           const config = {
             ERROR: { icon: IconAlertCircle, color: 'text-red-600 bg-red-100 dark:text-red-400 dark:bg-red-900/40' },
             WARN: { icon: IconAlertTriangle, color: 'text-yellow-600 bg-yellow-100 dark:text-yellow-400 dark:bg-yellow-900/40' },
-            INFO: { icon: IconInfoCircle, color: 'text-blue-600 bg-blue-100 dark:text-blue-400 dark:bg-blue-900/40' },
+            INFO: { icon: IconInfoCircle, color: 'text-blue-400 bg-blue-900/40 text-blue-400' },
           }[level] || { icon: IconInfoCircle, color: 'text-gray-600 bg-gray-100 dark:text-gray-400 dark:bg-gray-700' }
           const Icon = config.icon
           return (
@@ -281,7 +281,7 @@ export default function AdminLogsPage() {
           const action = getValue() as string
           const colors: Record<string, string> = {
             CREATE: 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-400',
-            UPDATE: 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-400',
+            UPDATE: 'bg-blue-900/40 text-blue-400',
             DELETE: 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400',
             LOGIN: 'bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-400',
             INVITE: 'bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-400',
@@ -389,7 +389,7 @@ export default function AdminLogsPage() {
           onClick={() => setActiveTab('app')}
           className={`px-4 py-2 font-medium border-b-2 transition-colors ${
             activeTab === 'app'
-              ? 'border-blue-600 text-blue-600 dark:border-blue-400 dark:text-blue-400'
+              ? 'border-blue-400 text-blue-400'
               : 'border-transparent text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200'
           }`}
         >
@@ -399,7 +399,7 @@ export default function AdminLogsPage() {
           onClick={() => setActiveTab('audit')}
           className={`px-4 py-2 font-medium border-b-2 transition-colors ${
             activeTab === 'audit'
-              ? 'border-blue-600 text-blue-600 dark:border-blue-400 dark:text-blue-400'
+              ? 'border-blue-400 text-blue-400'
               : 'border-transparent text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200'
           }`}
         >
@@ -427,7 +427,7 @@ export default function AdminLogsPage() {
             onClick={() => setShowFilters(!showFilters)}
             className={`flex items-center gap-2 px-3 py-2 border rounded-lg text-sm ${
               hasActiveFilters
-                ? 'bg-blue-50 dark:bg-blue-900/30 border-blue-300 dark:border-blue-700 text-blue-700 dark:text-blue-300'
+                ? 'bg-blue-900/30 border-blue-700 text-blue-400'
                 : 'border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
             }`}
           >

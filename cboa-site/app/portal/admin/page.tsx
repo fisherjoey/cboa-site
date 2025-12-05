@@ -71,7 +71,7 @@ export default function PortalAdmin() {
                   <Link
                     key={linkIdx}
                     href={link.href}
-                    className="flex items-center justify-between text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 py-1"
+                    className="flex items-center justify-between text-sm text-blue-400 hover:text-blue-300 py-1"
                   >
                     <span className="flex items-center gap-2">
                       {link.icon && <link.icon className="h-4 w-4" />}
@@ -87,9 +87,9 @@ export default function PortalAdmin() {
       </div>
 
       {/* Role-based Access Info */}
-      <div className="mt-8 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
-        <h3 className="font-semibold text-blue-900 dark:text-blue-300 mb-2">Access Levels</h3>
-        <div className="text-sm text-blue-700 dark:text-blue-400 space-y-1">
+      <div className="mt-8 p-4 bg-blue-900/20 border border-blue-800 rounded-lg">
+        <h3 className="font-semibold text-blue-400 mb-2">Access Levels</h3>
+        <div className="text-sm text-blue-400 space-y-1">
           <p>• <strong>Executives:</strong> Can create and edit public website content</p>
           <p>• <strong>Admins:</strong> Full access to all content and system logs</p>
         </div>

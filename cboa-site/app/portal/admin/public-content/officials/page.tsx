@@ -637,14 +637,14 @@ export default function PublicOfficialsAdmin() {
                           )}
                           {official.email && (
                             <p className="text-sm text-gray-600 mt-1">
-                              <a href={`mailto:${official.email}`} className="text-blue-600 hover:text-blue-700">
+                              <a href={`mailto:${official.email}`} className="text-blue-400 hover:text-blue-700">
                                 {official.email}
                               </a>
                             </p>
                           )}
                           {official.phone && (
                             <p className="text-sm text-gray-600">
-                              <a href={`tel:${official.phone}`} className="text-blue-600 hover:text-blue-700">
+                              <a href={`tel:${official.phone}`} className="text-blue-400 hover:text-blue-700">
                                 {official.phone}
                               </a>
                             </p>

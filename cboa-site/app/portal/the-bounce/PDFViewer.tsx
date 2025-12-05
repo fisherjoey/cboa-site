@@ -83,7 +83,7 @@ export default function PDFViewer({ pdfUrl, title, onClose }: PDFViewerProps) {
             <a
               href={pdfUrl}
               download
-              className="p-2 text-blue-600 hover:text-blue-800 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded"
+              className="p-2 text-blue-400 hover:text-blue-300 hover:bg-blue-900/20 rounded"
               title="Download"
             >
               <IconDownload className="h-5 w-5" />
@@ -92,7 +92,7 @@ export default function PDFViewer({ pdfUrl, title, onClose }: PDFViewerProps) {
               href={pdfUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="p-2 text-blue-600 hover:text-blue-800 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded"
+              className="p-2 text-blue-400 hover:text-blue-300 hover:bg-blue-900/20 rounded"
               title="Open in new tab"
             >
               <IconExternalLink className="h-5 w-5" />

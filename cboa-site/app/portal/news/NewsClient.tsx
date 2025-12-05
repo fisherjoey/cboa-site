@@ -710,7 +710,7 @@ export default function NewsClient({ initialAnnouncements }: NewsClientProps) {
                     <div className="flex gap-2 sm:ml-4">
                       <button
                         onClick={() => startEditing(announcement)}
-                        className="text-blue-600 hover:text-blue-800"
+                        className="text-blue-400 hover:text-blue-800"
                       >
                         <IconEdit className="h-5 w-5" />
                       </button>
@@ -744,9 +744,9 @@ export default function NewsClient({ initialAnnouncements }: NewsClientProps) {
       )}
 
       {/* Subscription Notice */}
-      <div className="mt-8 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
-        <h3 className="text-sm font-medium text-blue-900 dark:text-blue-300 mb-2">Stay Updated</h3>
-        <p className="text-sm text-blue-700 dark:text-blue-400">
+      <div className="mt-8 p-4 bg-blue-900/20 rounded-lg border border-blue-800">
+        <h3 className="text-sm font-medium text-blue-400 mb-2">Stay Updated</h3>
+        <p className="text-sm text-blue-400">
           Important announcements are also sent via email. Make sure your contact information is up to date.
         </p>
       </div>

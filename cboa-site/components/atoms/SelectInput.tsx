@@ -78,7 +78,7 @@ export default function SelectInput({
     'bg-white dark:bg-gray-800',
     error
       ? 'border-red-500 focus:ring-red-500 dark:border-red-400'
-      : 'border-gray-300 dark:border-gray-600 focus:ring-blue-500 dark:focus:ring-blue-400',
+      : 'border-gray-300 dark:border-gray-600 focus:ring-blue-400',
     disabled
       ? 'cursor-not-allowed opacity-60 bg-gray-50 dark:bg-gray-900'
       : 'hover:border-gray-400 dark:hover:border-gray-500',
@@ -128,7 +128,7 @@ export default function SelectInput({
                   value=""
                   className={({ active }) =>
                     `relative cursor-pointer select-none py-2 pl-10 pr-4 ${
-                      active ? 'bg-blue-100 dark:bg-blue-900/40 text-blue-900 dark:text-blue-100' : 'text-gray-500 dark:text-gray-400'
+                      active ? 'bg-blue-900/40 text-blue-100' : 'text-gray-500 dark:text-gray-400'
                     }`
                   }
                 >
@@ -138,7 +138,7 @@ export default function SelectInput({
                         {placeholder}
                       </span>
                       {selected && (
-                        <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-blue-600 dark:text-blue-400">
+                        <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-blue-400">
                           <CheckIcon className="h-5 w-5" aria-hidden="true" />
                         </span>
                       )}
@@ -160,7 +160,7 @@ export default function SelectInput({
                         value={option.value}
                         className={({ active }) =>
                           `relative cursor-pointer select-none py-2 pl-10 pr-4 ${
-                            active ? 'bg-blue-100 dark:bg-blue-900/40 text-blue-900 dark:text-blue-100' : 'text-gray-900 dark:text-gray-100'
+                            active ? 'bg-blue-900/40 text-blue-100' : 'text-gray-900 dark:text-gray-100'
                           }`
                         }
                       >
@@ -170,7 +170,7 @@ export default function SelectInput({
                               {option.label}
                             </span>
                             {selected && (
-                              <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-blue-600 dark:text-blue-400">
+                              <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-blue-400">
                                 <CheckIcon className="h-5 w-5" aria-hidden="true" />
                               </span>
                             )}
@@ -188,7 +188,7 @@ export default function SelectInput({
                     value={option.value}
                     className={({ active }) =>
                       `relative cursor-pointer select-none py-2 pl-10 pr-4 ${
-                        active ? 'bg-blue-100 dark:bg-blue-900/40 text-blue-900 dark:text-blue-100' : 'text-gray-900 dark:text-gray-100'
+                        active ? 'bg-blue-900/40 text-blue-100' : 'text-gray-900 dark:text-gray-100'
                       }`
                     }
                   >
@@ -198,7 +198,7 @@ export default function SelectInput({
                           {option.label}
                         </span>
                         {selected && (
-                          <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-blue-600 dark:text-blue-400">
+                          <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-blue-400">
                             <CheckIcon className="h-5 w-5" aria-hidden="true" />
                           </span>
                         )}

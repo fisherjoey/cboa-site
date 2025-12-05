@@ -307,8 +307,8 @@ function StatCard({ label, value, icon: Icon, subtext }: {
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 sm:p-6">
       <div className="flex items-center gap-3">
         {Icon && (
-          <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
-            <Icon className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+          <div className="p-2 bg-blue-900/30 rounded-lg">
+            <Icon className="h-6 w-6 text-blue-400" />
           </div>
         )}
         <div>
@@ -511,7 +511,7 @@ export default function StatisticsClient() {
           {data.tournaments.byCategory.map((cat) => (
             <div key={cat.name} className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3">
               <p className="text-sm font-medium text-gray-900 dark:text-white">{cat.name}</p>
-              <p className="text-xl font-bold text-blue-600 dark:text-blue-400">{cat.count}</p>
+              <p className="text-xl font-bold text-blue-400">{cat.count}</p>
               <p className="text-xs text-gray-500 dark:text-gray-400">{cat.games} games</p>
             </div>
           ))}

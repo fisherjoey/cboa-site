@@ -352,7 +352,7 @@ export default function EvaluationsPage() {
               >
                 <IconUser className="h-5 w-5" />
                 All Member Evaluations
-                <span className="ml-2 px-2 py-0.5 text-xs rounded-full bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400">
+                <span className="ml-2 px-2 py-0.5 text-xs rounded-full bg-blue-900/40 text-blue-400">
                   {evaluations.length}
                 </span>
               </button>
@@ -416,7 +416,7 @@ export default function EvaluationsPage() {
                             href={evaluation.file_url}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="p-2 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded"
+                            className="p-2 text-blue-400 hover:bg-blue-900/30 rounded"
                             title="View PDF"
                           >
                             <IconExternalLink className="h-5 w-5" />
@@ -474,14 +474,14 @@ export default function EvaluationsPage() {
                           <IconChevronDown
                             className={`h-5 w-5 text-gray-400 transition-transform duration-200 flex-shrink-0 ${open ? 'rotate-180' : ''}`}
                           />
-                          <div className="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900/40 flex items-center justify-center flex-shrink-0">
-                            <IconUser className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                          <div className="w-10 h-10 rounded-full bg-blue-900/40 flex items-center justify-center flex-shrink-0">
+                            <IconUser className="h-5 w-5 text-blue-400" />
                           </div>
                           <div className="flex-1 min-w-0 text-left">
                             <h3 className="font-semibold text-gray-900 dark:text-white">{group.memberName}</h3>
                             <p className="text-sm text-gray-500 dark:text-gray-400">{group.memberEmail}</p>
                           </div>
-                          <span className="px-2 py-1 text-xs font-medium bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 rounded-full flex-shrink-0">
+                          <span className="px-2 py-1 text-xs font-medium bg-blue-900/40 text-blue-400 rounded-full flex-shrink-0">
                             {group.evaluations.length} evaluation{group.evaluations.length !== 1 ? 's' : ''}
                           </span>
                         </div>
@@ -521,7 +521,7 @@ export default function EvaluationsPage() {
                                       href={evaluation.file_url}
                                       target="_blank"
                                       rel="noopener noreferrer"
-                                      className="p-2 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded"
+                                      className="p-2 text-blue-400 hover:bg-blue-900/30 rounded"
                                       title="View PDF"
                                     >
                                       <IconExternalLink className="h-5 w-5" />
@@ -569,8 +569,8 @@ export default function EvaluationsPage() {
             >
               <div className="flex items-start gap-4">
                 {/* Icon */}
-                <div className="w-12 h-12 rounded-lg bg-blue-100 dark:bg-blue-900/40 flex items-center justify-center flex-shrink-0">
-                  <IconFile className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+                <div className="w-12 h-12 rounded-lg bg-blue-900/40 flex items-center justify-center flex-shrink-0">
+                  <IconFile className="h-6 w-6 text-blue-400" />
                 </div>
 
                 {/* Content */}
@@ -586,7 +586,7 @@ export default function EvaluationsPage() {
                         href={evaluation.file_url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="p-2 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded"
+                        className="p-2 text-blue-400 hover:bg-blue-900/30 rounded"
                         title="View PDF"
                       >
                         <IconExternalLink className="h-5 w-5" />

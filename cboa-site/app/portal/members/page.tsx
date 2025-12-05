@@ -124,7 +124,7 @@ export default function MembersPage() {
       case 'evaluator':
         return 'bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-300'
       default:
-        return 'bg-blue-100 dark:bg-blue-900/40 text-blue-800 dark:text-blue-300'
+        return 'bg-blue-900/40 text-blue-400'
     }
   }
 
@@ -500,7 +500,7 @@ export default function MembersPage() {
       header: 'NOCP Level',
       cell: ({ row }) => (
         row.original.certification_level ? (
-          <span className="px-2 py-1 text-xs bg-blue-100 dark:bg-blue-900/40 text-blue-800 dark:text-blue-300 rounded-full">
+          <span className="px-2 py-1 text-xs bg-blue-900/40 text-blue-400 rounded-full">
             {row.original.certification_level}
           </span>
         ) : <span className="text-gray-400 dark:text-gray-500">-</span>
@@ -873,8 +873,8 @@ export default function MembersPage() {
                 className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4 hover:shadow-lg transition-shadow cursor-pointer"
               >
                 <div className="flex items-start gap-3">
-                  <div className="bg-blue-100 dark:bg-blue-900/40 p-3 rounded-full">
-                    <IconUser size={24} className="text-blue-600 dark:text-blue-400" />
+                  <div className="bg-blue-900/40 p-3 rounded-full">
+                    <IconUser size={24} className="text-blue-400" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <h3 className="font-semibold text-gray-900 dark:text-white truncate">{member.name}</h3>
@@ -891,7 +891,7 @@ export default function MembersPage() {
                         {member.status || 'active'}
                       </span>
                       {member.certification_level && (
-                        <span className="px-2 py-1 text-xs bg-blue-100 dark:bg-blue-900/40 text-blue-800 dark:text-blue-300 rounded-full">
+                        <span className="px-2 py-1 text-xs bg-blue-900/40 text-blue-400 rounded-full">
                           {member.certification_level}
                         </span>
                       )}
@@ -1487,7 +1487,7 @@ export default function MembersPage() {
               <button
                 onClick={() => handleSyncAll(true)}
                 disabled={syncing || loadingIdentityUsers}
-                className="flex items-center gap-2 px-3 py-1.5 text-sm bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 rounded-lg hover:bg-blue-200 dark:hover:bg-blue-900/60 disabled:opacity-50"
+                className="flex items-center gap-2 px-3 py-1.5 text-sm bg-blue-900/40 text-blue-400 rounded-lg hover:bg-blue-900/60 disabled:opacity-50"
               >
                 <IconRefresh size={16} className={syncing ? 'animate-spin' : ''} />
                 Preview Sync
@@ -1553,7 +1553,7 @@ export default function MembersPage() {
                           </span>
                         )}
                         {inMembers && (
-                          <span className="px-2 py-0.5 text-xs bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 rounded-full">
+                          <span className="px-2 py-0.5 text-xs bg-blue-900/40 text-blue-400 rounded-full">
                             In Members
                           </span>
                         )}

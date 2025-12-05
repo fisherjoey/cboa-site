@@ -488,7 +488,7 @@ export default function ResourcesClient() {
       case 'video': return { icon: IconVideo, bg: 'bg-red-100', color: 'text-red-600' }
       case 'link': return { icon: IconLink, bg: 'bg-green-100', color: 'text-green-600' }
       case 'text': return { icon: IconArticle, bg: 'bg-purple-100', color: 'text-purple-600' }
-      default: return { icon: IconFile, bg: 'bg-blue-100', color: 'text-blue-600' }
+      default: return { icon: IconFile, bg: 'bg-blue-100', color: 'text-blue-400' }
     }
   }
 
@@ -713,7 +713,7 @@ export default function ResourcesClient() {
               </a>
             )}
             {resource.externalLink && (
-              <a href={resource.externalLink} target="_blank" rel="noopener noreferrer" className="p-1.5 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded" title="Open in new tab">
+              <a href={resource.externalLink} target="_blank" rel="noopener noreferrer" className="p-1.5 text-blue-400 hover:bg-blue-900/30 rounded" title="Open in new tab">
                 <IconExternalLink className="h-4 w-4" />
               </a>
             )}
@@ -772,7 +772,7 @@ export default function ResourcesClient() {
               </a>
             )}
             {resource.externalLink && (
-              <a href={resource.externalLink} target="_blank" rel="noopener noreferrer" className="p-1.5 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded" title="Open in new tab">
+              <a href={resource.externalLink} target="_blank" rel="noopener noreferrer" className="p-1.5 text-blue-400 hover:bg-blue-900/30 rounded" title="Open in new tab">
                 <IconExternalLink className="h-4 w-4" />
               </a>
             )}
@@ -820,7 +820,7 @@ export default function ResourcesClient() {
                 <span>{formatDate(resource.lastUpdated)}</span>
                 {resource.fileSize && <span>{resource.fileSize}</span>}
                 {resource.accessLevel && resource.accessLevel !== 'all' && (
-                  <span className="bg-blue-100 dark:bg-blue-900/40 text-blue-800 dark:text-blue-300 px-2 py-0.5 rounded">{resource.accessLevel}</span>
+                  <span className="bg-blue-900/40 text-blue-400 px-2 py-0.5 rounded">{resource.accessLevel}</span>
                 )}
               </div>
             </div>
@@ -831,7 +831,7 @@ export default function ResourcesClient() {
                 </a>
               )}
               {resource.externalLink && (
-                <a href={resource.externalLink} target="_blank" rel="noopener noreferrer" className="p-2 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded" title="Open in new tab">
+                <a href={resource.externalLink} target="_blank" rel="noopener noreferrer" className="p-2 text-blue-400 hover:bg-blue-900/30 rounded" title="Open in new tab">
                   <IconExternalLink className="h-5 w-5" />
                 </a>
               )}
@@ -1307,7 +1307,7 @@ export default function ResourcesClient() {
                           href={resource.externalLink}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="p-2 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded"
+                          className="p-2 text-blue-400 hover:bg-blue-900/30 rounded"
                           title="Open in new tab"
                         >
                           <IconExternalLink className="h-5 w-5" />

@@ -124,12 +124,12 @@ export default function PublicPagesAdmin() {
       </div>
 
       {/* Info Alert */}
-      <div className="mb-6 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+      <div className="mb-6 bg-blue-900/20 border border-blue-800 rounded-lg p-4">
         <div className="flex items-start gap-3">
-          <IconInfoCircle className="h-5 w-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
+          <IconInfoCircle className="h-5 w-5 text-blue-400 flex-shrink-0 mt-0.5" />
           <div className="flex-1">
-            <h3 className="text-sm font-semibold text-blue-900 dark:text-blue-300">About Page Content</h3>
-            <p className="mt-1 text-sm text-blue-700 dark:text-blue-400">
+            <h3 className="text-sm font-semibold text-blue-400">About Page Content</h3>
+            <p className="mt-1 text-sm text-blue-400">
               These are the core pages of your website. The content you add here will be displayed on the public-facing pages.
               Changes are reflected immediately after saving.
             </p>

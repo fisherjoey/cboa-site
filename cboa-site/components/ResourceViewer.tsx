@@ -384,7 +384,7 @@ export default function ResourceViewer({ resource, onClose }: ResourceViewerProp
               <a
                 href={resource.fileUrl}
                 download
-                className="p-2 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded"
+                className="p-2 text-blue-400 hover:text-blue-800 hover:bg-blue-50 rounded"
                 title="Download"
               >
                 <IconDownload className="h-5 w-5" />
@@ -395,7 +395,7 @@ export default function ResourceViewer({ resource, onClose }: ResourceViewerProp
                 href={resource.externalLink}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="p-2 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded"
+                className="p-2 text-blue-400 hover:text-blue-800 hover:bg-blue-50 rounded"
                 title="Open in new tab"
               >
                 <IconExternalLink className="h-5 w-5" />

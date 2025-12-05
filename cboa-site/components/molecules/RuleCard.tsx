@@ -33,7 +33,7 @@ export default function RuleCard({
             {onEdit && (
               <button
                 onClick={onEdit}
-                className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+                className="text-blue-400 hover:text-blue-800 text-sm font-medium"
                 aria-label={`Edit ${rule.title}`}
               >
                 Edit

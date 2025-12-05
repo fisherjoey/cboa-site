@@ -450,14 +450,35 @@ export const handler: Handler = async (event) => {
         if (error) throw error
 
         // Also delete the auth user if they have one
+        // First try by user_id, then fallback to email lookup
+        let authUserDeleted = false
+
         if (member?.user_id) {
           try {
             await supabase.auth.admin.deleteUser(member.user_id)
+            authUserDeleted = true
             logger.info('crud', 'delete_member_auth_deleted', `Auth user deleted for member ${id}`, {
               metadata: { memberId: id, userId: member.user_id }
             })
           } catch (authErr) {
-            logger.error('crud', 'delete_member_auth_failed', 'Failed to delete auth user', authErr instanceof Error ? authErr : new Error(String(authErr)))
+            logger.error('crud', 'delete_member_auth_failed', 'Failed to delete auth user by user_id', authErr instanceof Error ? authErr : new Error(String(authErr)))
+          }
+        }
+
+        // If user_id was null or deletion failed, try to find auth user by email
+        if (!authUserDeleted && member?.email) {
+          try {
+            const { data: authData } = await supabase.auth.admin.listUsers()
+            const authUser = authData?.users?.find((u: any) => u.email?.toLowerCase() === member.email.toLowerCase())
+
+            if (authUser) {
+              await supabase.auth.admin.deleteUser(authUser.id)
+              logger.info('crud', 'delete_member_auth_deleted_by_email', `Auth user deleted by email lookup for member ${id}`, {
+                metadata: { memberId: id, userId: authUser.id, email: member.email }
+              })
+            }
+          } catch (authErr) {
+            logger.error('crud', 'delete_member_auth_email_lookup_failed', 'Failed to delete auth user by email', authErr instanceof Error ? authErr : new Error(String(authErr)))
             // Continue - member is deleted, auth cleanup failed
           }
         }

@@ -633,7 +633,7 @@ export default function PublicNewsAdmin() {
                           {article.tags && article.tags.length > 0 && (
                             <div className="flex flex-wrap gap-1 mt-2">
                               {article.tags.map((tag, idx) => (
-                                <span key={idx} className="px-2 py-0.5 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded text-xs">
+                                <span key={idx} className="px-2 py-0.5 bg-blue-900/30 text-blue-400 rounded text-xs">
                                   {tag}
                                 </span>
                               ))}

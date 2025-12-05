@@ -128,8 +128,8 @@ export default function ResourceThumbnail({ resource, size = 'medium', onClick }
       break
     case 'word':
       Icon = IconFileTypeDoc
-      bgColor = 'bg-blue-50 dark:bg-blue-900/60'
-      iconColor = 'text-blue-600 dark:text-blue-300'
+      bgColor = 'bg-blue-900/60'
+      iconColor = 'text-blue-400'
       break
     case 'excel':
       Icon = IconFileTypeXls
@@ -158,8 +158,8 @@ export default function ResourceThumbnail({ resource, size = 'medium', onClick }
       break
     case 'vimeo':
       Icon = IconBrandVimeo
-      bgColor = 'bg-blue-50 dark:bg-blue-900/60'
-      iconColor = 'text-blue-600 dark:text-blue-300'
+      bgColor = 'bg-blue-900/60'
+      iconColor = 'text-blue-400'
       break
     case 'website':
       Icon = IconWorld

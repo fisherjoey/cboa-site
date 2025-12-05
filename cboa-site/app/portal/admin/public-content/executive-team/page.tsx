@@ -467,7 +467,7 @@ export default function ExecutiveTeamAdmin() {
                           </p>
                           <p className="text-sm text-gray-600 dark:text-gray-400 mt-1 flex items-center gap-1">
                             <IconMail className="h-4 w-4" />
-                            <a href={`mailto:${member.email}`} className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300">
+                            <a href={`mailto:${member.email}`} className="text-blue-400 hover:text-blue-300">
                               {member.email}
                             </a>
                           </p>
