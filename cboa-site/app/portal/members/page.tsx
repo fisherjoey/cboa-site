@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useRole } from '@/contexts/RoleContext'
 import { membersAPI, memberActivitiesAPI, identityAPI, type IdentityStatus } from '@/lib/api'
-import { IconUser, IconSearch, IconPlus, IconEdit, IconTrash, IconCalendar, IconX, IconCheck, IconFilter, IconMail, IconMailForward, IconCircleCheck, IconClock, IconUsers, IconUserPlus, IconRefresh, IconLayoutGrid, IconTable } from '@tabler/icons-react'
+import { IconUser, IconSearch, IconPlus, IconEdit, IconTrash, IconCalendar, IconX, IconCheck, IconFilter, IconMail, IconMailForward, IconCircleCheck, IconClock, IconUsers, IconUserPlus, IconRefresh, IconLayoutGrid, IconTable, IconUsersPlus, IconLoader2, IconAlertCircle } from '@tabler/icons-react'
 import type { IdentityUser } from '@/lib/api'
 import Modal from '@/components/ui/Modal'
 import { useToast } from '@/hooks/useToast'
@@ -92,6 +92,16 @@ export default function MembersPage() {
   const [loadingIdentityUsers, setLoadingIdentityUsers] = useState(false)
   const [importingUser, setImportingUser] = useState<string | null>(null)
   const [syncing, setSyncing] = useState(false)
+
+  // Bulk add members state
+  const [showBulkAddModal, setShowBulkAddModal] = useState(false)
+  const [bulkEmails, setBulkEmails] = useState('')
+  const [bulkAddProgress, setBulkAddProgress] = useState<{
+    total: number
+    processed: number
+    results: Array<{ email: string; success: boolean; message: string }>
+  } | null>(null)
+  const [isBulkAdding, setIsBulkAdding] = useState(false)
 
   // Check if user has admin/executive access
   const hasAccess = user.role === 'admin' || user.role === 'executive'
@@ -305,6 +315,112 @@ export default function MembersPage() {
     } else {
       warning(`Imported ${imported} users, ${failed} failed`)
     }
+  }
+
+  // Handle bulk add members
+  const handleBulkAddMembers = async () => {
+    // Parse emails from textarea (one per line, handle commas too)
+    const emailLines = bulkEmails
+      .split(/[\n,]/)
+      .map(e => e.trim().toLowerCase())
+      .filter(e => e.length > 0)
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    const validEmails = emailLines.filter(e => emailRegex.test(e))
+    const invalidEmails = emailLines.filter(e => !emailRegex.test(e))
+
+    if (validEmails.length === 0) {
+      error('No valid email addresses found')
+      return
+    }
+
+    // Remove duplicates
+    const uniqueEmails = [...new Set(validEmails)]
+
+    // Check for existing members
+    const existingEmails = members.map(m => m.email.toLowerCase())
+    const newEmails = uniqueEmails.filter(e => !existingEmails.includes(e))
+    const duplicateCount = uniqueEmails.length - newEmails.length
+
+    if (newEmails.length === 0) {
+      error('All email addresses already exist in the members list')
+      return
+    }
+
+    setIsBulkAdding(true)
+    setBulkAddProgress({
+      total: newEmails.length,
+      processed: 0,
+      results: []
+    })
+
+    const results: Array<{ email: string; success: boolean; message: string }> = []
+
+    // Add invalid emails to results
+    for (const email of invalidEmails) {
+      results.push({ email, success: false, message: 'Invalid email format' })
+    }
+
+    // Process each email
+    for (let i = 0; i < newEmails.length; i++) {
+      const email = newEmails[i]
+      try {
+        // Create member with just email - they'll fill in name via complete-profile
+        const result = await membersAPI.create({
+          email,
+          name: email.split('@')[0], // Temporary name from email prefix
+          status: 'active',
+          role: 'official'
+        })
+
+        if (result.inviteSent) {
+          results.push({ email, success: true, message: 'Created & invite sent' })
+        } else if (result.user_id) {
+          results.push({ email, success: true, message: 'Created & linked to existing account' })
+        } else {
+          results.push({ email, success: true, message: 'Created (invite pending)' })
+        }
+      } catch (err: any) {
+        const errorMsg = parseAPIError(err)
+        results.push({ email, success: false, message: errorMsg })
+      }
+
+      setBulkAddProgress({
+        total: newEmails.length,
+        processed: i + 1,
+        results: [...results]
+      })
+    }
+
+    setIsBulkAdding(false)
+
+    // Summary
+    const successCount = results.filter(r => r.success).length
+    const failCount = results.filter(r => !r.success).length
+
+    if (failCount === 0) {
+      success(`Successfully added ${successCount} member${successCount > 1 ? 's' : ''}`)
+    } else if (successCount === 0) {
+      error(`Failed to add all ${failCount} member${failCount > 1 ? 's' : ''}`)
+    } else {
+      warning(`Added ${successCount} member${successCount > 1 ? 's' : ''}, ${failCount} failed`)
+    }
+
+    if (duplicateCount > 0) {
+      info(`${duplicateCount} email${duplicateCount > 1 ? 's were' : ' was'} already in the members list`)
+    }
+
+    // Refresh members list
+    await loadMembers()
+  }
+
+  // Reset bulk add modal
+  const handleCloseBulkAddModal = () => {
+    setShowBulkAddModal(false)
+    setBulkEmails('')
+    setBulkAddProgress(null)
+    setIsBulkAdding(false)
   }
 
   // Sync all members and auth users
@@ -671,6 +787,13 @@ export default function MembersPage() {
             >
               <IconUsers size={20} />
               Portal Users
+            </button>
+            <button
+              onClick={() => setShowBulkAddModal(true)}
+              className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors"
+            >
+              <IconUsersPlus size={20} />
+              Bulk Add
             </button>
             <button
               onClick={handleAddMember}
@@ -1483,6 +1606,153 @@ export default function MembersPage() {
                 )
               })}
             </div>
+          )}
+        </div>
+      </Modal>
+
+      {/* Bulk Add Members Modal */}
+      <Modal
+        isOpen={showBulkAddModal}
+        onClose={handleCloseBulkAddModal}
+        title="Bulk Add Members"
+        size="lg"
+      >
+        <div className="space-y-4">
+          {!bulkAddProgress ? (
+            <>
+              <p className="text-gray-600 dark:text-gray-400">
+                Enter email addresses below (one per line or comma-separated). Each member will receive an invite to set up their account and complete their profile.
+              </p>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Email Addresses
+                </label>
+                <textarea
+                  value={bulkEmails}
+                  onChange={(e) => setBulkEmails(e.target.value)}
+                  rows={10}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 font-mono text-sm"
+                  placeholder="john@example.com&#10;jane@example.com&#10;bob@example.com"
+                  disabled={isBulkAdding}
+                />
+                <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                  {bulkEmails.split(/[\n,]/).filter(e => e.trim()).length} email(s) entered
+                </p>
+              </div>
+
+              <div className="flex gap-3 justify-end pt-4 border-t border-gray-200 dark:border-gray-700">
+                <button
+                  onClick={handleCloseBulkAddModal}
+                  className="px-4 py-2 bg-gray-500 dark:bg-gray-600 text-white rounded-lg hover:bg-gray-600 dark:hover:bg-gray-500"
+                  disabled={isBulkAdding}
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleBulkAddMembers}
+                  disabled={isBulkAdding || !bulkEmails.trim()}
+                  className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 disabled:opacity-50"
+                >
+                  {isBulkAdding ? (
+                    <>
+                      <IconLoader2 size={20} className="animate-spin" />
+                      Processing...
+                    </>
+                  ) : (
+                    <>
+                      <IconUsersPlus size={20} />
+                      Add Members & Send Invites
+                    </>
+                  )}
+                </button>
+              </div>
+            </>
+          ) : (
+            <>
+              {/* Progress display */}
+              <div className="space-y-4">
+                {isBulkAdding && (
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-sm text-gray-600 dark:text-gray-400">
+                        Processing {bulkAddProgress.processed} of {bulkAddProgress.total}...
+                      </span>
+                      <span className="text-sm font-medium text-gray-900 dark:text-white">
+                        {Math.round((bulkAddProgress.processed / bulkAddProgress.total) * 100)}%
+                      </span>
+                    </div>
+                    <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                      <div
+                        className="bg-emerald-600 h-2 rounded-full transition-all duration-300"
+                        style={{ width: `${(bulkAddProgress.processed / bulkAddProgress.total) * 100}%` }}
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {!isBulkAdding && (
+                  <div className="text-center py-2">
+                    <p className="text-lg font-medium text-gray-900 dark:text-white">
+                      Processing Complete
+                    </p>
+                    <p className="text-gray-600 dark:text-gray-400">
+                      {bulkAddProgress.results.filter(r => r.success).length} successful, {bulkAddProgress.results.filter(r => !r.success).length} failed
+                    </p>
+                  </div>
+                )}
+
+                {/* Results list */}
+                <div className="max-h-80 overflow-y-auto space-y-2">
+                  {bulkAddProgress.results.map((result, index) => (
+                    <div
+                      key={index}
+                      className={`flex items-center justify-between p-3 rounded-lg ${
+                        result.success
+                          ? 'bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800'
+                          : 'bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2 min-w-0">
+                        {result.success ? (
+                          <IconCheck size={18} className="text-green-600 dark:text-green-400 flex-shrink-0" />
+                        ) : (
+                          <IconAlertCircle size={18} className="text-red-600 dark:text-red-400 flex-shrink-0" />
+                        )}
+                        <span className="text-gray-900 dark:text-white truncate">
+                          {result.email}
+                        </span>
+                      </div>
+                      <span className={`text-sm flex-shrink-0 ml-2 ${
+                        result.success ? 'text-green-700 dark:text-green-300' : 'text-red-700 dark:text-red-300'
+                      }`}>
+                        {result.message}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+
+                {!isBulkAdding && (
+                  <div className="flex gap-3 justify-end pt-4 border-t border-gray-200 dark:border-gray-700">
+                    <button
+                      onClick={() => {
+                        setBulkAddProgress(null)
+                        setBulkEmails('')
+                      }}
+                      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                    >
+                      Add More Members
+                    </button>
+                    <button
+                      onClick={handleCloseBulkAddModal}
+                      className="px-4 py-2 bg-gray-500 dark:bg-gray-600 text-white rounded-lg hover:bg-gray-600 dark:hover:bg-gray-500"
+                    >
+                      Close
+                    </button>
+                  </div>
+                )}
+              </div>
+            </>
           )}
         </div>
       </Modal>
