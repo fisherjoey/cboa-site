@@ -418,8 +418,16 @@ export const membersAPI = {
   },
 
   async resendInvite(member: { email: string; name: string; role?: string }) {
+    const token = await getAuthToken()
+    if (!token) {
+      throw new AppError('Not authenticated', 'AUTH_ERROR', 401)
+    }
+
     const res = await apiFetch(`${API_BASE}/supabase-auth-admin`, {
       method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`
+      },
       body: JSON.stringify({
         action: 'resend',
         email: member.email,
@@ -432,8 +440,16 @@ export const membersAPI = {
   },
 
   async sendPasswordReset(email: string) {
+    const token = await getAuthToken()
+    if (!token) {
+      throw new AppError('Not authenticated', 'AUTH_ERROR', 401)
+    }
+
     const res = await apiFetch(`${API_BASE}/supabase-auth-admin`, {
       method: 'PUT',
+      headers: {
+        'Authorization': `Bearer ${token}`
+      },
       body: JSON.stringify({
         action: 'reset_password',
         email
@@ -443,8 +459,16 @@ export const membersAPI = {
   },
 
   async resendPendingInvites() {
+    const token = await getAuthToken()
+    if (!token) {
+      throw new AppError('Not authenticated', 'AUTH_ERROR', 401)
+    }
+
     const res = await apiFetch(`${API_BASE}/supabase-auth-admin`, {
       method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`
+      },
       body: JSON.stringify({
         action: 'resend_pending'
       })
