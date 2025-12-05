@@ -65,14 +65,14 @@ export function TinyMCEEditor({
       color: #374151;
       background-color: #ffffff;
     }
-    h1 { color: #003DA5; font-size: 2.5rem; font-weight: bold; margin-top: 1.5rem; margin-bottom: 1rem; }
-    h2 { color: #003DA5; font-size: 1.875rem; font-weight: bold; margin-top: 1.25rem; margin-bottom: 0.875rem; }
-    h3 { color: #003DA5; font-size: 1.5rem; font-weight: 600; margin-top: 1rem; margin-bottom: 0.75rem; }
-    h4 { color: #003DA5; font-size: 1.25rem; font-weight: 600; margin-top: 0.875rem; margin-bottom: 0.625rem; }
+    h1 { color: #60a5fa; font-size: 2.5rem; font-weight: bold; margin-top: 1.5rem; margin-bottom: 1rem; }
+    h2 { color: #60a5fa; font-size: 1.875rem; font-weight: bold; margin-top: 1.25rem; margin-bottom: 0.875rem; }
+    h3 { color: #60a5fa; font-size: 1.5rem; font-weight: 600; margin-top: 1rem; margin-bottom: 0.75rem; }
+    h4 { color: #60a5fa; font-size: 1.25rem; font-weight: 600; margin-top: 0.875rem; margin-bottom: 0.625rem; }
     p { margin-bottom: 1rem; }
     a { color: #F97316; text-decoration: underline; }
-    a:hover { color: #003DA5; }
-    strong { color: #003DA5; font-weight: 600; }
+    a:hover { color: #60a5fa; }
+    strong { color: #60a5fa; font-weight: 600; }
     table { border-collapse: collapse; width: 100%; margin: 1.5rem 0; }
     th { background-color: #003DA5; color: white; font-weight: 600; padding: 0.75rem; text-align: left; }
     td { border: 1px solid #E5E7EB; padding: 0.75rem; }
