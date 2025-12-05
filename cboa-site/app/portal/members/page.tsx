@@ -2,9 +2,8 @@
 
 import { useState, useEffect, useMemo } from 'react'
 import { useRole } from '@/contexts/RoleContext'
-import { membersAPI, memberActivitiesAPI, identityAPI, type IdentityStatus } from '@/lib/api'
-import { IconUser, IconSearch, IconPlus, IconEdit, IconTrash, IconCalendar, IconX, IconCheck, IconFilter, IconMail, IconMailForward, IconCircleCheck, IconClock, IconUsers, IconUserPlus, IconRefresh, IconLayoutGrid, IconTable, IconUsersPlus, IconLoader2, IconAlertCircle } from '@tabler/icons-react'
-import type { IdentityUser } from '@/lib/api'
+import { membersAPI, memberActivitiesAPI } from '@/lib/api'
+import { IconUser, IconSearch, IconPlus, IconEdit, IconTrash, IconCalendar, IconX, IconCheck, IconFilter, IconLayoutGrid, IconTable, IconUsersPlus, IconLoader2, IconAlertCircle } from '@tabler/icons-react'
 import Modal from '@/components/ui/Modal'
 import { useToast } from '@/hooks/useToast'
 import {
@@ -56,6 +55,9 @@ export default function MembersPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState<string>('all')
+  const [roleFilter, setRoleFilter] = useState<string>('all')
+  const [certificationFilter, setCertificationFilter] = useState<string>('all')
+  const [cityFilter, setCityFilter] = useState<string>('all')
   const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid')
   const [selectedMember, setSelectedMember] = useState<Member | null>(null)
   const [memberActivities, setMemberActivities] = useState<Activity[]>([])
@@ -81,17 +83,6 @@ export default function MembersPage() {
   const [validationErrors, setValidationErrors] = useState<ValidationError[]>([])
   const [activityValidationErrors, setActivityValidationErrors] = useState<ValidationError[]>([])
 
-  // Identity integration state
-  const [identityStatusMap, setIdentityStatusMap] = useState<Record<string, IdentityStatus>>({})
-  const [loadingIdentityStatus, setLoadingIdentityStatus] = useState(false)
-  const [sendingInvite, setSendingInvite] = useState(false)
-
-  // Identity users modal state
-  const [showIdentityModal, setShowIdentityModal] = useState(false)
-  const [identityUsers, setIdentityUsers] = useState<IdentityUser[]>([])
-  const [loadingIdentityUsers, setLoadingIdentityUsers] = useState(false)
-  const [importingUser, setImportingUser] = useState<string | null>(null)
-  const [syncing, setSyncing] = useState(false)
 
   // Bulk add members state
   const [showBulkAddModal, setShowBulkAddModal] = useState(false)
@@ -136,15 +127,13 @@ export default function MembersPage() {
 
   useEffect(() => {
     filterMembers()
-  }, [members, searchQuery, statusFilter])
+  }, [members, searchQuery, statusFilter, roleFilter, certificationFilter, cityFilter])
 
   const loadMembers = async (forceRefresh: boolean = false) => {
     try {
       setIsLoading(true)
       const data = await membersAPI.getAll({ forceRefresh })
       setMembers(data)
-      // Load identity status for all members
-      loadIdentityStatus(data)
     } catch (err) {
       const errorMessage = parseAPIError(err)
       error(errorMessage)
@@ -153,169 +142,6 @@ export default function MembersPage() {
     }
   }
 
-  // Load identity status for all members
-  const loadIdentityStatus = async (membersList: Member[]) => {
-    try {
-      setLoadingIdentityStatus(true)
-      const identityUsers = await identityAPI.listUsers()
-
-      // Create a map of email -> identity status
-      const statusMap: Record<string, IdentityStatus> = {}
-      for (const member of membersList) {
-        const identityUser = identityUsers.find(
-          u => u.email.toLowerCase() === member.email.toLowerCase()
-        )
-        if (identityUser) {
-          statusMap[member.email.toLowerCase()] = {
-            exists: true,
-            id: identityUser.id,
-            email: identityUser.email,
-            name: identityUser.name,
-            confirmed: identityUser.confirmed,
-            confirmed_at: identityUser.confirmed_at,
-            invited_at: identityUser.invited_at,
-            last_sign_in_at: identityUser.last_sign_in_at,
-            has_logged_in: identityUser.has_logged_in,
-            roles: identityUser.roles
-          }
-        } else {
-          statusMap[member.email.toLowerCase()] = { exists: false }
-        }
-      }
-      setIdentityStatusMap(statusMap)
-    } catch (err) {
-      console.error('Failed to load identity status:', err)
-      // Don't show error to user - this is a non-critical feature
-    } finally {
-      setLoadingIdentityStatus(false)
-    }
-  }
-
-  // Get identity status for a member
-  const getIdentityStatus = (email: string): IdentityStatus | null => {
-    return identityStatusMap[email.toLowerCase()] || null
-  }
-
-  // Send invite to member
-  const handleSendInvite = async (member: Member) => {
-    try {
-      setSendingInvite(true)
-      const result = await identityAPI.sendInvite(member.email, member.name)
-      if (result.success) {
-        success(`Invite sent to ${member.email}`)
-        // Refresh identity status
-        loadIdentityStatus(members)
-      } else {
-        error(result.error || 'Failed to send invite')
-      }
-    } catch (err) {
-      const errorMessage = parseAPIError(err)
-      error(errorMessage)
-    } finally {
-      setSendingInvite(false)
-    }
-  }
-
-  // Resend invite to member
-  const handleResendInvite = async (member: Member) => {
-    try {
-      setSendingInvite(true)
-      const result = await identityAPI.resendInvite(member.email, member.name)
-      if (result.success) {
-        success(`Invite resent to ${member.email}`)
-        // Refresh identity status
-        loadIdentityStatus(members)
-      } else {
-        error(result.error || 'Failed to resend invite')
-      }
-    } catch (err) {
-      const errorMessage = parseAPIError(err)
-      error(errorMessage)
-    } finally {
-      setSendingInvite(false)
-    }
-  }
-
-  // Load all identity users
-  const loadIdentityUsers = async () => {
-    try {
-      setLoadingIdentityUsers(true)
-      const users = await identityAPI.listUsers()
-      setIdentityUsers(users)
-    } catch (err) {
-      const errorMessage = parseAPIError(err)
-      error(errorMessage)
-    } finally {
-      setLoadingIdentityUsers(false)
-    }
-  }
-
-  // Open identity users modal
-  const handleShowIdentityUsers = () => {
-    setShowIdentityModal(true)
-    loadIdentityUsers()
-  }
-
-  // Check if an identity user is already in members
-  const isIdentityUserInMembers = (email: string): boolean => {
-    return members.some(m => m.email.toLowerCase() === email.toLowerCase())
-  }
-
-  // Import identity user to members
-  const handleImportIdentityUser = async (identityUser: IdentityUser) => {
-    try {
-      setImportingUser(identityUser.email)
-      await membersAPI.create({
-        email: identityUser.email,
-        name: identityUser.name || identityUser.email.split('@')[0],
-        status: 'active',
-        role: 'official'
-      })
-      success(`Imported ${identityUser.email} to members`)
-      await loadMembers()
-    } catch (err) {
-      const errorMessage = parseAPIError(err)
-      error(errorMessage)
-    } finally {
-      setImportingUser(null)
-    }
-  }
-
-  // Import all identity users not in members
-  const handleImportAllIdentityUsers = async () => {
-    const usersToImport = identityUsers.filter(u => !isIdentityUserInMembers(u.email))
-    if (usersToImport.length === 0) {
-      info('All identity users are already in members')
-      return
-    }
-
-    let imported = 0
-    let failed = 0
-
-    for (const identityUser of usersToImport) {
-      try {
-        setImportingUser(identityUser.email)
-        await membersAPI.create({
-          email: identityUser.email,
-          name: identityUser.name || identityUser.email.split('@')[0],
-          status: 'active',
-          role: 'official'
-        })
-        imported++
-      } catch {
-        failed++
-      }
-    }
-
-    setImportingUser(null)
-    await loadMembers()
-
-    if (failed === 0) {
-      success(`Imported ${imported} users to members`)
-    } else {
-      warning(`Imported ${imported} users, ${failed} failed`)
-    }
-  }
 
   // Handle bulk add members
   const handleBulkAddMembers = async () => {
@@ -423,34 +249,6 @@ export default function MembersPage() {
     setIsBulkAdding(false)
   }
 
-  // Sync all members and auth users
-  const handleSyncAll = async (dryRun: boolean = false) => {
-    try {
-      setSyncing(true)
-      const result = await identityAPI.syncMembersAuth(dryRun)
-
-      if (dryRun) {
-        const { summary } = result
-        info(`Dry run complete: Would import ${summary.authUsersImported} auth users, invite ${summary.membersInvited} members, link ${summary.membersLinked} accounts`)
-      } else {
-        const { summary } = result
-        if (summary.errors > 0) {
-          warning(`Sync complete with ${summary.errors} errors. Imported: ${summary.authUsersImported}, Invited: ${summary.membersInvited}, Linked: ${summary.membersLinked}`)
-        } else {
-          success(`Sync complete! Imported: ${summary.authUsersImported}, Invited: ${summary.membersInvited}, Linked: ${summary.membersLinked}`)
-        }
-        // Refresh data (force bypass cache)
-        await loadMembers(true)
-        await loadIdentityUsers()
-      }
-    } catch (err) {
-      const errorMessage = parseAPIError(err)
-      error(`Sync failed: ${errorMessage}`)
-    } finally {
-      setSyncing(false)
-    }
-  }
-
   const filterMembers = () => {
     let filtered = [...members]
 
@@ -460,7 +258,8 @@ export default function MembersPage() {
       filtered = filtered.filter(member =>
         member.name.toLowerCase().includes(query) ||
         member.email.toLowerCase().includes(query) ||
-        (member.phone && member.phone.includes(query))
+        (member.phone && member.phone.includes(query)) ||
+        (member.city && member.city.toLowerCase().includes(query))
       )
     }
 
@@ -469,8 +268,35 @@ export default function MembersPage() {
       filtered = filtered.filter(member => member.status === statusFilter)
     }
 
+    // Apply role filter
+    if (roleFilter !== 'all') {
+      filtered = filtered.filter(member => (member.role || 'official') === roleFilter)
+    }
+
+    // Apply certification filter
+    if (certificationFilter !== 'all') {
+      if (certificationFilter === 'none') {
+        filtered = filtered.filter(member => !member.certification_level || member.certification_level === 'None')
+      } else {
+        filtered = filtered.filter(member => member.certification_level === certificationFilter)
+      }
+    }
+
+    // Apply city filter
+    if (cityFilter !== 'all') {
+      filtered = filtered.filter(member => member.city === cityFilter)
+    }
+
     setFilteredMembers(filtered)
   }
+
+  // Get unique cities from members for filter dropdown
+  const uniqueCities = useMemo(() => {
+    const cities = members
+      .map(m => m.city)
+      .filter((city): city is string => !!city && city.trim() !== '')
+    return [...new Set(cities)].sort()
+  }, [members])
 
   // Table columns definition
   const tableColumns = useMemo<ColumnDef<Member>[]>(() => [
@@ -535,36 +361,15 @@ export default function MembersPage() {
       ),
     },
     {
-      id: 'portal',
-      header: 'Portal',
-      cell: ({ row }) => {
-        const identityStatus = getIdentityStatus(row.original.email)
-        if (!identityStatus) return null
-        if (!identityStatus.exists) {
-          return (
-            <span className="px-2 py-1 text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 rounded-full flex items-center gap-1 w-fit" title="Not invited to portal">
-              <IconMail size={12} />
-              No invite
-            </span>
-          )
-        }
-        if (identityStatus.has_logged_in) {
-          return (
-            <span className="px-2 py-1 text-xs bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300 rounded-full flex items-center gap-1 w-fit" title="User has logged in">
-              <IconCircleCheck size={12} />
-              Active
-            </span>
-          )
-        }
-        return (
-          <span className="px-2 py-1 text-xs bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 rounded-full flex items-center gap-1 w-fit" title="User has not logged in yet">
-            <IconClock size={12} />
-            Pending
-          </span>
-        )
-      },
+      accessorKey: 'role',
+      header: 'Role',
+      cell: ({ row }) => (
+        <span className={`px-2 py-1 text-xs rounded-full ${getRoleBadgeColor(row.original.role || 'official')}`}>
+          {formatRole(row.original.role || 'official')}
+        </span>
+      ),
     },
-  ], [identityStatusMap])
+  ], [])
 
   const handleViewMember = async (member: Member) => {
     setSelectedMember(member)
@@ -782,13 +587,6 @@ export default function MembersPage() {
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Members Directory</h1>
           <div className="flex items-center gap-2">
             <button
-              onClick={handleShowIdentityUsers}
-              className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
-            >
-              <IconUsers size={20} />
-              Portal Users
-            </button>
-            <button
               onClick={() => setShowBulkAddModal(true)}
               className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors"
             >
@@ -807,32 +605,20 @@ export default function MembersPage() {
 
         {/* Filters */}
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4 mb-4">
-          <div className="flex flex-col md:flex-row gap-4">
-            <div className="flex-1">
-              <div className="relative">
-                <IconSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500" size={20} />
-                <input
-                  type="text"
-                  placeholder="Search by name, email, or phone..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
-              </div>
-            </div>
-
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2">
-                <IconFilter size={20} className="text-gray-600 dark:text-gray-400" />
-                <select
-                  value={statusFilter}
-                  onChange={(e) => setStatusFilter(e.target.value)}
-                  className="px-4 py-2 border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                >
-                  <option value="all">All Status</option>
-                  <option value="active">Active</option>
-                  <option value="inactive">Inactive</option>
-                </select>
+          <div className="flex flex-col gap-4">
+            {/* Search and View Toggle Row */}
+            <div className="flex flex-col md:flex-row gap-4">
+              <div className="flex-1">
+                <div className="relative">
+                  <IconSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500" size={20} />
+                  <input
+                    type="text"
+                    placeholder="Search by name, email, phone, or city..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                </div>
               </div>
 
               {/* View Toggle */}
@@ -852,6 +638,79 @@ export default function MembersPage() {
                   <IconTable size={20} />
                 </button>
               </div>
+            </div>
+
+            {/* Filter Dropdowns Row */}
+            <div className="flex flex-wrap items-center gap-3">
+              <IconFilter size={20} className="text-gray-600 dark:text-gray-400" />
+
+              {/* Status Filter */}
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+                className="px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              >
+                <option value="all">All Status</option>
+                <option value="active">Active</option>
+                <option value="inactive">Inactive</option>
+              </select>
+
+              {/* Role Filter */}
+              <select
+                value={roleFilter}
+                onChange={(e) => setRoleFilter(e.target.value)}
+                className="px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              >
+                <option value="all">All Roles</option>
+                <option value="official">Official</option>
+                <option value="evaluator">Evaluator</option>
+                <option value="executive">Executive</option>
+                <option value="admin">Admin</option>
+              </select>
+
+              {/* NOCP Level Filter */}
+              <select
+                value={certificationFilter}
+                onChange={(e) => setCertificationFilter(e.target.value)}
+                className="px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              >
+                <option value="all">All NOCP Levels</option>
+                <option value="none">None</option>
+                <option value="Level 1">Level 1</option>
+                <option value="Level 2">Level 2</option>
+                <option value="Level 3">Level 3</option>
+                <option value="Level 4">Level 4</option>
+                <option value="Level 5">Level 5</option>
+              </select>
+
+              {/* City Filter */}
+              {uniqueCities.length > 0 && (
+                <select
+                  value={cityFilter}
+                  onChange={(e) => setCityFilter(e.target.value)}
+                  className="px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                >
+                  <option value="all">All Cities</option>
+                  {uniqueCities.map(city => (
+                    <option key={city} value={city}>{city}</option>
+                  ))}
+                </select>
+              )}
+
+              {/* Clear Filters Button */}
+              {(statusFilter !== 'all' || roleFilter !== 'all' || certificationFilter !== 'all' || cityFilter !== 'all') && (
+                <button
+                  onClick={() => {
+                    setStatusFilter('all')
+                    setRoleFilter('all')
+                    setCertificationFilter('all')
+                    setCityFilter('all')
+                  }}
+                  className="px-3 py-1.5 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white underline"
+                >
+                  Clear filters
+                </button>
+              )}
             </div>
           </div>
         </div>
@@ -895,33 +754,6 @@ export default function MembersPage() {
                           {member.certification_level}
                         </span>
                       )}
-                      {/* Identity Status Badge */}
-                      {(() => {
-                        const identityStatus = getIdentityStatus(member.email)
-                        if (!identityStatus) return null
-                        if (!identityStatus.exists) {
-                          return (
-                            <span className="px-2 py-1 text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 rounded-full flex items-center gap-1" title="Not invited to portal">
-                              <IconMail size={12} />
-                              No invite
-                            </span>
-                          )
-                        }
-                        if (identityStatus.has_logged_in) {
-                          return (
-                            <span className="px-2 py-1 text-xs bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300 rounded-full flex items-center gap-1" title="User has logged in and set up their account">
-                              <IconCircleCheck size={12} />
-                              Portal active
-                            </span>
-                          )
-                        }
-                        return (
-                          <span className="px-2 py-1 text-xs bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 rounded-full flex items-center gap-1" title="User has not logged in yet">
-                            <IconClock size={12} />
-                            Needs setup
-                          </span>
-                        )
-                      })()}
                     </div>
                   </div>
                 </div>
@@ -959,42 +791,6 @@ export default function MembersPage() {
         <div className="flex flex-wrap gap-2 justify-end mb-4 -mt-2">
           {!isEditing && selectedMember && (
             <>
-              {/* Identity/Invite Actions */}
-              {(() => {
-                const identityStatus = getIdentityStatus(selectedMember.email)
-                if (!identityStatus) return null
-
-                // Not invited - show Send Invite button
-                if (!identityStatus.exists) {
-                  return (
-                    <button
-                      onClick={() => handleSendInvite(selectedMember)}
-                      disabled={sendingInvite}
-                      className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 disabled:opacity-50"
-                    >
-                      <IconMail size={20} />
-                      {sendingInvite ? 'Sending...' : 'Send Invite'}
-                    </button>
-                  )
-                }
-
-                // Pending - show Resend Invite button
-                if (!identityStatus.confirmed) {
-                  return (
-                    <button
-                      onClick={() => handleResendInvite(selectedMember)}
-                      disabled={sendingInvite}
-                      className="flex items-center gap-2 px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 disabled:opacity-50"
-                    >
-                      <IconMailForward size={20} />
-                      {sendingInvite ? 'Sending...' : 'Resend Invite'}
-                    </button>
-                  )
-                }
-
-                // Already confirmed - no button needed
-                return null
-              })()}
               <button
                 onClick={handleEditMember}
                 className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
@@ -1102,47 +898,7 @@ export default function MembersPage() {
                         )}
                       </>
                     ) : (
-                      <>
-                        <p className="text-gray-900 dark:text-white">{selectedMember?.email}</p>
-                        {/* Portal Status */}
-                        {selectedMember && (() => {
-                          const identityStatus = getIdentityStatus(selectedMember.email)
-                          if (!identityStatus) return null
-
-                          if (!identityStatus.exists) {
-                            return (
-                              <p className="mt-1 text-sm text-gray-500 dark:text-gray-400 flex items-center gap-1">
-                                <IconMail size={14} />
-                                Not invited to portal
-                              </p>
-                            )
-                          }
-                          if (identityStatus.confirmed) {
-                            return (
-                              <p className="mt-1 text-sm text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
-                                <IconCircleCheck size={14} />
-                                Portal access active
-                                {identityStatus.confirmed_at && (
-                                  <span className="text-gray-500 dark:text-gray-400">
-                                    (since {new Date(identityStatus.confirmed_at).toLocaleDateString()})
-                                  </span>
-                                )}
-                              </p>
-                            )
-                          }
-                          return (
-                            <p className="mt-1 text-sm text-amber-600 dark:text-amber-400 flex items-center gap-1">
-                              <IconClock size={14} />
-                              Invite pending
-                              {identityStatus.invited_at && (
-                                <span className="text-gray-500 dark:text-gray-400">
-                                  (sent {new Date(identityStatus.invited_at).toLocaleDateString()})
-                                </span>
-                              )}
-                            </p>
-                          )
-                        })()}
-                      </>
+                      <p className="text-gray-900 dark:text-white">{selectedMember?.email}</p>
                     )}
                   </div>
 
@@ -1459,154 +1215,6 @@ export default function MembersPage() {
               {isSaving ? 'Saving...' : 'Save Activity'}
             </button>
           </div>
-        </div>
-      </Modal>
-
-      {/* Auth Users Modal */}
-      <Modal
-        isOpen={showIdentityModal}
-        onClose={() => setShowIdentityModal(false)}
-        title="Portal Users"
-        size="lg"
-      >
-        <div className="space-y-4">
-          {/* Header with actions */}
-          <div className="flex flex-col gap-3 pb-4 border-b border-gray-200 dark:border-gray-700">
-            <p className="text-sm text-gray-600 dark:text-gray-400">
-              {identityUsers.length} users with portal access | {members.length} members in database
-            </p>
-            <div className="flex flex-wrap items-center gap-2">
-              <button
-                onClick={loadIdentityUsers}
-                disabled={loadingIdentityUsers || syncing}
-                className="flex items-center gap-2 px-3 py-1.5 text-sm bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 disabled:opacity-50"
-              >
-                <IconRefresh size={16} className={loadingIdentityUsers ? 'animate-spin' : ''} />
-                Refresh
-              </button>
-              <button
-                onClick={() => handleSyncAll(true)}
-                disabled={syncing || loadingIdentityUsers}
-                className="flex items-center gap-2 px-3 py-1.5 text-sm bg-blue-900/40 text-blue-400 rounded-lg hover:bg-blue-900/60 disabled:opacity-50"
-              >
-                <IconRefresh size={16} className={syncing ? 'animate-spin' : ''} />
-                Preview Sync
-              </button>
-              <button
-                onClick={() => {
-                  if (confirm('This will:\n• Import all auth users as members\n• Create auth accounts for members without one\n• Send invite emails to new users\n\nContinue?')) {
-                    handleSyncAll(false)
-                  }
-                }}
-                disabled={syncing || loadingIdentityUsers}
-                className="flex items-center gap-2 px-3 py-1.5 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50"
-              >
-                <IconRefresh size={16} className={syncing ? 'animate-spin' : ''} />
-                {syncing ? 'Syncing...' : 'Sync All'}
-              </button>
-            </div>
-          </div>
-
-          {/* Loading state */}
-          {loadingIdentityUsers && identityUsers.length === 0 && (
-            <div className="text-center py-8">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600 mx-auto"></div>
-              <p className="mt-2 text-gray-600 dark:text-gray-400">Loading portal users...</p>
-            </div>
-          )}
-
-          {/* Users list */}
-          {!loadingIdentityUsers && identityUsers.length === 0 && (
-            <div className="text-center py-8">
-              <p className="text-gray-600 dark:text-gray-400">No users found.</p>
-              <p className="text-sm text-gray-500 dark:text-gray-500 mt-1">
-                Invite members to give them portal access.
-              </p>
-            </div>
-          )}
-
-          {identityUsers.length > 0 && (
-            <div className="max-h-96 overflow-y-auto space-y-2">
-              {identityUsers.map((identityUser) => {
-                const inMembers = isIdentityUserInMembers(identityUser.email)
-                const isImporting = importingUser === identityUser.email
-
-                return (
-                  <div
-                    key={identityUser.id}
-                    className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg"
-                  >
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <p className="font-medium text-gray-900 dark:text-white truncate">
-                          {identityUser.name || identityUser.email.split('@')[0]}
-                        </p>
-                        {identityUser.has_logged_in ? (
-                          <span className="px-2 py-0.5 text-xs bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300 rounded-full flex items-center gap-1">
-                            <IconCircleCheck size={12} />
-                            Active
-                          </span>
-                        ) : (
-                          <span className="px-2 py-0.5 text-xs bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 rounded-full flex items-center gap-1">
-                            <IconClock size={12} />
-                            Needs setup
-                          </span>
-                        )}
-                        {inMembers && (
-                          <span className="px-2 py-0.5 text-xs bg-blue-900/40 text-blue-400 rounded-full">
-                            In Members
-                          </span>
-                        )}
-                      </div>
-                      <p className="text-sm text-gray-600 dark:text-gray-400 truncate">
-                        {identityUser.email}
-                      </p>
-                    </div>
-
-                    <div className="flex items-center gap-2 ml-2">
-                      {/* Resend invite button for users who haven't logged in */}
-                      {!identityUser.has_logged_in && (
-                        <button
-                          onClick={async () => {
-                            try {
-                              setSendingInvite(true)
-                              const result = await identityAPI.resendInvite(identityUser.email, identityUser.name)
-                              if (result.success) {
-                                success(`Invite resent to ${identityUser.email}`)
-                                loadIdentityUsers()
-                              } else {
-                                error(result.error || 'Failed to resend invite')
-                              }
-                            } catch (err) {
-                              error(parseAPIError(err))
-                            } finally {
-                              setSendingInvite(false)
-                            }
-                          }}
-                          disabled={sendingInvite}
-                          className="flex items-center gap-1 px-3 py-1.5 text-sm bg-amber-600 text-white rounded-lg hover:bg-amber-700 disabled:opacity-50"
-                        >
-                          <IconMailForward size={16} />
-                          Resend
-                        </button>
-                      )}
-                      {/* Import button for users not in members */}
-                      {!inMembers && (
-                        <button
-                          onClick={() => handleImportIdentityUser(identityUser)}
-                          disabled={isImporting}
-                          className="flex items-center gap-1 px-3 py-1.5 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
-                        >
-                          <IconUserPlus size={16} />
-                          {isImporting ? 'Importing...' : 'Import'}
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
-          )}
         </div>
       </Modal>
 

@@ -86,8 +86,12 @@ function CompleteProfileForm() {
         if (member) {
           setMemberId(member.id)
           // Pre-fill form with existing data
+          // Don't pre-fill name if it's just the email prefix (placeholder from bulk add)
+          const emailPrefix = member.email?.split('@')[0]?.toLowerCase() || ''
+          const isPlaceholderName = member.name && emailPrefix &&
+            member.name.toLowerCase() === emailPrefix
           setForm({
-            name: member.name || '',
+            name: isPlaceholderName ? '' : (member.name || ''),
             phone: member.phone || '',
             address: member.address || '',
             city: member.city || '',
