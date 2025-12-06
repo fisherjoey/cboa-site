@@ -216,10 +216,29 @@ export const handler: Handler = async (event) => {
 
         if (error) throw error
 
+        // Fetch auth users to check who has actually signed in
+        const { data: { users: authUsers } } = await supabase.auth.admin.listUsers()
+
+        // Add account_setup_complete flag to each member
+        const membersWithStatus = data?.map(member => {
+          let accountSetupComplete = false
+
+          if (member.user_id) {
+            const authUser = authUsers?.find(u => u.id === member.user_id)
+            // Account is complete if user has signed in at least once
+            accountSetupComplete = !!authUser?.last_sign_in_at
+          }
+
+          return {
+            ...member,
+            account_setup_complete: accountSetupComplete
+          }
+        }) || []
+
         return {
           statusCode: 200,
           headers,
-          body: JSON.stringify(data)
+          body: JSON.stringify(membersWithStatus)
         }
       }
 

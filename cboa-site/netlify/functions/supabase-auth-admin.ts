@@ -242,6 +242,152 @@ export const handler: Handler = async (event) => {
     return { statusCode: 200, headers, body: '' }
   }
 
+  // PUBLIC ENDPOINT: Self-service invite request (no auth required)
+  if (event.httpMethod === 'POST') {
+    try {
+      const body = JSON.parse(event.body || '{}')
+      if (body.action === 'request_invite') {
+        const { email } = body
+
+        if (!email) {
+          return {
+            statusCode: 400,
+            headers,
+            body: JSON.stringify({ error: 'Email is required' })
+          }
+        }
+
+        const normalizedEmail = email.toLowerCase().trim()
+
+        // Check if email exists in members table
+        const { data: member, error: memberError } = await supabaseAdmin
+          .from('members')
+          .select('id, name, email, role, user_id, status')
+          .eq('email', normalizedEmail)
+          .single()
+
+        if (memberError || !member) {
+          // Don't reveal if email exists or not for security
+          logger.info('auth', 'request_invite_not_found', `Invite request for non-member: ${normalizedEmail}`)
+          return {
+            statusCode: 200,
+            headers,
+            body: JSON.stringify({
+              success: true,
+              message: 'If your email is registered as a member, you will receive an invite shortly.'
+            })
+          }
+        }
+
+        if (member.status !== 'active') {
+          logger.info('auth', 'request_invite_inactive', `Invite request for inactive member: ${normalizedEmail}`)
+          return {
+            statusCode: 200,
+            headers,
+            body: JSON.stringify({
+              success: true,
+              message: 'If your email is registered as a member, you will receive an invite shortly.'
+            })
+          }
+        }
+
+        // Check if user has already signed in
+        if (member.user_id) {
+          const { data: { users } } = await supabaseAdmin.auth.admin.listUsers()
+          const authUser = users.find(u => u.id === member.user_id)
+
+          if (authUser?.last_sign_in_at) {
+            logger.info('auth', 'request_invite_already_active', `Invite request for already active user: ${normalizedEmail}`)
+            return {
+              statusCode: 200,
+              headers,
+              body: JSON.stringify({
+                success: false,
+                alreadyActive: true,
+                message: 'Your account is already set up. Please use "Forgot Password" on the login page if you need to reset your password.'
+              })
+            }
+          }
+
+          // User exists but never signed in - delete and recreate
+          if (authUser) {
+            await supabaseAdmin.auth.admin.deleteUser(authUser.id)
+          }
+        }
+
+        // Check Microsoft Graph credentials
+        if (!process.env.MICROSOFT_TENANT_ID || !process.env.MICROSOFT_CLIENT_ID || !process.env.MICROSOFT_CLIENT_SECRET) {
+          logger.error('auth', 'request_invite_config_error', 'Microsoft Graph credentials not configured')
+          return {
+            statusCode: 500,
+            headers,
+            body: JSON.stringify({ error: 'Email service not configured' })
+          }
+        }
+
+        // Generate new invite link
+        const { data: linkData, error: linkError } = await supabaseAdmin.auth.admin.generateLink({
+          type: 'invite',
+          email: normalizedEmail,
+          options: {
+            data: {
+              full_name: member.name,
+              name: member.name,
+              role: member.role || 'official'
+            },
+            redirectTo: `${siteUrl}/auth/callback`
+          }
+        })
+
+        if (linkError) {
+          logger.error('auth', 'request_invite_link_failed', `Failed to generate invite for ${normalizedEmail}`, new Error(linkError.message))
+          return {
+            statusCode: 500,
+            headers,
+            body: JSON.stringify({ error: 'Failed to generate invite' })
+          }
+        }
+
+        // Update member's user_id
+        if (linkData.user?.id) {
+          await supabaseAdmin
+            .from('members')
+            .update({ user_id: linkData.user.id })
+            .eq('id', member.id)
+        }
+
+        // Send email
+        const msToken = await getMicrosoftAccessToken()
+        const inviteUrl = linkData.properties?.action_link || ''
+        const emailHtml = generateInviteEmailHtml(inviteUrl, member.name)
+        await sendEmailViaMicrosoftGraph(msToken, normalizedEmail, "You're Invited to Join CBOA!", emailHtml)
+
+        logger.info('auth', 'request_invite_success', `Self-service invite sent to ${normalizedEmail}`)
+
+        return {
+          statusCode: 200,
+          headers,
+          body: JSON.stringify({
+            success: true,
+            message: 'Invite sent! Check your email for a link to set up your account.'
+          })
+        }
+      }
+    } catch (err: any) {
+      // If JSON parsing fails or other error, continue to auth check
+      if (err.message?.includes('JSON')) {
+        // Continue to normal auth flow
+      } else {
+        logger.error('auth', 'request_invite_error', 'Error processing invite request', err)
+        return {
+          statusCode: 500,
+          headers,
+          body: JSON.stringify({ error: 'An error occurred' })
+        }
+      }
+    }
+  }
+
   // Verify authorization - require a valid JWT token
   const authHeader = event.headers.authorization || event.headers.Authorization
   if (!authHeader?.startsWith('Bearer ')) {

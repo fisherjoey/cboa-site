@@ -20,7 +20,8 @@ import { ColumnDef } from '@tanstack/react-table'
 interface Member {
   id?: string
   netlify_user_id?: string
-  user_id?: string // Supabase auth user ID - if present, account is fully set up
+  user_id?: string // Supabase auth user ID
+  account_setup_complete?: boolean // True if user has actually signed in
   name: string
   email: string
   phone?: string
@@ -873,8 +874,8 @@ export default function MembersPage() {
         <div className="flex flex-wrap gap-2 justify-end mb-4 -mt-2">
           {!isEditing && selectedMember && (
             <>
-              {/* Show Reinvite if account not set up, Password Reset if account exists */}
-              {selectedMember.user_id ? (
+              {/* Show Reinvite if account not set up, Password Reset if account is complete */}
+              {selectedMember.account_setup_complete ? (
                 <button
                   onClick={handleSendPasswordReset}
                   disabled={isSendingInvite}
