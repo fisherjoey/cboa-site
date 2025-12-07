@@ -133,9 +133,6 @@ export default function GetInvitePage() {
                     <p className="text-gray-600 dark:text-gray-400 mb-6">
                       {result.message}
                     </p>
-                    <p className="text-sm text-gray-500 dark:text-gray-500">
-                      The link will expire in 24 hours.
-                    </p>
                   </>
                 ) : (
                   <>

@@ -1,5 +1,6 @@
 import { Handler } from '@netlify/functions'
 import { createClient } from '@supabase/supabase-js'
+import { randomBytes } from 'crypto'
 import { Logger } from '../../lib/logger'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
@@ -13,6 +14,51 @@ const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
     persistSession: false
   }
 })
+
+// ============================================================================
+// Invite Token Helpers (Proxy system - tokens never expire)
+// ============================================================================
+
+function generateSecureToken(): string {
+  return randomBytes(32).toString('hex') // 64 character hex string
+}
+
+async function createInviteToken(
+  email: string,
+  name?: string,
+  role?: string,
+  createdBy?: string
+): Promise<string> {
+  const token = generateSecureToken()
+
+  // Delete any existing unused tokens for this email
+  await supabaseAdmin
+    .from('invite_tokens')
+    .delete()
+    .eq('email', email.toLowerCase())
+    .is('used_at', null)
+
+  // Create new token
+  const { error } = await supabaseAdmin
+    .from('invite_tokens')
+    .insert({
+      token,
+      email: email.toLowerCase(),
+      name,
+      role: role || 'official',
+      created_by: createdBy
+    })
+
+  if (error) {
+    throw new Error(`Failed to create invite token: ${error.message}`)
+  }
+
+  return token
+}
+
+function getInviteUrl(token: string): string {
+  return `${siteUrl}/accept-invite?token=${token}`
+}
 
 export interface AuthUser {
   id: string
@@ -101,18 +147,7 @@ async function sendEmailViaMicrosoftGraph(
 // ============================================================================
 
 function generateInviteEmailHtml(inviteUrl: string, name?: string): string {
-  // Calculate expiration time (24 hours from now) in Mountain Time
-  const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000)
-  const expiresFormatted = expiresAt.toLocaleString('en-US', {
-    timeZone: 'America/Edmonton',
-    weekday: 'long',
-    month: 'long',
-    day: 'numeric',
-    hour: 'numeric',
-    minute: '2-digit',
-    hour12: true
-  })
-
+  // Note: We no longer show expiration since proxy tokens don't expire
   return `
 <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: #f5f5f5; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;">
   <tr>
@@ -142,7 +177,6 @@ function generateInviteEmailHtml(inviteUrl: string, name?: string): string {
             <p style="text-align: center; margin: 24px 0;">
               <a href="${inviteUrl}" style="display: inline-block; padding: 14px 28px; min-height: 44px; background-color: #F97316; color: #ffffff !important; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px;">Accept Invitation</a>
             </p>
-            <p style="margin: 0 0 16px 0; font-size: 14px; line-height: 1.6; color: #666666; text-align: center;"><em>This link expires on ${expiresFormatted} (Mountain Time).</em></p>
             <p style="margin: 0 0 16px 0; font-size: 16px; line-height: 1.6;">If you have any questions about your membership, please don't hesitate to contact us.</p>
             <p style="margin: 0 0 16px 0; font-size: 16px; line-height: 1.6;">We look forward to having you on our team!</p>
             <p style="margin: 0; font-size: 16px; line-height: 1.6;">Best regards,<br><strong style="color: #003DA5; font-weight: 600;">CBOA Executive Board</strong></p>
@@ -309,10 +343,9 @@ export const handler: Handler = async (event) => {
             }
           }
 
-          // User exists but never signed in - delete and recreate
-          if (authUser) {
-            await supabaseAdmin.auth.admin.deleteUser(authUser.id)
-          }
+          // Note: We do NOT delete existing auth user here.
+          // If they have an old Supabase magic link, it should still work.
+          // The accept-invite function will handle cleanup when the proxy token is redeemed.
         }
 
         // Check Microsoft Graph credentials
@@ -325,44 +358,20 @@ export const handler: Handler = async (event) => {
           }
         }
 
-        // Generate new invite link
-        const { data: linkData, error: linkError } = await supabaseAdmin.auth.admin.generateLink({
-          type: 'invite',
-          email: normalizedEmail,
-          options: {
-            data: {
-              full_name: member.name,
-              name: member.name,
-              role: member.role || 'official'
-            },
-            redirectTo: `${siteUrl}/auth/callback`
-          }
-        })
+        // Create a proxy invite token (never expires)
+        const inviteToken = await createInviteToken(
+          normalizedEmail,
+          member.name,
+          member.role || 'official'
+        )
+        const inviteUrl = getInviteUrl(inviteToken)
 
-        if (linkError) {
-          logger.error('auth', 'request_invite_link_failed', `Failed to generate invite for ${normalizedEmail}`, new Error(linkError.message))
-          return {
-            statusCode: 500,
-            headers,
-            body: JSON.stringify({ error: 'Failed to generate invite' })
-          }
-        }
-
-        // Update member's user_id
-        if (linkData.user?.id) {
-          await supabaseAdmin
-            .from('members')
-            .update({ user_id: linkData.user.id })
-            .eq('id', member.id)
-        }
-
-        // Send email
+        // Send email with proxy link
         const msToken = await getMicrosoftAccessToken()
-        const inviteUrl = linkData.properties?.action_link || ''
         const emailHtml = generateInviteEmailHtml(inviteUrl, member.name)
         await sendEmailViaMicrosoftGraph(msToken, normalizedEmail, "You're Invited to Join CBOA!", emailHtml)
 
-        logger.info('auth', 'request_invite_success', `Self-service invite sent to ${normalizedEmail}`)
+        logger.info('auth', 'request_invite_success', `Self-service invite sent to ${normalizedEmail} (proxy token)`)
 
         return {
           statusCode: 200,
@@ -571,39 +580,26 @@ export const handler: Handler = async (event) => {
                 await supabaseAdmin.auth.admin.deleteUser(existingUser.id)
               }
 
-              // Generate new invite link
-              const { data: linkData, error: linkError } = await supabaseAdmin.auth.admin.generateLink({
-                type: 'invite',
-                email: member.email,
-                options: {
-                  data: {
-                    full_name: member.name,
-                    name: member.name,
-                    role: member.role || 'official'
-                  },
-                  redirectTo: `${siteUrl}/auth/callback`
-                }
-              })
+              // Clear member's user_id since we deleted the auth user
+              await supabaseAdmin
+                .from('members')
+                .update({ user_id: null })
+                .eq('id', member.id)
 
-              if (linkError) {
-                results.push({ email: member.email, success: false, message: linkError.message })
-                continue
-              }
+              // Create a proxy invite token (never expires)
+              const inviteToken = await createInviteToken(
+                member.email,
+                member.name,
+                member.role || 'official',
+                callerUser.id
+              )
+              const inviteUrl = getInviteUrl(inviteToken)
 
-              // Update member's user_id
-              if (linkData.user?.id) {
-                await supabaseAdmin
-                  .from('members')
-                  .update({ user_id: linkData.user.id })
-                  .eq('id', member.id)
-              }
-
-              // Send email
-              const inviteUrl = linkData.properties?.action_link || ''
+              // Send email with proxy link
               const emailHtml = generateInviteEmailHtml(inviteUrl, member.name)
               await sendEmailViaMicrosoftGraph(msToken, member.email, "You're Invited to Join CBOA!", emailHtml)
 
-              results.push({ email: member.email, success: true, message: 'Invite resent' })
+              results.push({ email: member.email, success: true, message: 'Invite resent (proxy token)' })
             } catch (err: any) {
               results.push({ email: member.email, success: false, message: err.message || 'Unknown error' })
             }
@@ -651,7 +647,7 @@ export const handler: Handler = async (event) => {
           }
         }
 
-        // Resend invite - delete existing user and re-invite
+        // Resend invite - delete existing user and re-invite with proxy token
         if (postAction === 'resend') {
           logger.info('auth', 'resend_invite_start', `Resending invite to ${email}`, {
             userEmail: callerUser.email,
@@ -666,54 +662,23 @@ export const handler: Handler = async (event) => {
             await supabaseAdmin.auth.admin.deleteUser(existingUser.id)
           }
 
-          // Generate new invite link (without sending Supabase's email)
-          const { data: linkData, error: linkError } = await supabaseAdmin.auth.admin.generateLink({
-            type: 'invite',
+          // Clear member's user_id since we deleted the auth user
+          await supabaseAdmin
+            .from('members')
+            .update({ user_id: null })
+            .eq('email', email.toLowerCase())
+
+          // Create a proxy invite token (never expires)
+          const inviteToken = await createInviteToken(
             email,
-            options: {
-              data: {
-                full_name: name,
-                name: name,
-                role: role || 'official'
-              },
-              redirectTo: `${siteUrl}/auth/callback`
-            }
-          })
+            name,
+            role || 'official',
+            callerUser.id
+          )
+          const inviteUrl = getInviteUrl(inviteToken)
 
-          if (linkError) {
-            logger.error('auth', 'resend_invite_failed', `Failed to generate invite link for ${email}`, new Error(linkError.message))
-            return {
-              statusCode: 400,
-              headers,
-              body: JSON.stringify({ success: false, error: linkError.message })
-            }
-          }
-
-          // Update the member record's user_id to match the new auth user
-          if (linkData.user?.id) {
-            const { error: updateError } = await supabaseAdmin
-              .from('members')
-              .update({ user_id: linkData.user.id })
-              .eq('email', email.toLowerCase())
-
-            if (updateError) {
-              logger.warn('auth', 'resend_invite_member_update_failed',
-                `Failed to update member user_id for ${email}`, {
-                userEmail: callerUser.email,
-                metadata: { targetEmail: email, error: updateError.message }
-              })
-            } else {
-              logger.info('auth', 'resend_invite_member_updated',
-                `Updated member user_id for ${email}`, {
-                userEmail: callerUser.email,
-                metadata: { targetEmail: email, newUserId: linkData.user.id }
-              })
-            }
-          }
-
-          // Send email via Microsoft Graph
+          // Send email via Microsoft Graph with proxy link
           const msToken = await getMicrosoftAccessToken()
-          const inviteUrl = linkData.properties?.action_link || ''
           const emailHtml = generateInviteEmailHtml(inviteUrl, name)
 
           await sendEmailViaMicrosoftGraph(
@@ -724,16 +689,16 @@ export const handler: Handler = async (event) => {
           )
 
           // Audit log
-          await logger.audit('INVITE', 'auth_user', linkData.user?.id || null, {
+          await logger.audit('INVITE', 'auth_user', null, {
             actorId: callerUser.id,
             actorEmail: callerUser.email!,
             actorRole: callerRole,
             targetUserEmail: email,
             newValues: { email, name, role: role || 'official' },
-            description: `Resent invite to ${email}`
+            description: `Resent invite to ${email} (proxy token)`
           })
 
-          logger.info('auth', 'resend_invite_success', `Invite resent to ${email}`, {
+          logger.info('auth', 'resend_invite_success', `Invite resent to ${email} (proxy token)`, {
             userEmail: callerUser.email,
             metadata: { targetEmail: email }
           })
@@ -743,19 +708,18 @@ export const handler: Handler = async (event) => {
             headers,
             body: JSON.stringify({
               success: true,
-              message: `Invite resent to ${email}`,
-              user: linkData.user
+              message: `Invite resent to ${email}`
             })
           }
         }
 
-        // Send new invite
+        // Send new invite with proxy token
         logger.info('auth', 'invite_user_start', `Inviting new user ${email}`, {
           userEmail: callerUser.email,
           metadata: { targetEmail: email, name, role: role || 'official' }
         })
 
-        // First check if user already exists
+        // First check if user already exists in auth
         const { data: { users: existingUsers } } = await supabaseAdmin.auth.admin.listUsers()
         const existingUser = existingUsers.find(u => u.email?.toLowerCase() === email.toLowerCase())
 
@@ -771,32 +735,17 @@ export const handler: Handler = async (event) => {
           }
         }
 
-        // Generate invite link (without sending Supabase's email)
-        const { data: linkData, error: linkError } = await supabaseAdmin.auth.admin.generateLink({
-          type: 'invite',
+        // Create a proxy invite token (never expires)
+        const inviteToken = await createInviteToken(
           email,
-          options: {
-            data: {
-              full_name: name,
-              name: name,
-              role: role || 'official'
-            },
-            redirectTo: `${siteUrl}/auth/callback`
-          }
-        })
+          name,
+          role || 'official',
+          callerUser.id
+        )
+        const inviteUrl = getInviteUrl(inviteToken)
 
-        if (linkError) {
-          logger.error('auth', 'invite_user_failed', `Failed to generate invite for ${email}`, new Error(linkError.message))
-          return {
-            statusCode: 400,
-            headers,
-            body: JSON.stringify({ success: false, error: linkError.message })
-          }
-        }
-
-        // Send email via Microsoft Graph
+        // Send email via Microsoft Graph with proxy link
         const msToken = await getMicrosoftAccessToken()
-        const inviteUrl = linkData.properties?.action_link || ''
         const emailHtml = generateInviteEmailHtml(inviteUrl, name)
 
         await sendEmailViaMicrosoftGraph(
@@ -807,18 +756,18 @@ export const handler: Handler = async (event) => {
         )
 
         // Audit log
-        await logger.audit('INVITE', 'auth_user', linkData.user?.id || null, {
+        await logger.audit('INVITE', 'auth_user', null, {
           actorId: callerUser.id,
           actorEmail: callerUser.email!,
           actorRole: callerRole,
           targetUserEmail: email,
           newValues: { email, name, role: role || 'official' },
-          description: `Invited new user ${email}`
+          description: `Invited new user ${email} (proxy token)`
         })
 
-        logger.info('auth', 'invite_user_success', `Invite sent to ${email}`, {
+        logger.info('auth', 'invite_user_success', `Invite sent to ${email} (proxy token)`, {
           userEmail: callerUser.email,
-          metadata: { targetEmail: email, userId: linkData.user?.id }
+          metadata: { targetEmail: email }
         })
 
         return {
@@ -826,8 +775,7 @@ export const handler: Handler = async (event) => {
           headers,
           body: JSON.stringify({
             success: true,
-            message: `Invite sent to ${email}`,
-            user: linkData.user
+            message: `Invite sent to ${email}`
           })
         }
       }
