@@ -4,7 +4,9 @@ import { Logger } from '../../lib/logger'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
-const supabase = createClient(supabaseUrl, supabaseServiceKey)
+const supabase = createClient(supabaseUrl, supabaseServiceKey, {
+  auth: { autoRefreshToken: false, persistSession: false }
+})
 
 export const handler: Handler = async (event) => {
   const logger = Logger.fromEvent('member-activities', event)
@@ -126,6 +128,22 @@ export const handler: Handler = async (event) => {
         }
 
         logger.info('crud', 'delete_member_activity', `Deleting member activity ${id}`, { metadata: { id } })
+
+        // First check if the activity exists
+        const { data: existing, error: findError } = await supabase
+          .from('member_activities')
+          .select('id')
+          .eq('id', id)
+          .single()
+
+        if (findError || !existing) {
+          logger.warn('crud', 'delete_member_activity_not_found', `Member activity ${id} not found`, { metadata: { id } })
+          return {
+            statusCode: 404,
+            headers,
+            body: JSON.stringify({ error: 'Activity not found' })
+          }
+        }
 
         const { error } = await supabase
           .from('member_activities')

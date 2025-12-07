@@ -553,12 +553,13 @@ export default function MembersPage() {
     }
 
     try {
-      await memberActivitiesAPI.delete(activityId)
+      // Pass memberId to properly invalidate the cache
+      await memberActivitiesAPI.delete(activityId, selectedMember?.id)
       success('Activity deleted successfully')
 
-      // Reload activities
+      // Reload activities with force refresh to bypass any remaining cache
       if (selectedMember?.id) {
-        const activities = await memberActivitiesAPI.getAll(selectedMember.id)
+        const activities = await memberActivitiesAPI.getAll(selectedMember.id, { forceRefresh: true })
         setMemberActivities(activities)
       }
     } catch (err) {
