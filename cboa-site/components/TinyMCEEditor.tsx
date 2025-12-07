@@ -199,6 +199,10 @@ export function TinyMCEEditor({
           '#3B82F6', 'Blue',
         ],
         height: height,
+        // URL handling - IMPORTANT: Keep URLs absolute for email compatibility
+        relative_urls: false,
+        remove_script_host: false,
+        convert_urls: false,
       }}
       />
     </div>
