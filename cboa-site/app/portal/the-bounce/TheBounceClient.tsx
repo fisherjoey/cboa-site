@@ -505,7 +505,7 @@ export default function TheBounceClient({ newsletters: initialNewsletters }: The
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">The Bounce Newsletter</h1>
           <p className="mt-1 sm:mt-2 text-sm sm:text-base text-gray-600 dark:text-gray-300">
-            Your monthly source for CBOA news, officiating tips, and member updates
+            Your monthly source for CBOA news and updates
           </p>
         </div>
         {canEdit && !isCreating && (
