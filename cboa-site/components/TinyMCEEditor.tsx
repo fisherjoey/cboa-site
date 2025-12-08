@@ -22,39 +22,48 @@ export function TinyMCEEditor({
   const [isDark, setIsDark] = useState(false)
   const [editorKey, setEditorKey] = useState(0)
 
-  // Detect dark mode
+  // Detect dark mode by checking for .dark class anywhere in parent hierarchy
   useEffect(() => {
     const checkDarkMode = () => {
-      const isDarkMode = document.documentElement.classList.contains('dark')
-      if (isDarkMode !== isDark) {
-        setIsDark(isDarkMode)
-        // Force editor to re-render with correct theme on initial load
-        setEditorKey(prev => prev + 1)
-      }
+      // Check if any parent element has the 'dark' class (ThemeProvider uses a wrapper div)
+      const isDarkMode = !!document.querySelector('.dark')
+      return isDarkMode
+    }
+
+    const updateDarkMode = () => {
+      const nowDark = checkDarkMode()
+      setIsDark(prevDark => {
+        if (prevDark !== nowDark) {
+          // Force editor to re-render with new theme
+          setEditorKey(prev => prev + 1)
+          return nowDark
+        }
+        return prevDark
+      })
     }
 
     // Initial check
-    checkDarkMode()
+    updateDarkMode()
 
-    // Watch for theme changes
+    // Watch for theme changes on the entire document
     const observer = new MutationObserver((mutations) => {
-      mutations.forEach((mutation) => {
+      for (const mutation of mutations) {
         if (mutation.attributeName === 'class') {
-          const wasDark = isDark
-          const nowDark = document.documentElement.classList.contains('dark')
-          if (wasDark !== nowDark) {
-            setIsDark(nowDark)
-            // Force editor to re-render with new theme
-            setEditorKey(prev => prev + 1)
-          }
+          updateDarkMode()
+          break
         }
-      })
+      }
     })
 
-    observer.observe(document.documentElement, { attributes: true })
+    // Observe the entire document body subtree for class changes
+    observer.observe(document.body, {
+      attributes: true,
+      attributeFilter: ['class'],
+      subtree: true
+    })
 
     return () => observer.disconnect()
-  }, [isDark])
+  }, [])
 
   // Content styles for light and dark modes
   const lightContentStyle = `
@@ -89,6 +98,9 @@ export function TinyMCEEditor({
       line-height: 1.6;
       color: #e5e7eb;
       background-color: #1f2937;
+    }
+    .mce-content-body[data-mce-placeholder]:not(.mce-visualblocks)::before {
+      color: #9ca3af;
     }
     h1 { color: #60a5fa; font-size: 2.5rem; font-weight: bold; margin-top: 1.5rem; margin-bottom: 1rem; }
     h2 { color: #60a5fa; font-size: 1.875rem; font-weight: bold; margin-top: 1.25rem; margin-bottom: 0.875rem; }
