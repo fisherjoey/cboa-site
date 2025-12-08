@@ -10,7 +10,8 @@ import {
   IconUserCheck,
   IconLayoutDashboard,
   IconReportAnalytics,
-  IconUsersGroup
+  IconUsersGroup,
+  IconMail
 } from '@tabler/icons-react'
 
 export default function PortalAdmin() {
@@ -44,6 +45,14 @@ export default function PortalAdmin() {
       icon: IconReportAnalytics,
       links: [
         { label: 'View All Logs', href: '/portal/admin/logs' },
+      ]
+    },
+    {
+      title: 'Email History',
+      description: 'View all emails sent through the system',
+      icon: IconMail,
+      links: [
+        { label: 'View Email History', href: '/portal/admin/email-history', icon: IconMail },
       ]
     },
   ]

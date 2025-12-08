@@ -1,6 +1,7 @@
 import { Handler } from '@netlify/functions'
 import { createClient } from '@supabase/supabase-js'
 import { Logger } from '../../lib/logger'
+import { recordPasswordResetEmail } from '../../lib/emailHistory'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
@@ -214,6 +215,14 @@ export const handler: Handler = async (event) => {
       'Reset Your CBOA Portal Password',
       emailHtml
     )
+
+    // Record to email history
+    await recordPasswordResetEmail({
+      recipientEmail: email,
+      htmlContent: emailHtml,
+      sentByEmail: 'self-service',
+      status: 'sent',
+    })
 
     // Audit log
     await logger.audit('PASSWORD_RESET', 'auth_user', user.id, {

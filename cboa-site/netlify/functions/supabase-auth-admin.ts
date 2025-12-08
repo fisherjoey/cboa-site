@@ -2,6 +2,7 @@ import { Handler } from '@netlify/functions'
 import { createClient } from '@supabase/supabase-js'
 import { randomBytes } from 'crypto'
 import { Logger } from '../../lib/logger'
+import { recordInviteEmail, recordPasswordResetEmail } from '../../lib/emailHistory'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
@@ -371,6 +372,15 @@ export const handler: Handler = async (event) => {
         const emailHtml = generateInviteEmailHtml(inviteUrl, member.name)
         await sendEmailViaMicrosoftGraph(msToken, normalizedEmail, "You're Invited to Join CBOA!", emailHtml)
 
+        // Record to email history
+        await recordInviteEmail({
+          recipientEmail: normalizedEmail,
+          recipientName: member.name,
+          htmlContent: emailHtml,
+          sentByEmail: 'self-service',
+          status: 'sent',
+        })
+
         logger.info('auth', 'request_invite_success', `Self-service invite sent to ${normalizedEmail} (proxy token)`)
 
         return {
@@ -599,6 +609,16 @@ export const handler: Handler = async (event) => {
               const emailHtml = generateInviteEmailHtml(inviteUrl, member.name)
               await sendEmailViaMicrosoftGraph(msToken, member.email, "You're Invited to Join CBOA!", emailHtml)
 
+              // Record to email history
+              await recordInviteEmail({
+                recipientEmail: member.email,
+                recipientName: member.name,
+                htmlContent: emailHtml,
+                sentById: callerUser.id,
+                sentByEmail: callerUser.email!,
+                status: 'sent',
+              })
+
               results.push({ email: member.email, success: true, message: 'Invite resent (proxy token)' })
             } catch (err: any) {
               results.push({ email: member.email, success: false, message: err.message || 'Unknown error' })
@@ -688,6 +708,16 @@ export const handler: Handler = async (event) => {
             emailHtml
           )
 
+          // Record to email history
+          await recordInviteEmail({
+            recipientEmail: email,
+            recipientName: name,
+            htmlContent: emailHtml,
+            sentById: callerUser.id,
+            sentByEmail: callerUser.email!,
+            status: 'sent',
+          })
+
           // Audit log
           await logger.audit('INVITE', 'auth_user', null, {
             actorId: callerUser.id,
@@ -754,6 +784,16 @@ export const handler: Handler = async (event) => {
           "You're Invited to Join CBOA!",
           emailHtml
         )
+
+        // Record to email history
+        await recordInviteEmail({
+          recipientEmail: email,
+          recipientName: name,
+          htmlContent: emailHtml,
+          sentById: callerUser.id,
+          sentByEmail: callerUser.email!,
+          status: 'sent',
+        })
 
         // Audit log
         await logger.audit('INVITE', 'auth_user', null, {
@@ -830,6 +870,15 @@ export const handler: Handler = async (event) => {
             'Reset Your CBOA Portal Password',
             emailHtml
           )
+
+          // Record to email history
+          await recordPasswordResetEmail({
+            recipientEmail: email,
+            htmlContent: emailHtml,
+            sentById: callerUser.id,
+            sentByEmail: callerUser.email!,
+            status: 'sent',
+          })
 
           // Audit log
           await logger.audit('PASSWORD_RESET', 'auth_user', linkData.user?.id || null, {

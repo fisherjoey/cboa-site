@@ -1,6 +1,20 @@
 import { Handler, HandlerEvent, HandlerContext } from '@netlify/functions'
 import { generateCBOAEmailTemplate } from '../../lib/emailTemplate'
 import { Logger } from '../../lib/logger'
+import { recordBulkEmail } from '../../lib/emailHistory'
+
+/**
+ * Normalize URLs in HTML content to ensure they have proper protocols.
+ * This fixes links like href="cboa.ca/..." to href="https://cboa.ca/..."
+ * Only applied to email sending, not stored content.
+ */
+function normalizeUrlsInHtml(html: string): string {
+  // Match href="..." attributes where the URL doesn't start with a protocol, #, /, or mailto:
+  return html.replace(
+    /href="(?!(https?:\/\/|mailto:|tel:|#|\/))/gi,
+    'href="https://'
+  )
+}
 
 interface EmailRequest {
   subject: string
@@ -309,15 +323,29 @@ export const handler: Handler = async (
     // Get access token
     const accessToken = await getAccessToken()
 
+    // Normalize URLs to ensure they have https:// protocol
+    const normalizedContent = normalizeUrlsInHtml(htmlContent)
+
     // Wrap content in CBOA email template
     const emailHtml = generateCBOAEmailTemplate({
       subject,
-      content: htmlContent,
+      content: normalizedContent,
       previewText: subject
     })
 
     // Send email
     await sendEmail(accessToken, recipientEmails, subject, emailHtml)
+
+    // Record to email history
+    await recordBulkEmail({
+      subject,
+      htmlContent: emailHtml,
+      recipientCount: recipientEmails.length,
+      recipientList: recipientEmails,
+      recipientGroups: recipientGroups || [],
+      rankFilter,
+      status: 'sent',
+    })
 
     // Audit log for bulk email
     await logger.audit('EMAIL_SENT', 'email', null, {
@@ -341,6 +369,19 @@ export const handler: Handler = async (
     }
 
   } catch (error: any) {
+    // Record failed email attempt
+    const requestBody: EmailRequest = JSON.parse(event.body || '{}')
+    await recordBulkEmail({
+      subject: requestBody.subject || 'Unknown',
+      htmlContent: requestBody.htmlContent || '',
+      recipientCount: 0,
+      recipientList: [],
+      recipientGroups: requestBody.recipientGroups || [],
+      rankFilter: requestBody.rankFilter,
+      status: 'failed',
+      errorMessage: error.message || 'Unknown error',
+    })
+
     logger.error('email', 'send_email_error', 'Error sending email', error instanceof Error ? error : new Error(String(error)))
     return {
       statusCode: 500,

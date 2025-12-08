@@ -17,7 +17,8 @@ import {
   IconBallBasketball,
   IconBrandDiscord,
   IconArchive,
-  IconReportAnalytics
+  IconReportAnalytics,
+  IconMail
 } from '@tabler/icons-react';
 import UpcomingEventsWidget from '@/components/dashboard/UpcomingEventsWidget';
 import LatestAnnouncementWidget from '@/components/dashboard/LatestAnnouncementWidget';
@@ -240,6 +241,13 @@ export default function PortalDashboard() {
               >
                 <IconReportAnalytics className="h-5 w-5 text-orange-600 dark:text-orange-500 flex-shrink-0" />
                 <span className="text-sm font-medium text-gray-900 dark:text-white">System Logs</span>
+              </Link>
+              <Link
+                href="/portal/admin/email-history"
+                className="flex items-center gap-2 p-3 bg-white dark:bg-gray-800 rounded-lg hover:shadow-md transition-shadow border border-gray-200 dark:border-gray-700"
+              >
+                <IconMail className="h-5 w-5 text-orange-600 dark:text-orange-500 flex-shrink-0" />
+                <span className="text-sm font-medium text-gray-900 dark:text-white">Email History</span>
               </Link>
             </>
           )}
