@@ -659,14 +659,16 @@ export default function MailPage() {
                   <IconEye className="h-4 w-4" />
                   Live Email Preview
                 </div>
-                <iframe
-                  ref={iframeRef}
-                  srcDoc={templateShell}
-                  onLoad={handleIframeLoad}
-                  className="w-full border-0"
-                  style={{ height: '800px' }}
-                  title="Email Preview"
-                />
+                <div className="bg-gray-100 dark:bg-gray-800 p-4">
+                  <iframe
+                    ref={iframeRef}
+                    srcDoc={templateShell}
+                    onLoad={handleIframeLoad}
+                    className="w-full border-0"
+                    style={{ height: '800px' }}
+                    title="Email Preview"
+                  />
+                </div>
               </div>
             )}
           </div>

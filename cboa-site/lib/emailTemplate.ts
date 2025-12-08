@@ -5,10 +5,12 @@ export interface EmailTemplateOptions {
   subject: string
   content: string
   previewText?: string
+  previewMode?: boolean // When true, uses dark outer background for preview display
 }
 
 export function generateCBOAEmailTemplate(options: EmailTemplateOptions): string {
-  const { subject, content, previewText } = options
+  const { subject, content, previewText, previewMode } = options
+  const outerBgColor = previewMode ? '#1f2937' : '#f5f5f5'
 
   return `
 <!DOCTYPE html>
@@ -29,7 +31,7 @@ export function generateCBOAEmailTemplate(options: EmailTemplateOptions): string
       margin: 0;
       padding: 0;
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-      background-color: #f5f5f5;
+      background-color: ${outerBgColor};
       -webkit-text-size-adjust: 100%;
       -ms-text-size-adjust: 100%;
     }
@@ -139,7 +141,7 @@ export function generateCBOAEmailTemplate(options: EmailTemplateOptions): string
 <body>
   ${previewText ? `<div style="display:none;font-size:1px;color:#ffffff;line-height:1px;max-height:0px;max-width:0px;opacity:0;overflow:hidden;">${previewText}</div>` : ''}
 
-  <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: #f5f5f5;">
+  <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: ${outerBgColor};">
     <tr>
       <td style="padding: 20px 10px;">
         <table role="presentation" class="email-container" cellspacing="0" cellpadding="0" border="0" style="max-width: 600px; width: 100%; margin: 0 auto; background-color: #ffffff;" align="center">
