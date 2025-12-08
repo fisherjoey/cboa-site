@@ -1,17 +1,30 @@
 'use client'
 
-import { useState, useRef, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import dynamic from 'next/dynamic'
-import { IconNotebook, IconDownload, IconEye, IconCalendar, IconUpload, IconPlus, IconTrash, IconFile } from '@tabler/icons-react'
-import Card from '@/components/ui/Card'
-import { ContentItem } from '@/lib/content'
-import { useRole } from '@/contexts/RoleContext'
 import { newslettersAPI } from '@/lib/api'
 import { uploadFile } from '@/lib/fileUpload'
+import { useRole } from '@/contexts/RoleContext'
 import { useToast } from '@/hooks/useToast'
 import { validateNewsletterForm, getFieldError, hasErrors, formatValidationErrors } from '@/lib/portalValidation'
 import { parseAPIError, sanitize, ValidationError } from '@/lib/errorHandling'
 import FileUpload from '@/components/FileUpload'
+import {
+  IconPlus,
+  IconEdit,
+  IconTrash,
+  IconDownload,
+  IconEye,
+  IconFile,
+  IconNotebook,
+  IconDeviceFloppy,
+  IconX,
+  IconSortAscending,
+  IconSortDescending,
+  IconLayoutList,
+  IconLayoutGrid,
+  IconCalendar
+} from '@tabler/icons-react'
 
 // Dynamically import PDFViewer to avoid SSR issues
 const PDFViewer = dynamic(() => import('./PDFViewer'), {
@@ -19,38 +32,42 @@ const PDFViewer = dynamic(() => import('./PDFViewer'), {
   loading: () => <div className="text-center py-8">Loading PDF viewer...</div>
 })
 
-interface TheBounceClientProps {
-  newsletters: ContentItem[]
-}
-
 interface Newsletter {
   id: string
   title: string
   date: string
   pdfFile: string
   description?: string
-  featured?: boolean
   uploadedAt: string
+}
+
+interface TheBounceClientProps {
+  newsletters: any[]
 }
 
 export default function TheBounceClient({ newsletters: initialNewsletters }: TheBounceClientProps) {
   const { user } = useRole()
-  const { success, error, warning, info } = useToast()
+  const { success, error } = useToast()
   const [newsletters, setNewsletters] = useState<Newsletter[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [selectedNewsletter, setSelectedNewsletter] = useState<Newsletter | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
-  const [showUploadForm, setShowUploadForm] = useState(false)
-  const [uploadForm, setUploadForm] = useState({
+  const [isCreating, setIsCreating] = useState(false)
+  const [editingId, setEditingId] = useState<string | null>(null)
+  const [editingData, setEditingData] = useState<Partial<Newsletter> | null>(null)
+  const [newNewsletter, setNewNewsletter] = useState({
     title: '',
     date: new Date().toISOString().split('T')[0],
-    description: '',
-    featured: false
+    description: ''
   })
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [validationErrors, setValidationErrors] = useState<ValidationError[]>([])
-  const fileInputRef = useRef<HTMLInputElement>(null)
+  const [isUploading, setIsUploading] = useState(false)
+  const [sortBy, setSortBy] = useState<'title' | 'date'>('date')
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc')
+  const [viewMode, setViewMode] = useState<'list' | 'grid'>('list')
+
+  const canEdit = user.role === 'admin' || user.role === 'executive'
 
   // Load newsletters from API
   useEffect(() => {
@@ -60,50 +77,63 @@ export default function TheBounceClient({ newsletters: initialNewsletters }: The
   const loadNewsletters = async () => {
     try {
       const data = await newslettersAPI.getAll()
-      // Map API data to frontend format
       const mapped = data.map((n: any) => ({
         id: n.id,
         title: n.title,
         date: n.date,
         description: n.description || '',
         pdfFile: n.file_url,
-        featured: n.is_featured,
         uploadedAt: n.created_at
       }))
       setNewsletters(mapped)
-    } catch (error) {
-      const errorMessage = parseAPIError(error)
-      error(`Failed to load newsletters: ${errorMessage}`)
+    } catch (err) {
+      error(parseAPIError(err))
     } finally {
       setIsLoading(false)
     }
   }
 
-  // Filter newsletters based on search
-  const filteredNewsletters = newsletters.filter(newsletter => 
-    searchTerm === '' ||
-    newsletter.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    newsletter.description?.toLowerCase().includes(searchTerm.toLowerCase())
-  )
-  
-  // Get featured newsletter
-  const featuredNewsletter = newsletters.find(n => n.featured)
-  
+  // Get the latest newsletter by date
+  const latestNewsletter = newsletters.length > 0
+    ? newsletters.reduce((latest, current) =>
+        new Date(current.date) > new Date(latest.date) ? current : latest
+      )
+    : null
+
+  // Filter and sort newsletters
+  const filteredNewsletters = newsletters
+    .filter(newsletter =>
+      searchTerm === '' ||
+      newsletter.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      newsletter.description?.toLowerCase().includes(searchTerm.toLowerCase())
+    )
+    .sort((a, b) => {
+      let comparison = 0
+      switch (sortBy) {
+        case 'title':
+          comparison = a.title.localeCompare(b.title)
+          break
+        case 'date':
+          comparison = new Date(a.date).getTime() - new Date(b.date).getTime()
+          break
+      }
+      return sortOrder === 'asc' ? comparison : -comparison
+    })
+
   const handleView = (newsletter: Newsletter) => {
     setSelectedNewsletter(newsletter)
   }
-  
+
   const handleDownload = (newsletter: Newsletter) => {
     if (newsletter.pdfFile) {
-      // Create a download link
       const link = document.createElement('a')
       link.href = newsletter.pdfFile
       link.download = `${newsletter.title}.pdf`
       link.click()
     }
   }
-  
-  const handleUpload = async () => {
+
+  const handleCreate = async () => {
     if (!selectedFile) {
       error('Please select a PDF file')
       return
@@ -114,16 +144,13 @@ export default function TheBounceClient({ newsletters: initialNewsletters }: The
       return
     }
 
-    // Sanitize text inputs
-    const sanitizedTitle = sanitize.text(uploadForm.title)
-    const sanitizedDescription = sanitize.text(uploadForm.description)
+    const sanitizedTitle = sanitize.text(newNewsletter.title)
+    const sanitizedDescription = sanitize.text(newNewsletter.description)
 
-    // Extract month and year from date for validation
-    const dateObj = new Date(uploadForm.date)
+    const dateObj = new Date(newNewsletter.date)
     const month = dateObj.toLocaleDateString('en-CA', { month: 'long' })
     const year = dateObj.getFullYear()
 
-    // Validate form data
     const formData = {
       title: sanitizedTitle || `The Bounce - ${month} ${year}`,
       month: month,
@@ -142,68 +169,337 @@ export default function TheBounceClient({ newsletters: initialNewsletters }: The
     setValidationErrors([])
 
     try {
-      // Upload file to Supabase Storage (newsletters bucket)
+      setIsUploading(true)
       const uploadResult = await uploadFile(selectedFile, '/newsletter/')
 
-      // Create newsletter in database
       const apiData = {
         title: formData.title,
-        date: uploadForm.date,
+        date: newNewsletter.date,
         description: formData.description,
         file_name: selectedFile.name,
         file_url: uploadResult.url,
         file_size: uploadResult.size,
-        is_featured: uploadForm.featured
+        is_featured: false
       }
 
       const created = await newslettersAPI.create(apiData)
 
-      // Add to local state
-      const newNewsletter: Newsletter = {
+      const newItem: Newsletter = {
         id: created.id,
         title: created.title,
         date: created.date,
         description: created.description || '',
         pdfFile: created.file_url,
-        featured: created.is_featured,
         uploadedAt: created.created_at
       }
 
-      setNewsletters([newNewsletter, ...newsletters])
-
-      // Reset form
-      setUploadForm({
+      setNewsletters([newItem, ...newsletters])
+      setNewNewsletter({
         title: '',
         date: new Date().toISOString().split('T')[0],
-        description: '',
-        featured: false
+        description: ''
       })
       setSelectedFile(null)
-      setShowUploadForm(false)
-
+      setValidationErrors([])
+      setIsCreating(false)
       success('Newsletter uploaded successfully!')
     } catch (err) {
-      const errorMessage = parseAPIError(err)
-      error(`Failed to upload newsletter: ${errorMessage}`)
+      error(`Failed to upload newsletter: ${parseAPIError(err)}`)
+    } finally {
+      setIsUploading(false)
     }
   }
-  
-  const handleDelete = async (id: string) => {
-    if (confirm('Are you sure you want to delete this newsletter?')) {
-      try {
-        await newslettersAPI.delete(id)
-        setNewsletters(prev => prev.filter(n => n.id !== id))
-        success('Newsletter deleted successfully!')
-      } catch (error) {
-        const errorMessage = parseAPIError(error)
-        error(`Failed to delete newsletter: ${errorMessage}`)
+
+  const startEditing = (newsletter: Newsletter) => {
+    setEditingId(newsletter.id)
+    setEditingData({
+      title: newsletter.title,
+      date: newsletter.date,
+      description: newsletter.description || ''
+    })
+  }
+
+  const cancelEditing = () => {
+    setEditingId(null)
+    setEditingData(null)
+  }
+
+  const handleSaveEdit = async () => {
+    if (!editingId || !editingData) return
+
+    try {
+      const sanitizedUpdates = {
+        id: editingId,
+        title: sanitize.text(editingData.title || ''),
+        date: editingData.date,
+        description: sanitize.text(editingData.description || '')
       }
+
+      const updated = await newslettersAPI.update(sanitizedUpdates)
+      const updatedNewsletters = newsletters.map(n =>
+        n.id === editingId ? { ...n, ...editingData } : n
+      )
+      setNewsletters(updatedNewsletters)
+      success('Newsletter updated successfully.')
+      cancelEditing()
+    } catch (err) {
+      error(parseAPIError(err))
     }
   }
-  
+
+  const handleDelete = async (id: string) => {
+    if (!confirm('Are you sure you want to delete this newsletter?')) return
+
+    try {
+      await newslettersAPI.delete(id)
+      setNewsletters(newsletters.filter(n => n.id !== id))
+      success('Newsletter deleted successfully!')
+    } catch (err) {
+      error(`Failed to delete newsletter: ${parseAPIError(err)}`)
+    }
+  }
+
+  const formatDate = (dateString: string) => {
+    try {
+      const date = new Date(dateString)
+      return date.toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        timeZone: 'America/Edmonton'
+      })
+    } catch {
+      return dateString
+    }
+  }
+
+  // Render a single newsletter (list or grid view)
+  const renderNewsletter = (newsletter: Newsletter) => {
+    // Check if editing this newsletter
+    if (editingId === newsletter.id && editingData) {
+      return (
+        <div key={newsletter.id} className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 col-span-full">
+          <div className="space-y-3">
+            <input
+              type="text"
+              value={editingData.title || ''}
+              onChange={(e) => setEditingData({ ...editingData, title: e.target.value })}
+              className="w-full font-semibold px-3 py-2 border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+              placeholder="Newsletter title..."
+            />
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Date</label>
+              <input
+                type="date"
+                value={editingData.date || ''}
+                onChange={(e) => setEditingData({ ...editingData, date: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Description</label>
+              <textarea
+                value={editingData.description || ''}
+                onChange={(e) => setEditingData({ ...editingData, description: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                rows={2}
+                placeholder="Newsletter description..."
+              />
+            </div>
+
+            <div className="flex gap-2">
+              <button
+                onClick={handleSaveEdit}
+                className="bg-green-600 text-white px-3 py-1 rounded text-sm hover:bg-green-700 flex items-center gap-1"
+              >
+                <IconDeviceFloppy className="h-4 w-4" />
+                Save Changes
+              </button>
+              <button
+                onClick={cancelEditing}
+                className="bg-gray-300 dark:bg-gray-600 text-gray-700 dark:text-gray-200 px-3 py-1 rounded text-sm hover:bg-gray-400 dark:hover:bg-gray-500 flex items-center gap-1"
+              >
+                <IconX className="h-4 w-4" />
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )
+    }
+
+    // Grid view card
+    if (viewMode === 'grid') {
+      return (
+        <div
+          key={newsletter.id}
+          className="bg-white dark:bg-gray-800 rounded-lg shadow hover:shadow-md transition-shadow p-4 flex flex-col cursor-pointer"
+          onClick={() => handleView(newsletter)}
+        >
+          <div className="flex items-start gap-3 mb-3">
+            <div className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 bg-orange-100 dark:bg-orange-900/30">
+              <IconNotebook className="h-5 w-5 text-orange-600 dark:text-orange-400" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <h3 className="font-semibold text-gray-900 dark:text-white text-sm line-clamp-2">{newsletter.title}</h3>
+              <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                {formatDate(newsletter.date)}
+              </div>
+            </div>
+          </div>
+          <div className="mt-auto flex items-center gap-1 pt-2 border-t border-gray-100 dark:border-gray-700" onClick={(e) => e.stopPropagation()}>
+            <button
+              onClick={() => handleView(newsletter)}
+              className="p-1.5 text-orange-500 hover:bg-orange-50 dark:hover:bg-orange-900/20 rounded transition-colors"
+              title="View"
+            >
+              <IconEye className="h-4 w-4" />
+            </button>
+            <a
+              href={newsletter.pdfFile}
+              download
+              className="p-1.5 text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/30 rounded transition-colors"
+              title="Download"
+            >
+              <IconDownload className="h-4 w-4" />
+            </a>
+            {canEdit && (
+              <>
+                <button
+                  onClick={() => startEditing(newsletter)}
+                  className="p-1.5 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded ml-auto transition-colors"
+                  title="Edit"
+                >
+                  <IconEdit className="h-4 w-4" />
+                </button>
+                <button
+                  onClick={() => handleDelete(newsletter.id)}
+                  className="p-1.5 text-red-500 dark:text-red-400/70 hover:bg-red-50 dark:hover:bg-red-900/30 rounded transition-colors"
+                  title="Delete"
+                >
+                  <IconTrash className="h-4 w-4" />
+                </button>
+              </>
+            )}
+          </div>
+        </div>
+      )
+    }
+
+    // List view row
+    return (
+      <div key={newsletter.id} className="bg-white dark:bg-gray-800 rounded-lg shadow hover:shadow-md transition-shadow cursor-pointer" onClick={() => handleView(newsletter)}>
+        {/* Mobile card layout */}
+        <div className="sm:hidden p-4">
+          <div className="flex items-start gap-3 mb-3">
+            <div className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 bg-orange-100 dark:bg-orange-900/30">
+              <IconNotebook className="h-5 w-5 text-orange-600 dark:text-orange-400" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <h3 className="font-semibold text-gray-900 dark:text-white text-sm">{newsletter.title}</h3>
+              <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">{formatDate(newsletter.date)}</div>
+            </div>
+          </div>
+          <div className="flex items-center gap-1 pt-2 border-t border-gray-100 dark:border-gray-700" onClick={(e) => e.stopPropagation()}>
+            <button
+              onClick={() => handleView(newsletter)}
+              className="p-1.5 text-orange-500 hover:bg-orange-50 dark:hover:bg-orange-900/20 rounded transition-colors"
+              title="View"
+            >
+              <IconEye className="h-4 w-4" />
+            </button>
+            <a
+              href={newsletter.pdfFile}
+              download
+              className="p-1.5 text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/30 rounded transition-colors"
+              title="Download"
+            >
+              <IconDownload className="h-4 w-4" />
+            </a>
+            {canEdit && (
+              <>
+                <button
+                  onClick={() => startEditing(newsletter)}
+                  className="p-1.5 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded ml-auto transition-colors"
+                  title="Edit"
+                >
+                  <IconEdit className="h-4 w-4" />
+                </button>
+                <button
+                  onClick={() => handleDelete(newsletter.id)}
+                  className="p-1.5 text-red-500 dark:text-red-400/70 hover:bg-red-50 dark:hover:bg-red-900/30 rounded transition-colors"
+                  title="Delete"
+                >
+                  <IconTrash className="h-4 w-4" />
+                </button>
+              </>
+            )}
+          </div>
+        </div>
+
+        {/* Desktop row layout */}
+        <div className="hidden sm:block">
+          <div className="p-4 flex items-center gap-4">
+            <div className="w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0 bg-orange-100 dark:bg-orange-900/30">
+              <IconNotebook className="h-6 w-6 text-orange-600 dark:text-orange-400" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <h3 className="font-semibold text-gray-900 dark:text-white break-words">{newsletter.title}</h3>
+              <div className="flex flex-wrap items-center gap-2 text-xs text-gray-500 dark:text-gray-400 mt-1">
+                <span>{formatDate(newsletter.date)}</span>
+                {newsletter.description && (
+                  <span className="text-gray-400 dark:text-gray-500">•</span>
+                )}
+                {newsletter.description && (
+                  <span className="line-clamp-1">{newsletter.description}</span>
+                )}
+              </div>
+            </div>
+            <div className="flex items-center gap-1 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
+              <button
+                onClick={() => handleView(newsletter)}
+                className="p-2 text-orange-500 hover:bg-orange-50 dark:hover:bg-orange-900/20 rounded transition-colors"
+                title="View"
+              >
+                <IconEye className="h-5 w-5" />
+              </button>
+              <a
+                href={newsletter.pdfFile}
+                download
+                className="p-2 text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/30 rounded transition-colors"
+                title="Download"
+              >
+                <IconDownload className="h-5 w-5" />
+              </a>
+              {canEdit && (
+                <>
+                  <button
+                    onClick={() => startEditing(newsletter)}
+                    className="p-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"
+                    title="Edit"
+                  >
+                    <IconEdit className="h-5 w-5" />
+                  </button>
+                  <button
+                    onClick={() => handleDelete(newsletter.id)}
+                    className="p-2 text-red-500 dark:text-red-400/70 hover:bg-red-50 dark:hover:bg-red-900/30 rounded transition-colors"
+                    title="Delete"
+                  >
+                    <IconTrash className="h-5 w-5" />
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="px-4 py-5 sm:p-6">
-
       {/* Header */}
       <div className="mb-6 sm:mb-8 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
         <div>
@@ -212,9 +508,9 @@ export default function TheBounceClient({ newsletters: initialNewsletters }: The
             Your monthly source for CBOA news, officiating tips, and member updates
           </p>
         </div>
-        {(user.role === 'admin' || user.role === 'executive') && !showUploadForm && (
+        {canEdit && !isCreating && (
           <button
-            onClick={() => setShowUploadForm(true)}
+            onClick={() => setIsCreating(true)}
             className="bg-orange-500 text-white px-3 py-2 sm:px-4 rounded-lg hover:bg-orange-600 flex items-center gap-2 text-sm sm:text-base"
           >
             <IconPlus className="h-5 w-5" />
@@ -222,20 +518,19 @@ export default function TheBounceClient({ newsletters: initialNewsletters }: The
           </button>
         )}
       </div>
-      
-      {/* Upload Form */}
-      {showUploadForm && (user.role === 'admin' || user.role === 'executive') && (
+
+      {/* Create New Newsletter Form */}
+      {isCreating && (
         <div className="mb-6 bg-white dark:bg-gray-800 rounded-lg shadow-lg p-4 sm:p-6">
           <h2 className="text-lg sm:text-xl font-semibold mb-4 text-gray-900 dark:text-white">Upload New Newsletter</h2>
+
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Title
-              </label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Title</label>
               <input
                 type="text"
-                value={uploadForm.title}
-                onChange={(e) => setUploadForm({ ...uploadForm, title: e.target.value })}
+                value={newNewsletter.title}
+                onChange={(e) => setNewNewsletter({ ...newNewsletter, title: e.target.value })}
                 placeholder="e.g., The Bounce - January 2025"
                 className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white ${
                   getFieldError(validationErrors, 'title')
@@ -249,13 +544,11 @@ export default function TheBounceClient({ newsletters: initialNewsletters }: The
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Date
-              </label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Date</label>
               <input
                 type="date"
-                value={uploadForm.date}
-                onChange={(e) => setUploadForm({ ...uploadForm, date: e.target.value })}
+                value={newNewsletter.date}
+                onChange={(e) => setNewNewsletter({ ...newNewsletter, date: e.target.value })}
                 className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white ${
                   getFieldError(validationErrors, 'date')
                     ? 'border-red-500 focus:ring-red-500'
@@ -268,41 +561,18 @@ export default function TheBounceClient({ newsletters: initialNewsletters }: The
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Description (optional)
-              </label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Description (optional)</label>
               <textarea
-                value={uploadForm.description}
-                onChange={(e) => setUploadForm({ ...uploadForm, description: e.target.value })}
+                value={newNewsletter.description}
+                onChange={(e) => setNewNewsletter({ ...newNewsletter, description: e.target.value })}
                 placeholder="Brief description of this issue's content"
                 rows={2}
-                className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white ${
-                  getFieldError(validationErrors, 'description')
-                    ? 'border-red-500 focus:ring-red-500'
-                    : 'border-gray-300 dark:border-gray-700 focus:ring-orange-500'
-                }`}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
               />
-              {getFieldError(validationErrors, 'description') && (
-                <p className="mt-1 text-sm text-red-600">{getFieldError(validationErrors, 'description')}</p>
-              )}
-            </div>
-
-            <div className="flex items-center">
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={uploadForm.featured}
-                  onChange={(e) => setUploadForm({ ...uploadForm, featured: e.target.checked })}
-                  className="rounded text-orange-500 focus:ring-orange-500"
-                />
-                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Feature this issue</span>
-              </label>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                PDF File
-              </label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">PDF File *</label>
               <FileUpload
                 onFileSelect={setSelectedFile}
                 selectedFile={selectedFile}
@@ -314,233 +584,191 @@ export default function TheBounceClient({ newsletters: initialNewsletters }: The
 
             <div className="flex flex-col sm:flex-row gap-2">
               <button
-                type="button"
-                onClick={handleUpload}
-                disabled={!selectedFile}
+                onClick={handleCreate}
+                disabled={!selectedFile || isUploading}
                 className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                <IconUpload className="h-5 w-5" />
-                Upload Newsletter
+                {isUploading ? (
+                  <>
+                    <div className="animate-spin h-5 w-5 border-2 border-white border-t-transparent rounded-full" />
+                    Uploading...
+                  </>
+                ) : (
+                  <>
+                    <IconDeviceFloppy className="h-5 w-5" />
+                    Save Newsletter
+                  </>
+                )}
               </button>
               <button
-                type="button"
                 onClick={() => {
-                  setShowUploadForm(false)
+                  setIsCreating(false)
                   setSelectedFile(null)
                   setValidationErrors([])
-                  setUploadForm({
+                  setNewNewsletter({
                     title: '',
                     date: new Date().toISOString().split('T')[0],
-                    description: '',
-                    featured: false
+                    description: ''
                   })
                 }}
-                className="bg-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-400 flex items-center justify-center gap-2"
+                className="bg-gray-300 dark:bg-gray-600 text-gray-700 dark:text-gray-200 px-4 py-2 rounded-lg hover:bg-gray-400 dark:hover:bg-gray-500 flex items-center justify-center gap-2"
               >
-                <IconFile className="h-5 w-5" />
+                <IconX className="h-5 w-5" />
                 Cancel
               </button>
             </div>
           </div>
         </div>
       )}
-      
-      {/* Featured Issue */}
-      {featuredNewsletter && (
-        <div className="bg-gradient-to-r from-cboa-orange to-orange-600 rounded-lg shadow-lg text-white p-4 sm:p-6">
-          <div>
-            <span className="text-sm font-medium opacity-90">Latest Issue</span>
-            <h2 className="text-xl sm:text-2xl font-bold mt-1">{featuredNewsletter.title}</h2>
-            {featuredNewsletter.description && (
-              <p className="mt-2 text-sm sm:text-base opacity-90">{featuredNewsletter.description}</p>
-            )}
-            <div className="mt-4 flex flex-col sm:flex-row gap-3">
-              <button
-                onClick={() => handleView(featuredNewsletter)}
-                className="bg-white text-orange-600 px-4 py-2 rounded-lg font-medium hover:bg-orange-50 transition-colors flex items-center justify-center gap-2"
-              >
-                <IconEye className="h-4 w-4" />
-                Read Now
-              </button>
-              <button
-                onClick={() => handleDownload(featuredNewsletter)}
-                className="border-2 border-white text-white px-4 py-2 rounded-lg font-medium hover:bg-white hover:text-orange-600 transition-colors flex items-center justify-center gap-2"
-              >
-                <IconDownload className="h-4 w-4" />
-                Download PDF
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-      
-      {/* Search and View Mode */}
+
+      {/* Search and Filter */}
       <div className="mb-6 bg-white dark:bg-gray-800 rounded-lg shadow p-3 sm:p-4">
-        <div className="flex flex-wrap gap-4">
+        <div className="flex flex-wrap gap-3 sm:gap-4">
           <div className="flex-1 min-w-0">
             <input
               type="text"
               placeholder="Search newsletters..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full px-3 py-2 text-sm sm:text-base border border-gray-300 dark:border-gray-700 rounded-md focus:outline-none focus:ring-orange-500 focus:border-orange-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+              className="w-full px-3 py-2 text-sm sm:text-base border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-md focus:outline-none focus:ring-orange-500 focus:border-orange-500"
             />
           </div>
+        </div>
 
-          <div className="flex gap-2">
-            <button
-              onClick={() => setViewMode('grid')}
-              className={`px-2 sm:px-3 py-1.5 sm:py-2 rounded-md text-xs sm:text-sm ${
-                viewMode === 'grid'
-                  ? 'bg-orange-500 text-white'
-                  : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
-              }`}
+        {/* Sort and View Options */}
+        <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700 flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="text-xs text-gray-500 dark:text-gray-400">Sort by:</span>
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value as 'title' | 'date')}
+              className="text-sm border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-orange-500"
             >
-              Grid View
+              <option value="date">Date</option>
+              <option value="title">Title</option>
+            </select>
+            <button
+              onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
+              className="p-1.5 text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
+              title={sortOrder === 'asc' ? 'Ascending' : 'Descending'}
+            >
+              {sortOrder === 'asc' ? (
+                <IconSortAscending className="h-4 w-4" />
+              ) : (
+                <IconSortDescending className="h-4 w-4" />
+              )}
             </button>
+          </div>
+
+          {/* View Mode Toggle */}
+          <div className="flex items-center gap-1 bg-gray-100 dark:bg-gray-700 rounded p-0.5">
             <button
               onClick={() => setViewMode('list')}
-              className={`px-2 sm:px-3 py-1.5 sm:py-2 rounded-md text-xs sm:text-sm ${
-                viewMode === 'list'
-                  ? 'bg-orange-500 text-white'
-                  : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
-              }`}
+              className={`p-1.5 rounded ${viewMode === 'list' ? 'bg-white dark:bg-gray-800 shadow text-orange-600' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'}`}
+              title="List view"
             >
-              List View
+              <IconLayoutList className="h-4 w-4" />
+            </button>
+            <button
+              onClick={() => setViewMode('grid')}
+              className={`p-1.5 rounded ${viewMode === 'grid' ? 'bg-white dark:bg-gray-800 shadow text-orange-600' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'}`}
+              title="Grid view"
+            >
+              <IconLayoutGrid className="h-4 w-4" />
             </button>
           </div>
         </div>
       </div>
-      
-      {/* Newsletter Archive */}
-      {filteredNewsletters.length === 0 ? (
-        <div className="text-center py-12 bg-white dark:bg-gray-800 rounded-lg shadow">
-          <IconNotebook className="mx-auto h-12 w-12 text-gray-400" />
-          <h3 className="mt-2 text-sm font-medium text-gray-900 dark:text-white">No newsletters found</h3>
-          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-            {searchTerm
-              ? `No newsletters found matching "${searchTerm}"`
-              : (user.role === 'admin' || user.role === 'executive')
-                ? 'Click "Upload Newsletter" to add your first newsletter.'
-                : 'Newsletters will appear here once uploaded by administrators.'}
-          </p>
-        </div>
-      ) : (
-        <div>
-          {viewMode === 'grid' ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredNewsletters.map((newsletter) => (
-                <Card key={newsletter.id} className="hover:shadow-lg transition-shadow">
-                  <div className="p-6">
-                    <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 mb-3">
-                      <IconCalendar className="h-4 w-4" />
-                      <span>
-                        {new Date(newsletter.date).toLocaleDateString('en-CA', {
-                          year: 'numeric',
-                          month: 'long',
-                          day: 'numeric'
-                        })}
-                      </span>
-                    </div>
 
-                    <h3 className="text-lg font-bold text-cboa-blue mb-2">
-                      {newsletter.title}
-                    </h3>
-
-                    {newsletter.description && (
-                      <p className="text-gray-600 dark:text-gray-300 text-sm mb-4 line-clamp-2">
-                        {newsletter.description}
-                      </p>
-                    )}
-
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => handleView(newsletter)}
-                        className="flex-1 bg-orange-500 text-white px-3 py-2 rounded-lg text-sm font-medium hover:bg-orange-600 transition-colors"
-                      >
-                        View
-                      </button>
-                      <button
-                        onClick={() => handleDownload(newsletter)}
-                        className="flex-1 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 px-3 py-2 rounded-lg text-sm font-medium hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
-                      >
-                        Download
-                      </button>
-                      {(user.role === 'admin' || user.role === 'executive') && (
-                        <button
-                          onClick={() => handleDelete(newsletter.id)}
-                          className="p-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
-                          title="Delete newsletter"
-                        >
-                          <IconTrash className="h-4 w-4" />
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                </Card>
-              ))}
+      {/* Latest Newsletter */}
+      {latestNewsletter && (
+        <div className="mb-6">
+          <h2 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white mb-3">Latest Newsletter</h2>
+          <div
+            className="bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg p-3 sm:p-4 cursor-pointer hover:bg-orange-100 dark:hover:bg-orange-900/30 transition-colors"
+            onClick={() => handleView(latestNewsletter)}
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0 bg-orange-100 dark:bg-orange-900/40">
+                <IconNotebook className="h-6 w-6 text-orange-600 dark:text-orange-400" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <h3 className="font-semibold text-gray-900 dark:text-white">{latestNewsletter.title}</h3>
+                <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  {formatDate(latestNewsletter.date)}
+                  {latestNewsletter.description && (
+                    <span className="hidden sm:inline"> • {latestNewsletter.description}</span>
+                  )}
+                </div>
+              </div>
+              <div className="flex items-center gap-1 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
+                <button
+                  onClick={() => handleView(latestNewsletter)}
+                  className="p-2 text-orange-600 dark:text-orange-400 hover:bg-orange-100 dark:hover:bg-orange-900/40 rounded transition-colors"
+                  title="View"
+                >
+                  <IconEye className="h-5 w-5" />
+                </button>
+                <a
+                  href={latestNewsletter.pdfFile}
+                  download
+                  className="p-2 text-orange-600 dark:text-orange-400 hover:bg-orange-100 dark:hover:bg-orange-900/40 rounded transition-colors"
+                  title="Download"
+                >
+                  <IconDownload className="h-5 w-5" />
+                </a>
+                {canEdit && (
+                  <>
+                    <button
+                      onClick={() => startEditing(latestNewsletter)}
+                      className="p-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"
+                      title="Edit"
+                    >
+                      <IconEdit className="h-5 w-5" />
+                    </button>
+                    <button
+                      onClick={() => handleDelete(latestNewsletter.id)}
+                      className="p-2 text-red-500 dark:text-red-400/70 hover:bg-red-50 dark:hover:bg-red-900/30 rounded transition-colors"
+                      title="Delete"
+                    >
+                      <IconTrash className="h-5 w-5" />
+                    </button>
+                  </>
+                )}
+              </div>
             </div>
-          ) : (
-            <Card className="overflow-hidden">
-              <ul className="divide-y divide-gray-200 dark:divide-gray-700">
-                {filteredNewsletters.map((newsletter) => (
-                  <li key={newsletter.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50 p-4 sm:p-6">
-                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                      <div className="flex-1 min-w-0">
-                        <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 mb-1">
-                          <h3 className="text-base sm:text-lg font-medium text-cboa-blue truncate">
-                            {newsletter.title}
-                          </h3>
-                          <span className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
-                            {new Date(newsletter.date).toLocaleDateString('en-CA', {
-                              year: 'numeric',
-                              month: 'long',
-                              day: 'numeric'
-                            })}
-                          </span>
-                        </div>
-                        {newsletter.description && (
-                          <p className="text-gray-600 dark:text-gray-300 text-sm line-clamp-2">
-                            {newsletter.description}
-                          </p>
-                        )}
-                      </div>
-
-                      <div className="flex items-center gap-3 sm:ml-4">
-                        <button
-                          onClick={() => handleView(newsletter)}
-                          className="text-orange-500 hover:text-orange-600 font-medium text-sm"
-                        >
-                          View
-                        </button>
-                        <span className="text-gray-300 dark:text-gray-600">|</span>
-                        <button
-                          onClick={() => handleDownload(newsletter)}
-                          className="text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 font-medium text-sm"
-                        >
-                          Download
-                        </button>
-                        {(user.role === 'admin' || user.role === 'executive') && (
-                          <>
-                            <span className="text-gray-300 dark:text-gray-600">|</span>
-                            <button
-                              onClick={() => handleDelete(newsletter.id)}
-                              className="text-red-600 hover:text-red-700 font-medium text-sm"
-                            >
-                              Delete
-                            </button>
-                          </>
-                        )}
-                      </div>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            </Card>
-          )}
+          </div>
         </div>
       )}
-      
+
+      {/* Newsletter List */}
+      <div className="space-y-6">
+        <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+          All Newsletters
+          <span className="text-sm font-normal text-gray-500 dark:text-gray-400 ml-2">
+            ({filteredNewsletters.length})
+          </span>
+        </h2>
+        <div className={viewMode === 'grid'
+          ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4'
+          : 'grid grid-cols-1 gap-3 sm:block sm:space-y-3'
+        }>
+          {filteredNewsletters.map(newsletter => renderNewsletter(newsletter))}
+        </div>
+      </div>
+
+      {filteredNewsletters.length === 0 && (
+        <div className="text-center py-12 bg-white dark:bg-gray-800 rounded-lg">
+          <IconNotebook className="mx-auto h-12 w-12 text-gray-400 dark:text-gray-500" />
+          <h3 className="mt-2 text-sm font-medium text-gray-900 dark:text-white">No newsletters found</h3>
+          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+            {canEdit
+              ? 'Click "Upload Newsletter" to add your first newsletter.'
+              : 'Newsletters will appear here once uploaded by administrators.'}
+          </p>
+        </div>
+      )}
+
       {/* PDF Viewer Modal */}
       {selectedNewsletter && (
         <PDFViewer
@@ -549,24 +777,6 @@ export default function TheBounceClient({ newsletters: initialNewsletters }: The
           onClose={() => setSelectedNewsletter(null)}
         />
       )}
-      
-      {/* Newsletter Info */}
-      <div className="bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg p-6">
-        <h3 className="text-lg font-semibold text-orange-900 dark:text-orange-300 mb-2">About The Bounce</h3>
-        <p className="text-sm text-orange-800 dark:text-orange-300 mb-3">
-          The Bounce is CBOA's monthly newsletter, featuring:
-        </p>
-        <ul className="text-sm text-orange-800 dark:text-orange-300 space-y-1">
-          <li>• In-depth articles on officiating techniques</li>
-          <li>• Rule interpretations and clarifications</li>
-          <li>• Member spotlights and achievements</li>
-          <li>• Training tips from experienced officials</li>
-          <li>• Important dates and upcoming events</li>
-        </ul>
-        <p className="text-sm text-orange-800 dark:text-orange-300 mt-3">
-          New issues are published on the first Monday of each month.
-        </p>
-      </div>
     </div>
   )
 }
