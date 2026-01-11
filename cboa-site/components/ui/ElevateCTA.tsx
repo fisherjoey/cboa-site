@@ -20,7 +20,7 @@ export default function ElevateCTA({ primaryButtonHref = "/get-officials" }: Ele
               <p className="text-white">Certified Officials</p>
             </div>
             <div className="bg-white/10 backdrop-blur-sm rounded-lg p-6">
-              <div className="text-3xl font-bold text-cboa-orange mb-2">40+</div>
+              <div className="text-3xl font-bold text-cboa-orange mb-2">60+</div>
               <p className="text-white">Years of Excellence</p>
             </div>
             <div className="bg-white/10 backdrop-blur-sm rounded-lg p-6">
