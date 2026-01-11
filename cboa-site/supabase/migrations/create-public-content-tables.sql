@@ -233,9 +233,9 @@ VALUES
       "stats": [
         {"label": "Active Officials", "value": "250+"},
         {"label": "Games Per Season", "value": "5,000+"},
-        {"label": "Years of Service", "value": "45"}
+        {"label": "Years of Service", "value": "60+"}
       ],
-      "aboutSection": "<h1>Welcome to CBOA</h1><p>The Calgary Basketball Officials Association (CBOA) has been serving the Calgary basketball community for over 45 years.</p>"
+      "aboutSection": "<h1>Welcome to CBOA</h1><p>The Calgary Basketball Officials Association (CBOA) has been serving the Calgary basketball community for over 60 years.</p>"
     }'::jsonb,
     true
   ),
@@ -243,7 +243,7 @@ VALUES
     'about',
     'About CBOA',
     '{
-      "body": "<h1>About Calgary Basketball Officials Association</h1><p>The Calgary Basketball Officials Association (CBOA) has been serving the Calgary basketball community for over 45 years. We are dedicated to providing qualified, professional basketball officials for all levels of play in the Calgary area.</p>"
+      "body": "<h1>About Calgary Basketball Officials Association</h1><p>The Calgary Basketball Officials Association (CBOA) has been serving the Calgary basketball community for over 60 years. We are dedicated to providing qualified, professional basketball officials for all levels of play in the Calgary area.</p>"
     }'::jsonb,
     true
   )
