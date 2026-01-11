@@ -4,7 +4,7 @@ title: About CBOA
 
 # About Calgary Basketball Officials Association
 
-The Calgary Basketball Officials Association (CBOA) has been serving the Calgary basketball community for over 45 years. We are dedicated to providing qualified, professional basketball officials for all levels of play in the Calgary area.
+The Calgary Basketball Officials Association (CBOA) has been serving the Calgary basketball community for over 60 years. We are dedicated to providing qualified, professional basketball officials for all levels of play in the Calgary area.
 
 ## Our Mission
 

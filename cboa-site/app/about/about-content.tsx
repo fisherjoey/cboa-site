@@ -76,7 +76,7 @@ export default function AboutContent() {
               provincial championships.
             </p>
             <p className="text-gray-700">
-              Over the past 45 years, CBOA has been instrumental in developing officiating
+              Over the past 60 years, CBOA has been instrumental in developing officiating
               standards, training programs, and mentorship initiatives that have produced some
               of Canada's finest basketball officials, including several who have gone on to
               officiate at national and international levels.
