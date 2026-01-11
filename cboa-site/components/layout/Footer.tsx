@@ -27,6 +27,7 @@ export default function Footer() {
               <li><Link href="/become-a-referee" className="text-gray-300 hover:text-cboa-orange transition-colors text-sm sm:text-base">Become an Official</Link></li>
               <li><Link href="/get-officials" className="text-gray-300 hover:text-cboa-orange transition-colors text-sm sm:text-base">Book Referees</Link></li>
               <li><Link href="/about" className="text-gray-300 hover:text-cboa-orange transition-colors text-sm sm:text-base">About Us</Link></li>
+              <li><Link href="/new-officials" className="text-gray-300 hover:text-cboa-orange transition-colors text-sm sm:text-base">Blue Whistle Program</Link></li>
             </ul>
           </div>
           

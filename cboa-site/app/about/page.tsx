@@ -103,7 +103,7 @@ export default function AboutPage() {
                 </li>
                 <li className="flex items-start">
                   <IconCheck size={20} className="text-cboa-orange mr-2 flex-shrink-0" />
-                  Mentorship programs pairing experienced officials with newcomers
+                  <span>Mentorship programs pairing experienced officials with newcomers, including the <a href="/new-officials" className="text-cboa-orange hover:underline">Blue Whistle Program</a></span>
                 </li>
                 <li className="flex items-start">
                   <IconCheck size={20} className="text-cboa-orange mr-2 flex-shrink-0" />

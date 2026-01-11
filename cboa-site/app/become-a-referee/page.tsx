@@ -3,6 +3,7 @@
 import Hero from '@/components/content/Hero'
 import Card from '@/components/ui/Card'
 import { IconCheck } from '@tabler/icons-react'
+import Link from 'next/link'
 
 export default function BecomeARefereePage() {
   const requirements = [
@@ -110,6 +111,26 @@ export default function BecomeARefereePage() {
                 <p className="text-gray-100">{benefit.description}</p>
               </div>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Blue Whistle Program Section */}
+      <section className="py-16 bg-blue-50">
+        <div className="container mx-auto px-4">
+          <div className="max-w-3xl mx-auto text-center">
+            <h2 className="text-3xl font-bold text-cboa-blue mb-4">
+              New to Officiating?
+            </h2>
+            <p className="text-gray-700 mb-6">
+              The Blue Whistle Program is a provincewide initiative that encourages respectful treatment of new basketball officials. When you see the blue whistle, you know the official is new and learning.
+            </p>
+            <Link
+              href="/new-officials"
+              className="inline-block bg-cboa-orange hover:bg-cboa-blue text-white font-bold py-3 px-8 rounded-lg transition-colors"
+            >
+              Learn About the Blue Whistle Program
+            </Link>
           </div>
         </div>
       </section>
