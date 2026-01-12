@@ -174,7 +174,7 @@ export default function PinkWhistlePage() {
                 </li>
                 <li className="flex items-start">
                   <IconCheck size={20} className="text-pink-500 mr-3 flex-shrink-0 mt-0.5" />
-                  <span className="text-gray-700">Receive your pink whistle to wear during October games</span>
+                  <span className="text-gray-700">Receive your pink whistle to wear during February games</span>
                 </li>
                 <li className="flex items-start">
                   <IconCheck size={20} className="text-pink-500 mr-3 flex-shrink-0 mt-0.5" />
