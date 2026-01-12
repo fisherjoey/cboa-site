@@ -88,6 +88,25 @@ export default function HomeContent() {
 
   return (
     <>
+      {/* Instagram Feed */}
+      <section className="py-8 sm:py-12 lg:py-16 bg-gray-50">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-6 sm:mb-8">
+            <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-cboa-blue mb-2">Follow Us on Instagram</h2>
+            <p className="text-gray-600">Stay up to date with the latest from CBOA</p>
+          </div>
+          <div className="max-w-4xl mx-auto">
+            <iframe
+              src="https://www.instagram.com/thecboa/embed"
+              width="100%"
+              frameBorder="0"
+              scrolling="no"
+              className="rounded-lg shadow-lg h-[450px] sm:h-[500px] lg:h-[600px]"
+            />
+          </div>
+        </div>
+      </section>
+
       {/* Latest News - Commented out for public site
       <section className="py-8 sm:py-12 lg:py-16">
         <div className="container mx-auto px-4">

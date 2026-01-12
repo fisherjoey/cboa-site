@@ -38,6 +38,14 @@ export default function Button({
   const combinedStyles = `${baseStyles} ${variantStyles[variant]} ${sizeStyles[size]} ${className} ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`
   
   if (href) {
+    const isExternal = href.startsWith('http://') || href.startsWith('https://')
+    if (isExternal) {
+      return (
+        <a href={href} className={combinedStyles} target="_blank" rel="noopener noreferrer">
+          {children}
+        </a>
+      )
+    }
     return (
       <Link href={href} className={combinedStyles}>
         {children}

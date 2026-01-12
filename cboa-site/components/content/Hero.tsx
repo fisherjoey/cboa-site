@@ -14,6 +14,8 @@ interface HeroProps {
   }
   backgroundImage?: string
   showLogo?: boolean
+  gradientClass?: string
+  buttonClassName?: string
 }
 
 export default function Hero({
@@ -23,10 +25,12 @@ export default function Hero({
   secondaryAction,
   backgroundImage,
   showLogo = false,
+  gradientClass = 'bg-gradient-to-br from-cboa-blue to-cboa-light-blue',
+  buttonClassName,
 }: HeroProps) {
   return (
-    <section 
-      className="relative bg-gradient-to-br from-cboa-blue to-cboa-light-blue text-white py-20 md:py-32"
+    <section
+      className={`relative ${gradientClass} text-white py-20 md:py-32`}
       style={backgroundImage ? { backgroundImage: `url(${backgroundImage})`, backgroundSize: 'cover', backgroundPosition: 'center' } : {}}
     >
       {backgroundImage && (
@@ -62,7 +66,7 @@ export default function Hero({
           {(primaryAction || secondaryAction) && (
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               {primaryAction && (
-                <Button href={primaryAction.href} size="lg">
+                <Button href={primaryAction.href} size="lg" className={buttonClassName}>
                   {primaryAction.text}
                 </Button>
               )}

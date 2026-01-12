@@ -46,7 +46,7 @@ export default function GetOfficialsPage() {
                 <p>
                   Members of the Calgary Basketball Officials Association are members of the provincial referee organization,
                   the Alberta Basketball Officials Association (ABOA). As such we are pleased to partner with the sanctioning
-                  body for all basketball played in the province, the Alberta Basketball Association (ABA).
+                  body for all basketball played in the province, Basketball Alberta.
                 </p>
                 <p>
                   As certified partner members of the Provincial Sport Organizing Committee, CBOA members are trained, assessed,

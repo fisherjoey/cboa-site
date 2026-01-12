@@ -44,7 +44,7 @@ export default function BlueWhistlePage() {
                   &ldquo;When the whistle is <span className="text-blue-500">blue</span>, the official is <span className="text-cboa-orange">new</span>&rdquo;
                 </h2>
                 <p className="text-gray-700">
-                  ABA has launched the Blue Whistle Program, a provincewide initiative encouraging respectful treatment of new basketball officials.
+                  Basketball Alberta has launched the Blue Whistle Program, a provincewide initiative encouraging respectful treatment of new basketball officials.
                 </p>
               </div>
             </div>
@@ -52,7 +52,7 @@ export default function BlueWhistlePage() {
             <Card>
               <div className="space-y-4">
                 <p className="text-gray-700">
-                  Through the Blue Whistle Program, new officials across the province are receiving specially designed blue whistles emblazoned with the orange ABA logo.
+                  Through the Blue Whistle Program, new officials across the province are receiving specially designed blue whistles emblazoned with the orange Basketball Alberta logo.
                 </p>
                 <p className="text-gray-700">
                   When worn during games, the distinctive and easily identifiable whistle serves as a visual reminder for fans, parents, players and coaches that the official is new.

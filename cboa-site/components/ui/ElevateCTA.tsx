@@ -8,11 +8,11 @@ export default function ElevateCTA({ primaryButtonHref = "/get-officials" }: Ele
       <div className="container mx-auto px-4">
         <div className="max-w-4xl mx-auto text-center">
           <h2 className="text-4xl font-bold text-white mb-6">
-            Ready to Elevate Your Basketball Event?
+            Need Officials for Your Event?
           </h2>
           <p className="text-xl text-gray-200 mb-8">
-            Don't leave your officiating to chance. Partner with CBOA's certified referees and ensure 
-            your games are managed with professionalism, consistency, and expertise.
+            CBOA provides trained and certified referees for games, leagues, and tournaments
+            throughout the Calgary area.
           </p>
           <div className="grid md:grid-cols-3 gap-6 mb-10">
             <div className="bg-white/10 backdrop-blur-sm rounded-lg p-6">
@@ -43,7 +43,7 @@ export default function ElevateCTA({ primaryButtonHref = "/get-officials" }: Ele
             </a>
           </div>
           <p className="text-sm text-gray-300 mt-6">
-            Book early to secure the best officials for your event
+            Book early to ensure you secure officials for your event
           </p>
         </div>
       </div>

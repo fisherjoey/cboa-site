@@ -5,6 +5,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { usePathname } from 'next/navigation'
 import SearchBox from '../ui/SearchBox'
+import CampaignBanner from '../ui/CampaignBanner'
 import { IconBrandFacebook, IconBrandInstagram } from '@tabler/icons-react'
 
 export default function Header() {
@@ -122,11 +123,15 @@ export default function Header() {
               <li><Link href="/about" className={`transition-colors px-3 py-2 text-base font-medium ${isActive('/about') ? 'text-cboa-orange' : 'hover:text-cboa-orange'}`}>About</Link></li>
               <li><Link href="/become-a-referee" className={`transition-colors px-3 py-2 text-base font-medium ${isActive('/become-a-referee') ? 'text-cboa-orange' : 'hover:text-cboa-orange'}`}>Become a Referee</Link></li>
               <li><Link href="/get-officials" className={`transition-colors px-3 py-2 text-base font-medium ${isActive('/get-officials') ? 'text-cboa-orange' : 'hover:text-cboa-orange'}`}>Book Referees</Link></li>
+              <li><Link href="/new-officials" className={`transition-colors px-3 py-2 text-base font-medium ${isActive('/new-officials') ? 'text-cboa-orange' : 'hover:text-cboa-orange'}`}>Blue Whistles</Link></li>
             </ul>
           </div>
         </div>
       </nav>
-      
+
+      {/* Campaign Banner - Uncomment to enable Pink Whistle campaign banner (February) */}
+      {/* <CampaignBanner /> */}
+
       {/* Mobile Menu Slide-in Panel */}
       {mobileMenuOpen && (
         <>
@@ -163,7 +168,8 @@ export default function Header() {
               <Link href="/about" className={`block px-4 py-3 transition-colors ${isActive('/about') ? 'bg-cboa-orange' : 'hover:bg-white/10'}`}>About</Link>
               <Link href="/become-a-referee" className={`block px-4 py-3 transition-colors ${isActive('/become-a-referee') ? 'bg-cboa-orange' : 'hover:bg-white/10'}`}>Become a Referee</Link>
               <Link href="/get-officials" className={`block px-4 py-3 transition-colors ${isActive('/get-officials') ? 'bg-cboa-orange' : 'hover:bg-white/10'}`}>Book Referees</Link>
-              
+              <Link href="/new-officials" className={`block px-4 py-3 transition-colors ${isActive('/new-officials') ? 'bg-cboa-orange' : 'hover:bg-white/10'}`}>Blue Whistles</Link>
+
               {/* Portal Button */}
               <div className="px-4 py-3 mt-4 border-t border-white/20">
                 <Link
