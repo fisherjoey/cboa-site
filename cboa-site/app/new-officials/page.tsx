@@ -13,6 +13,7 @@ export default function BlueWhistlePage() {
   ]
 
   const partners = [
+    { name: 'Basketball Alberta', url: 'https://www.basketballalberta.ca/' },
     { name: 'Alberta Basketball Officials Association', url: 'https://www.refalberta.ca/' },
     { name: 'Calgary Basketball Officials Association', url: '/' },
     { name: 'Calgary Minor Basketball Association', url: 'https://www.cmba.ab.ca/' }
