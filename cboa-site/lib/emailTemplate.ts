@@ -19,13 +19,49 @@ export function generateCBOAEmailTemplate(options: EmailTemplateOptions): string
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="color-scheme" content="light">
+  <meta name="supported-color-schemes" content="light">
   <title>${subject}</title>
   <!--[if mso]>
   <style type="text/css">
     body, table, td { font-family: Arial, Helvetica, sans-serif !important; }
   </style>
   <![endif]-->
+  <!--[if mso | IE]>
   <style>
+    /* Force Outlook to respect background colors */
+    .email-container { background-color: #ffffff !important; }
+  </style>
+  <![endif]-->
+  <style>
+    /* Prevent dark mode color inversion in Outlook/Windows Mail */
+    :root {
+      color-scheme: light;
+      supported-color-schemes: light;
+    }
+    /* Dark mode meta override */
+    [data-ogsc] body,
+    [data-ogsb] body {
+      background-color: ${outerBgColor} !important;
+    }
+    /* Force light mode on content area */
+    [data-ogsc] .email-content,
+    [data-ogsb] .email-content {
+      background-color: #ffffff !important;
+      color: #333333 !important;
+    }
+    /* Outlook.com dark mode overrides */
+    [data-ogsc] h1, [data-ogsc] h2, [data-ogsc] h3,
+    [data-ogsb] h1, [data-ogsb] h2, [data-ogsb] h3 {
+      color: #003DA5 !important;
+    }
+    [data-ogsc] p, [data-ogsc] li, [data-ogsc] td,
+    [data-ogsb] p, [data-ogsb] li, [data-ogsb] td {
+      color: #333333 !important;
+    }
+    [data-ogsc] a, [data-ogsb] a {
+      color: #F97316 !important;
+    }
     /* Base styles - these serve as fallbacks for email clients that support <style> */
     body {
       margin: 0;
@@ -157,7 +193,7 @@ export function generateCBOAEmailTemplate(options: EmailTemplateOptions): string
 
           <!-- Main Content -->
           <tr>
-            <td style="padding: 30px 20px; color: #333333; font-size: 16px; line-height: 1.6;">
+            <td class="email-content" style="padding: 30px 20px; color: #333333; background-color: #ffffff; font-size: 16px; line-height: 1.6;">
               ${content}
             </td>
           </tr>

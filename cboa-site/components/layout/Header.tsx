@@ -130,7 +130,7 @@ export default function Header() {
       </nav>
 
       {/* Campaign Banner - Uncomment to enable Pink Whistle campaign banner (February) */}
-      {/* <CampaignBanner /> */}
+      <CampaignBanner />
 
       {/* Mobile Menu Slide-in Panel */}
       {mobileMenuOpen && (

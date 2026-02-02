@@ -20,6 +20,7 @@ export type LogCategory =
   | 'file'
   | 'system'
   | 'admin'
+  | 'osa'
 
 export type AuditAction =
   | 'CREATE'
@@ -31,6 +32,7 @@ export type AuditAction =
   | 'PASSWORD_RESET'
   | 'EMAIL_SENT'
   | 'ROLE_CHANGE'
+  | 'OSA_SUBMITTED'
 
 export type AuditEntityType =
   | 'member'
@@ -50,6 +52,7 @@ export type AuditEntityType =
   | 'member_activity'
   | 'email'
   | 'file'
+  | 'osa'
 
 export interface LogOptions {
   userId?: string

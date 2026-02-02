@@ -1,31 +1,13 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
 import Hero from '@/components/content/Hero'
-import Card from '@/components/ui/Card'
 import ElevateCTA from '@/components/ui/ElevateCTA'
+import OSARequestFormWizard from '@/components/forms/OSARequestFormWizard'
+import Card from '@/components/ui/Card'
 import { IconBallBasketball, IconCalendar, IconTrophy, IconCheck } from '@tabler/icons-react'
 
 export default function GetOfficialsPage() {
-  const [iframeHeight, setIframeHeight] = useState('1000px')
-  const iframeRef = useRef<HTMLIFrameElement>(null)
 
-  useEffect(() => {
-    const updateHeight = () => {
-      // Adjust height based on screen size
-      if (window.innerWidth < 640) {
-        setIframeHeight('1400px') // Mobile needs more height
-      } else if (window.innerWidth < 1024) {
-        setIframeHeight('1200px') // Tablet
-      } else {
-        setIframeHeight('1000px') // Desktop
-      }
-    }
-
-    updateHeight()
-    window.addEventListener('resize', updateHeight)
-    return () => window.removeEventListener('resize', updateHeight)
-  }, [])
   return (
     <>
       <Hero
@@ -142,20 +124,7 @@ export default function GetOfficialsPage() {
           </p>
 
           <div className="max-w-3xl mx-auto">
-            <Card>
-              <iframe
-                ref={iframeRef}
-                src="https://docs.google.com/forms/d/e/1FAIpQLSdMAeopallZzxMtiUOHhqyEkb7_NmLSutojiS2uJZjEsROEbw/viewform?embedded=true"
-                width="100%"
-                height={iframeHeight}
-                frameBorder="0"
-                marginHeight={0}
-                marginWidth={0}
-                className="transition-all duration-300"
-              >
-                Loading...
-              </iframe>
-            </Card>
+            <OSARequestFormWizard />
 
             <div className="mt-8 text-center">
               <p className="text-gray-600">

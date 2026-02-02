@@ -11,7 +11,8 @@ import {
   IconLayoutDashboard,
   IconReportAnalytics,
   IconUsersGroup,
-  IconMail
+  IconMail,
+  IconClipboardList
 } from '@tabler/icons-react'
 
 export default function PortalAdmin() {
@@ -53,6 +54,14 @@ export default function PortalAdmin() {
       icon: IconMail,
       links: [
         { label: 'View Email History', href: '/portal/admin/email-history', icon: IconMail },
+      ]
+    },
+    {
+      title: 'OSA Submissions',
+      description: 'View and manage Officiating Services Agreement requests',
+      icon: IconClipboardList,
+      links: [
+        { label: 'View OSA Submissions', href: '/portal/admin/osa-submissions', icon: IconClipboardList },
       ]
     },
   ]
