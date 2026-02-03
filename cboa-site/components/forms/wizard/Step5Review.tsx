@@ -61,9 +61,20 @@ export default function Step5Review({ watch, onEditStep, eventCount }: Step5Revi
   const eventContactEmail = watch('eventContactEmail')
   const eventContactPhone = watch('eventContactPhone')
 
-  const events = watch('events') || []
+  const eventType = watch('eventType')
+  const leagues = watch('leagues') || []
+  const tournaments = watch('tournaments') || []
+  const exhibitions = watch('exhibitions') || []
   const disciplinePolicy = watch('disciplinePolicy')
   const agreement = watch('agreement')
+
+  // Get event type label
+  const getEventTypeLabel = () => {
+    if (eventType === 'League') return eventCount === 1 ? 'League' : 'Leagues'
+    if (eventType === 'Tournament') return eventCount === 1 ? 'Tournament' : 'Tournaments'
+    if (eventType === 'Exhibition Game(s)') return eventCount === 1 ? 'Exhibition' : 'Exhibitions'
+    return 'Events'
+  }
 
   return (
     <div className="space-y-6">
@@ -162,7 +173,7 @@ export default function Step5Review({ watch, onEditStep, eventCount }: Step5Revi
       {/* Events Section */}
       <div className="border border-gray-300 rounded-lg p-6 bg-white">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-bold text-cboa-blue">Events ({eventCount})</h3>
+          <h3 className="text-lg font-bold text-cboa-blue">{getEventTypeLabel()} ({eventCount})</h3>
           <button
             type="button"
             onClick={() => onEditStep(4)}
@@ -172,133 +183,144 @@ export default function Step5Review({ watch, onEditStep, eventCount }: Step5Revi
             Edit
           </button>
         </div>
+
+        {/* Event Type Badge */}
+        <div className="mb-4">
+          <span className="inline-block px-3 py-1 bg-cboa-blue text-white rounded-full text-sm font-medium">
+            {eventType || 'N/A'}
+          </span>
+        </div>
+
         <div className="space-y-4">
-          {events.map((event: any, index: number) => (
-            <div key={index} className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+          {/* Leagues */}
+          {eventType === 'League' && leagues.map((league: any, index: number) => (
+            <div key={index} className="bg-blue-50 border border-blue-200 rounded-lg p-4">
               <div className="flex items-start gap-3">
-                <span className="flex items-center justify-center w-8 h-8 rounded-full bg-cboa-blue text-white font-bold text-sm flex-shrink-0">
+                <span className="flex items-center justify-center w-8 h-8 rounded-full bg-blue-600 text-white font-bold text-sm flex-shrink-0">
                   {index + 1}
                 </span>
                 <div className="flex-1 space-y-2">
-                  {/* Event Type Badge */}
                   <div>
-                    <span className="inline-block px-3 py-1 bg-gray-200 text-gray-800 rounded-full text-sm font-medium">
-                      {event.eventType || 'N/A'}
-                    </span>
+                    <p className="text-sm text-gray-600">League Name</p>
+                    <p className="text-gray-900 font-medium">{league.leagueName || 'N/A'}</p>
                   </div>
-
-                  {/* League Details */}
-                  {event.eventType === 'League' && (
-                    <>
-                      <div>
-                        <p className="text-sm text-gray-600">League Name</p>
-                        <p className="text-gray-900 font-medium">{event.leagueName || 'N/A'}</p>
-                      </div>
-                      <div>
-                        <p className="text-sm text-gray-600">Dates</p>
-                        <p className="text-gray-900">
-                          {formatDate(event.leagueStartDate)} - {formatDate(event.leagueEndDate)}
-                        </p>
-                      </div>
-                      {event.leagueDaysOfWeek && event.leagueDaysOfWeek.length > 0 && (
-                        <div>
-                          <p className="text-sm text-gray-600">Days of Week</p>
-                          <p className="text-gray-900">{event.leagueDaysOfWeek.join(', ')}</p>
-                        </div>
-                      )}
-                      {event.leaguePlayerGender && event.leaguePlayerGender.length > 0 && (
-                        <div>
-                          <p className="text-sm text-gray-600">Gender</p>
-                          <p className="text-gray-900">{event.leaguePlayerGender.join(', ')}</p>
-                        </div>
-                      )}
-                      {event.leagueLevelOfPlay && event.leagueLevelOfPlay.length > 0 && (
-                        <div>
-                          <p className="text-sm text-gray-600">Level of Play</p>
-                          <p className="text-gray-900">{event.leagueLevelOfPlay.join(', ')}</p>
-                        </div>
-                      )}
-                    </>
+                  <div>
+                    <p className="text-sm text-gray-600">Dates</p>
+                    <p className="text-gray-900">
+                      {formatDate(league.leagueStartDate)} - {formatDate(league.leagueEndDate)}
+                    </p>
+                  </div>
+                  {league.leagueDaysOfWeek && league.leagueDaysOfWeek.length > 0 && (
+                    <div>
+                      <p className="text-sm text-gray-600">Days of Week</p>
+                      <p className="text-gray-900">{league.leagueDaysOfWeek.join(', ')}</p>
+                    </div>
                   )}
-
-                  {/* Tournament Details */}
-                  {event.eventType === 'Tournament' && (
-                    <>
-                      <div>
-                        <p className="text-sm text-gray-600">Tournament Name</p>
-                        <p className="text-gray-900 font-medium">{event.tournamentName || 'N/A'}</p>
-                      </div>
-                      <div>
-                        <p className="text-sm text-gray-600">Dates</p>
-                        <p className="text-gray-900">
-                          {formatDate(event.tournamentStartDate)} - {formatDate(event.tournamentEndDate)}
-                        </p>
-                      </div>
-                      {event.tournamentNumberOfGames && (
-                        <div>
-                          <p className="text-sm text-gray-600">Number of Games</p>
-                          <p className="text-gray-900">{event.tournamentNumberOfGames}</p>
-                        </div>
-                      )}
-                      {event.tournamentPlayerGender && event.tournamentPlayerGender.length > 0 && (
-                        <div>
-                          <p className="text-sm text-gray-600">Gender</p>
-                          <p className="text-gray-900">{event.tournamentPlayerGender.join(', ')}</p>
-                        </div>
-                      )}
-                      {event.tournamentLevelOfPlay && event.tournamentLevelOfPlay.length > 0 && (
-                        <div>
-                          <p className="text-sm text-gray-600">Level of Play</p>
-                          <p className="text-gray-900">{event.tournamentLevelOfPlay.join(', ')}</p>
-                        </div>
-                      )}
-                    </>
+                  {league.leaguePlayerGender && league.leaguePlayerGender.length > 0 && (
+                    <div>
+                      <p className="text-sm text-gray-600">Gender</p>
+                      <p className="text-gray-900">{league.leaguePlayerGender.join(', ')}</p>
+                    </div>
                   )}
+                  {league.leagueLevelOfPlay && league.leagueLevelOfPlay.length > 0 && (
+                    <div>
+                      <p className="text-sm text-gray-600">Level of Play</p>
+                      <p className="text-gray-900">{league.leagueLevelOfPlay.join(', ')}</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          ))}
 
-                  {/* Exhibition Details */}
-                  {event.eventType === 'Exhibition Game(s)' && (
-                    <>
-                      <div>
-                        <p className="text-sm text-gray-600">Facility/Location</p>
-                        <p className="text-gray-900 font-medium">{event.exhibitionGameLocation || 'N/A'}</p>
-                      </div>
-                      {event.exhibitionGames && event.exhibitionGames.length > 0 && (
-                        <div>
-                          <p className="text-sm text-gray-600">Game Times</p>
-                          <div className="mt-1 space-y-1">
-                            {event.exhibitionGames.map((game: any, gameIndex: number) => (
-                              <p key={gameIndex} className="text-gray-900 text-sm">
-                                {formatDate(game.date)} at {formatTime(game.time)}
-                                {game.numberOfGames && game.numberOfGames !== '1' && ` (${game.numberOfGames} games)`}
-                              </p>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                      {event.exhibitionGames && event.exhibitionGames.length > 0 && (
-                        <div>
-                          <p className="text-sm text-gray-600">Total Number of Games</p>
-                          <p className="text-gray-900">
-                            {event.exhibitionGames.reduce((sum: number, game: any) => {
-                              const num = parseInt(game.numberOfGames || '0', 10)
-                              return sum + (isNaN(num) ? 0 : num)
-                            }, 0)}
+          {/* Tournaments */}
+          {eventType === 'Tournament' && tournaments.map((tournament: any, index: number) => (
+            <div key={index} className="bg-green-50 border border-green-200 rounded-lg p-4">
+              <div className="flex items-start gap-3">
+                <span className="flex items-center justify-center w-8 h-8 rounded-full bg-green-600 text-white font-bold text-sm flex-shrink-0">
+                  {index + 1}
+                </span>
+                <div className="flex-1 space-y-2">
+                  <div>
+                    <p className="text-sm text-gray-600">Tournament Name</p>
+                    <p className="text-gray-900 font-medium">{tournament.tournamentName || 'N/A'}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Dates</p>
+                    <p className="text-gray-900">
+                      {formatDate(tournament.tournamentStartDate)} - {formatDate(tournament.tournamentEndDate)}
+                    </p>
+                  </div>
+                  {tournament.tournamentNumberOfGames && (
+                    <div>
+                      <p className="text-sm text-gray-600">Number of Games</p>
+                      <p className="text-gray-900">{tournament.tournamentNumberOfGames}</p>
+                    </div>
+                  )}
+                  {tournament.tournamentPlayerGender && tournament.tournamentPlayerGender.length > 0 && (
+                    <div>
+                      <p className="text-sm text-gray-600">Gender</p>
+                      <p className="text-gray-900">{tournament.tournamentPlayerGender.join(', ')}</p>
+                    </div>
+                  )}
+                  {tournament.tournamentLevelOfPlay && tournament.tournamentLevelOfPlay.length > 0 && (
+                    <div>
+                      <p className="text-sm text-gray-600">Level of Play</p>
+                      <p className="text-gray-900">{tournament.tournamentLevelOfPlay.join(', ')}</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          ))}
+
+          {/* Exhibitions */}
+          {eventType === 'Exhibition Game(s)' && exhibitions.map((exhibition: any, index: number) => (
+            <div key={index} className="bg-orange-50 border border-orange-200 rounded-lg p-4">
+              <div className="flex items-start gap-3">
+                <span className="flex items-center justify-center w-8 h-8 rounded-full bg-orange-600 text-white font-bold text-sm flex-shrink-0">
+                  {index + 1}
+                </span>
+                <div className="flex-1 space-y-2">
+                  <div>
+                    <p className="text-sm text-gray-600">Facility/Location</p>
+                    <p className="text-gray-900 font-medium">{exhibition.exhibitionGameLocation || 'N/A'}</p>
+                  </div>
+                  {exhibition.exhibitionGames && exhibition.exhibitionGames.length > 0 && (
+                    <div>
+                      <p className="text-sm text-gray-600">Game Times</p>
+                      <div className="mt-1 space-y-1">
+                        {exhibition.exhibitionGames.map((game: any, gameIndex: number) => (
+                          <p key={gameIndex} className="text-gray-900 text-sm">
+                            {formatDate(game.date)} at {formatTime(game.time)}
+                            {game.numberOfGames && game.numberOfGames !== '1' && ` (${game.numberOfGames} games)`}
                           </p>
-                        </div>
-                      )}
-                      {event.exhibitionPlayerGender && event.exhibitionPlayerGender.length > 0 && (
-                        <div>
-                          <p className="text-sm text-gray-600">Gender</p>
-                          <p className="text-gray-900">{event.exhibitionPlayerGender.join(', ')}</p>
-                        </div>
-                      )}
-                      {event.exhibitionLevelOfPlay && event.exhibitionLevelOfPlay.length > 0 && (
-                        <div>
-                          <p className="text-sm text-gray-600">Level of Play</p>
-                          <p className="text-gray-900">{event.exhibitionLevelOfPlay.join(', ')}</p>
-                        </div>
-                      )}
-                    </>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {exhibition.exhibitionGames && exhibition.exhibitionGames.length > 0 && (
+                    <div>
+                      <p className="text-sm text-gray-600">Total Number of Games</p>
+                      <p className="text-gray-900">
+                        {exhibition.exhibitionGames.reduce((sum: number, game: any) => {
+                          const num = parseInt(game.numberOfGames || '0', 10)
+                          return sum + (isNaN(num) ? 0 : num)
+                        }, 0)}
+                      </p>
+                    </div>
+                  )}
+                  {exhibition.exhibitionPlayerGender && exhibition.exhibitionPlayerGender.length > 0 && (
+                    <div>
+                      <p className="text-sm text-gray-600">Gender</p>
+                      <p className="text-gray-900">{exhibition.exhibitionPlayerGender.join(', ')}</p>
+                    </div>
+                  )}
+                  {exhibition.exhibitionLevelOfPlay && exhibition.exhibitionLevelOfPlay.length > 0 && (
+                    <div>
+                      <p className="text-sm text-gray-600">Level of Play</p>
+                      <p className="text-gray-900">{exhibition.exhibitionLevelOfPlay.join(', ')}</p>
+                    </div>
                   )}
                 </div>
               </div>

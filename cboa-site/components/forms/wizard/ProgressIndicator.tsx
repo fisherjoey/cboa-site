@@ -3,6 +3,7 @@ import { IconCheck } from '@tabler/icons-react';
 
 interface ProgressIndicatorProps {
   currentStep: number;
+  highestStepReached: number;
   onStepClick?: (step: number) => void;
 }
 
@@ -14,17 +15,19 @@ const steps = [
   { number: 5, label: 'Review' },
 ];
 
-export default function ProgressIndicator({ currentStep, onStepClick }: ProgressIndicatorProps) {
-  const progressPercentage = (currentStep / steps.length) * 100;
+export default function ProgressIndicator({ currentStep, highestStepReached, onStepClick }: ProgressIndicatorProps) {
+  const progressPercentage = (highestStepReached / steps.length) * 100;
 
   const getStepStatus = (stepNumber: number) => {
-    if (stepNumber < currentStep) return 'completed';
+    // A step is completed if we've been past it (highestStepReached > stepNumber)
+    if (stepNumber < highestStepReached) return 'completed';
     if (stepNumber === currentStep) return 'current';
     return 'future';
   };
 
   const handleStepClick = (stepNumber: number) => {
-    if (onStepClick && stepNumber < currentStep) {
+    // Allow clicking on any step we've already visited
+    if (onStepClick && stepNumber <= highestStepReached) {
       onStepClick(stepNumber);
     }
   };
@@ -50,7 +53,7 @@ export default function ProgressIndicator({ currentStep, onStepClick }: Progress
       <div className="hidden md:flex items-center justify-between">
         {steps.map((step, index) => {
           const status = getStepStatus(step.number);
-          const isClickable = status === 'completed' && onStepClick;
+          const isClickable = step.number <= highestStepReached && onStepClick;
 
           return (
             <React.Fragment key={step.number}>
@@ -90,7 +93,7 @@ export default function ProgressIndicator({ currentStep, onStepClick }: Progress
                   <div
                     className={`
                       h-full transition-all duration-300
-                      ${step.number < currentStep ? 'bg-green-500' : 'bg-gray-300'}
+                      ${step.number < highestStepReached ? 'bg-green-500' : 'bg-gray-300'}
                     `}
                   />
                 </div>

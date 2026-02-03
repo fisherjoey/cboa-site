@@ -74,340 +74,8 @@ function CheckboxGroup({
   )
 }
 
-// Get event type color
-function getEventTypeColor(eventType: string): string {
-  return eventType ? 'border-gray-300 bg-gray-50' : 'border-gray-300 bg-white'
-}
-
-// Get event type badge color
-function getEventTypeBadgeColor(eventType: string): string {
-  return 'bg-gray-100 text-gray-800'
-}
-
-// League Fields Component
-function LeagueFields({ index, control, register, errors }: { index: number; control: any; register: any; errors: any }) {
-  return (
-    <div className="space-y-4 p-4 bg-white rounded-lg">
-      <h5 className="font-semibold text-blue-800">League Details</h5>
-
-      <div className="grid md:grid-cols-2 gap-4">
-        <div>
-          <label htmlFor={`events.${index}.leagueName`} className={labelStyles}>
-            League Name <span className="text-red-500">*</span>
-          </label>
-          <input
-            id={`events.${index}.leagueName`}
-            type="text"
-            {...register(`events.${index}.leagueName`)}
-            className={inputStyles}
-          />
-          {errors?.leagueName && <p className={errorStyles}>{errors.leagueName.message}</p>}
-        </div>
-
-        <div>
-          <label htmlFor={`events.${index}.leagueStartDate`} className={labelStyles}>
-            Start Date <span className="text-red-500">*</span>
-          </label>
-          <input
-            id={`events.${index}.leagueStartDate`}
-            type="date"
-            {...register(`events.${index}.leagueStartDate`)}
-            className={inputStyles}
-          />
-          {errors?.leagueStartDate && <p className={errorStyles}>{errors.leagueStartDate.message}</p>}
-        </div>
-
-        <div>
-          <label htmlFor={`events.${index}.leagueEndDate`} className={labelStyles}>
-            End Date <span className="text-red-500">*</span>
-          </label>
-          <input
-            id={`events.${index}.leagueEndDate`}
-            type="date"
-            {...register(`events.${index}.leagueEndDate`)}
-            className={inputStyles}
-          />
-          {errors?.leagueEndDate && <p className={errorStyles}>{errors.leagueEndDate.message}</p>}
-        </div>
-      </div>
-
-      <Controller
-        name={`events.${index}.leagueDaysOfWeek`}
-        control={control}
-        render={({ field }) => (
-          <CheckboxGroup
-            label="Days of Week"
-            options={DAYS_OF_WEEK}
-            value={field.value}
-            onChange={field.onChange}
-            error={errors?.leagueDaysOfWeek?.message}
-            required
-          />
-        )}
-      />
-
-      <Controller
-        name={`events.${index}.leaguePlayerGender`}
-        control={control}
-        render={({ field }) => (
-          <CheckboxGroup
-            label="Player Gender"
-            options={GENDERS}
-            value={field.value}
-            onChange={field.onChange}
-            error={errors?.leaguePlayerGender?.message}
-            required
-          />
-        )}
-      />
-
-      <Controller
-        name={`events.${index}.leagueLevelOfPlay`}
-        control={control}
-        render={({ field }) => (
-          <CheckboxGroup
-            label="Level of Play"
-            options={LEVELS_OF_PLAY}
-            value={field.value}
-            onChange={field.onChange}
-            error={errors?.leagueLevelOfPlay?.message}
-            required
-          />
-        )}
-      />
-    </div>
-  )
-}
-
-// Exhibition Fields Component with multiple games support
-function ExhibitionFields({ index, control, register, errors }: { index: number; control: any; register: any; errors: any }) {
-  const { fields: gameFields, append: appendGame, remove: removeGame } = useFieldArray({
-    control,
-    name: `events.${index}.exhibitionGames`,
-  })
-
-  return (
-    <div className="space-y-4 p-4 bg-white rounded-lg">
-      <h5 className="font-semibold text-orange-800">Exhibition Game Details</h5>
-
-      <div>
-        <label htmlFor={`events.${index}.exhibitionGameLocation`} className={labelStyles}>
-          Game Location <span className="text-red-500">*</span>
-        </label>
-        <input
-          id={`events.${index}.exhibitionGameLocation`}
-          type="text"
-          {...register(`events.${index}.exhibitionGameLocation`)}
-          className={inputStyles}
-          placeholder="e.g., Calgary Sports Centre"
-        />
-        {errors?.exhibitionGameLocation && <p className={errorStyles}>{errors.exhibitionGameLocation.message}</p>}
-      </div>
-
-      {/* Multiple Games Section */}
-      <div>
-        <label className={labelStyles}>
-          Game Dates & Times <span className="text-red-500">*</span>
-        </label>
-        <p className="text-sm text-gray-600 mb-3">
-          Add each game date/time. You can add multiple games for the same event.
-        </p>
-
-        <div className="space-y-3">
-          {gameFields.map((field, gameIndex) => (
-            <div key={field.id} className="flex flex-wrap gap-3 items-start p-3 bg-orange-50 rounded-lg border border-orange-200">
-              <div className="flex-1 min-w-[140px]">
-                <label className="text-xs font-medium text-gray-600">Date</label>
-                <input
-                  type="date"
-                  {...register(`events.${index}.exhibitionGames.${gameIndex}.date`)}
-                  className={inputStyles}
-                />
-                {errors?.exhibitionGames?.[gameIndex]?.date && (
-                  <p className={errorStyles}>{errors.exhibitionGames[gameIndex].date.message}</p>
-                )}
-              </div>
-              <div className="flex-1 min-w-[120px]">
-                <label className="text-xs font-medium text-gray-600">Start Time</label>
-                <input
-                  type="time"
-                  {...register(`events.${index}.exhibitionGames.${gameIndex}.time`)}
-                  className={inputStyles}
-                />
-                {errors?.exhibitionGames?.[gameIndex]?.time && (
-                  <p className={errorStyles}>{errors.exhibitionGames[gameIndex].time.message}</p>
-                )}
-              </div>
-              <div className="w-24">
-                <label className="text-xs font-medium text-gray-600"># Games</label>
-                <input
-                  type="number"
-                  min="1"
-                  {...register(`events.${index}.exhibitionGames.${gameIndex}.numberOfGames`)}
-                  className={inputStyles}
-                  placeholder="1"
-                />
-                {errors?.exhibitionGames?.[gameIndex]?.numberOfGames && (
-                  <p className={errorStyles}>{errors.exhibitionGames[gameIndex].numberOfGames.message}</p>
-                )}
-              </div>
-              {gameFields.length > 1 && (
-                <button
-                  type="button"
-                  onClick={() => removeGame(gameIndex)}
-                  className="mt-5 p-2 text-red-500 hover:bg-red-100 rounded-md transition-colors"
-                  title="Remove game"
-                >
-                  <IconTrash size={18} />
-                </button>
-              )}
-            </div>
-          ))}
-        </div>
-
-        <button
-          type="button"
-          onClick={() => appendGame({ date: '', time: '', numberOfGames: '1' })}
-          className="mt-3 flex items-center gap-2 px-4 py-2 text-sm font-medium text-orange-700 bg-orange-100 hover:bg-orange-200 rounded-md transition-colors"
-        >
-          <IconPlus size={16} />
-          Add Another Game Date/Time
-        </button>
-
-        {errors?.exhibitionGames && typeof errors.exhibitionGames.message === 'string' && (
-          <p className={errorStyles}>{errors.exhibitionGames.message}</p>
-        )}
-      </div>
-
-      <Controller
-        name={`events.${index}.exhibitionPlayerGender`}
-        control={control}
-        render={({ field }) => (
-          <CheckboxGroup
-            label="Player Gender"
-            options={GENDERS}
-            value={field.value}
-            onChange={field.onChange}
-            error={errors?.exhibitionPlayerGender?.message}
-            required
-          />
-        )}
-      />
-
-      <Controller
-        name={`events.${index}.exhibitionLevelOfPlay`}
-        control={control}
-        render={({ field }) => (
-          <CheckboxGroup
-            label="Level of Play"
-            options={LEVELS_OF_PLAY}
-            value={field.value}
-            onChange={field.onChange}
-            error={errors?.exhibitionLevelOfPlay?.message}
-            required
-          />
-        )}
-      />
-    </div>
-  )
-}
-
-// Tournament Fields Component
-function TournamentFields({ index, control, register, errors }: { index: number; control: any; register: any; errors: any }) {
-  return (
-    <div className="space-y-4 p-4 bg-white rounded-lg">
-      <h5 className="font-semibold text-green-800">Tournament Details</h5>
-
-      <div className="grid md:grid-cols-2 gap-4">
-        <div>
-          <label htmlFor={`events.${index}.tournamentName`} className={labelStyles}>
-            Tournament Name <span className="text-red-500">*</span>
-          </label>
-          <input
-            id={`events.${index}.tournamentName`}
-            type="text"
-            {...register(`events.${index}.tournamentName`)}
-            className={inputStyles}
-          />
-          {errors?.tournamentName && <p className={errorStyles}>{errors.tournamentName.message}</p>}
-        </div>
-
-        <div>
-          <label htmlFor={`events.${index}.tournamentNumberOfGames`} className={labelStyles}>
-            Estimated Number of Games <span className="text-red-500">*</span>
-          </label>
-          <input
-            id={`events.${index}.tournamentNumberOfGames`}
-            type="number"
-            min="1"
-            {...register(`events.${index}.tournamentNumberOfGames`)}
-            className={inputStyles}
-          />
-          {errors?.tournamentNumberOfGames && <p className={errorStyles}>{errors.tournamentNumberOfGames.message}</p>}
-        </div>
-
-        <div>
-          <label htmlFor={`events.${index}.tournamentStartDate`} className={labelStyles}>
-            Start Date <span className="text-red-500">*</span>
-          </label>
-          <input
-            id={`events.${index}.tournamentStartDate`}
-            type="date"
-            {...register(`events.${index}.tournamentStartDate`)}
-            className={inputStyles}
-          />
-          {errors?.tournamentStartDate && <p className={errorStyles}>{errors.tournamentStartDate.message}</p>}
-        </div>
-
-        <div>
-          <label htmlFor={`events.${index}.tournamentEndDate`} className={labelStyles}>
-            End Date <span className="text-red-500">*</span>
-          </label>
-          <input
-            id={`events.${index}.tournamentEndDate`}
-            type="date"
-            {...register(`events.${index}.tournamentEndDate`)}
-            className={inputStyles}
-          />
-          {errors?.tournamentEndDate && <p className={errorStyles}>{errors.tournamentEndDate.message}</p>}
-        </div>
-      </div>
-
-      <Controller
-        name={`events.${index}.tournamentPlayerGender`}
-        control={control}
-        render={({ field }) => (
-          <CheckboxGroup
-            label="Player Gender"
-            options={GENDERS}
-            value={field.value}
-            onChange={field.onChange}
-            error={errors?.tournamentPlayerGender?.message}
-            required
-          />
-        )}
-      />
-
-      <Controller
-        name={`events.${index}.tournamentLevelOfPlay`}
-        control={control}
-        render={({ field }) => (
-          <CheckboxGroup
-            label="Level of Play"
-            options={LEVELS_OF_PLAY}
-            value={field.value}
-            onChange={field.onChange}
-            error={errors?.tournamentLevelOfPlay?.message}
-            required
-          />
-        )}
-      />
-    </div>
-  )
-}
-
-// Event Card Component
-function EventCard({
+// League Card Component
+function LeagueCard({
   index,
   control,
   register,
@@ -425,46 +93,22 @@ function EventCard({
   canRemove: boolean
 }) {
   const [isExpanded, setIsExpanded] = useState(true)
-  const eventType = watch(`events.${index}.eventType`)
-  const eventErrors = errors?.events?.[index]
-
-  const getEventTitle = () => {
-    if (!eventType) return `Event ${index + 1}`
-
-    if (eventType === 'League') {
-      const name = watch(`events.${index}.leagueName`)
-      return name ? `${name}` : `Event ${index + 1}: League`
-    }
-    if (eventType === 'Tournament') {
-      const name = watch(`events.${index}.tournamentName`)
-      return name ? `${name}` : `Event ${index + 1}: Tournament`
-    }
-    if (eventType === 'Exhibition Game(s)') {
-      const location = watch(`events.${index}.exhibitionGameLocation`)
-      return location ? `Exhibition at ${location}` : `Event ${index + 1}: Exhibition`
-    }
-    return `Event ${index + 1}`
-  }
+  const leagueName = watch(`leagues.${index}.leagueName`)
+  const leagueErrors = errors?.leagues?.[index]
 
   return (
-    <div className={`border-2 rounded-lg overflow-hidden ${eventType ? getEventTypeColor(eventType) : 'border-gray-300 bg-white'}`}>
-      {/* Card Header */}
+    <div className="border-2 rounded-lg overflow-hidden border-blue-200 bg-blue-50">
       <div
-        className="flex items-center justify-between p-4 cursor-pointer hover:bg-opacity-80 transition-colors"
+        className="flex items-center justify-between p-4 cursor-pointer hover:bg-blue-100 transition-colors"
         onClick={() => setIsExpanded(!isExpanded)}
       >
         <div className="flex items-center gap-3">
-          <span className="flex items-center justify-center w-8 h-8 rounded-full bg-cboa-blue text-white font-bold text-sm">
+          <span className="flex items-center justify-center w-8 h-8 rounded-full bg-blue-600 text-white font-bold text-sm">
             {index + 1}
           </span>
-          <div>
-            <h4 className="font-semibold text-gray-800">{getEventTitle()}</h4>
-            {eventType && (
-              <span className={`inline-block mt-1 px-2 py-0.5 rounded-full text-xs font-medium ${getEventTypeBadgeColor(eventType)}`}>
-                {eventType}
-              </span>
-            )}
-          </div>
+          <h4 className="font-semibold text-gray-800">
+            {leagueName || `League ${index + 1}`}
+          </h4>
         </div>
         <div className="flex items-center gap-2">
           {canRemove && (
@@ -475,73 +119,439 @@ function EventCard({
                 remove()
               }}
               className="p-2 text-red-500 hover:bg-red-100 rounded-md transition-colors"
-              title="Remove event"
+              title="Remove league"
             >
               <IconTrash size={18} />
             </button>
           )}
-          <button
-            type="button"
-            className="p-2 text-gray-500 hover:bg-gray-200 rounded-md transition-colors"
-          >
+          <button type="button" className="p-2 text-gray-500 hover:bg-gray-200 rounded-md transition-colors">
             {isExpanded ? <IconChevronUp size={20} /> : <IconChevronDown size={20} />}
           </button>
         </div>
       </div>
 
-      {/* Card Content */}
       {isExpanded && (
-        <div className="p-4 pt-0 border-t border-gray-200">
-          {/* Event Type Selection */}
-          <div className="mb-4">
-            <label className={labelStyles}>
-              Event Type <span className="text-red-500">*</span>
-            </label>
-            <div className="space-y-2">
-              {EVENT_TYPES.map(type => (
-                <label key={type} className="flex items-center space-x-3 cursor-pointer p-3 border rounded-lg hover:bg-white/50 transition-colors bg-white">
-                  <input
-                    type="radio"
-                    value={type}
-                    {...register(`events.${index}.eventType`)}
-                    className="w-5 h-5 text-cboa-orange border-gray-300 focus:ring-cboa-orange"
-                  />
-                  <span className="text-gray-700 font-medium">{type}</span>
-                </label>
-              ))}
+        <div className="p-4 pt-0 border-t border-blue-200 space-y-4">
+          <div className="grid md:grid-cols-2 gap-4">
+            <div>
+              <label htmlFor={`leagues.${index}.leagueName`} className={labelStyles}>
+                League Name <span className="text-red-500">*</span>
+              </label>
+              <input
+                id={`leagues.${index}.leagueName`}
+                type="text"
+                {...register(`leagues.${index}.leagueName`)}
+                className={inputStyles}
+              />
+              {leagueErrors?.leagueName && <p className={errorStyles}>{leagueErrors.leagueName.message}</p>}
             </div>
-            {eventErrors?.eventType && <p className={errorStyles}>{eventErrors.eventType.message}</p>}
+
+            <div>
+              <label htmlFor={`leagues.${index}.leagueStartDate`} className={labelStyles}>
+                Start Date <span className="text-red-500">*</span>
+              </label>
+              <input
+                id={`leagues.${index}.leagueStartDate`}
+                type="date"
+                {...register(`leagues.${index}.leagueStartDate`)}
+                className={inputStyles}
+              />
+              {leagueErrors?.leagueStartDate && <p className={errorStyles}>{leagueErrors.leagueStartDate.message}</p>}
+            </div>
+
+            <div>
+              <label htmlFor={`leagues.${index}.leagueEndDate`} className={labelStyles}>
+                End Date <span className="text-red-500">*</span>
+              </label>
+              <input
+                id={`leagues.${index}.leagueEndDate`}
+                type="date"
+                {...register(`leagues.${index}.leagueEndDate`)}
+                className={inputStyles}
+              />
+              {leagueErrors?.leagueEndDate && <p className={errorStyles}>{leagueErrors.leagueEndDate.message}</p>}
+            </div>
           </div>
 
-          {/* League Details */}
-          {eventType === 'League' && (
-            <LeagueFields
-              index={index}
-              control={control}
-              register={register}
-              errors={eventErrors}
-            />
-          )}
+          <Controller
+            name={`leagues.${index}.leagueDaysOfWeek`}
+            control={control}
+            render={({ field }) => (
+              <CheckboxGroup
+                label="Days of Week"
+                options={DAYS_OF_WEEK}
+                value={field.value}
+                onChange={field.onChange}
+                error={leagueErrors?.leagueDaysOfWeek?.message}
+                required
+              />
+            )}
+          />
 
-          {/* Exhibition Details */}
-          {eventType === 'Exhibition Game(s)' && (
-            <ExhibitionFields
-              index={index}
-              control={control}
-              register={register}
-              errors={eventErrors}
-            />
-          )}
+          <Controller
+            name={`leagues.${index}.leaguePlayerGender`}
+            control={control}
+            render={({ field }) => (
+              <CheckboxGroup
+                label="Player Gender"
+                options={GENDERS}
+                value={field.value}
+                onChange={field.onChange}
+                error={leagueErrors?.leaguePlayerGender?.message}
+                required
+              />
+            )}
+          />
 
-          {/* Tournament Details */}
-          {eventType === 'Tournament' && (
-            <TournamentFields
-              index={index}
-              control={control}
-              register={register}
-              errors={eventErrors}
-            />
+          <Controller
+            name={`leagues.${index}.leagueLevelOfPlay`}
+            control={control}
+            render={({ field }) => (
+              <CheckboxGroup
+                label="Level of Play"
+                options={LEVELS_OF_PLAY}
+                value={field.value}
+                onChange={field.onChange}
+                error={leagueErrors?.leagueLevelOfPlay?.message}
+                required
+              />
+            )}
+          />
+        </div>
+      )}
+    </div>
+  )
+}
+
+// Tournament Card Component
+function TournamentCard({
+  index,
+  control,
+  register,
+  errors,
+  watch,
+  remove,
+  canRemove,
+}: {
+  index: number
+  control: any
+  register: any
+  errors: any
+  watch: any
+  remove: () => void
+  canRemove: boolean
+}) {
+  const [isExpanded, setIsExpanded] = useState(true)
+  const tournamentName = watch(`tournaments.${index}.tournamentName`)
+  const tournamentErrors = errors?.tournaments?.[index]
+
+  return (
+    <div className="border-2 rounded-lg overflow-hidden border-green-200 bg-green-50">
+      <div
+        className="flex items-center justify-between p-4 cursor-pointer hover:bg-green-100 transition-colors"
+        onClick={() => setIsExpanded(!isExpanded)}
+      >
+        <div className="flex items-center gap-3">
+          <span className="flex items-center justify-center w-8 h-8 rounded-full bg-green-600 text-white font-bold text-sm">
+            {index + 1}
+          </span>
+          <h4 className="font-semibold text-gray-800">
+            {tournamentName || `Tournament ${index + 1}`}
+          </h4>
+        </div>
+        <div className="flex items-center gap-2">
+          {canRemove && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation()
+                remove()
+              }}
+              className="p-2 text-red-500 hover:bg-red-100 rounded-md transition-colors"
+              title="Remove tournament"
+            >
+              <IconTrash size={18} />
+            </button>
           )}
+          <button type="button" className="p-2 text-gray-500 hover:bg-gray-200 rounded-md transition-colors">
+            {isExpanded ? <IconChevronUp size={20} /> : <IconChevronDown size={20} />}
+          </button>
+        </div>
+      </div>
+
+      {isExpanded && (
+        <div className="p-4 pt-0 border-t border-green-200 space-y-4">
+          <div className="grid md:grid-cols-2 gap-4">
+            <div>
+              <label htmlFor={`tournaments.${index}.tournamentName`} className={labelStyles}>
+                Tournament Name <span className="text-red-500">*</span>
+              </label>
+              <input
+                id={`tournaments.${index}.tournamentName`}
+                type="text"
+                {...register(`tournaments.${index}.tournamentName`)}
+                className={inputStyles}
+              />
+              {tournamentErrors?.tournamentName && <p className={errorStyles}>{tournamentErrors.tournamentName.message}</p>}
+            </div>
+
+            <div>
+              <label htmlFor={`tournaments.${index}.tournamentNumberOfGames`} className={labelStyles}>
+                Estimated Number of Games <span className="text-red-500">*</span>
+              </label>
+              <input
+                id={`tournaments.${index}.tournamentNumberOfGames`}
+                type="number"
+                min="1"
+                {...register(`tournaments.${index}.tournamentNumberOfGames`)}
+                className={inputStyles}
+              />
+              {tournamentErrors?.tournamentNumberOfGames && <p className={errorStyles}>{tournamentErrors.tournamentNumberOfGames.message}</p>}
+            </div>
+
+            <div>
+              <label htmlFor={`tournaments.${index}.tournamentStartDate`} className={labelStyles}>
+                Start Date <span className="text-red-500">*</span>
+              </label>
+              <input
+                id={`tournaments.${index}.tournamentStartDate`}
+                type="date"
+                {...register(`tournaments.${index}.tournamentStartDate`)}
+                className={inputStyles}
+              />
+              {tournamentErrors?.tournamentStartDate && <p className={errorStyles}>{tournamentErrors.tournamentStartDate.message}</p>}
+            </div>
+
+            <div>
+              <label htmlFor={`tournaments.${index}.tournamentEndDate`} className={labelStyles}>
+                End Date <span className="text-red-500">*</span>
+              </label>
+              <input
+                id={`tournaments.${index}.tournamentEndDate`}
+                type="date"
+                {...register(`tournaments.${index}.tournamentEndDate`)}
+                className={inputStyles}
+              />
+              {tournamentErrors?.tournamentEndDate && <p className={errorStyles}>{tournamentErrors.tournamentEndDate.message}</p>}
+            </div>
+          </div>
+
+          <Controller
+            name={`tournaments.${index}.tournamentPlayerGender`}
+            control={control}
+            render={({ field }) => (
+              <CheckboxGroup
+                label="Player Gender"
+                options={GENDERS}
+                value={field.value}
+                onChange={field.onChange}
+                error={tournamentErrors?.tournamentPlayerGender?.message}
+                required
+              />
+            )}
+          />
+
+          <Controller
+            name={`tournaments.${index}.tournamentLevelOfPlay`}
+            control={control}
+            render={({ field }) => (
+              <CheckboxGroup
+                label="Level of Play"
+                options={LEVELS_OF_PLAY}
+                value={field.value}
+                onChange={field.onChange}
+                error={tournamentErrors?.tournamentLevelOfPlay?.message}
+                required
+              />
+            )}
+          />
+        </div>
+      )}
+    </div>
+  )
+}
+
+// Exhibition Card Component (with multiple games)
+function ExhibitionCard({
+  index,
+  control,
+  register,
+  errors,
+  watch,
+  remove,
+  canRemove,
+}: {
+  index: number
+  control: any
+  register: any
+  errors: any
+  watch: any
+  remove: () => void
+  canRemove: boolean
+}) {
+  const [isExpanded, setIsExpanded] = useState(true)
+  const location = watch(`exhibitions.${index}.exhibitionGameLocation`)
+  const exhibitionErrors = errors?.exhibitions?.[index]
+
+  const { fields: gameFields, append: appendGame, remove: removeGame } = useFieldArray({
+    control,
+    name: `exhibitions.${index}.exhibitionGames`,
+  })
+
+  return (
+    <div className="border-2 rounded-lg overflow-hidden border-orange-200 bg-orange-50">
+      <div
+        className="flex items-center justify-between p-4 cursor-pointer hover:bg-orange-100 transition-colors"
+        onClick={() => setIsExpanded(!isExpanded)}
+      >
+        <div className="flex items-center gap-3">
+          <span className="flex items-center justify-center w-8 h-8 rounded-full bg-orange-600 text-white font-bold text-sm">
+            {index + 1}
+          </span>
+          <h4 className="font-semibold text-gray-800">
+            {location ? `Exhibition at ${location}` : `Exhibition ${index + 1}`}
+          </h4>
+        </div>
+        <div className="flex items-center gap-2">
+          {canRemove && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation()
+                remove()
+              }}
+              className="p-2 text-red-500 hover:bg-red-100 rounded-md transition-colors"
+              title="Remove exhibition"
+            >
+              <IconTrash size={18} />
+            </button>
+          )}
+          <button type="button" className="p-2 text-gray-500 hover:bg-gray-200 rounded-md transition-colors">
+            {isExpanded ? <IconChevronUp size={20} /> : <IconChevronDown size={20} />}
+          </button>
+        </div>
+      </div>
+
+      {isExpanded && (
+        <div className="p-4 pt-0 border-t border-orange-200 space-y-4">
+          <div>
+            <label htmlFor={`exhibitions.${index}.exhibitionGameLocation`} className={labelStyles}>
+              Game Location <span className="text-red-500">*</span>
+            </label>
+            <input
+              id={`exhibitions.${index}.exhibitionGameLocation`}
+              type="text"
+              {...register(`exhibitions.${index}.exhibitionGameLocation`)}
+              className={inputStyles}
+              placeholder="e.g., Calgary Sports Centre"
+            />
+            {exhibitionErrors?.exhibitionGameLocation && <p className={errorStyles}>{exhibitionErrors.exhibitionGameLocation.message}</p>}
+          </div>
+
+          {/* Multiple Games Section */}
+          <div>
+            <label className={labelStyles}>
+              Game Dates & Times <span className="text-red-500">*</span>
+            </label>
+            <p className="text-sm text-gray-600 mb-3">
+              Add each game date/time. You can add multiple games for this location.
+            </p>
+
+            <div className="space-y-3">
+              {gameFields.map((field, gameIndex) => (
+                <div key={field.id} className="flex flex-wrap gap-3 items-start p-3 bg-white rounded-lg border border-orange-200">
+                  <div className="flex-1 min-w-[140px]">
+                    <label className="text-xs font-medium text-gray-600">Date</label>
+                    <input
+                      type="date"
+                      {...register(`exhibitions.${index}.exhibitionGames.${gameIndex}.date`)}
+                      className={inputStyles}
+                    />
+                    {exhibitionErrors?.exhibitionGames?.[gameIndex]?.date && (
+                      <p className={errorStyles}>{exhibitionErrors.exhibitionGames[gameIndex].date.message}</p>
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-[120px]">
+                    <label className="text-xs font-medium text-gray-600">Start Time</label>
+                    <input
+                      type="time"
+                      {...register(`exhibitions.${index}.exhibitionGames.${gameIndex}.time`)}
+                      className={inputStyles}
+                    />
+                    {exhibitionErrors?.exhibitionGames?.[gameIndex]?.time && (
+                      <p className={errorStyles}>{exhibitionErrors.exhibitionGames[gameIndex].time.message}</p>
+                    )}
+                  </div>
+                  <div className="w-24">
+                    <label className="text-xs font-medium text-gray-600"># Games</label>
+                    <input
+                      type="number"
+                      min="1"
+                      {...register(`exhibitions.${index}.exhibitionGames.${gameIndex}.numberOfGames`)}
+                      className={inputStyles}
+                      placeholder="1"
+                    />
+                    {exhibitionErrors?.exhibitionGames?.[gameIndex]?.numberOfGames && (
+                      <p className={errorStyles}>{exhibitionErrors.exhibitionGames[gameIndex].numberOfGames.message}</p>
+                    )}
+                  </div>
+                  {gameFields.length > 1 && (
+                    <button
+                      type="button"
+                      onClick={() => removeGame(gameIndex)}
+                      className="mt-5 p-2 text-red-500 hover:bg-red-100 rounded-md transition-colors"
+                      title="Remove game"
+                    >
+                      <IconTrash size={18} />
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
+
+            <button
+              type="button"
+              onClick={() => appendGame({ date: '', time: '', numberOfGames: '1' })}
+              className="mt-3 flex items-center gap-2 px-4 py-2 text-sm font-medium text-orange-700 bg-orange-100 hover:bg-orange-200 rounded-md transition-colors"
+            >
+              <IconPlus size={16} />
+              Add Another Game Date/Time
+            </button>
+
+            {exhibitionErrors?.exhibitionGames && typeof exhibitionErrors.exhibitionGames.message === 'string' && (
+              <p className={errorStyles}>{exhibitionErrors.exhibitionGames.message}</p>
+            )}
+          </div>
+
+          <Controller
+            name={`exhibitions.${index}.exhibitionPlayerGender`}
+            control={control}
+            render={({ field }) => (
+              <CheckboxGroup
+                label="Player Gender"
+                options={GENDERS}
+                value={field.value}
+                onChange={field.onChange}
+                error={exhibitionErrors?.exhibitionPlayerGender?.message}
+                required
+              />
+            )}
+          />
+
+          <Controller
+            name={`exhibitions.${index}.exhibitionLevelOfPlay`}
+            control={control}
+            render={({ field }) => (
+              <CheckboxGroup
+                label="Level of Play"
+                options={LEVELS_OF_PLAY}
+                value={field.value}
+                onChange={field.onChange}
+                error={exhibitionErrors?.exhibitionLevelOfPlay?.message}
+                required
+              />
+            )}
+          />
         </div>
       )}
     </div>
@@ -554,74 +564,214 @@ interface Step4EventsProps {
   control: any
   errors: any
   watch: any
+  setValue: any
 }
 
 // Main Step4Events Component
-export default function Step4Events({ register, control, errors, watch }: Step4EventsProps) {
-  const { fields: eventFields, append: appendEvent, remove: removeEvent } = useFieldArray({
+export default function Step4Events({ register, control, errors, watch, setValue }: Step4EventsProps) {
+  const eventType = watch('eventType')
+
+  const { fields: leagueFields, append: appendLeague, remove: removeLeague } = useFieldArray({
     control,
-    name: 'events',
+    name: 'leagues',
   })
 
-  const events = watch('events')
-  const eventCount = events?.length || 0
+  const { fields: tournamentFields, append: appendTournament, remove: removeTournament } = useFieldArray({
+    control,
+    name: 'tournaments',
+  })
 
-  const addNewEvent = () => {
-    appendEvent({
-      eventType: undefined as any,
-      leagueDaysOfWeek: [],
-      leaguePlayerGender: [],
-      leagueLevelOfPlay: [],
-      exhibitionPlayerGender: [],
-      exhibitionLevelOfPlay: [],
-      exhibitionGames: [{ date: '', time: '', numberOfGames: '1' }],
-      tournamentPlayerGender: [],
-      tournamentLevelOfPlay: [],
-    })
+  const { fields: exhibitionFields, append: appendExhibition, remove: removeExhibition } = useFieldArray({
+    control,
+    name: 'exhibitions',
+  })
+
+  const getEventCount = () => {
+    if (eventType === 'League') return leagueFields.length
+    if (eventType === 'Tournament') return tournamentFields.length
+    if (eventType === 'Exhibition Game(s)') return exhibitionFields.length
+    return 0
+  }
+
+  const eventCount = getEventCount()
+
+  const getEventLabel = () => {
+    if (eventType === 'League') return eventCount === 1 ? 'League' : 'Leagues'
+    if (eventType === 'Tournament') return eventCount === 1 ? 'Tournament' : 'Tournaments'
+    if (eventType === 'Exhibition Game(s)') return eventCount === 1 ? 'Exhibition' : 'Exhibitions'
+    return 'Events'
+  }
+
+  const addNewItem = () => {
+    if (eventType === 'League') {
+      appendLeague({
+        leagueName: '',
+        leagueStartDate: '',
+        leagueEndDate: '',
+        leagueDaysOfWeek: [],
+        leaguePlayerGender: [],
+        leagueLevelOfPlay: [],
+      })
+    } else if (eventType === 'Tournament') {
+      appendTournament({
+        tournamentName: '',
+        tournamentStartDate: '',
+        tournamentEndDate: '',
+        tournamentNumberOfGames: '',
+        tournamentPlayerGender: [],
+        tournamentLevelOfPlay: [],
+      })
+    } else if (eventType === 'Exhibition Game(s)') {
+      appendExhibition({
+        exhibitionGameLocation: '',
+        exhibitionGames: [{ date: '', time: '', numberOfGames: '1' }],
+        exhibitionPlayerGender: [],
+        exhibitionLevelOfPlay: [],
+      })
+    }
   }
 
   return (
     <div className="space-y-6">
-      {/* Events Section */}
+      {/* Event Type Selection */}
       <div>
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-xl font-bold text-cboa-blue">Events</h3>
-          <span className="px-3 py-1 bg-cboa-blue text-white rounded-full text-sm font-medium">
-            {eventCount} {eventCount === 1 ? 'Event' : 'Events'}
-          </span>
-        </div>
+        <h3 className="text-xl font-bold text-cboa-blue mb-4">Event Type</h3>
         <p className="text-sm text-gray-600 mb-4">
-          Add one or more events. Each event will be processed separately but share the same organization and contact information.
+          Select the type of event you need officials for. You can add multiple events of the same type.
         </p>
 
-        <div className="space-y-4">
-          {eventFields.map((field, index) => (
-            <EventCard
-              key={field.id}
-              index={index}
-              control={control}
-              register={register}
-              errors={errors}
-              watch={watch}
-              remove={() => removeEvent(index)}
-              canRemove={eventFields.length > 1}
-            />
+        <div className="space-y-3">
+          {EVENT_TYPES.map(type => (
+            <label key={type} className={`flex items-center space-x-3 cursor-pointer p-4 border-2 rounded-lg transition-colors ${
+              eventType === type
+                ? 'border-cboa-orange bg-orange-50'
+                : 'border-gray-200 hover:bg-gray-50'
+            }`}>
+              <input
+                type="radio"
+                value={type}
+                {...register('eventType')}
+                className="w-5 h-5 text-cboa-orange border-gray-300 focus:ring-cboa-orange"
+              />
+              <div>
+                <span className="text-gray-800 font-medium">{type}</span>
+                <p className="text-sm text-gray-500 mt-0.5">
+                  {type === 'League' && 'Regular season games over a period of time'}
+                  {type === 'Tournament' && 'Multiple games over a short period (1-3 days)'}
+                  {type === 'Exhibition Game(s)' && 'One-off games or scrimmages'}
+                </p>
+              </div>
+            </label>
           ))}
         </div>
-
-        <button
-          type="button"
-          onClick={addNewEvent}
-          className="mt-4 w-full flex items-center justify-center gap-2 px-4 py-3 text-cboa-blue font-semibold bg-blue-50 hover:bg-blue-100 border-2 border-dashed border-blue-300 rounded-lg transition-colors"
-        >
-          <IconPlus size={20} />
-          Add Another Event
-        </button>
-
-        {errors.events && typeof errors.events.message === 'string' && (
-          <p className={errorStyles}>{errors.events.message}</p>
-        )}
+        {errors.eventType && <p className={errorStyles}>{errors.eventType.message}</p>}
       </div>
+
+      {/* Events Section - Only show after type is selected */}
+      {eventType && (
+        <div>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-xl font-bold text-cboa-blue">{getEventLabel()}</h3>
+            <span className="px-3 py-1 bg-cboa-blue text-white rounded-full text-sm font-medium">
+              {eventCount} {getEventLabel()}
+            </span>
+          </div>
+
+          {/* League List */}
+          {eventType === 'League' && (
+            <>
+              <div className="space-y-4">
+                {leagueFields.map((field, index) => (
+                  <LeagueCard
+                    key={field.id}
+                    index={index}
+                    control={control}
+                    register={register}
+                    errors={errors}
+                    watch={watch}
+                    remove={() => removeLeague(index)}
+                    canRemove={leagueFields.length > 1}
+                  />
+                ))}
+              </div>
+              <button
+                type="button"
+                onClick={addNewItem}
+                className="mt-4 w-full flex items-center justify-center gap-2 px-4 py-3 text-blue-700 font-semibold bg-blue-50 hover:bg-blue-100 border-2 border-dashed border-blue-300 rounded-lg transition-colors"
+              >
+                <IconPlus size={20} />
+                Add Another League
+              </button>
+            </>
+          )}
+
+          {/* Tournament List */}
+          {eventType === 'Tournament' && (
+            <>
+              <div className="space-y-4">
+                {tournamentFields.map((field, index) => (
+                  <TournamentCard
+                    key={field.id}
+                    index={index}
+                    control={control}
+                    register={register}
+                    errors={errors}
+                    watch={watch}
+                    remove={() => removeTournament(index)}
+                    canRemove={tournamentFields.length > 1}
+                  />
+                ))}
+              </div>
+              <button
+                type="button"
+                onClick={addNewItem}
+                className="mt-4 w-full flex items-center justify-center gap-2 px-4 py-3 text-green-700 font-semibold bg-green-50 hover:bg-green-100 border-2 border-dashed border-green-300 rounded-lg transition-colors"
+              >
+                <IconPlus size={20} />
+                Add Another Tournament
+              </button>
+            </>
+          )}
+
+          {/* Exhibition List */}
+          {eventType === 'Exhibition Game(s)' && (
+            <>
+              <div className="space-y-4">
+                {exhibitionFields.map((field, index) => (
+                  <ExhibitionCard
+                    key={field.id}
+                    index={index}
+                    control={control}
+                    register={register}
+                    errors={errors}
+                    watch={watch}
+                    remove={() => removeExhibition(index)}
+                    canRemove={exhibitionFields.length > 1}
+                  />
+                ))}
+              </div>
+              <button
+                type="button"
+                onClick={addNewItem}
+                className="mt-4 w-full flex items-center justify-center gap-2 px-4 py-3 text-orange-700 font-semibold bg-orange-50 hover:bg-orange-100 border-2 border-dashed border-orange-300 rounded-lg transition-colors"
+              >
+                <IconPlus size={20} />
+                Add Another Exhibition Location
+              </button>
+            </>
+          )}
+
+          {errors.leagues && typeof errors.leagues.message === 'string' && (
+            <p className={errorStyles}>{errors.leagues.message}</p>
+          )}
+          {errors.tournaments && typeof errors.tournaments.message === 'string' && (
+            <p className={errorStyles}>{errors.tournaments.message}</p>
+          )}
+          {errors.exhibitions && typeof errors.exhibitions.message === 'string' && (
+            <p className={errorStyles}>{errors.exhibitions.message}</p>
+          )}
+        </div>
+      )}
 
       {/* Discipline Policy Section */}
       <div>

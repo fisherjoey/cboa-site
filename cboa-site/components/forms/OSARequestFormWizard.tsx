@@ -87,111 +87,36 @@ const exhibitionGameSchema = z.object({
 
 const EVENT_TYPES = ['Exhibition Game(s)', 'League', 'Tournament'] as const
 
-const eventSchema = z.object({
-  eventType: z.enum(EVENT_TYPES, { message: 'Please select an event type' }),
-  leagueName: z.string().optional(),
-  leagueStartDate: z.string().optional(),
-  leagueEndDate: z.string().optional(),
-  leagueDaysOfWeek: z.array(z.string()).optional(),
-  leaguePlayerGender: z.array(z.string()).optional(),
-  leagueLevelOfPlay: z.array(z.string()).optional(),
-  exhibitionGameLocation: z.string().optional(),
-  exhibitionPlayerGender: z.array(z.string()).optional(),
-  exhibitionLevelOfPlay: z.array(z.string()).optional(),
-  exhibitionGames: z.array(exhibitionGameSchema).optional(),
-  tournamentName: z.string().optional(),
-  tournamentStartDate: z.string().optional(),
-  tournamentEndDate: z.string().optional(),
-  tournamentNumberOfGames: z.string().optional(),
-  tournamentPlayerGender: z.array(z.string()).optional(),
-  tournamentLevelOfPlay: z.array(z.string()).optional(),
-}).superRefine((data, ctx) => {
-  const today = new Date()
-  today.setHours(0, 0, 0, 0)
+// Loose schemas for storing data (no validation - validated in superRefine based on eventType)
+const leagueSchemaLoose = z.object({
+  leagueName: z.string().optional().default(''),
+  leagueStartDate: z.string().optional().default(''),
+  leagueEndDate: z.string().optional().default(''),
+  leagueDaysOfWeek: z.array(z.string()).optional().default([]),
+  leaguePlayerGender: z.array(z.string()).optional().default([]),
+  leagueLevelOfPlay: z.array(z.string()).optional().default([]),
+})
 
-  if (data.eventType === 'League') {
-    if (!data.leagueName || data.leagueName.trim().length < 2) {
-      ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'League name is required (min 2 characters)', path: ['leagueName'] })
-    }
-    if (!data.leagueStartDate) {
-      ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Start date is required', path: ['leagueStartDate'] })
-    } else {
-      const startDate = new Date(data.leagueStartDate)
-      if (startDate < today) {
-        ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Start date cannot be in the past', path: ['leagueStartDate'] })
-      }
-    }
-    if (!data.leagueEndDate) {
-      ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'End date is required', path: ['leagueEndDate'] })
-    } else if (data.leagueStartDate) {
-      const startDate = new Date(data.leagueStartDate)
-      const endDate = new Date(data.leagueEndDate)
-      if (endDate < startDate) {
-        ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'End date must be on or after start date', path: ['leagueEndDate'] })
-      }
-    }
-    if (!data.leagueDaysOfWeek?.length) {
-      ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Please select at least one day', path: ['leagueDaysOfWeek'] })
-    }
-    if (!data.leaguePlayerGender?.length) {
-      ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Please select player gender', path: ['leaguePlayerGender'] })
-    }
-    if (!data.leagueLevelOfPlay?.length) {
-      ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Please select level of play', path: ['leagueLevelOfPlay'] })
-    }
-  }
+const tournamentSchemaLoose = z.object({
+  tournamentName: z.string().optional().default(''),
+  tournamentStartDate: z.string().optional().default(''),
+  tournamentEndDate: z.string().optional().default(''),
+  tournamentNumberOfGames: z.string().optional().default(''),
+  tournamentPlayerGender: z.array(z.string()).optional().default([]),
+  tournamentLevelOfPlay: z.array(z.string()).optional().default([]),
+})
 
-  if (data.eventType === 'Exhibition Game(s)') {
-    if (!data.exhibitionGameLocation || data.exhibitionGameLocation.trim().length < 2) {
-      ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Game location is required (min 2 characters)', path: ['exhibitionGameLocation'] })
-    }
-    if (!data.exhibitionGames?.length) {
-      ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'At least one game is required', path: ['exhibitionGames'] })
-    }
-    if (!data.exhibitionPlayerGender?.length) {
-      ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Please select player gender', path: ['exhibitionPlayerGender'] })
-    }
-    if (!data.exhibitionLevelOfPlay?.length) {
-      ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Please select level of play', path: ['exhibitionLevelOfPlay'] })
-    }
-  }
+const exhibitionGameSchemaLoose = z.object({
+  date: z.string().optional().default(''),
+  time: z.string().optional().default(''),
+  numberOfGames: z.string().optional().default('1'),
+})
 
-  if (data.eventType === 'Tournament') {
-    if (!data.tournamentName || data.tournamentName.trim().length < 2) {
-      ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Tournament name is required (min 2 characters)', path: ['tournamentName'] })
-    }
-    if (!data.tournamentStartDate) {
-      ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Start date is required', path: ['tournamentStartDate'] })
-    } else {
-      const startDate = new Date(data.tournamentStartDate)
-      if (startDate < today) {
-        ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Start date cannot be in the past', path: ['tournamentStartDate'] })
-      }
-    }
-    if (!data.tournamentEndDate) {
-      ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'End date is required', path: ['tournamentEndDate'] })
-    } else if (data.tournamentStartDate) {
-      const startDate = new Date(data.tournamentStartDate)
-      const endDate = new Date(data.tournamentEndDate)
-      if (endDate < startDate) {
-        ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'End date must be on or after start date', path: ['tournamentEndDate'] })
-      }
-    }
-    if (!data.tournamentNumberOfGames) {
-      ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Estimated number of games is required', path: ['tournamentNumberOfGames'] })
-    } else {
-      const num = parseInt(data.tournamentNumberOfGames, 10)
-      if (isNaN(num) || num < 1 || num > 500) {
-        ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Enter a valid number (1-500)', path: ['tournamentNumberOfGames'] })
-      }
-    }
-    if (!data.tournamentPlayerGender?.length) {
-      ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Please select player gender', path: ['tournamentPlayerGender'] })
-    }
-    if (!data.tournamentLevelOfPlay?.length) {
-      ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Please select level of play', path: ['tournamentLevelOfPlay'] })
-    }
-  }
+const exhibitionSchemaLoose = z.object({
+  exhibitionGameLocation: z.string().optional().default(''),
+  exhibitionGames: z.array(exhibitionGameSchemaLoose).optional().default([]),
+  exhibitionPlayerGender: z.array(z.string()).optional().default([]),
+  exhibitionLevelOfPlay: z.array(z.string()).optional().default([]),
 })
 
 const osaFormSchema = z.object({
@@ -222,9 +147,138 @@ const osaFormSchema = z.object({
     .email('Please enter a valid email address')
     .max(254, 'Email is too long'),
   eventContactPhone: phoneSchema,
-  events: z.array(eventSchema).min(1, 'At least one event is required'),
+  // Single event type selection
+  eventType: z.enum(EVENT_TYPES, { message: 'Please select an event type' }),
+  // Arrays for each event type - use loose schemas so unselected types don't cause validation errors
+  leagues: z.array(leagueSchemaLoose).optional(),
+  tournaments: z.array(tournamentSchemaLoose).optional(),
+  exhibitions: z.array(exhibitionSchemaLoose).optional(),
   disciplinePolicy: z.string().min(1, 'Please select a discipline policy'),
   agreement: z.boolean().refine(val => val === true, 'You must agree to the exclusivity agreement'),
+}).superRefine((data, ctx) => {
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+
+  // Only validate the selected event type
+  if (data.eventType === 'League') {
+    if (!data.leagues || data.leagues.length === 0) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'At least one league is required', path: ['leagues'] })
+    } else {
+      data.leagues.forEach((league, index) => {
+        if (!league.leagueName || league.leagueName.trim().length < 2) {
+          ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'League name is required (min 2 characters)', path: ['leagues', index, 'leagueName'] })
+        }
+        if (!league.leagueStartDate) {
+          ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Start date is required', path: ['leagues', index, 'leagueStartDate'] })
+        } else {
+          const startDate = new Date(league.leagueStartDate)
+          if (startDate < today) {
+            ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Start date cannot be in the past', path: ['leagues', index, 'leagueStartDate'] })
+          }
+        }
+        if (!league.leagueEndDate) {
+          ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'End date is required', path: ['leagues', index, 'leagueEndDate'] })
+        } else if (league.leagueStartDate) {
+          const startDate = new Date(league.leagueStartDate)
+          const endDate = new Date(league.leagueEndDate)
+          if (endDate < startDate) {
+            ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'End date must be on or after start date', path: ['leagues', index, 'leagueEndDate'] })
+          }
+        }
+        if (!league.leagueDaysOfWeek || league.leagueDaysOfWeek.length === 0) {
+          ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Please select at least one day', path: ['leagues', index, 'leagueDaysOfWeek'] })
+        }
+        if (!league.leaguePlayerGender || league.leaguePlayerGender.length === 0) {
+          ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Please select player gender', path: ['leagues', index, 'leaguePlayerGender'] })
+        }
+        if (!league.leagueLevelOfPlay || league.leagueLevelOfPlay.length === 0) {
+          ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Please select level of play', path: ['leagues', index, 'leagueLevelOfPlay'] })
+        }
+      })
+    }
+  } else if (data.eventType === 'Tournament') {
+    if (!data.tournaments || data.tournaments.length === 0) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'At least one tournament is required', path: ['tournaments'] })
+    } else {
+      data.tournaments.forEach((tournament, index) => {
+        if (!tournament.tournamentName || tournament.tournamentName.trim().length < 2) {
+          ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Tournament name is required (min 2 characters)', path: ['tournaments', index, 'tournamentName'] })
+        }
+        if (!tournament.tournamentStartDate) {
+          ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Start date is required', path: ['tournaments', index, 'tournamentStartDate'] })
+        } else {
+          const startDate = new Date(tournament.tournamentStartDate)
+          if (startDate < today) {
+            ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Start date cannot be in the past', path: ['tournaments', index, 'tournamentStartDate'] })
+          }
+        }
+        if (!tournament.tournamentEndDate) {
+          ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'End date is required', path: ['tournaments', index, 'tournamentEndDate'] })
+        } else if (tournament.tournamentStartDate) {
+          const startDate = new Date(tournament.tournamentStartDate)
+          const endDate = new Date(tournament.tournamentEndDate)
+          if (endDate < startDate) {
+            ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'End date must be on or after start date', path: ['tournaments', index, 'tournamentEndDate'] })
+          }
+        }
+        if (!tournament.tournamentNumberOfGames) {
+          ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Number of games is required', path: ['tournaments', index, 'tournamentNumberOfGames'] })
+        } else {
+          const num = parseInt(tournament.tournamentNumberOfGames, 10)
+          if (isNaN(num) || num < 1 || num > 500) {
+            ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Enter a valid number (1-500)', path: ['tournaments', index, 'tournamentNumberOfGames'] })
+          }
+        }
+        if (!tournament.tournamentPlayerGender || tournament.tournamentPlayerGender.length === 0) {
+          ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Please select player gender', path: ['tournaments', index, 'tournamentPlayerGender'] })
+        }
+        if (!tournament.tournamentLevelOfPlay || tournament.tournamentLevelOfPlay.length === 0) {
+          ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Please select level of play', path: ['tournaments', index, 'tournamentLevelOfPlay'] })
+        }
+      })
+    }
+  } else if (data.eventType === 'Exhibition Game(s)') {
+    if (!data.exhibitions || data.exhibitions.length === 0) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'At least one exhibition is required', path: ['exhibitions'] })
+    } else {
+      data.exhibitions.forEach((exhibition, index) => {
+        if (!exhibition.exhibitionGameLocation || exhibition.exhibitionGameLocation.trim().length < 2) {
+          ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Game location is required (min 2 characters)', path: ['exhibitions', index, 'exhibitionGameLocation'] })
+        }
+        if (!exhibition.exhibitionGames || exhibition.exhibitionGames.length === 0) {
+          ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'At least one game is required', path: ['exhibitions', index, 'exhibitionGames'] })
+        } else {
+          exhibition.exhibitionGames.forEach((game, gameIndex) => {
+            if (!game.date) {
+              ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Date is required', path: ['exhibitions', index, 'exhibitionGames', gameIndex, 'date'] })
+            } else {
+              const selectedDate = new Date(game.date)
+              if (selectedDate < today) {
+                ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Date cannot be in the past', path: ['exhibitions', index, 'exhibitionGames', gameIndex, 'date'] })
+              }
+            }
+            if (!game.time) {
+              ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Time is required', path: ['exhibitions', index, 'exhibitionGames', gameIndex, 'time'] })
+            }
+            if (!game.numberOfGames) {
+              ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Number of games is required', path: ['exhibitions', index, 'exhibitionGames', gameIndex, 'numberOfGames'] })
+            } else {
+              const num = parseInt(game.numberOfGames, 10)
+              if (isNaN(num) || num < 1 || num > 50) {
+                ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Enter a valid number (1-50)', path: ['exhibitions', index, 'exhibitionGames', gameIndex, 'numberOfGames'] })
+              }
+            }
+          })
+        }
+        if (!exhibition.exhibitionPlayerGender || exhibition.exhibitionPlayerGender.length === 0) {
+          ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Please select player gender', path: ['exhibitions', index, 'exhibitionPlayerGender'] })
+        }
+        if (!exhibition.exhibitionLevelOfPlay || exhibition.exhibitionLevelOfPlay.length === 0) {
+          ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Please select level of play', path: ['exhibitions', index, 'exhibitionLevelOfPlay'] })
+        }
+      })
+    }
+  }
 })
 
 type OSAFormData = z.infer<typeof osaFormSchema>
@@ -237,7 +291,7 @@ const STEP_FIELDS: Record<number, (keyof OSAFormData)[]> = {
   1: ['organizationName'],
   2: ['billingAddress', 'billingCity', 'billingProvince', 'billingPostalCode', 'billingContactName', 'billingEmail', 'billingPhone'],
   3: ['eventContactName', 'eventContactEmail', 'eventContactPhone'],
-  4: ['events', 'disciplinePolicy', 'agreement'],
+  4: ['eventType', 'leagues', 'tournaments', 'exhibitions', 'disciplinePolicy', 'agreement'],
   5: [], // Review step - no validation needed
 }
 
@@ -257,16 +311,28 @@ const getDefaultValues = (): OSAFormData => ({
   eventContactName: '',
   eventContactEmail: '',
   eventContactPhone: '',
-  events: [{
-    eventType: undefined as any,
+  eventType: undefined as any,
+  leagues: [{
+    leagueName: '',
+    leagueStartDate: '',
+    leagueEndDate: '',
     leagueDaysOfWeek: [],
     leaguePlayerGender: [],
     leagueLevelOfPlay: [],
-    exhibitionPlayerGender: [],
-    exhibitionLevelOfPlay: [],
-    exhibitionGames: [{ date: '', time: '', numberOfGames: '1' }],
+  }],
+  tournaments: [{
+    tournamentName: '',
+    tournamentStartDate: '',
+    tournamentEndDate: '',
+    tournamentNumberOfGames: '',
     tournamentPlayerGender: [],
     tournamentLevelOfPlay: [],
+  }],
+  exhibitions: [{
+    exhibitionGameLocation: '',
+    exhibitionGames: [{ date: '', time: '', numberOfGames: '1' }],
+    exhibitionPlayerGender: [],
+    exhibitionLevelOfPlay: [],
   }],
   disciplinePolicy: '',
   agreement: false,
@@ -280,6 +346,7 @@ export default function OSARequestFormWizard() {
   const router = useRouter()
   const formRef = useRef<HTMLDivElement>(null)
   const [currentStep, setCurrentStep] = useState(1)
+  const [highestStepReached, setHighestStepReached] = useState(1)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [isHydrated, setIsHydrated] = useState(false)
@@ -292,6 +359,7 @@ export default function OSARequestFormWizard() {
     trigger,
     getValues,
     reset,
+    setValue,
     formState: { errors }
   } = useForm<OSAFormData>({
     resolver: zodResolver(osaFormSchema),
@@ -299,8 +367,19 @@ export default function OSARequestFormWizard() {
     mode: 'onTouched',
   })
 
-  const events = watch('events')
-  const eventCount = events?.length || 0
+  const eventType = watch('eventType')
+  const leagues = watch('leagues')
+  const tournaments = watch('tournaments')
+  const exhibitions = watch('exhibitions')
+
+  // Calculate event count based on selected type
+  const getEventCount = () => {
+    if (eventType === 'League') return leagues?.length || 0
+    if (eventType === 'Tournament') return tournaments?.length || 0
+    if (eventType === 'Exhibition Game(s)') return exhibitions?.length || 0
+    return 0
+  }
+  const eventCount = getEventCount()
 
   // ============================================
   // localStorage persistence
@@ -318,6 +397,9 @@ export default function OSARequestFormWizard() {
         if (parsed.currentStep) {
           setCurrentStep(parsed.currentStep)
         }
+        if (parsed.highestStepReached) {
+          setHighestStepReached(parsed.highestStepReached)
+        }
       }
     } catch (e) {
       console.error('Failed to load saved form data:', e)
@@ -332,13 +414,14 @@ export default function OSARequestFormWizard() {
       const data = {
         formData: getValues(),
         currentStep,
+        highestStepReached,
         savedAt: new Date().toISOString(),
       }
       localStorage.setItem(STORAGE_KEY, JSON.stringify(data))
     } catch (e) {
       console.error('Failed to save form data:', e)
     }
-  }, [getValues, currentStep, isHydrated])
+  }, [getValues, currentStep, highestStepReached, isHydrated])
 
   // Auto-save on step change and form changes
   useEffect(() => {
@@ -386,8 +469,10 @@ export default function OSARequestFormWizard() {
     const isValid = await trigger(fieldsToValidate)
 
     if (isValid) {
+      const nextStep = Math.min(currentStep + 1, 5)
+      setCurrentStep(nextStep)
+      setHighestStepReached(prev => Math.max(prev, nextStep))
       saveToStorage()
-      setCurrentStep(prev => Math.min(prev + 1, 5))
       scrollToForm()
     }
   }
@@ -407,6 +492,42 @@ export default function OSARequestFormWizard() {
     setSubmitError(null)
 
     try {
+      // Transform the new structure into events array for the webhook
+      let events: any[] = []
+
+      if (data.eventType === 'League' && data.leagues) {
+        events = data.leagues.map((league, idx) => ({
+          eventIndex: idx + 1,
+          eventType: 'League',
+          leagueName: league.leagueName,
+          leagueStartDate: league.leagueStartDate,
+          leagueEndDate: league.leagueEndDate,
+          leagueDaysOfWeek: league.leagueDaysOfWeek?.join(', '),
+          leaguePlayerGender: league.leaguePlayerGender?.join(', '),
+          leagueLevelOfPlay: league.leagueLevelOfPlay?.join(', '),
+        }))
+      } else if (data.eventType === 'Tournament' && data.tournaments) {
+        events = data.tournaments.map((tournament, idx) => ({
+          eventIndex: idx + 1,
+          eventType: 'Tournament',
+          tournamentName: tournament.tournamentName,
+          tournamentStartDate: tournament.tournamentStartDate,
+          tournamentEndDate: tournament.tournamentEndDate,
+          tournamentNumberOfGames: tournament.tournamentNumberOfGames,
+          tournamentPlayerGender: tournament.tournamentPlayerGender?.join(', '),
+          tournamentLevelOfPlay: tournament.tournamentLevelOfPlay?.join(', '),
+        }))
+      } else if (data.eventType === 'Exhibition Game(s)' && data.exhibitions) {
+        events = data.exhibitions.map((exhibition, idx) => ({
+          eventIndex: idx + 1,
+          eventType: 'Exhibition Game(s)',
+          exhibitionGameLocation: exhibition.exhibitionGameLocation,
+          exhibitionGames: exhibition.exhibitionGames,
+          exhibitionPlayerGender: exhibition.exhibitionPlayerGender?.join(', '),
+          exhibitionLevelOfPlay: exhibition.exhibitionLevelOfPlay?.join(', '),
+        }))
+      }
+
       const payload = {
         organizationName: data.organizationName,
         billingContactName: data.billingContactName,
@@ -422,26 +543,7 @@ export default function OSARequestFormWizard() {
         disciplinePolicy: data.disciplinePolicy,
         agreement: data.agreement,
         submissionTime: new Date().toISOString(),
-        events: data.events.map((event, idx) => ({
-          eventIndex: idx + 1,
-          eventType: event.eventType,
-          leagueName: event.leagueName,
-          leagueStartDate: event.leagueStartDate,
-          leagueEndDate: event.leagueEndDate,
-          leagueDaysOfWeek: event.leagueDaysOfWeek?.join(', '),
-          leaguePlayerGender: event.leaguePlayerGender?.join(', '),
-          leagueLevelOfPlay: event.leagueLevelOfPlay?.join(', '),
-          exhibitionGameLocation: event.exhibitionGameLocation,
-          exhibitionGames: event.exhibitionGames,
-          exhibitionPlayerGender: event.exhibitionPlayerGender?.join(', '),
-          exhibitionLevelOfPlay: event.exhibitionLevelOfPlay?.join(', '),
-          tournamentName: event.tournamentName,
-          tournamentStartDate: event.tournamentStartDate,
-          tournamentEndDate: event.tournamentEndDate,
-          tournamentNumberOfGames: event.tournamentNumberOfGames,
-          tournamentPlayerGender: event.tournamentPlayerGender?.join(', '),
-          tournamentLevelOfPlay: event.tournamentLevelOfPlay?.join(', '),
-        })),
+        events,
       }
 
       const response = await fetch('/.netlify/functions/osa-webhook', {
@@ -489,9 +591,10 @@ export default function OSARequestFormWizard() {
         {/* Progress Indicator */}
         <ProgressIndicator
           currentStep={currentStep}
+          highestStepReached={highestStepReached}
           onStepClick={(step) => {
-            // Only allow clicking on completed steps
-            if (step < currentStep) {
+            // Allow clicking on any step we've visited
+            if (step <= highestStepReached) {
               goToStep(step)
             }
           }}
@@ -528,6 +631,7 @@ export default function OSARequestFormWizard() {
               control={control}
               errors={errors}
               watch={watch}
+              setValue={setValue}
             />
           )}
 

@@ -152,8 +152,8 @@ async function getAccessToken(): Promise<string> {
   return data.access_token
 }
 
-// Load PDF as base64
-async function loadPdfAsBase64(filename: string): Promise<string | null> {
+// Load file as base64
+async function loadFileAsBase64(filename: string): Promise<string | null> {
   try {
     const possiblePaths = [
       path.join(process.cwd(), 'public', 'documents', filename),
@@ -171,11 +171,26 @@ async function loadPdfAsBase64(filename: string): Promise<string | null> {
       }
     }
 
-    console.error(`PDF not found: ${filename}`)
+    console.error(`File not found: ${filename}`)
     return null
   } catch (error) {
-    console.error(`Error loading PDF ${filename}:`, error)
+    console.error(`Error loading file ${filename}:`, error)
     return null
+  }
+}
+
+// Get content type from filename
+function getContentType(filename: string): string {
+  const ext = filename.split('.').pop()?.toLowerCase()
+  switch (ext) {
+    case 'pdf':
+      return 'application/pdf'
+    case 'xlsx':
+      return 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    case 'xls':
+      return 'application/vnd.ms-excel'
+    default:
+      return 'application/octet-stream'
   }
 }
 
@@ -425,7 +440,20 @@ function generateMultiEventClientEmailContent(data: MultiEventFormData): string 
     <ul>
       <li>CBOA Fee Schedule (Sept 2025 - Aug 2028)</li>
       <li>CBOA Invoice Policy</li>
+      ${data.events[0]?.eventType === 'League' ? `
+      <li>League Scheduling Template (Excel) - use if you have Microsoft Excel</li>
+      <li>League Scheduling Template (Google Sheets) - use if you prefer Google Sheets</li>
+      ` : ''}
+      ${data.events[0]?.eventType === 'Tournament' ? `
+      <li>Tournament Scheduling Template (Excel) - use if you have Microsoft Excel</li>
+      <li>Tournament Scheduling Template (Google Sheets) - use if you prefer Google Sheets</li>
+      ` : ''}
     </ul>
+    ${data.events[0]?.eventType === 'League' || data.events[0]?.eventType === 'Tournament' ? `
+    <p style="background-color: #EFF6FF; border-left: 4px solid #3B82F6; padding: 12px 16px; margin: 16px 0;">
+      <strong>Scheduling Template:</strong> Please fill out the attached scheduling template with your game schedule details and email it to <a href="mailto:scheduler@cboa.ca">scheduler@cboa.ca</a>. We've included two versions - choose the Excel version if using Microsoft Excel, or the Google Sheets version if you'll be uploading to Google Drive.
+    </p>
+    ` : ''}
 
     <h2>Payment Information</h2>
     <p>Payments can be made by cheque or e-transfer to the CBOA Director of Finance at <a href="mailto:treasurer@cboa.ca">treasurer@cboa.ca</a>.</p>
@@ -758,7 +786,12 @@ export const handler: Handler = async (event: HandlerEvent) => {
         statusCode: 400,
         body: JSON.stringify({
           error: 'Missing required fields',
-          required: ['organizationName', 'eventContactEmail', 'events']
+          required: ['organizationName', 'eventContactEmail', 'events'],
+          received: {
+            organizationName: !!formData.organizationName,
+            eventContactEmail: !!formData.eventContactEmail,
+            eventsCount: formData.events?.length || 0
+          }
         })
       }
     }
@@ -777,9 +810,9 @@ export const handler: Handler = async (event: HandlerEvent) => {
     // Get access token
     const accessToken = await getAccessToken()
 
-    // Load PDF attachments for client email
-    const feeSchedulePdf = await loadPdfAsBase64('CBOA-Fee-Schedule-2025-2028.pdf')
-    const invoicePolicyPdf = await loadPdfAsBase64('CBOA-Invoice-Policy.pdf')
+    // Load attachments for client email
+    const feeSchedulePdf = await loadFileAsBase64('CBOA-Fee-Schedule-2025-2028.pdf')
+    const invoicePolicyPdf = await loadFileAsBase64('CBOA-Invoice-Policy.pdf')
 
     const attachments: Array<{ name: string; content: string; contentType: string }> = []
     if (feeSchedulePdf) {
@@ -797,6 +830,48 @@ export const handler: Handler = async (event: HandlerEvent) => {
       })
     }
 
+    // Determine the primary event type for scheduling templates
+    // Since we now support single event type, all events should be the same type
+    const eventTypesSummary = Array.from(new Set(formData.events.map(e => e.eventType))).join(', ')
+    const primaryEventType = formData.events[0]?.eventType
+
+    // Add scheduling templates based on event type (League or Tournament only - not Exhibition)
+    if (primaryEventType === 'League') {
+      const leagueExcel = await loadFileAsBase64('CBOA-League-Scheduling-Template.xlsx')
+      const leagueGoogle = await loadFileAsBase64('CBOA-League-Scheduling-Template-Google.xlsx')
+      if (leagueExcel) {
+        attachments.push({
+          name: 'CBOA League Scheduling Template (Excel).xlsx',
+          content: leagueExcel,
+          contentType: getContentType('xlsx')
+        })
+      }
+      if (leagueGoogle) {
+        attachments.push({
+          name: 'CBOA League Scheduling Template (Google Sheets).xlsx',
+          content: leagueGoogle,
+          contentType: getContentType('xlsx')
+        })
+      }
+    } else if (primaryEventType === 'Tournament') {
+      const tournamentExcel = await loadFileAsBase64('CBOA-Tournament-Scheduling-Template.xlsx')
+      const tournamentGoogle = await loadFileAsBase64('CBOA-Tournament-Scheduling-Template-Google.xlsx')
+      if (tournamentExcel) {
+        attachments.push({
+          name: 'CBOA Tournament Scheduling Template (Excel).xlsx',
+          content: tournamentExcel,
+          contentType: getContentType('xlsx')
+        })
+      }
+      if (tournamentGoogle) {
+        attachments.push({
+          name: 'CBOA Tournament Scheduling Template (Google Sheets).xlsx',
+          content: tournamentGoogle,
+          contentType: getContentType('xlsx')
+        })
+      }
+    }
+
     const results = {
       client: false,
       scheduler: false,
@@ -805,7 +880,6 @@ export const handler: Handler = async (event: HandlerEvent) => {
     }
 
     const schedulerEmail = process.env.OSA_SCHEDULER_EMAIL || 'scheduler@cboa.ca'
-    const eventTypesSummary = [...new Set(formData.events.map(e => e.eventType))].join(', ')
 
     // 1. Send email to CLIENT (with attachments, CC scheduler) - ONE email for all events
     try {
@@ -851,26 +925,50 @@ export const handler: Handler = async (event: HandlerEvent) => {
       logger.error('osa', 'email_failed', `Failed to send scheduler email`, error as Error)
     }
 
-    // 3. Send email to TREASURER - ONE email for all events
+    // 3. Send email to TREASURER - only if billing email is NEW (not already in database)
     const treasurerEmail = process.env.OSA_TREASURER_EMAIL || 'treasurer@cboa.ca'
-    try {
-      const treasurerContent = generateMultiEventTreasurerEmailContent(formData)
-      const treasurerHtml = generateCBOAEmailTemplate({
-        subject: `OSA Billing Info: ${formData.organizationName} - ${eventCount} event${eventCount > 1 ? 's' : ''}`,
-        content: treasurerContent,
-        previewText: `Billing info for ${formData.organizationName}`
-      })
 
-      await sendEmail(
-        accessToken,
-        treasurerEmail,
-        `OSA Billing Info: ${formData.organizationName} - ${eventCount} event${eventCount > 1 ? 's' : ''}`,
-        treasurerHtml
-      )
-      results.treasurer = true
-      logger.info('osa', 'email_sent', `Treasurer notification sent to ${treasurerEmail}`)
+    // Check if billing email already exists in the database
+    let billingEmailExists = false
+    try {
+      const { data: existingSubmissions, error: lookupError } = await supabase
+        .from('osa_submissions')
+        .select('id')
+        .eq('billing_email', formData.billingEmail)
+        .limit(1)
+
+      if (lookupError) {
+        logger.warn('osa', 'billing_lookup_failed', `Failed to check if billing email exists: ${lookupError.message}`)
+      } else {
+        billingEmailExists = existingSubmissions && existingSubmissions.length > 0
+      }
     } catch (error) {
-      logger.error('osa', 'email_failed', `Failed to send treasurer email`, error as Error)
+      logger.warn('osa', 'billing_lookup_error', `Error checking billing email: ${(error as Error).message}`)
+    }
+
+    if (!billingEmailExists) {
+      // New billing contact - send treasurer email with billing info
+      try {
+        const treasurerContent = generateMultiEventTreasurerEmailContent(formData)
+        const treasurerHtml = generateCBOAEmailTemplate({
+          subject: `OSA Billing Info: ${formData.organizationName} - ${eventCount} event${eventCount > 1 ? 's' : ''}`,
+          content: treasurerContent,
+          previewText: `Billing info for ${formData.organizationName}`
+        })
+
+        await sendEmail(
+          accessToken,
+          treasurerEmail,
+          `OSA Billing Info: ${formData.organizationName} - ${eventCount} event${eventCount > 1 ? 's' : ''}`,
+          treasurerHtml
+        )
+        results.treasurer = true
+        logger.info('osa', 'email_sent', `Treasurer notification sent to ${treasurerEmail} (new billing contact)`)
+      } catch (error) {
+        logger.error('osa', 'email_failed', `Failed to send treasurer email`, error as Error)
+      }
+    } else {
+      logger.info('osa', 'treasurer_email_skipped', `Billing email ${formData.billingEmail} already exists in database - skipping treasurer notification`)
     }
 
     // 4. Send email to PRESIDENT (optional - enable via env var) - ONE email for all events
