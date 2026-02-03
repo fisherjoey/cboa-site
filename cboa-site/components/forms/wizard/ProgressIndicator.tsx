@@ -70,7 +70,7 @@ export default function ProgressIndicator({ currentStep, highestStepReached, onS
                   `}
                 >
                   {status === 'completed' ? (
-                    <IconCheck size={20} stroke={2.5} />
+                    <IconCheck size={24} stroke={3} />
                   ) : (
                     <span className="text-sm font-semibold">{step.number}</span>
                   )}
