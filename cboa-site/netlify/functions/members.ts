@@ -105,7 +105,7 @@ function generateInviteEmailHtml(inviteUrl: string, name?: string): string {
               <tr>
                 <td style="padding: 0 8px;"><a href="${siteUrl}" style="color: #F97316; text-decoration: none;">Website</a></td>
                 <td style="padding: 0 8px;"><a href="${siteUrl}/portal" style="color: #F97316; text-decoration: none;">Member Portal</a></td>
-                <td style="padding: 0 8px;"><a href="mailto:info@cboa.ca" style="color: #F97316; text-decoration: none;">Contact Us</a></td>
+                <td style="padding: 0 8px;"><a href="${siteUrl}/contact?category=membership" style="color: #F97316; text-decoration: none;">Contact Us</a></td>
               </tr>
             </table>
             <p style="margin: 20px 0 0 0; font-size: 13px; color: #9ca3af;">&copy; 2025 Calgary Basketball Officials Association. All rights reserved.</p>

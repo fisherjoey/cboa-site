@@ -178,7 +178,7 @@ function generateInviteEmailHtml(inviteUrl: string, name?: string): string {
             <p style="text-align: center; margin: 24px 0;">
               <a href="${inviteUrl}" style="display: inline-block; padding: 14px 28px; min-height: 44px; background-color: #F97316; color: #ffffff !important; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px;">Accept Invitation</a>
             </p>
-            <p style="margin: 0 0 16px 0; font-size: 16px; line-height: 1.6;">If you have any questions about your membership, please don't hesitate to contact us.</p>
+            <p style="margin: 0 0 16px 0; font-size: 16px; line-height: 1.6;">If you have any questions about your membership, please don't hesitate to <a href="${siteUrl}/contact?category=membership" style="color: #F97316;">contact us</a>.</p>
             <p style="margin: 0 0 16px 0; font-size: 16px; line-height: 1.6;">We look forward to having you on our team!</p>
             <p style="margin: 0; font-size: 16px; line-height: 1.6;">Best regards,<br><strong style="color: #003DA5; font-weight: 600;">CBOA Executive Board</strong></p>
           </td>
@@ -192,7 +192,7 @@ function generateInviteEmailHtml(inviteUrl: string, name?: string): string {
               <tr>
                 <td style="padding: 0 8px;"><a href="${siteUrl}" style="color: #F97316; text-decoration: none; font-size: 14px;">Website</a></td>
                 <td style="padding: 0 8px;"><a href="${siteUrl}/portal" style="color: #F97316; text-decoration: none; font-size: 14px;">Member Portal</a></td>
-                <td style="padding: 0 8px;"><a href="mailto:info@cboa.ca" style="color: #F97316; text-decoration: none; font-size: 14px;">Contact Us</a></td>
+                <td style="padding: 0 8px;"><a href="${siteUrl}/contact?category=membership" style="color: #F97316; text-decoration: none; font-size: 14px;">Contact Us</a></td>
               </tr>
             </table>
             <p style="margin: 20px 0 0 0; font-size: 13px; color: #9ca3af;">&copy; 2025 Calgary Basketball Officials Association. All rights reserved.</p>
@@ -246,7 +246,7 @@ function generatePasswordResetEmailHtml(resetUrl: string, email: string): string
               <tr>
                 <td style="padding: 0 8px;"><a href="${siteUrl}" style="color: #F97316; text-decoration: none; font-size: 14px;">Website</a></td>
                 <td style="padding: 0 8px;"><a href="${siteUrl}/portal" style="color: #F97316; text-decoration: none; font-size: 14px;">Member Portal</a></td>
-                <td style="padding: 0 8px;"><a href="mailto:info@cboa.ca" style="color: #F97316; text-decoration: none; font-size: 14px;">Contact Us</a></td>
+                <td style="padding: 0 8px;"><a href="${siteUrl}/contact?category=membership" style="color: #F97316; text-decoration: none; font-size: 14px;">Contact Us</a></td>
               </tr>
             </table>
             <p style="margin: 20px 0 0 0; font-size: 13px; color: #9ca3af;">&copy; 2025 Calgary Basketball Officials Association. All rights reserved.</p>

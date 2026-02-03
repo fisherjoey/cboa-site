@@ -247,9 +247,8 @@ export default function MobileHeader() {
               {/* Contact Info */}
               <div className="px-4 pt-6 mt-6 border-t">
                 <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Quick Contact</h3>
-                <div className="space-y-2 text-sm text-gray-600">
-                  <p>Email: info@cboa.ca</p>
-                  <p>Phone: (403) 555-0123</p>
+                <div className="text-sm text-gray-600">
+                  <Link href="/contact?category=general" className="text-cboa-orange hover:text-cboa-blue">Contact Us</Link>
                 </div>
               </div>
 

@@ -153,7 +153,7 @@ function AcceptInviteContent() {
           <div className="px-6 py-4 bg-gray-50 dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700 text-center">
             <p className="text-sm text-gray-500 dark:text-gray-400">
               Need help?{' '}
-              <a href="mailto:info@cboa.ca" className="text-orange-500 hover:text-orange-600 font-medium">
+              <a href="/contact?category=general" className="text-orange-500 hover:text-orange-600 font-medium">
                 Contact CBOA
               </a>
             </p>

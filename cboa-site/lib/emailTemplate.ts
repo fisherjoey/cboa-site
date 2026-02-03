@@ -213,7 +213,7 @@ export function generateCBOAEmailTemplate(options: EmailTemplateOptions): string
                     <a href="https://cboa.ca/portal" style="color: #F97316; text-decoration: none; font-size: 14px;">Member Portal</a>
                   </td>
                   <td style="padding: 0 8px;">
-                    <a href="mailto:info@cboa.ca" style="color: #F97316; text-decoration: none; font-size: 14px;">Contact Us</a>
+                    <a href="https://cboa.ca/contact?category=general" style="color: #F97316; text-decoration: none; font-size: 14px;">Contact Us</a>
                   </td>
                 </tr>
               </table>
@@ -364,7 +364,7 @@ export const sampleEmails = {
 
       <p><strong>Please arrive 30 minutes early for pre-game preparation.</strong></p>
 
-      <p>If you have any conflicts or questions, please contact the assignor immediately at <a href="mailto:assignor@cboa.ca">assignor@cboa.ca</a>.</p>
+      <p>If you have any conflicts or questions, please <a href="https://cboa.ca/contact?category=scheduling">contact the assignor</a> immediately.</p>
 
       <p style="text-align: center;">
         <a href="https://cboa.ca/portal/calendar" class="button">View Full Schedule</a>

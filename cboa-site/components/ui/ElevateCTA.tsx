@@ -35,8 +35,8 @@ export default function ElevateCTA({ primaryButtonHref = "/get-officials" }: Ele
             >
               Request Officials Now
             </a>
-            <a 
-              href="mailto:scheduler@cboa.ca" 
+            <a
+              href="/contact?category=scheduling"
               className="inline-block bg-white text-cboa-blue px-8 py-4 rounded-full font-bold text-lg hover:bg-gray-100 transition-all transform hover:scale-105 shadow-lg"
             >
               Contact Our Team

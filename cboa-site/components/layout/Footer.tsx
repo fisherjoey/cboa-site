@@ -18,7 +18,7 @@ export default function Footer() {
               />
             </div>
             <p className="text-gray-300 font-semibold text-sm sm:text-base mb-2">Calgary Basketball Officials Association</p>
-            <p className="text-gray-400 text-xs sm:text-sm">Email: info@cboa.ca</p>
+            <Link href="/contact?category=general" className="text-gray-400 hover:text-cboa-orange text-xs sm:text-sm transition-colors">Contact Us</Link>
           </div>
           
           <div>

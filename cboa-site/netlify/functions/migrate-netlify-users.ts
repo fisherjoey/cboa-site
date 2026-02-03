@@ -74,7 +74,7 @@ async function sendMigrationEmail(
             <p style="text-align: center; margin: 24px 0;">
               <a href="${resetUrl}" style="display: inline-block; padding: 14px 28px; background-color: #F97316; color: #ffffff !important; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px;">Set New Password</a>
             </p>
-            <p style="margin: 0 0 16px 0;">This link will expire in 24 hours. If you have any questions, please contact us at info@cboa.ca.</p>
+            <p style="margin: 0 0 16px 0;">This link will expire in 24 hours. If you have any questions, please <a href="https://cboa.ca/contact?category=general" style="color: #F97316;">contact us</a>.</p>
             <p style="margin: 0;">Best regards,<br><strong style="color: #003DA5;">CBOA Executive Board</strong></p>
           </td>
         </tr>

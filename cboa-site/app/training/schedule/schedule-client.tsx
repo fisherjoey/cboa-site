@@ -293,17 +293,10 @@ export default function ScheduleClient({ trainingEvents }: ScheduleClientProps) 
               </p>
               <div className="space-y-2 text-sm">
                 <p className="text-gray-700">
-                  <strong>Referee Development:</strong><br />
-                  Doran Davidson<br />
-                  <a href="mailto:education@cboa.ca" className="text-cboa-orange hover:underline">
-                    education@cboa.ca
-                  </a>
-                </p>
-                <p className="text-gray-700">
-                  <strong>General Inquiries:</strong><br />
-                  <a href="mailto:info@cboa.ca" className="text-cboa-orange hover:underline">
-                    info@cboa.ca
-                  </a>
+                  <a href="/contact?category=education" className="text-cboa-orange hover:underline">
+                    Contact our education team
+                  </a>{' '}
+                  for questions about training events or registration.
                 </p>
               </div>
             </Card>

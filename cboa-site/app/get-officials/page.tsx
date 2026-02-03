@@ -128,9 +128,9 @@ export default function GetOfficialsPage() {
 
             <div className="mt-8 text-center">
               <p className="text-gray-600">
-                Questions about our services? Contact us at{' '}
-                <a href="mailto:scheduler@cboa.ca" className="text-cboa-orange hover:text-cboa-blue">
-                  scheduler@cboa.ca
+                Questions about our services?{' '}
+                <a href="/contact?category=scheduling" className="text-cboa-orange hover:text-cboa-blue">
+                  Contact our scheduling team
                 </a>
               </p>
             </div>

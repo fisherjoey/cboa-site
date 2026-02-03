@@ -166,7 +166,7 @@ export default function BecomeARefereePage() {
                 Again, thank you for your interest in joining our organization. We look forward to having you as a member.
               </p>
               <p className="text-sm text-gray-500 mt-4">
-                Questions? Contact us at <a href="mailto:info@cboa.ca" className="text-cboa-orange hover:text-cboa-blue">info@cboa.ca</a>
+                Questions? <a href="/contact?category=general" className="text-cboa-orange hover:text-cboa-blue">Contact us</a>
               </p>
             </div>
           </div>

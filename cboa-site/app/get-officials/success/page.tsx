@@ -63,10 +63,11 @@ export default function OSASuccessPage() {
                     <h3 className="font-semibold text-gray-800">Provide Your Schedule</h3>
                     <p className="text-gray-600 text-sm">
                       For leagues and tournaments, please send your game schedule in
-                      spreadsheet format to{' '}
-                      <a href="mailto:scheduler@cboa.ca" className="text-cboa-orange hover:text-cboa-blue">
-                        scheduler@cboa.ca
-                      </a>
+                      spreadsheet format through our{' '}
+                      <a href="/contact?category=scheduling" className="text-cboa-orange hover:text-cboa-blue">
+                        contact form
+                      </a>{' '}
+                      (select &quot;Officiating Services / Booking&quot;)
                     </p>
                   </div>
                 </div>
@@ -82,16 +83,18 @@ export default function OSASuccessPage() {
                   please provide a copy to the CBOA Vice President before your event.
                 </li>
                 <li>
-                  <strong>Payment:</strong> Payments can be made by cheque or e-transfer to{' '}
-                  <a href="mailto:treasurer@cboa.ca" className="text-cboa-orange hover:text-cboa-blue">
-                    treasurer@cboa.ca
-                  </a>
+                  <strong>Payment:</strong> Payments can be made by cheque or e-transfer.{' '}
+                  <a href="/contact?category=billing" className="text-cboa-orange hover:text-cboa-blue">
+                    Contact our billing team
+                  </a>{' '}
+                  for details.
                 </li>
                 <li>
-                  <strong>Questions:</strong> Contact our scheduling team at{' '}
-                  <a href="mailto:scheduler@cboa.ca" className="text-cboa-orange hover:text-cboa-blue">
-                    scheduler@cboa.ca
-                  </a>
+                  <strong>Questions:</strong>{' '}
+                  <a href="/contact?category=scheduling" className="text-cboa-orange hover:text-cboa-blue">
+                    Contact our scheduling team
+                  </a>{' '}
+                  for any inquiries.
                 </li>
               </ul>
             </div>

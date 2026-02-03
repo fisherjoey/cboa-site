@@ -124,6 +124,7 @@ export default function Header() {
               <li><Link href="/become-a-referee" className={`transition-colors px-3 py-2 text-base font-medium ${isActive('/become-a-referee') ? 'text-cboa-orange' : 'hover:text-cboa-orange'}`}>Become a Referee</Link></li>
               <li><Link href="/get-officials" className={`transition-colors px-3 py-2 text-base font-medium ${isActive('/get-officials') ? 'text-cboa-orange' : 'hover:text-cboa-orange'}`}>Book Referees</Link></li>
               <li><Link href="/new-officials" className={`transition-colors px-3 py-2 text-base font-medium ${isActive('/new-officials') ? 'text-cboa-orange' : 'hover:text-cboa-orange'}`}>Blue Whistles</Link></li>
+              <li><Link href="/contact" className={`transition-colors px-3 py-2 text-base font-medium ${isActive('/contact') ? 'text-cboa-orange' : 'hover:text-cboa-orange'}`}>Contact</Link></li>
             </ul>
           </div>
         </div>
@@ -169,6 +170,7 @@ export default function Header() {
               <Link href="/become-a-referee" className={`block px-4 py-3 transition-colors ${isActive('/become-a-referee') ? 'bg-cboa-orange' : 'hover:bg-white/10'}`}>Become a Referee</Link>
               <Link href="/get-officials" className={`block px-4 py-3 transition-colors ${isActive('/get-officials') ? 'bg-cboa-orange' : 'hover:bg-white/10'}`}>Book Referees</Link>
               <Link href="/new-officials" className={`block px-4 py-3 transition-colors ${isActive('/new-officials') ? 'bg-cboa-orange' : 'hover:bg-white/10'}`}>Blue Whistles</Link>
+              <Link href="/contact" className={`block px-4 py-3 transition-colors ${isActive('/contact') ? 'bg-cboa-orange' : 'hover:bg-white/10'}`}>Contact</Link>
 
               {/* Portal Button */}
               <div className="px-4 py-3 mt-4 border-t border-white/20">

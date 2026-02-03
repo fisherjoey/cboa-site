@@ -217,7 +217,7 @@ function generateClientEmailContent(data) {
     <h2 style="color: #003DA5;">Discipline Policy</h2>
     <p>You have indicated your discipline policy will be: <strong>${data.disciplinePolicy}</strong></p>
 
-    <p>The CBOA Scheduling & Assigning team will be contacting you shortly to gather your schedule to be put into the assigning software. If your event is a League or Tournament, please provide your schedule in spreadsheet format to <a href="mailto:scheduler@cboa.ca">scheduler@cboa.ca</a>.</p>
+    <p>The CBOA Scheduling & Assigning team will be contacting you shortly to gather your schedule to be put into the assigning software. If your event is a League or Tournament, please provide your schedule in spreadsheet format to <a href="https://cboa.ca/contact">scheduler@cboa.ca</a>.</p>
 
     <h2 style="color: #003DA5;">Attached Documents</h2>
     <p>For your reference, we have attached:</p>
@@ -227,14 +227,14 @@ function generateClientEmailContent(data) {
     </ul>
 
     <h2 style="color: #003DA5;">Payment Information</h2>
-    <p>Payments can be made by cheque or e-transfer to the CBOA Director of Finance at <a href="mailto:treasurer@cboa.ca">treasurer@cboa.ca</a>.</p>
+    <p>Payments can be made by cheque or e-transfer to the CBOA Director of Finance at <a href="https://cboa.ca/contact">treasurer@cboa.ca</a>.</p>
 
     <p>Thank you for booking your officials with the Calgary Basketball Officials Association. We look forward to providing our trained and certified referees to make your event${eventCount > 1 ? 's' : ''} a success.</p>
 
     <p>Best Regards,<br>
     <strong>Calgary Basketball Officials Association</strong><br>
     Scheduling Group<br>
-    <a href="mailto:scheduler@cboa.ca">scheduler@cboa.ca</a><br>
+    <a href="https://cboa.ca/contact">scheduler@cboa.ca</a><br>
     <a href="https://www.cboa.ca">www.cboa.ca</a></p>
   `;
 }

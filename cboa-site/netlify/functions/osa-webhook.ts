@@ -433,7 +433,7 @@ function generateMultiEventClientEmailContent(data: MultiEventFormData): string 
     </p>
     ` : ''}
 
-    <p>The CBOA Scheduling & Assigning team will review your submission and be in touch if any additional information is needed. If you were unable to provide all game dates or details in the form, please email your complete schedule to <a href="mailto:scheduler@cboa.ca">scheduler@cboa.ca</a>.</p>
+    <p>The CBOA Scheduling & Assigning team will review your submission and be in touch if any additional information is needed. If you were unable to provide all game dates or details in the form, please <a href="https://cboa.ca/contact?category=scheduling">contact our scheduling team</a> with your complete schedule.</p>
 
     <h2>Attached Documents</h2>
     <p>For your reference, we have attached:</p>
@@ -451,19 +451,19 @@ function generateMultiEventClientEmailContent(data: MultiEventFormData): string 
     </ul>
     ${data.events[0]?.eventType === 'League' || data.events[0]?.eventType === 'Tournament' ? `
     <p style="background-color: #EFF6FF; border-left: 4px solid #3B82F6; padding: 12px 16px; margin: 16px 0;">
-      <strong>Scheduling Template:</strong> Please fill out the attached scheduling template with your game schedule details and email it to <a href="mailto:scheduler@cboa.ca">scheduler@cboa.ca</a>. We've included two versions - choose the Excel version if using Microsoft Excel, or the Google Sheets version if you'll be uploading to Google Drive.
+      <strong>Scheduling Template:</strong> Please fill out the attached scheduling template with your game schedule details and submit it through our <a href="https://cboa.ca/contact?category=scheduling">contact form</a> (select "Officiating Services / Booking"). We've included two versions - choose the Excel version if using Microsoft Excel, or the Google Sheets version if you'll be uploading to Google Drive.
     </p>
     ` : ''}
 
     <h2>Payment Information</h2>
-    <p>Payments can be made by cheque or e-transfer to the CBOA Director of Finance at <a href="mailto:treasurer@cboa.ca">treasurer@cboa.ca</a>.</p>
+    <p>Payments can be made by cheque or e-transfer. <a href="https://cboa.ca/contact?category=billing">Contact our billing team</a> (select "Billing / Payments") for payment details.</p>
 
     <p>Thank you for booking your officials with the Calgary Basketball Officials Association. We look forward to providing our trained and certified referees to make your ${eventCount === 1 ? 'event' : 'events'} a success.</p>
 
     <p>Best Regards,<br>
     <strong>Calgary Basketball Officials Association</strong><br>
     Scheduling Group<br>
-    <a href="mailto:scheduler@cboa.ca">scheduler@cboa.ca</a><br>
+    <a href="https://cboa.ca/contact?category=scheduling">Contact us</a><br>
     <a href="https://www.cboa.ca">www.cboa.ca</a></p>
   `
 }

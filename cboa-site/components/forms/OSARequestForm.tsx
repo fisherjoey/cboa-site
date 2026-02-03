@@ -1254,7 +1254,7 @@ export default function OSARequestForm() {
         {/* Privacy Notice */}
         <p className="text-xs text-gray-500 text-center">
           Your information will be used to process your officiating services request and will be stored securely.
-          Contact <a href="mailto:scheduler@cboa.ca" className="text-cboa-orange hover:text-cboa-blue">scheduler@cboa.ca</a> with any questions.
+          <a href="/contact?category=scheduling" className="text-cboa-orange hover:text-cboa-blue"> Contact us</a> with any questions.
         </p>
       </form>
     </Card>
