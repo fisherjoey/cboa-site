@@ -19,7 +19,7 @@ export default function Header() {
   }
 
   // Check if we're on portal pages
-  const isPortalPage = pathname?.startsWith('/portal')
+  const isPortalPage = pathname?.startsWith('/portal') || pathname?.startsWith('/theme-demo')
 
   // Close mobile menu when route changes
   useEffect(() => {
