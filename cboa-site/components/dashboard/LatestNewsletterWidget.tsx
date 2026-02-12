@@ -48,14 +48,14 @@ export default function LatestNewsletterWidget() {
 
   if (isLoading) {
     return (
-      <div className="bg-gradient-to-r from-orange-50 to-orange-100 dark:from-slate-800 dark:to-slate-800/80 rounded-lg shadow p-6 border-l-4 border-orange-500">
-        <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-          <IconNotebook className="h-5 w-5 text-orange-600 dark:text-orange-500" />
+      <div className="bg-gradient-to-r from-orange-50 to-orange-100 dark:from-portal-surface dark:to-portal-surface/80 rounded-xl border border-gray-200 dark:border-portal-border p-6 border-l-4 border-l-orange-500">
+        <h2 className="font-heading text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+          <IconNotebook className="h-5 w-5 text-orange-600 dark:text-portal-accent" />
           Latest Newsletter
         </h2>
         <div className="animate-pulse">
-          <div className="h-4 bg-orange-200 dark:bg-slate-700 rounded w-3/4 mb-2"></div>
-          <div className="h-16 bg-orange-200 dark:bg-slate-700 rounded"></div>
+          <div className="h-4 bg-orange-200 dark:bg-portal-hover rounded w-3/4 mb-2"></div>
+          <div className="h-16 bg-orange-200 dark:bg-portal-hover rounded"></div>
         </div>
       </div>
     )
@@ -63,9 +63,9 @@ export default function LatestNewsletterWidget() {
 
   if (!newsletter) {
     return (
-      <div className="bg-gradient-to-r from-orange-50 to-orange-100 dark:from-slate-800 dark:to-slate-800/80 rounded-lg shadow p-4 sm:p-6 border-l-4 border-orange-500">
-        <h2 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-          <IconNotebook className="h-5 w-5 text-orange-600 dark:text-orange-500" />
+      <div className="bg-gradient-to-r from-orange-50 to-orange-100 dark:from-portal-surface dark:to-portal-surface/80 rounded-xl border border-gray-200 dark:border-portal-border p-4 sm:p-6 border-l-4 border-l-orange-500">
+        <h2 className="font-heading text-base sm:text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+          <IconNotebook className="h-5 w-5 text-orange-600 dark:text-portal-accent" />
           Latest Newsletter
         </h2>
         <div className="text-center py-8 text-gray-500 dark:text-gray-400">
@@ -77,15 +77,15 @@ export default function LatestNewsletterWidget() {
   }
 
   return (
-    <div className="bg-gradient-to-r from-orange-50 to-orange-100 dark:from-slate-800 dark:to-slate-800/80 rounded-lg shadow p-4 sm:p-6 border-l-4 border-orange-500">
+    <div className="bg-gradient-to-r from-orange-50 to-orange-100 dark:from-portal-surface dark:to-portal-surface/80 rounded-xl border border-gray-200 dark:border-portal-border p-4 sm:p-6 border-l-4 border-l-orange-500">
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-          <IconNotebook className="h-5 w-5 text-orange-600 dark:text-orange-500" />
+        <h2 className="font-heading text-base sm:text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+          <IconNotebook className="h-5 w-5 text-orange-600 dark:text-portal-accent" />
           The Bounce Newsletter
         </h2>
         <Link
           href="/portal/the-bounce"
-          className="text-sm text-orange-600 dark:text-orange-500 hover:text-orange-700 dark:hover:text-orange-400 font-medium flex items-center gap-1"
+          className="text-sm text-orange-600 dark:text-portal-accent hover:text-orange-700 dark:hover:text-portal-accent font-medium flex items-center gap-1"
         >
           View All
           <IconChevronRight className="h-4 w-4" />
@@ -94,7 +94,7 @@ export default function LatestNewsletterWidget() {
 
       <div>
         <div className="mb-2">
-          <span className="text-xs text-orange-600 dark:text-orange-500 font-medium">Latest Issue</span>
+          <span className="text-xs text-orange-600 dark:text-portal-accent font-medium">Latest Issue</span>
         </div>
         <h3 className="font-semibold text-gray-900 dark:text-white mb-2 text-base sm:text-lg">
           {newsletter.title}
@@ -126,7 +126,7 @@ export default function LatestNewsletterWidget() {
             <a
               href={newsletter.file_url}
               download
-              className="flex-1 border-2 border-orange-600 text-orange-600 dark:text-orange-500 px-4 py-2 rounded-lg hover:bg-orange-600 hover:text-white transition-colors flex items-center justify-center gap-2 text-sm font-medium"
+              className="flex-1 border-2 border-orange-600 text-orange-600 dark:text-portal-accent px-4 py-2 rounded-lg hover:bg-orange-600 hover:text-white transition-colors flex items-center justify-center gap-2 text-sm font-medium"
             >
               <IconDownload className="h-4 w-4" />
               Download PDF

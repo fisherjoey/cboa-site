@@ -17,6 +17,7 @@ import {
 import { parseAPIError, sanitize, ValidationError } from '@/lib/errorHandling'
 import { TinyMCEEditor, HTMLViewer } from '@/components/TinyMCEEditor'
 import FileUpload from '@/components/FileUpload'
+import PortalFilterBar from '@/components/portal/PortalFilterBar'
 import {
   IconPlus,
   IconEdit,
@@ -517,7 +518,7 @@ export default function ResourcesClient() {
     // Check if editing this resource
     if (editingId === resource.id && editingData) {
       return (
-        <div key={resource.id} className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 col-span-full">
+        <div key={resource.id} className="bg-white dark:bg-portal-surface rounded-xl border border-gray-200 dark:border-portal-border p-4 col-span-full">
           <div className="space-y-3">
             {/* Resource Type Selector */}
             <div>
@@ -534,7 +535,7 @@ export default function ResourcesClient() {
                       className={`p-2 rounded-lg border-2 transition-all flex flex-col items-center gap-1 ${
                         isSelected
                           ? 'border-orange-500 bg-orange-50 text-orange-700'
-                          : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 text-gray-600 dark:text-gray-300'
+                          : 'border-gray-200 dark:border-portal-border hover:border-gray-300 text-gray-600 dark:text-gray-300'
                       }`}
                     >
                       <TypeIcon className="h-5 w-5" />
@@ -549,7 +550,7 @@ export default function ResourcesClient() {
               type="text"
               value={editingData.title || ''}
               onChange={(e) => setEditingData({ ...editingData, title: e.target.value })}
-              className="w-full font-semibold px-3 py-2 border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+              className="w-full font-semibold px-3 py-2 border border-gray-200 dark:border-portal-border bg-white dark:bg-portal-surface text-gray-900 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
               placeholder="Resource title..."
             />
 
@@ -569,7 +570,7 @@ export default function ResourcesClient() {
                 <textarea
                   value={editingData.description || ''}
                   onChange={(e) => setEditingData({ ...editingData, description: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                  className="w-full px-3 py-2 border border-gray-200 dark:border-portal-border bg-white dark:bg-portal-surface text-gray-900 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                   rows={2}
                   placeholder="Resource description..."
                 />
@@ -586,7 +587,7 @@ export default function ResourcesClient() {
                   type="url"
                   value={editingData.externalLink || ''}
                   onChange={(e) => setEditingData({ ...editingData, externalLink: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                  className="w-full px-3 py-2 border border-gray-200 dark:border-portal-border bg-white dark:bg-portal-surface text-gray-900 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                   placeholder="https://..."
                 />
               </div>
@@ -598,7 +599,7 @@ export default function ResourcesClient() {
                 <select
                   value={editingData.category || 'rulebooks'}
                   onChange={(e) => setEditingData({ ...editingData, category: e.target.value as Resource['category'] })}
-                  className="w-full px-3 py-2 border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                  className="w-full pl-3 pr-8 py-2 border border-gray-200 dark:border-portal-border bg-white dark:bg-portal-surface text-gray-900 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                 >
                   <option value="rulebooks">Rulebooks</option>
                   <option value="forms">Forms</option>
@@ -613,7 +614,7 @@ export default function ResourcesClient() {
                 <select
                   value={editingData.accessLevel || 'all'}
                   onChange={(e) => setEditingData({ ...editingData, accessLevel: e.target.value as Resource['accessLevel'] })}
-                  className="w-full px-3 py-2 border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                  className="w-full pl-3 pr-8 py-2 border border-gray-200 dark:border-portal-border bg-white dark:bg-portal-surface text-gray-900 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                 >
                   <option value="all">All Officials</option>
                   <option value="level1">Level 1+</option>
@@ -679,7 +680,7 @@ export default function ResourcesClient() {
         <div
           key={resource.id}
           id={`resource-${resource.id}`}
-          className="bg-white dark:bg-gray-800 rounded-lg shadow hover:shadow-md transition-shadow p-4 flex flex-col cursor-pointer"
+          className="bg-white dark:bg-portal-surface rounded-xl border border-gray-200 dark:border-portal-border hover:border-orange-200 dark:hover:border-orange-800/40 hover:shadow-sm transition-shadow p-4 flex flex-col cursor-pointer"
           onClick={handleResourceClick}
         >
           <div className="flex items-start gap-3 mb-3">
@@ -706,7 +707,7 @@ export default function ResourcesClient() {
               </div>
             </div>
           </div>
-          <div className="mt-auto flex items-center gap-1 pt-2 border-t border-gray-100 dark:border-gray-700" onClick={(e) => e.stopPropagation()}>
+          <div className="mt-auto flex items-center gap-1 pt-2 border-t border-gray-100 dark:border-portal-border" onClick={(e) => e.stopPropagation()}>
             {resource.fileUrl && (
               <a href={resource.fileUrl} download className="p-1.5 text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/30 rounded" title="Download">
                 <IconDownload className="h-4 w-4" />
@@ -719,7 +720,7 @@ export default function ResourcesClient() {
             )}
             {canEdit && (
               <>
-                <button onClick={() => startEditing(resource)} className="p-1.5 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded ml-auto" title="Edit">
+                <button onClick={() => startEditing(resource)} className="p-1.5 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-portal-hover rounded ml-auto" title="Edit">
                   <IconEdit className="h-4 w-4" />
                 </button>
                 <button onClick={() => handleDelete(resource.id)} className="p-1.5 text-red-500 dark:text-red-400/70 hover:bg-red-50 dark:hover:bg-red-900/30 rounded" title="Delete">
@@ -728,13 +729,13 @@ export default function ResourcesClient() {
               </>
             )}
             {isTextResource && (
-              <button onClick={() => toggleTextResourceExpanded(resource.id)} className="p-1.5 text-gray-400 dark:text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 rounded ml-auto">
+              <button onClick={() => toggleTextResourceExpanded(resource.id)} className="p-1.5 text-gray-400 dark:text-gray-500 hover:bg-gray-100 dark:hover:bg-portal-hover rounded ml-auto">
                 {isExpanded ? <IconChevronUp className="h-4 w-4" /> : <IconChevronDown className="h-4 w-4" />}
               </button>
             )}
           </div>
           {isTextResource && isExpanded && (
-            <div className="mt-3 pt-3 border-t border-gray-100 dark:border-gray-700 prose prose-sm max-w-none" onClick={(e) => e.stopPropagation()}>
+            <div className="mt-3 pt-3 border-t border-gray-100 dark:border-portal-border prose prose-sm max-w-none" onClick={(e) => e.stopPropagation()}>
               <HTMLViewer content={resource.description} />
             </div>
           )}
@@ -744,7 +745,7 @@ export default function ResourcesClient() {
 
     // List view row - renders as card on mobile, row on desktop
     return (
-      <div key={resource.id} id={`resource-${resource.id}`} className="bg-white dark:bg-gray-800 rounded-lg shadow hover:shadow-md transition-shadow cursor-pointer" onClick={handleResourceClick}>
+      <div key={resource.id} id={`resource-${resource.id}`} className="bg-white dark:bg-portal-surface rounded-xl border border-gray-200 dark:border-portal-border hover:border-orange-200 dark:hover:border-orange-800/40 hover:shadow-sm transition-shadow cursor-pointer" onClick={handleResourceClick}>
         {/* Mobile card layout */}
         <div className="sm:hidden p-4">
           <div className="flex items-start gap-3 mb-3">
@@ -765,7 +766,7 @@ export default function ResourcesClient() {
               <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">{formatDate(resource.lastUpdated)}</div>
             </div>
           </div>
-          <div className="flex items-center gap-1 pt-2 border-t border-gray-100 dark:border-gray-700" onClick={(e) => e.stopPropagation()}>
+          <div className="flex items-center gap-1 pt-2 border-t border-gray-100 dark:border-portal-border" onClick={(e) => e.stopPropagation()}>
             {resource.fileUrl && (
               <a href={resource.fileUrl} download className="p-1.5 text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/30 rounded" title="Download">
                 <IconDownload className="h-4 w-4" />
@@ -778,7 +779,7 @@ export default function ResourcesClient() {
             )}
             {canEdit && (
               <>
-                <button onClick={() => startEditing(resource)} className="p-1.5 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded ml-auto" title="Edit">
+                <button onClick={() => startEditing(resource)} className="p-1.5 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-portal-hover rounded ml-auto" title="Edit">
                   <IconEdit className="h-4 w-4" />
                 </button>
                 <button onClick={() => handleDelete(resource.id)} className="p-1.5 text-red-500 dark:text-red-400/70 hover:bg-red-50 dark:hover:bg-red-900/30 rounded" title="Delete">
@@ -787,13 +788,13 @@ export default function ResourcesClient() {
               </>
             )}
             {isTextResource && (
-              <button onClick={() => toggleTextResourceExpanded(resource.id)} className="p-1.5 text-gray-400 dark:text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 rounded ml-auto">
+              <button onClick={() => toggleTextResourceExpanded(resource.id)} className="p-1.5 text-gray-400 dark:text-gray-500 hover:bg-gray-100 dark:hover:bg-portal-hover rounded ml-auto">
                 {isExpanded ? <IconChevronUp className="h-4 w-4" /> : <IconChevronDown className="h-4 w-4" />}
               </button>
             )}
           </div>
           {isTextResource && isExpanded && (
-            <div className="mt-3 pt-3 border-t border-gray-100 dark:border-gray-700 prose prose-sm max-w-none" onClick={(e) => e.stopPropagation()}>
+            <div className="mt-3 pt-3 border-t border-gray-100 dark:border-portal-border prose prose-sm max-w-none" onClick={(e) => e.stopPropagation()}>
               <HTMLViewer content={resource.description} />
             </div>
           )}
@@ -837,7 +838,7 @@ export default function ResourcesClient() {
               )}
               {canEdit && (
                 <>
-                  <button onClick={() => startEditing(resource)} className="p-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded" title="Edit">
+                  <button onClick={() => startEditing(resource)} className="p-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-portal-hover rounded" title="Edit">
                     <IconEdit className="h-5 w-5" />
                   </button>
                   <button onClick={() => handleDelete(resource.id)} className="p-2 text-red-500 dark:text-red-400/70 hover:bg-red-50 dark:hover:bg-red-900/30 rounded" title="Delete">
@@ -846,14 +847,14 @@ export default function ResourcesClient() {
                 </>
               )}
               {isTextResource && (
-                <div className="p-2 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 rounded" onClick={() => toggleTextResourceExpanded(resource.id)}>
+                <div className="p-2 cursor-pointer hover:bg-gray-100 dark:hover:bg-portal-hover rounded" onClick={() => toggleTextResourceExpanded(resource.id)}>
                   {isExpanded ? <IconChevronUp className="h-5 w-5 text-gray-400 dark:text-gray-500" /> : <IconChevronDown className="h-5 w-5 text-gray-400 dark:text-gray-500" />}
                 </div>
               )}
             </div>
           </div>
           {isTextResource && isExpanded && (
-            <div className="px-4 pb-4 border-t border-gray-100 dark:border-gray-700" onClick={(e) => e.stopPropagation()}>
+            <div className="px-4 pb-4 border-t border-gray-100 dark:border-portal-border" onClick={(e) => e.stopPropagation()}>
               <div className="pt-4 prose prose-sm max-w-none">
                 <HTMLViewer content={resource.description} />
               </div>
@@ -865,11 +866,11 @@ export default function ResourcesClient() {
   }
 
   return (
-    <div className="px-4 py-5 sm:p-6">
+    <div className="px-4 py-5 sm:p-6 portal-animate">
 
       <div className="mb-6 sm:mb-8 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">Resources</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold font-heading tracking-tight text-gray-900 dark:text-white">Resources</h1>
           <p className="mt-1 sm:mt-2 text-sm sm:text-base text-gray-600 dark:text-gray-300">Training materials, forms, and official documents</p>
         </div>
         {canEdit && !isCreating && (
@@ -886,7 +887,7 @@ export default function ResourcesClient() {
                 accessLevel: 'all'
               })
             }}
-            className="bg-orange-500 text-white px-3 py-2 sm:px-4 rounded-lg hover:bg-orange-600 flex items-center gap-2 text-sm sm:text-base"
+            className="bg-orange-500 text-white px-3 py-2 sm:px-4 rounded-xl shadow-sm shadow-orange-500/20 hover:bg-orange-600 flex items-center gap-2 text-sm sm:text-base"
           >
             <IconPlus className="h-5 w-5" />
             Add Resource
@@ -896,7 +897,7 @@ export default function ResourcesClient() {
 
       {/* Create New Resource Form */}
       {isCreating && (
-        <div className="mb-6 bg-white dark:bg-gray-800 rounded-lg shadow-lg p-4 sm:p-6">
+        <div className="mb-6 bg-white dark:bg-portal-surface rounded-xl border border-gray-200 dark:border-portal-border p-4 sm:p-6">
           <h2 className="text-lg sm:text-xl font-semibold mb-4 text-gray-900 dark:text-white">Add New Resource</h2>
 
           <div className="space-y-4">
@@ -915,7 +916,7 @@ export default function ResourcesClient() {
                       className={`p-3 rounded-lg border-2 transition-all flex flex-col items-center gap-1 ${
                         isSelected
                           ? 'border-orange-500 bg-orange-50 text-orange-700'
-                          : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 text-gray-600 dark:text-gray-300'
+                          : 'border-gray-200 dark:border-portal-border hover:border-gray-300 text-gray-600 dark:text-gray-300'
                       }`}
                     >
                       <Icon className="h-6 w-6" />
@@ -936,10 +937,10 @@ export default function ResourcesClient() {
                   type="text"
                   value={newResource.title}
                   onChange={(e) => setNewResource({ ...newResource, title: e.target.value })}
-                  className={`w-full px-3 py-2 border rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 ${
+                  className={`w-full px-3 py-2 border rounded-lg bg-white dark:bg-portal-surface text-gray-900 dark:text-white focus:outline-none focus:ring-2 ${
                     getFieldError(validationErrors, 'title')
                       ? 'border-red-500 focus:ring-red-500'
-                      : 'border-gray-300 dark:border-gray-700 focus:ring-orange-500'
+                      : 'border-gray-300 dark:border-portal-border focus:ring-orange-500'
                   }`}
                   placeholder="Resource title..."
                 />
@@ -955,7 +956,7 @@ export default function ResourcesClient() {
                 <select
                   value={newResource.category}
                   onChange={(e) => setNewResource({ ...newResource, category: e.target.value as any })}
-                  className="w-full px-3 py-2 border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                  className="w-full pl-3 pr-8 py-2 border border-gray-200 dark:border-portal-border bg-white dark:bg-portal-surface text-gray-900 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                 >
                   <option value="rulebooks">Rulebooks</option>
                   <option value="forms">Forms</option>
@@ -973,7 +974,7 @@ export default function ResourcesClient() {
                 {newResource.resourceType === 'text' ? 'Content *' : 'Description'}
               </label>
               {newResource.resourceType === 'text' ? (
-                <div className={`border rounded-lg ${getFieldError(validationErrors, 'description') ? 'border-red-500' : 'border-gray-300 dark:border-gray-700'}`}>
+                <div className={`border rounded-lg ${getFieldError(validationErrors, 'description') ? 'border-red-500' : 'border-gray-300 dark:border-portal-border'}`}>
                   <TinyMCEEditor
                     value={newResource.description || ''}
                     onChange={(value) => setNewResource({ ...newResource, description: value })}
@@ -985,10 +986,10 @@ export default function ResourcesClient() {
                 <textarea
                   value={newResource.description}
                   onChange={(e) => setNewResource({ ...newResource, description: e.target.value })}
-                  className={`w-full px-3 py-2 border rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 ${
+                  className={`w-full px-3 py-2 border rounded-lg bg-white dark:bg-portal-surface text-gray-900 dark:text-white focus:outline-none focus:ring-2 ${
                     getFieldError(validationErrors, 'description')
                       ? 'border-red-500 focus:ring-red-500'
-                      : 'border-gray-300 dark:border-gray-700 focus:ring-orange-500'
+                      : 'border-gray-300 dark:border-portal-border focus:ring-orange-500'
                   }`}
                   rows={3}
                   placeholder="Brief description of the resource..."
@@ -1041,10 +1042,10 @@ export default function ResourcesClient() {
                   type="url"
                   value={newResource.externalLink || ''}
                   onChange={(e) => setNewResource({ ...newResource, externalLink: e.target.value })}
-                  className={`w-full px-3 py-2 border rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 ${
+                  className={`w-full px-3 py-2 border rounded-lg bg-white dark:bg-portal-surface text-gray-900 dark:text-white focus:outline-none focus:ring-2 ${
                     getFieldError(validationErrors, 'externalLink')
                       ? 'border-red-500 focus:ring-red-500'
-                      : 'border-gray-300 dark:border-gray-700 focus:ring-orange-500'
+                      : 'border-gray-300 dark:border-portal-border focus:ring-orange-500'
                   }`}
                   placeholder={newResource.resourceType === 'video' ? 'https://youtube.com/watch?v=...' : 'https://...'}
                 />
@@ -1060,7 +1061,7 @@ export default function ResourcesClient() {
                 <select
                   value={newResource.accessLevel}
                   onChange={(e) => setNewResource({ ...newResource, accessLevel: e.target.value as any })}
-                  className="w-full px-3 py-2 border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                  className="w-full pl-3 pr-8 py-2 border border-gray-200 dark:border-portal-border bg-white dark:bg-portal-surface text-gray-900 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                 >
                   <option value="all">All Officials</option>
                   <option value="level1">Level 1+</option>
@@ -1127,98 +1128,36 @@ export default function ResourcesClient() {
       )}
 
       {/* Search and Category Filter */}
-      <div className="mb-6 bg-white dark:bg-gray-800 rounded-lg shadow p-3 sm:p-4">
-        <div className="flex flex-wrap gap-3 sm:gap-4">
-          <div className="flex-1 min-w-0">
+      <PortalFilterBar
+        searchValue={searchTerm}
+        onSearchChange={setSearchTerm}
+        searchPlaceholder="Search resources..."
+        categories={categories}
+        selectedCategory={selectedCategory}
+        onCategoryChange={setSelectedCategory}
+        sortOptions={[
+          { value: 'date', label: 'Date' },
+          { value: 'title', label: 'Title' },
+          { value: 'type', label: 'Type' },
+        ]}
+        sortValue={sortBy}
+        onSortChange={(val) => setSortBy(val as 'title' | 'date' | 'type')}
+        sortDirection={sortOrder}
+        onSortDirectionChange={setSortOrder}
+        viewMode={viewMode}
+        onViewModeChange={setViewMode}
+        extraControls={selectedCategory === 'all' ? (
+          <label className="flex items-center gap-1.5 text-sm text-gray-600 dark:text-gray-300">
             <input
-              type="text"
-              placeholder="Search resources..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full px-3 py-2 text-sm sm:text-base border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-md focus:outline-none focus:ring-orange-500 focus:border-orange-500"
+              type="checkbox"
+              checked={groupByCategory}
+              onChange={(e) => setGroupByCategory(e.target.checked)}
+              className="rounded text-orange-500 focus:ring-orange-500"
             />
-          </div>
-        </div>
-
-        <div className="mt-3 sm:mt-4 flex flex-wrap gap-1.5 sm:gap-2">
-          {categories.map(category => {
-            const Icon = category.icon
-            return (
-              <button
-                key={category.value}
-                onClick={() => setSelectedCategory(category.value)}
-                className={`px-2 sm:px-3 py-1.5 sm:py-2 rounded-md text-xs sm:text-sm flex items-center gap-1 sm:gap-2 ${
-                  selectedCategory === category.value
-                    ? 'bg-orange-500 text-white'
-                    : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
-                }`}
-              >
-                <Icon className="h-3 w-3 sm:h-4 sm:w-4" />
-                {category.label}
-              </button>
-            )
-          })}
-        </div>
-
-        {/* Sort and View Options */}
-        <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700 flex flex-wrap items-center justify-between gap-3">
-          <div className="flex items-center gap-2 flex-wrap">
-            {/* Sort By */}
-            <span className="text-xs text-gray-500 dark:text-gray-400">Sort by:</span>
-            <select
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value as 'title' | 'date' | 'type')}
-              className="text-sm border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-orange-500"
-            >
-              <option value="date">Date</option>
-              <option value="title">Title</option>
-              <option value="type">Type</option>
-            </select>
-            <button
-              onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
-              className="p-1.5 text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
-              title={sortOrder === 'asc' ? 'Ascending' : 'Descending'}
-            >
-              {sortOrder === 'asc' ? (
-                <IconSortAscending className="h-4 w-4" />
-              ) : (
-                <IconSortDescending className="h-4 w-4" />
-              )}
-            </button>
-
-            {/* Group by Category toggle - only show when viewing all */}
-            {selectedCategory === 'all' && (
-              <label className="flex items-center gap-1.5 text-sm text-gray-600 dark:text-gray-300 ml-2">
-                <input
-                  type="checkbox"
-                  checked={groupByCategory}
-                  onChange={(e) => setGroupByCategory(e.target.checked)}
-                  className="rounded text-orange-500 focus:ring-orange-500"
-                />
-                Group by category
-              </label>
-            )}
-          </div>
-
-          {/* View Mode Toggle */}
-          <div className="flex items-center gap-1 bg-gray-100 dark:bg-gray-700 rounded p-0.5">
-            <button
-              onClick={() => setViewMode('list')}
-              className={`p-1.5 rounded ${viewMode === 'list' ? 'bg-white dark:bg-gray-800 shadow text-orange-600' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'}`}
-              title="List view"
-            >
-              <IconLayoutList className="h-4 w-4" />
-            </button>
-            <button
-              onClick={() => setViewMode('grid')}
-              className={`p-1.5 rounded ${viewMode === 'grid' ? 'bg-white dark:bg-gray-800 shadow text-orange-600' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'}`}
-              title="Grid view"
-            >
-              <IconLayoutGrid className="h-4 w-4" />
-            </button>
-          </div>
-        </div>
-      </div>
+            Group by category
+          </label>
+        ) : undefined}
+      />
 
       {/* Featured Resources */}
       {filteredResources.some(r => r.featured) && (
@@ -1263,7 +1202,7 @@ export default function ResourcesClient() {
               return (
                 <div
                   key={resource.id}
-                  className="bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg p-3 sm:p-4 cursor-pointer hover:bg-orange-100 dark:hover:bg-orange-900/30 transition-colors"
+                  className="bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-xl p-3 sm:p-4 cursor-pointer hover:bg-orange-100 dark:hover:bg-orange-900/30 transition-colors"
                   onClick={handleFeaturedClick}
                 >
                   <div className="flex items-center gap-3">
@@ -1317,7 +1256,7 @@ export default function ResourcesClient() {
                         <>
                           <button
                             onClick={() => startEditing(resource)}
-                            className="p-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
+                            className="p-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-portal-hover rounded"
                             title="Edit"
                           >
                             <IconEdit className="h-5 w-5" />
@@ -1382,7 +1321,7 @@ export default function ResourcesClient() {
       </div>
 
       {filteredResources.length === 0 && (
-        <div className="text-center py-12 bg-white dark:bg-gray-800 rounded-lg">
+        <div className="text-center py-12 bg-white dark:bg-portal-surface rounded-lg">
           <IconFile className="mx-auto h-12 w-12 text-gray-400 dark:text-gray-500" />
           <h3 className="mt-2 text-sm font-medium text-gray-900 dark:text-white">No resources found</h3>
           <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">

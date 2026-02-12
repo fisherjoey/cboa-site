@@ -362,7 +362,7 @@ export default function MembersPage() {
         <span className={`px-2 py-1 text-xs rounded-full ${
           row.original.status === 'active'
             ? 'bg-green-100 dark:bg-green-900/40 text-green-800 dark:text-green-300'
-            : 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300'
+            : 'bg-gray-100 dark:bg-portal-hover text-gray-800 dark:text-gray-300'
         }`}>
           {row.original.status || 'active'}
         </span>
@@ -658,28 +658,28 @@ export default function MembersPage() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto p-6">
+    <div className="max-w-7xl mx-auto p-6 portal-animate">
       <div className="mb-6">
         <div className="flex items-center justify-between mb-4">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Members Directory</h1>
+          <h1 className="text-3xl font-bold font-heading tracking-tight text-gray-900 dark:text-white">Members Directory</h1>
           <div className="flex items-center gap-2">
             <button
               onClick={() => setShowResendPendingModal(true)}
-              className="flex items-center gap-2 px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors"
+              className="flex items-center gap-2 px-4 py-2 bg-amber-600 text-white rounded-xl hover:bg-amber-700 transition-colors"
             >
               <IconMail size={20} />
               Resend Pending
             </button>
             <button
               onClick={() => setShowBulkAddModal(true)}
-              className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors"
+              className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 transition-colors"
             >
               <IconUsersPlus size={20} />
               Bulk Add
             </button>
             <button
               onClick={handleAddMember}
-              className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors"
             >
               <IconPlus size={20} />
               Add Member
@@ -688,7 +688,7 @@ export default function MembersPage() {
         </div>
 
         {/* Filters */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4 mb-4">
+        <div className="bg-white dark:bg-portal-surface rounded-xl border border-gray-200 dark:border-portal-border p-4 mb-4">
           <div className="flex flex-col gap-4">
             {/* Search and View Toggle Row */}
             <div className="flex flex-col md:flex-row gap-4">
@@ -700,7 +700,7 @@ export default function MembersPage() {
                     placeholder="Search by name, email, phone, or city..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-portal-border bg-white dark:bg-portal-surface text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
                 </div>
               </div>
@@ -709,14 +709,14 @@ export default function MembersPage() {
               <div className="flex items-center border border-gray-300 dark:border-gray-600 rounded-lg overflow-hidden">
                 <button
                   onClick={() => setViewMode('grid')}
-                  className={`p-2 ${viewMode === 'grid' ? 'bg-blue-600 text-white' : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'}`}
+                  className={`p-2 ${viewMode === 'grid' ? 'bg-blue-600 text-white' : 'bg-white dark:bg-portal-surface text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-portal-hover'}`}
                   title="Grid view"
                 >
                   <IconLayoutGrid size={20} />
                 </button>
                 <button
                   onClick={() => setViewMode('table')}
-                  className={`p-2 ${viewMode === 'table' ? 'bg-blue-600 text-white' : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'}`}
+                  className={`p-2 ${viewMode === 'table' ? 'bg-blue-600 text-white' : 'bg-white dark:bg-portal-surface text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-portal-hover'}`}
                   title="Table view"
                 >
                   <IconTable size={20} />
@@ -732,7 +732,7 @@ export default function MembersPage() {
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
-                className="px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="pl-3 pr-8 py-2 text-sm border border-gray-300 dark:border-portal-border bg-white dark:bg-portal-surface text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               >
                 <option value="all">All Status</option>
                 <option value="active">Active</option>
@@ -743,7 +743,7 @@ export default function MembersPage() {
               <select
                 value={roleFilter}
                 onChange={(e) => setRoleFilter(e.target.value)}
-                className="px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="pl-3 pr-8 py-2 text-sm border border-gray-300 dark:border-portal-border bg-white dark:bg-portal-surface text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               >
                 <option value="all">All Roles</option>
                 <option value="official">Official</option>
@@ -756,7 +756,7 @@ export default function MembersPage() {
               <select
                 value={certificationFilter}
                 onChange={(e) => setCertificationFilter(e.target.value)}
-                className="px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="pl-3 pr-8 py-2 text-sm border border-gray-300 dark:border-portal-border bg-white dark:bg-portal-surface text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               >
                 <option value="all">All NOCP Levels</option>
                 <option value="none">None</option>
@@ -772,7 +772,7 @@ export default function MembersPage() {
                 <select
                   value={cityFilter}
                   onChange={(e) => setCityFilter(e.target.value)}
-                  className="px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="pl-3 pr-8 py-2 text-sm border border-gray-300 dark:border-portal-border bg-white dark:bg-portal-surface text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 >
                   <option value="all">All Cities</option>
                   {uniqueCities.map(city => (
@@ -813,7 +813,7 @@ export default function MembersPage() {
               <div
                 key={member.id}
                 onClick={() => handleViewMember(member)}
-                className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4 hover:shadow-lg transition-shadow cursor-pointer"
+                className="bg-white dark:bg-portal-surface rounded-xl border border-gray-200 dark:border-portal-border p-4 hover:shadow-lg transition-shadow cursor-pointer"
               >
                 <div className="flex items-start gap-3">
                   <div className="bg-blue-900/40 p-3 rounded-full">
@@ -829,7 +829,7 @@ export default function MembersPage() {
                       <span className={`px-2 py-1 text-xs rounded-full ${
                         member.status === 'active'
                           ? 'bg-green-100 dark:bg-green-900/40 text-green-800 dark:text-green-300'
-                          : 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300'
+                          : 'bg-gray-100 dark:bg-portal-hover text-gray-800 dark:text-gray-300'
                       }`}>
                         {member.status || 'active'}
                       </span>
@@ -846,13 +846,13 @@ export default function MembersPage() {
           </div>
 
           {filteredMembers.length === 0 && (
-            <div className="text-center py-12 bg-white dark:bg-gray-800 rounded-lg shadow-md">
+            <div className="text-center py-12 bg-white dark:bg-portal-surface rounded-xl border border-gray-200 dark:border-portal-border">
               <p className="text-gray-600 dark:text-gray-400">No members found.</p>
             </div>
           )}
         </>
       ) : (
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden">
+        <div className="bg-white dark:bg-portal-surface rounded-xl border border-gray-200 dark:border-portal-border overflow-hidden">
           <DataTable
             data={filteredMembers}
             columns={tableColumns}
@@ -954,7 +954,7 @@ export default function MembersPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Basic Information */}
                 <div className="space-y-4">
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white border-b border-gray-200 dark:border-gray-700 pb-2">Basic Information</h3>
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white border-b border-gray-200 dark:border-portal-border pb-2">Basic Information</h3>
 
                   <div>
                     <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 block">Name *</label>
@@ -964,7 +964,7 @@ export default function MembersPage() {
                           type="text"
                           value={editForm.name}
                           onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
-                          className={`w-full px-3 py-2 border rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 ${
+                          className={`w-full px-3 py-2 border rounded-lg bg-white dark:bg-portal-surface text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 ${
                             getFieldError(validationErrors, 'name')
                               ? 'border-red-500'
                               : 'border-gray-300 dark:border-gray-600'
@@ -990,7 +990,7 @@ export default function MembersPage() {
                           type="email"
                           value={editForm.email}
                           onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
-                          className={`w-full px-3 py-2 border rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 ${
+                          className={`w-full px-3 py-2 border rounded-lg bg-white dark:bg-portal-surface text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 ${
                             getFieldError(validationErrors, 'email')
                               ? 'border-red-500'
                               : 'border-gray-300 dark:border-gray-600'
@@ -1021,7 +1021,7 @@ export default function MembersPage() {
                         type="tel"
                         value={editForm.phone || ''}
                         onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500"
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-portal-surface text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500"
                       />
                     ) : (
                       <p className="text-gray-900 dark:text-white">{selectedMember?.phone || 'Not provided'}</p>
@@ -1034,7 +1034,7 @@ export default function MembersPage() {
                       <select
                         value={editForm.certification_level || ''}
                         onChange={(e) => setEditForm({ ...editForm, certification_level: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500"
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-portal-surface text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500"
                       >
                         <option value="">Select level</option>
                         <option value="None">None</option>
@@ -1056,7 +1056,7 @@ export default function MembersPage() {
                         type="number"
                         value={editForm.rank || ''}
                         onChange={(e) => setEditForm({ ...editForm, rank: e.target.value ? parseInt(e.target.value) : undefined })}
-                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500"
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-portal-surface text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500"
                         placeholder="Enter numeric rank"
                         min="0"
                       />
@@ -1071,7 +1071,7 @@ export default function MembersPage() {
                       <select
                         value={editForm.status || 'active'}
                         onChange={(e) => setEditForm({ ...editForm, status: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500"
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-portal-surface text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500"
                       >
                         <option value="active">Active</option>
                         <option value="inactive">Inactive</option>
@@ -1087,7 +1087,7 @@ export default function MembersPage() {
                       <select
                         value={editForm.role || 'official'}
                         onChange={(e) => setEditForm({ ...editForm, role: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500"
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-portal-surface text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500"
                       >
                         <option value="official">Official</option>
                         <option value="evaluator">Evaluator</option>
@@ -1104,7 +1104,7 @@ export default function MembersPage() {
 
                 {/* Contact Information */}
                 <div className="space-y-4">
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white border-b border-gray-200 dark:border-gray-700 pb-2">Contact Information</h3>
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white border-b border-gray-200 dark:border-portal-border pb-2">Contact Information</h3>
 
                   <div>
                     <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 block">Address</label>
@@ -1113,7 +1113,7 @@ export default function MembersPage() {
                         type="text"
                         value={editForm.address || ''}
                         onChange={(e) => setEditForm({ ...editForm, address: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500"
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-portal-surface text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500"
                       />
                     ) : (
                       <p className="text-gray-900 dark:text-white">{selectedMember?.address || 'Not provided'}</p>
@@ -1128,7 +1128,7 @@ export default function MembersPage() {
                           type="text"
                           value={editForm.city || ''}
                           onChange={(e) => setEditForm({ ...editForm, city: e.target.value })}
-                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500"
+                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-portal-surface text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500"
                         />
                       ) : (
                         <p className="text-gray-900 dark:text-white">{selectedMember?.city || 'N/A'}</p>
@@ -1142,7 +1142,7 @@ export default function MembersPage() {
                           type="text"
                           value={editForm.province || ''}
                           onChange={(e) => setEditForm({ ...editForm, province: e.target.value })}
-                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500"
+                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-portal-surface text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500"
                         />
                       ) : (
                         <p className="text-gray-900 dark:text-white">{selectedMember?.province || 'N/A'}</p>
@@ -1157,14 +1157,14 @@ export default function MembersPage() {
                         type="text"
                         value={editForm.postal_code || ''}
                         onChange={(e) => setEditForm({ ...editForm, postal_code: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500"
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-portal-surface text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500"
                       />
                     ) : (
                       <p className="text-gray-900 dark:text-white">{selectedMember?.postal_code || 'Not provided'}</p>
                     )}
                   </div>
 
-                  <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
+                  <div className="pt-4 border-t border-gray-200 dark:border-portal-border">
                     <h4 className="font-semibold text-gray-900 dark:text-white mb-3">Emergency Contact</h4>
 
                     <div className="space-y-3">
@@ -1175,7 +1175,7 @@ export default function MembersPage() {
                             type="text"
                             value={editForm.emergency_contact_name || ''}
                             onChange={(e) => setEditForm({ ...editForm, emergency_contact_name: e.target.value })}
-                            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500"
+                            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-portal-surface text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500"
                           />
                         ) : (
                           <p className="text-gray-900 dark:text-white">{selectedMember?.emergency_contact_name || 'Not provided'}</p>
@@ -1189,7 +1189,7 @@ export default function MembersPage() {
                             type="tel"
                             value={editForm.emergency_contact_phone || ''}
                             onChange={(e) => setEditForm({ ...editForm, emergency_contact_phone: e.target.value })}
-                            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500"
+                            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-portal-surface text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500"
                           />
                         ) : (
                           <p className="text-gray-900 dark:text-white">{selectedMember?.emergency_contact_phone || 'Not provided'}</p>
@@ -1201,14 +1201,14 @@ export default function MembersPage() {
               </div>
 
               {/* Notes */}
-              <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
+              <div className="mt-6 pt-6 border-t border-gray-200 dark:border-portal-border">
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">Notes</h3>
                 {isEditing ? (
                   <textarea
                     value={editForm.notes || ''}
                     onChange={(e) => setEditForm({ ...editForm, notes: e.target.value })}
                     rows={4}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-portal-surface text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500"
                     placeholder="Add notes about this member..."
                   />
                 ) : (
@@ -1218,7 +1218,7 @@ export default function MembersPage() {
 
               {/* Activities Section - Only show when viewing existing member */}
               {selectedMember && !isEditing && (
-                <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
+                <div className="mt-6 pt-6 border-t border-gray-200 dark:border-portal-border">
                   <div className="flex items-center justify-between mb-4">
                     <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Activity History</h3>
                     <button
@@ -1235,7 +1235,7 @@ export default function MembersPage() {
                   ) : (
                     <div className="space-y-2">
                       {memberActivities.map((activity) => (
-                        <div key={activity.id} className="flex items-start justify-between p-3 border border-gray-200 dark:border-gray-700 rounded-lg">
+                        <div key={activity.id} className="flex items-start justify-between p-3 border border-gray-200 dark:border-portal-border rounded-lg">
                           <div className="flex-1">
                             <div className="flex items-center gap-2">
                               <IconCalendar size={16} className="text-gray-500 dark:text-gray-400" />
@@ -1276,7 +1276,7 @@ export default function MembersPage() {
             <select
               value={activityForm.activity_type}
               onChange={(e) => setActivityForm({ ...activityForm, activity_type: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-portal-surface text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500"
             >
               <option value="game">Regular Game</option>
               <option value="special_game">Special Game (Finals, Zones, Provincials)</option>
@@ -1295,7 +1295,7 @@ export default function MembersPage() {
               type="date"
               value={activityForm.activity_date}
               onChange={(e) => setActivityForm({ ...activityForm, activity_date: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-portal-surface text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500"
               required
             />
           </div>
@@ -1306,7 +1306,7 @@ export default function MembersPage() {
               value={activityForm.notes || ''}
               onChange={(e) => setActivityForm({ ...activityForm, notes: e.target.value })}
               rows={3}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-portal-surface text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500"
               placeholder="Add details about this activity..."
             />
           </div>
@@ -1352,7 +1352,7 @@ export default function MembersPage() {
                   value={bulkEmails}
                   onChange={(e) => setBulkEmails(e.target.value)}
                   rows={10}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 font-mono text-sm"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-portal-surface text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 font-mono text-sm"
                   placeholder={"john@example.com\njane@example.com\nbob@example.com"}
                   disabled={isBulkAdding}
                 />
@@ -1361,7 +1361,7 @@ export default function MembersPage() {
                 </p>
               </div>
 
-              <div className="flex gap-3 justify-end pt-4 border-t border-gray-200 dark:border-gray-700">
+              <div className="flex gap-3 justify-end pt-4 border-t border-gray-200 dark:border-portal-border">
                 <button
                   onClick={handleCloseBulkAddModal}
                   className="px-4 py-2 bg-gray-500 dark:bg-gray-600 text-white rounded-lg hover:bg-gray-600 dark:hover:bg-gray-500"
@@ -1402,7 +1402,7 @@ export default function MembersPage() {
                         {Math.round((bulkAddProgress.processed / bulkAddProgress.total) * 100)}%
                       </span>
                     </div>
-                    <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                    <div className="w-full bg-gray-200 dark:bg-portal-hover rounded-full h-2">
                       <div
                         className="bg-emerald-600 h-2 rounded-full transition-all duration-300"
                         style={{ width: `${(bulkAddProgress.processed / bulkAddProgress.total) * 100}%` }}
@@ -1453,7 +1453,7 @@ export default function MembersPage() {
                 </div>
 
                 {!isBulkAdding && (
-                  <div className="flex gap-3 justify-end pt-4 border-t border-gray-200 dark:border-gray-700">
+                  <div className="flex gap-3 justify-end pt-4 border-t border-gray-200 dark:border-portal-border">
                     <button
                       onClick={() => {
                         setBulkAddProgress(null)
@@ -1501,7 +1501,7 @@ export default function MembersPage() {
                 </div>
               </div>
 
-              <div className="flex gap-3 justify-end pt-4 border-t border-gray-200 dark:border-gray-700">
+              <div className="flex gap-3 justify-end pt-4 border-t border-gray-200 dark:border-portal-border">
                 <button
                   onClick={handleCloseResendPendingModal}
                   className="px-4 py-2 bg-gray-500 dark:bg-gray-600 text-white rounded-lg hover:bg-gray-600 dark:hover:bg-gray-500"
@@ -1578,7 +1578,7 @@ export default function MembersPage() {
                   </div>
                 )}
 
-                <div className="flex gap-3 justify-end pt-4 border-t border-gray-200 dark:border-gray-700">
+                <div className="flex gap-3 justify-end pt-4 border-t border-gray-200 dark:border-portal-border">
                   <button
                     onClick={handleCloseResendPendingModal}
                     className="px-4 py-2 bg-gray-500 dark:bg-gray-600 text-white rounded-lg hover:bg-gray-600 dark:hover:bg-gray-500"

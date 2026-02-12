@@ -9,7 +9,7 @@ import listPlugin from '@fullcalendar/list'
 import interactionPlugin from '@fullcalendar/interaction'
 import { EventClickArg, DateSelectArg } from '@fullcalendar/core'
 import './calendar.css'
-import { IconPlus, IconEdit, IconTrash, IconCalendar, IconClock, IconMapPin, IconUsers, IconCalendarEvent, IconChartBar, IconX } from '@tabler/icons-react'
+import { IconPlus, IconEdit, IconTrash, IconCalendar, IconClock, IconMapPin, IconUsers, IconCalendarEvent, IconChartBar, IconX, IconFilter, IconFilterOff } from '@tabler/icons-react'
 import Modal from '@/components/ui/Modal'
 import { calendarAPI } from '@/lib/api'
 import { useRole } from '@/contexts/RoleContext'
@@ -61,6 +61,16 @@ export default function CalendarPage() {
   const [selectedEvent, setSelectedEvent] = useState<CBOAEvent | null>(null)
   const [isEditing, setIsEditing] = useState(false)
   const [selectedStatDate, setSelectedStatDate] = useState<string | null>(null)
+  const [activeTypes, setActiveTypes] = useState<Set<string>>(new Set(['training', 'meeting', 'league', 'social']))
+  const [isMobile, setIsMobile] = useState(false)
+
+  // Track viewport width for responsive calendar settings
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 640)
+    check()
+    window.addEventListener('resize', check)
+    return () => window.removeEventListener('resize', check)
+  }, [])
 
   // Load events from API on mount
   useEffect(() => {
@@ -115,23 +125,44 @@ export default function CalendarPage() {
 
   const canEdit = user.role === 'admin' || user.role === 'executive'
 
-  // Convert events to FullCalendar format
-  const fullCalendarEvents = events.map(event => ({
-    id: event.id,
-    title: event.title,
-    start: event.start,
-    end: event.end,
-    backgroundColor: eventTypeColors[event.type] || '#3b82f6',
-    borderColor: eventTypeColors[event.type] || '#3b82f6',
-    extendedProps: {
-      type: event.type,
-      description: event.description,
-      location: event.location,
-      instructor: event.instructor,
-      maxParticipants: event.maxParticipants,
-      registrationLink: event.registrationLink
-    }
-  }))
+  const toggleType = (type: string) => {
+    setActiveTypes(prev => {
+      const next = new Set(prev)
+      if (next.has(type)) {
+        if (next.size === 1) return prev // don't allow deselecting all
+        next.delete(type)
+      } else {
+        next.add(type)
+      }
+      return next
+    })
+  }
+
+  const allTypesActive = activeTypes.size === 4
+
+  const resetFilters = () => {
+    setActiveTypes(new Set(['training', 'meeting', 'league', 'social']))
+  }
+
+  // Convert events to FullCalendar format (filtered by active types)
+  const fullCalendarEvents = events
+    .filter(event => activeTypes.has(event.type))
+    .map(event => ({
+      id: event.id,
+      title: event.title,
+      start: event.start,
+      end: event.end,
+      backgroundColor: eventTypeColors[event.type] || '#3b82f6',
+      borderColor: eventTypeColors[event.type] || '#3b82f6',
+      extendedProps: {
+        type: event.type,
+        description: event.description,
+        location: event.location,
+        instructor: event.instructor,
+        maxParticipants: event.maxParticipants,
+        registrationLink: event.registrationLink
+      }
+    }))
 
   const handleEventClick = (clickInfo: EventClickArg) => {
     const event = events.find(e => e.id === clickInfo.event.id)
@@ -212,11 +243,11 @@ export default function CalendarPage() {
   const selectedStatDayData = selectedStatDate ? mockDailyGames[selectedStatDate] : null
 
   return (
-    <div className="p-4 sm:p-6">
+    <div className="p-4 sm:p-6 portal-animate">
       {/* Header */}
       <div className="mb-4 sm:mb-6 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">CBOA Calendar</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold font-heading tracking-tight text-gray-900 dark:text-white">CBOA Calendar</h1>
           <p className="text-sm sm:text-base text-gray-600 dark:text-gray-300 mt-1">
             {calendarMode === 'events'
               ? 'Training events, meetings, and important dates'
@@ -225,12 +256,12 @@ export default function CalendarPage() {
         </div>
         <div className="flex items-center gap-3">
           {/* Calendar Mode Toggle - Statistics tab commented out */}
-          {/* <div className="flex bg-gray-100 dark:bg-gray-800/50 rounded-lg p-1">
+          {/* <div className="flex bg-gray-100 dark:bg-portal-surface/50 rounded-lg p-1">
             <button
               onClick={() => setCalendarMode('events')}
               className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors flex items-center gap-1.5 ${
                 calendarMode === 'events'
-                  ? 'bg-white dark:bg-gray-800 shadow text-gray-900 dark:text-white'
+                  ? 'bg-white dark:bg-portal-surface shadow text-gray-900 dark:text-white'
                   : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white'
               }`}
             >
@@ -241,7 +272,7 @@ export default function CalendarPage() {
               onClick={() => setCalendarMode('statistics')}
               className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors flex items-center gap-1.5 ${
                 calendarMode === 'statistics'
-                  ? 'bg-white dark:bg-gray-800 shadow text-gray-900 dark:text-white'
+                  ? 'bg-white dark:bg-portal-surface shadow text-gray-900 dark:text-white'
                   : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white'
               }`}
             >
@@ -261,7 +292,7 @@ export default function CalendarPage() {
                 setIsEditing(true)
                 setShowEventModal(true)
               }}
-              className="bg-orange-500 text-white px-4 py-2 rounded-lg hover:bg-orange-600 flex items-center justify-center gap-2 text-sm sm:text-base"
+              className="bg-orange-500 text-white px-4 py-2 rounded-xl hover:bg-orange-600 flex items-center justify-center gap-2 text-sm sm:text-base"
             >
               <IconPlus className="h-5 w-5" />
               Add Event
@@ -273,28 +304,44 @@ export default function CalendarPage() {
       {/* Events Mode Content */}
       {calendarMode === 'events' && (
         <>
-          {/* Legend */}
-          <div className="mb-4 flex flex-wrap gap-2 sm:gap-4 text-xs sm:text-sm text-gray-700 dark:text-gray-300">
-            <div className="flex items-center gap-1 sm:gap-2">
-              <div className="w-3 h-3 sm:w-4 sm:h-4 bg-green-500 rounded"></div>
-              <span>Training</span>
-            </div>
-            <div className="flex items-center gap-1 sm:gap-2">
-              <div className="w-3 h-3 sm:w-4 sm:h-4 bg-purple-500 rounded"></div>
-              <span>Meeting</span>
-            </div>
-            <div className="flex items-center gap-1 sm:gap-2">
-              <div className="w-3 h-3 sm:w-4 sm:h-4 bg-red-500 rounded"></div>
-              <span>League Date</span>
-            </div>
-            <div className="flex items-center gap-1 sm:gap-2">
-              <div className="w-3 h-3 sm:w-4 sm:h-4 bg-blue-500 rounded"></div>
-              <span>Social</span>
-            </div>
+          {/* Filter Pills */}
+          <div className="mb-3 sm:mb-4 flex flex-wrap items-center gap-1.5 sm:gap-2">
+            <IconFilter className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-gray-400 dark:text-gray-500" />
+            {([
+              { type: 'training', label: 'Training', color: 'bg-green-500', ring: 'ring-green-500/30' },
+              { type: 'meeting', label: 'Meeting', color: 'bg-purple-500', ring: 'ring-purple-500/30' },
+              { type: 'league', label: 'League', color: 'bg-red-500', ring: 'ring-red-500/30' },
+              { type: 'social', label: 'Social', color: 'bg-blue-500', ring: 'ring-blue-500/30' },
+            ] as const).map(({ type, label, color, ring }) => {
+              const isActive = activeTypes.has(type)
+              return (
+                <button
+                  key={type}
+                  onClick={() => toggleType(type)}
+                  className={`flex items-center gap-1 sm:gap-1.5 px-2 sm:px-2.5 py-1 sm:py-1.5 rounded-full text-[11px] sm:text-sm font-medium transition-all duration-200 ${
+                    isActive
+                      ? `${color} text-white shadow-sm ring-2 ${ring}`
+                      : 'bg-gray-100 dark:bg-portal-hover text-gray-400 dark:text-gray-500'
+                  }`}
+                >
+                  <div className={`w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full ${isActive ? 'bg-white/80' : color + ' opacity-40'}`} />
+                  {label}
+                </button>
+              )
+            })}
+            {!allTypesActive && (
+              <button
+                onClick={resetFilters}
+                className="flex items-center gap-1 px-1.5 sm:px-2 py-1 sm:py-1.5 text-[11px] sm:text-xs text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors"
+              >
+                <IconFilterOff className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
+                Reset
+              </button>
+            )}
           </div>
 
           {/* FullCalendar */}
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4">
+          <div className="bg-white dark:bg-portal-surface rounded-xl border border-gray-200 dark:border-portal-border p-2 sm:p-4">
             <FullCalendar
               plugins={[dayGridPlugin, listPlugin, interactionPlugin]}
               initialView="dayGridMonth"
@@ -308,9 +355,8 @@ export default function CalendarPage() {
               selectable={canEdit}
               select={handleDateSelect}
               height="auto"
-              contentHeight={700}
               eventDisplay="block"
-              dayMaxEvents={4}
+              dayMaxEvents={isMobile ? 2 : 4}
               moreLinkClick="popover"
               eventTimeFormat={{
                 hour: 'numeric',
@@ -350,7 +396,7 @@ export default function CalendarPage() {
           <div className="mb-4 flex flex-wrap items-center gap-4 text-xs sm:text-sm text-gray-600 dark:text-gray-300">
             <span>Games:</span>
             <div className="flex items-center gap-1">
-              <span className="w-4 h-4 bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 rounded"></span>
+              <span className="w-4 h-4 bg-gray-50 dark:bg-portal-surface/50 border border-gray-200 dark:border-portal-border rounded"></span>
               <span>0</span>
             </div>
             <div className="flex items-center gap-1">
@@ -376,7 +422,7 @@ export default function CalendarPage() {
           </div>
 
           {/* Statistics placeholder */}
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-8 text-center text-gray-500 dark:text-gray-400">
+          <div className="bg-white dark:bg-portal-surface rounded-xl border border-gray-200 dark:border-portal-border p-8 text-center text-gray-500 dark:text-gray-400">
             <IconChartBar className="h-16 w-16 mx-auto mb-4 opacity-50" />
             <p className="text-lg font-medium">Statistics Calendar Coming Soon</p>
             <p className="text-sm mt-2">This feature will display game counts and assignment data by date.</p>
@@ -384,7 +430,7 @@ export default function CalendarPage() {
 
           {/* Selected Day Detail */}
           {selectedStatDate && selectedStatDayData && (
-            <div className="mt-4 p-4 bg-white dark:bg-gray-800 rounded-lg shadow">
+            <div className="mt-4 p-4 bg-white dark:bg-portal-surface rounded-xl border border-gray-200 dark:border-portal-border">
               <div className="flex items-center justify-between mb-3">
                 <h3 className="font-semibold text-gray-900 dark:text-white">
                   {new Date(selectedStatDate + 'T00:00:00').toLocaleDateString('en-US', {
@@ -396,7 +442,7 @@ export default function CalendarPage() {
                 </h3>
                 <button
                   onClick={() => setSelectedStatDate(null)}
-                  className="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded"
+                  className="p-1 hover:bg-gray-200 dark:hover:bg-portal-hover rounded"
                 >
                   <IconX className="h-4 w-4" />
                 </button>
@@ -482,7 +528,7 @@ function EventModal({
   }
 
   const inputClassName = (hasError: boolean) =>
-    `w-full px-3 py-2 border ${hasError ? 'border-red-500' : 'border-gray-200 dark:border-gray-700'} bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500`
+    `w-full px-3 py-2 border ${hasError ? 'border-red-500' : 'border-gray-200 dark:border-portal-border'} bg-white dark:bg-portal-surface text-gray-900 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500`
 
   if (!isEditing) {
     // View mode
@@ -561,7 +607,7 @@ function EventModal({
           )}
           <button
             onClick={onClose}
-            className="flex-1 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white px-4 py-2 rounded hover:bg-gray-300 dark:hover:bg-gray-600"
+            className="flex-1 bg-gray-200 dark:bg-portal-hover text-gray-800 dark:text-white px-4 py-2 rounded hover:bg-gray-300 dark:hover:bg-gray-600"
           >
             Close
           </button>
@@ -599,7 +645,7 @@ function EventModal({
           </label>
           <select
             {...register('type')}
-            className={inputClassName(!!errors.type)}
+            className={`w-full pl-3 pr-8 py-2 border ${!!errors.type ? 'border-red-500' : 'border-gray-200 dark:border-portal-border'} bg-white dark:bg-portal-surface text-gray-900 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500`}
           >
             <option value="training">Training</option>
             <option value="meeting">Meeting</option>
@@ -713,7 +759,7 @@ function EventModal({
           <button
             type="button"
             onClick={onClose}
-            className="flex-1 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white px-4 py-2 rounded hover:bg-gray-300 dark:hover:bg-gray-600"
+            className="flex-1 bg-gray-200 dark:bg-portal-hover text-gray-800 dark:text-white px-4 py-2 rounded hover:bg-gray-300 dark:hover:bg-gray-600"
           >
             Cancel
           </button>

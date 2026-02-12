@@ -20,9 +20,9 @@ export default function Card({
     lg: 'p-8',
   }
   
-  const baseStyles = 'bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700'
-  const shadowStyle = shadow ? 'shadow-md' : ''
-  const hoverStyle = hover ? 'transition-all duration-200 hover:-translate-y-1 hover:shadow-lg' : ''
+  const baseStyles = 'bg-white dark:bg-portal-surface rounded-xl border border-zinc-200 dark:border-portal-border transition-all duration-200'
+  const shadowStyle = shadow ? '' : ''
+  const hoverStyle = hover ? 'hover:border-orange-200 dark:hover:border-portal-accent/30 hover:shadow-sm hover:-translate-y-0.5' : ''
   
   return (
     <div className={`${baseStyles} ${paddingStyles[padding]} ${shadowStyle} ${hoverStyle} ${className}`}>

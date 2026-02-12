@@ -22,7 +22,7 @@ export default function PortalLayout({
             <MemberProvider>
               <ToastProvider>
                 <MemberGuard>
-                  <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors">
+                  <div className="min-h-screen bg-zinc-50 dark:bg-portal-bg transition-colors">
                     <PortalHeader />
 
                     {/* Portal Content */}

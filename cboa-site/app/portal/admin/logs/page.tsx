@@ -197,7 +197,7 @@ export default function AdminLogsPage() {
             ERROR: { icon: IconAlertCircle, color: 'text-red-600 bg-red-100 dark:text-red-400 dark:bg-red-900/40' },
             WARN: { icon: IconAlertTriangle, color: 'text-yellow-600 bg-yellow-100 dark:text-yellow-400 dark:bg-yellow-900/40' },
             INFO: { icon: IconInfoCircle, color: 'text-blue-400 bg-blue-900/40 text-blue-400' },
-          }[level] || { icon: IconInfoCircle, color: 'text-gray-600 bg-gray-100 dark:text-gray-400 dark:bg-gray-700' }
+          }[level] || { icon: IconInfoCircle, color: 'text-gray-600 bg-gray-100 dark:text-gray-400 dark:bg-portal-hover' }
           const Icon = config.icon
           return (
             <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium ${config.color}`}>
@@ -290,7 +290,7 @@ export default function AdminLogsPage() {
             EMAIL_SENT: 'bg-cyan-100 text-cyan-700 dark:bg-cyan-900/40 dark:text-cyan-400',
           }
           return (
-            <span className={`text-xs px-2 py-0.5 rounded font-medium ${colors[action] || 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300'}`}>
+            <span className={`text-xs px-2 py-0.5 rounded font-medium ${colors[action] || 'bg-gray-100 text-gray-700 dark:bg-portal-hover dark:text-gray-300'}`}>
               {action}
             </span>
           )
@@ -366,17 +366,17 @@ export default function AdminLogsPage() {
   const currentColumns = activeTab === 'app' ? appLogColumns : auditLogColumns
 
   return (
-    <div className="p-6">
+    <div className="p-6 portal-animate">
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">System Logs</h1>
+          <h1 className="text-2xl font-bold font-heading tracking-tight text-gray-900 dark:text-white">System Logs</h1>
           <p className="text-gray-600 dark:text-gray-400 text-sm">Monitor application activity and audit trail</p>
         </div>
         <button
           onClick={() => fetchLogs(pagination.page)}
           disabled={loading}
-          className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+          className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 disabled:opacity-50"
         >
           <IconRefresh className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
           Refresh
@@ -384,7 +384,7 @@ export default function AdminLogsPage() {
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-2 mb-4 border-b border-gray-200 dark:border-gray-700">
+      <div className="flex gap-2 mb-4 border-b border-gray-200 dark:border-portal-border">
         <button
           onClick={() => setActiveTab('app')}
           className={`px-4 py-2 font-medium border-b-2 transition-colors ${
@@ -408,7 +408,7 @@ export default function AdminLogsPage() {
       </div>
 
       {/* Filters */}
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow mb-4">
+      <div className="bg-white dark:bg-portal-surface rounded-xl border border-gray-200 dark:border-portal-border mb-4">
         <div className="p-4 flex items-center gap-4">
           {/* Search */}
           <div className="relative flex-1 max-w-md">
@@ -418,7 +418,7 @@ export default function AdminLogsPage() {
               placeholder="Search logs..."
               value={filters.search}
               onChange={(e) => setFilters({ ...filters, search: e.target.value })}
-              className="w-full pl-9 pr-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full pl-9 pr-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-portal-hover text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
 
@@ -428,7 +428,7 @@ export default function AdminLogsPage() {
             className={`flex items-center gap-2 px-3 py-2 border rounded-lg text-sm ${
               hasActiveFilters
                 ? 'bg-blue-900/30 border-blue-700 text-blue-400'
-                : 'border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
+                : 'border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-portal-hover'
             }`}
           >
             <IconFilter className="h-4 w-4" />
@@ -453,7 +453,7 @@ export default function AdminLogsPage() {
 
         {/* Filter panel */}
         {showFilters && (
-          <div className="px-4 pb-4 pt-2 border-t border-gray-200 dark:border-gray-700 grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="px-4 pb-4 pt-2 border-t border-gray-200 dark:border-portal-border grid grid-cols-2 md:grid-cols-4 gap-4">
             {activeTab === 'app' && (
               <>
                 <div>
@@ -461,7 +461,7 @@ export default function AdminLogsPage() {
                   <select
                     value={filters.level}
                     onChange={(e) => setFilters({ ...filters, level: e.target.value })}
-                    className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                    className="w-full pl-3 pr-8 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-portal-hover text-gray-900 dark:text-white"
                   >
                     <option value="">All</option>
                     <option value="ERROR">ERROR</option>
@@ -474,7 +474,7 @@ export default function AdminLogsPage() {
                   <select
                     value={filters.source}
                     onChange={(e) => setFilters({ ...filters, source: e.target.value })}
-                    className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                    className="w-full pl-3 pr-8 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-portal-hover text-gray-900 dark:text-white"
                   >
                     <option value="">All</option>
                     <option value="server">Server</option>
@@ -489,7 +489,7 @@ export default function AdminLogsPage() {
                 <select
                   value={filters.action}
                   onChange={(e) => setFilters({ ...filters, action: e.target.value })}
-                  className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  className="w-full pl-3 pr-8 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-portal-hover text-gray-900 dark:text-white"
                 >
                   <option value="">All</option>
                   <option value="CREATE">CREATE</option>
@@ -509,7 +509,7 @@ export default function AdminLogsPage() {
                 type="date"
                 value={filters.startDate}
                 onChange={(e) => setFilters({ ...filters, startDate: e.target.value })}
-                className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-portal-hover text-gray-900 dark:text-white"
               />
             </div>
             <div>
@@ -518,7 +518,7 @@ export default function AdminLogsPage() {
                 type="date"
                 value={filters.endDate}
                 onChange={(e) => setFilters({ ...filters, endDate: e.target.value })}
-                className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-portal-hover text-gray-900 dark:text-white"
               />
             </div>
           </div>
@@ -533,10 +533,10 @@ export default function AdminLogsPage() {
       )}
 
       {/* Table */}
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
+      <div className="bg-white dark:bg-portal-surface rounded-xl border border-gray-200 dark:border-portal-border overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
-            <thead className="bg-gray-50 dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700">
+            <thead className="bg-gray-50 dark:bg-portal-bg border-b border-gray-200 dark:border-portal-border">
               {currentTable.getHeaderGroups().map((headerGroup) => (
                 <tr key={headerGroup.id}>
                   {headerGroup.headers.map((header) => (
@@ -577,7 +577,7 @@ export default function AdminLogsPage() {
                 </tr>
               ) : (
                 currentTable.getRowModel().rows.map((row) => (
-                  <tr key={row.id} className="border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                  <tr key={row.id} className="border-b border-gray-200 dark:border-portal-border hover:bg-gray-50 dark:hover:bg-portal-hover/50">
                     {row.getVisibleCells().map((cell) => (
                       <td key={cell.id} className="px-4 py-3">
                         {flexRender(cell.column.columnDef.cell, cell.getContext())}
@@ -591,7 +591,7 @@ export default function AdminLogsPage() {
         </div>
 
         {/* Pagination */}
-        <div className="flex items-center justify-between px-4 py-3 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
+        <div className="flex items-center justify-between px-4 py-3 border-t border-gray-200 dark:border-portal-border bg-gray-50 dark:bg-portal-bg">
           <div className="text-sm text-gray-600 dark:text-gray-400">
             Showing {((pagination.page - 1) * pagination.pageSize) + 1} to{' '}
             {Math.min(pagination.page * pagination.pageSize, pagination.total)} of{' '}
@@ -601,14 +601,14 @@ export default function AdminLogsPage() {
             <button
               onClick={() => fetchLogs(1)}
               disabled={pagination.page === 1 || loading}
-              className="p-2 rounded text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="p-2 rounded text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-portal-hover disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <IconChevronsLeft className="h-4 w-4" />
             </button>
             <button
               onClick={() => fetchLogs(pagination.page - 1)}
               disabled={pagination.page === 1 || loading}
-              className="p-2 rounded text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="p-2 rounded text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-portal-hover disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <IconChevronLeft className="h-4 w-4" />
             </button>
@@ -618,14 +618,14 @@ export default function AdminLogsPage() {
             <button
               onClick={() => fetchLogs(pagination.page + 1)}
               disabled={pagination.page >= pagination.totalPages || loading}
-              className="p-2 rounded text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="p-2 rounded text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-portal-hover disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <IconChevronRight className="h-4 w-4" />
             </button>
             <button
               onClick={() => fetchLogs(pagination.totalPages)}
               disabled={pagination.page >= pagination.totalPages || loading}
-              className="p-2 rounded text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="p-2 rounded text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-portal-hover disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <IconChevronsRight className="h-4 w-4" />
             </button>

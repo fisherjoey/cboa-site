@@ -14,9 +14,34 @@ const config: Config = {
         'cboa-blue': '#2c3e50',
         'cboa-dark': '#1a1a1a',
         'cboa-light-blue': '#3498db',
+        // Portal dark-mode surfaces (blue-tinted zinc)
+        'portal-bg': '#0b0e14',
+        'portal-surface': '#141820',
+        'portal-border': '#1f2937',
+        'portal-hover': '#1a2030',
+        'portal-accent': '#d4845e',
       },
       fontFamily: {
-        sans: ['Arial', 'sans-serif'],
+        sans: ['"DM Sans"', '-apple-system', 'BlinkMacSystemFont', '"Segoe UI"', 'sans-serif'],
+        heading: ['"Plus Jakarta Sans"', '"DM Sans"', 'sans-serif'],
+      },
+      borderRadius: {
+        'xl': '14px',
+        '2xl': '16px',
+      },
+      keyframes: {
+        'fade-in': {
+          '0%': { opacity: '0' },
+          '100%': { opacity: '1' },
+        },
+        'slide-up': {
+          '0%': { opacity: '0', transform: 'translateY(8px)' },
+          '100%': { opacity: '1', transform: 'translateY(0)' },
+        },
+      },
+      animation: {
+        'fade-in': 'fade-in 0.3s ease-out',
+        'slide-up': 'slide-up 0.3s ease-out',
       },
     },
   },

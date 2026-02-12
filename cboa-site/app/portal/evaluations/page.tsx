@@ -303,11 +303,11 @@ export default function EvaluationsPage() {
   }
 
   return (
-    <div className="px-4 py-5 sm:p-6">
+    <div className="px-4 py-5 sm:p-6 portal-animate">
       {/* Header */}
       <div className="mb-6 sm:mb-8 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">Evaluations</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold font-heading tracking-tight text-gray-900 dark:text-white">Evaluations</h1>
           <p className="mt-1 sm:mt-2 text-sm sm:text-base text-gray-600 dark:text-gray-300">
             {canViewAll ? 'View and manage official evaluations' : 'View your performance evaluations'}
           </p>
@@ -315,7 +315,7 @@ export default function EvaluationsPage() {
         {canCreate && (
           <button
             onClick={() => setShowCreateModal(true)}
-            className="bg-orange-500 text-white px-3 py-2 sm:px-4 rounded-lg hover:bg-orange-600 flex items-center gap-2 text-sm sm:text-base"
+            className="bg-orange-500 text-white px-3 py-2 sm:px-4 rounded-xl hover:bg-orange-600 flex items-center gap-2 text-sm sm:text-base"
           >
             <IconPlus className="h-5 w-5" />
             Add Evaluation
@@ -326,7 +326,7 @@ export default function EvaluationsPage() {
       {/* Tabs for evaluators */}
       {isEvaluator && (
         <div className="mb-6">
-          <div className="border-b border-gray-200 dark:border-gray-700">
+          <div className="border-b border-gray-200 dark:border-portal-border">
             <nav className="-mb-px flex space-x-8">
               <button
                 onClick={() => setActiveTab('my')}
@@ -363,7 +363,7 @@ export default function EvaluationsPage() {
 
       {/* Search - only show for all evaluations view or non-evaluators */}
       {canViewAll && evaluations.length > 0 && (!isEvaluator || activeTab === 'all') && (
-        <div className="mb-6 bg-white dark:bg-gray-800 rounded-lg shadow p-4">
+        <div className="mb-6 bg-white dark:bg-portal-surface rounded-xl border border-gray-200 dark:border-portal-border p-4">
           <div className="relative">
             <IconSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
             <input
@@ -371,7 +371,7 @@ export default function EvaluationsPage() {
               placeholder="Search by member name, email, or title..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-portal-border bg-white dark:bg-portal-surface text-gray-900 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
             />
           </div>
         </div>
@@ -381,7 +381,7 @@ export default function EvaluationsPage() {
       {/* My Evaluations view for evaluators */}
       {isEvaluator && activeTab === 'my' ? (
         myEvaluations.length === 0 ? (
-          <div className="text-center py-12 bg-white dark:bg-gray-800 rounded-lg shadow">
+          <div className="text-center py-12 bg-white dark:bg-portal-surface rounded-xl border border-gray-200 dark:border-portal-border">
             <IconClipboardCheck className="mx-auto h-12 w-12 text-gray-400 dark:text-gray-500" />
             <h3 className="mt-2 text-sm font-medium text-gray-900 dark:text-white">No evaluations created yet</h3>
             <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
@@ -395,7 +395,7 @@ export default function EvaluationsPage() {
               .map((evaluation) => (
                 <div
                   key={evaluation.id}
-                  className="bg-white dark:bg-gray-800 rounded-lg shadow hover:shadow-md transition-shadow p-4"
+                  className="bg-white dark:bg-portal-surface rounded-xl border border-gray-200 dark:border-portal-border hover:shadow-md transition-shadow p-4"
                 >
                   <div className="flex items-start gap-4">
                     <div className="w-12 h-12 rounded-lg bg-orange-100 dark:bg-orange-900/40 flex items-center justify-center flex-shrink-0">
@@ -449,7 +449,7 @@ export default function EvaluationsPage() {
           </div>
         )
       ) : filteredEvaluations.length === 0 ? (
-        <div className="text-center py-12 bg-white dark:bg-gray-800 rounded-lg shadow">
+        <div className="text-center py-12 bg-white dark:bg-portal-surface rounded-xl border border-gray-200 dark:border-portal-border">
           <IconFileText className="mx-auto h-12 w-12 text-gray-400 dark:text-gray-500" />
           <h3 className="mt-2 text-sm font-medium text-gray-900 dark:text-white">No evaluations found</h3>
           <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
@@ -465,11 +465,11 @@ export default function EvaluationsPage() {
             const group = groupedEvaluations[memberId]
             return (
               <Accordion key={memberId} defaultOpen={false}>
-                <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
+                <div className="bg-white dark:bg-portal-surface rounded-xl border border-gray-200 dark:border-portal-border overflow-hidden">
                   {/* Member Header - Accordion Button */}
                   <AccordionButton className="w-full">
                     {({ open }) => (
-                      <div className="w-full bg-gray-50 dark:bg-gray-700 px-4 py-3 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors">
+                      <div className="w-full bg-gray-50 dark:bg-portal-hover px-4 py-3 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors">
                         <div className="flex items-center gap-3 w-full">
                           <IconChevronDown
                             className={`h-5 w-5 text-gray-400 transition-transform duration-200 flex-shrink-0 ${open ? 'rotate-180' : ''}`}
@@ -565,7 +565,7 @@ export default function EvaluationsPage() {
           {filteredEvaluations.map((evaluation) => (
             <div
               key={evaluation.id}
-              className="bg-white dark:bg-gray-800 rounded-lg shadow hover:shadow-md transition-shadow p-4"
+              className="bg-white dark:bg-portal-surface rounded-xl border border-gray-200 dark:border-portal-border hover:shadow-md transition-shadow p-4"
             >
               <div className="flex items-start gap-4">
                 {/* Icon */}
@@ -647,7 +647,7 @@ export default function EvaluationsPage() {
             <select
               value={selectedMemberId}
               onChange={(e) => setSelectedMemberId(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-orange-500"
+              className="w-full pl-3 pr-8 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-portal-surface text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-orange-500"
             >
               <option value="">Select a member...</option>
               {members.map((m) => (
@@ -668,7 +668,7 @@ export default function EvaluationsPage() {
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="e.g., Season Evaluation 2024"
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-orange-500"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-portal-surface text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-orange-500"
             />
           </div>
 
@@ -681,7 +681,7 @@ export default function EvaluationsPage() {
               type="date"
               value={evaluationDate}
               onChange={(e) => setEvaluationDate(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-orange-500"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-portal-surface text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-orange-500"
             />
           </div>
 
@@ -699,7 +699,7 @@ export default function EvaluationsPage() {
                 <select
                   value={selectedActivityId}
                   onChange={(e) => setSelectedActivityId(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-orange-500"
+                  className="w-full pl-3 pr-8 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-portal-surface text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-orange-500"
                 >
                   <option value="">Don't link to activity</option>
                   {memberActivities.map((activity) => (
@@ -737,7 +737,7 @@ export default function EvaluationsPage() {
               onChange={(e) => setNotes(e.target.value)}
               rows={3}
               placeholder="Add any additional notes..."
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-orange-500"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-portal-surface text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-orange-500"
             />
           </div>
 

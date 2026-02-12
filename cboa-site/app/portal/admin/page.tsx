@@ -67,17 +67,17 @@ export default function PortalAdmin() {
   ]
 
   return (
-    <div className="p-6">
+    <div className="p-6 portal-animate">
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Portal Administration</h1>
+        <h1 className="text-3xl font-bold font-heading tracking-tight text-gray-900 dark:text-white mb-2">Portal Administration</h1>
         <p className="text-gray-600 dark:text-gray-300">Manage public website content and view system logs</p>
       </div>
 
       {/* Admin Sections Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {adminSections.map((section, idx) => (
-          <div key={idx} className="bg-white dark:bg-gray-800 rounded-lg shadow-md hover:shadow-lg transition-shadow">
+          <div key={idx} className="bg-white dark:bg-portal-surface rounded-xl border border-gray-200 dark:border-portal-border hover:shadow-lg transition-shadow">
             <div className="p-6">
               <div className="flex items-start justify-between mb-4">
                 <section.icon className="h-8 w-8 text-orange-600" />

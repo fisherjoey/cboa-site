@@ -304,7 +304,7 @@ function StatCard({ label, value, icon: Icon, subtext }: {
   subtext?: string
 }) {
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 sm:p-6">
+    <div className="bg-white dark:bg-portal-surface rounded-xl border border-gray-200 dark:border-portal-border p-4 sm:p-6">
       <div className="flex items-center gap-3">
         {Icon && (
           <div className="p-2 bg-blue-900/30 rounded-lg">
@@ -347,7 +347,7 @@ export default function StatisticsClient() {
   const CHART_COLORS = ['#3b82f6', '#60a5fa', '#93c5fd']
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 portal-animate">
       {/* Under Construction Banner */}
       <div className="bg-amber-100 dark:bg-amber-900/30 border border-amber-300 dark:border-amber-700 rounded-lg p-4 flex items-center gap-3">
         <span className="text-2xl">🚧</span>
@@ -360,18 +360,18 @@ export default function StatisticsClient() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Statistics Dashboard</h1>
+          <h1 className="text-2xl font-bold font-heading tracking-tight text-gray-900 dark:text-white">Statistics Dashboard</h1>
           <p className="text-gray-600 dark:text-gray-400">CBOA Scheduler statistics and reports</p>
         </div>
 
         {/* View Toggle & Selectors */}
         <div className="flex flex-wrap items-center gap-3">
-          <div className="flex bg-gray-100 dark:bg-gray-800 rounded-lg p-1">
+          <div className="flex bg-gray-100 dark:bg-portal-surface rounded-lg p-1">
             <button
               onClick={() => setViewType('season')}
               className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
                 viewType === 'season'
-                  ? 'bg-white dark:bg-gray-700 shadow text-gray-900 dark:text-white'
+                  ? 'bg-white dark:bg-portal-hover shadow text-gray-900 dark:text-white'
                   : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
               }`}
             >
@@ -381,7 +381,7 @@ export default function StatisticsClient() {
               onClick={() => setViewType('monthly')}
               className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
                 viewType === 'monthly'
-                  ? 'bg-white dark:bg-gray-700 shadow text-gray-900 dark:text-white'
+                  ? 'bg-white dark:bg-portal-hover shadow text-gray-900 dark:text-white'
                   : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
               }`}
             >
@@ -393,7 +393,7 @@ export default function StatisticsClient() {
             <select
               value={selectedSeason}
               onChange={(e) => setSelectedSeason(e.target.value)}
-              className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+              className="pl-3 pr-8 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-portal-surface text-gray-900 dark:text-white"
             >
               <option value="2025-2026">2025-2026 Season</option>
               <option value="2024-2025">2024-2025 Season</option>
@@ -403,7 +403,7 @@ export default function StatisticsClient() {
             <select
               value={selectedMonth}
               onChange={(e) => setSelectedMonth(e.target.value)}
-              className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+              className="pl-3 pr-8 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-portal-surface text-gray-900 dark:text-white"
             >
               <option value="February 2026">February 2026</option>
               <option value="March 2026">March 2026</option>
@@ -430,7 +430,7 @@ export default function StatisticsClient() {
       </div>
 
       {/* Distribution Chart */}
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+      <div className="bg-white dark:bg-portal-surface rounded-xl border border-gray-200 dark:border-portal-border p-6">
         <h2 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Officials by Games Refereed</h2>
         <div className="h-80">
           <ResponsiveContainer width="100%" height="100%">
@@ -449,7 +449,7 @@ export default function StatisticsClient() {
 
       {/* Cumulative Distribution (Season only) */}
       {viewType === 'season' && mockSeasonData.cumulativeDistribution && (
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+        <div className="bg-white dark:bg-portal-surface rounded-xl border border-gray-200 dark:border-portal-border p-6">
           <h2 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Assignment Distribution (Cumulative)</h2>
           <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">Shows cumulative assignments by top officials</p>
           <div className="h-80">
@@ -491,7 +491,7 @@ export default function StatisticsClient() {
       )}
 
       {/* Tournaments Section */}
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+      <div className="bg-white dark:bg-portal-surface rounded-xl border border-gray-200 dark:border-portal-border p-6">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-3">
             <IconTrophy className="h-6 w-6 text-yellow-500" />
@@ -509,7 +509,7 @@ export default function StatisticsClient() {
         {/* Category Summary */}
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mb-6">
           {data.tournaments.byCategory.map((cat) => (
-            <div key={cat.name} className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3">
+            <div key={cat.name} className="bg-gray-50 dark:bg-portal-hover rounded-lg p-3">
               <p className="text-sm font-medium text-gray-900 dark:text-white">{cat.name}</p>
               <p className="text-xl font-bold text-blue-400">{cat.count}</p>
               <p className="text-xs text-gray-500 dark:text-gray-400">{cat.games} games</p>
@@ -535,7 +535,7 @@ export default function StatisticsClient() {
 
       {/* Leagues Section (Season only) */}
       {viewType === 'season' && (
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+        <div className="bg-white dark:bg-portal-surface rounded-xl border border-gray-200 dark:border-portal-border p-6">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Leagues</h2>
             <div className="flex items-center gap-4 text-sm text-gray-600 dark:text-gray-400">

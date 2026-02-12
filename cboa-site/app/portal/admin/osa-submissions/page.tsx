@@ -171,11 +171,11 @@ function OSADetailModal({
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={onClose}>
       <div
-        className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] flex flex-col"
+        className="bg-white dark:bg-portal-surface rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
+        <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-portal-border">
           <div>
             <h2 className="text-lg font-semibold text-gray-900 dark:text-white">{submission.organization_name}</h2>
             <div className="flex items-center gap-3 mt-1">
@@ -197,13 +197,13 @@ function OSADetailModal({
         </div>
 
         {/* Status Bar */}
-        <div className="px-4 py-3 bg-gray-50 dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700">
+        <div className="px-4 py-3 bg-gray-50 dark:bg-portal-bg border-b border-gray-200 dark:border-portal-border">
           <div className="flex items-center gap-4">
             <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Status:</label>
             <select
               value={status}
               onChange={(e) => setStatus(e.target.value)}
-              className="px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+              className="pl-3 pr-8 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-portal-hover text-gray-900 dark:text-white"
             >
               <option value="new">New</option>
               <option value="contacted">Contacted</option>
@@ -223,7 +223,7 @@ function OSADetailModal({
         </div>
 
         {/* Tabs */}
-        <div className="flex border-b border-gray-200 dark:border-gray-700">
+        <div className="flex border-b border-gray-200 dark:border-portal-border">
           <button
             onClick={() => setActiveTab('details')}
             className={`px-4 py-2 text-sm font-medium border-b-2 ${
@@ -263,7 +263,7 @@ function OSADetailModal({
               {/* Event Contact */}
               <div>
                 <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Event Contact</h3>
-                <div className="grid grid-cols-2 gap-4 bg-gray-50 dark:bg-gray-900 rounded-lg p-4">
+                <div className="grid grid-cols-2 gap-4 bg-gray-50 dark:bg-portal-bg rounded-lg p-4">
                   <div>
                     <span className="text-xs text-gray-500 dark:text-gray-400">Name</span>
                     <p className="text-sm font-medium text-gray-900 dark:text-white">{submission.event_contact_name}</p>
@@ -286,7 +286,7 @@ function OSADetailModal({
               {/* Event Details */}
               <div>
                 <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Event Information</h3>
-                <div className="grid grid-cols-2 gap-4 bg-gray-50 dark:bg-gray-900 rounded-lg p-4">
+                <div className="grid grid-cols-2 gap-4 bg-gray-50 dark:bg-portal-bg rounded-lg p-4">
                   <div>
                     <span className="text-xs text-gray-500 dark:text-gray-400">Event Name</span>
                     <p className="text-sm font-medium text-gray-900 dark:text-white">{eventDetails.name}</p>
@@ -329,7 +329,7 @@ function OSADetailModal({
               {/* Discipline Policy */}
               <div>
                 <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Discipline Policy</h3>
-                <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-4">
+                <div className="bg-gray-50 dark:bg-portal-bg rounded-lg p-4">
                   <p className="text-sm text-gray-900 dark:text-white">{submission.discipline_policy}</p>
                 </div>
               </div>
@@ -340,7 +340,7 @@ function OSADetailModal({
             <div className="space-y-6">
               <div>
                 <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Billing Contact</h3>
-                <div className="grid grid-cols-2 gap-4 bg-gray-50 dark:bg-gray-900 rounded-lg p-4">
+                <div className="grid grid-cols-2 gap-4 bg-gray-50 dark:bg-portal-bg rounded-lg p-4">
                   <div>
                     <span className="text-xs text-gray-500 dark:text-gray-400">Name</span>
                     <p className="text-sm font-medium text-gray-900 dark:text-white">{submission.billing_contact_name}</p>
@@ -362,7 +362,7 @@ function OSADetailModal({
 
               <div>
                 <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Billing Address</h3>
-                <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-4">
+                <div className="bg-gray-50 dark:bg-portal-bg rounded-lg p-4">
                   <p className="text-sm text-gray-900 dark:text-white">
                     {submission.billing_address || 'N/A'}<br />
                     {[submission.billing_city, submission.billing_province, submission.billing_postal_code].filter(Boolean).join(', ') || ''}
@@ -381,7 +381,7 @@ function OSADetailModal({
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
                 rows={8}
-                className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400"
+                className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-portal-hover text-gray-900 dark:text-white placeholder-gray-400"
                 placeholder="Add internal notes about this submission..."
               />
             </div>
@@ -389,10 +389,10 @@ function OSADetailModal({
         </div>
 
         {/* Footer */}
-        <div className="flex justify-end gap-3 p-4 border-t border-gray-200 dark:border-gray-700">
+        <div className="flex justify-end gap-3 p-4 border-t border-gray-200 dark:border-portal-border">
           <button
             onClick={onClose}
-            className="px-4 py-2 text-sm bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600"
+            className="px-4 py-2 text-sm bg-gray-200 dark:bg-portal-hover text-gray-800 dark:text-gray-200 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600"
           >
             Cancel
           </button>
@@ -593,7 +593,7 @@ export default function OSASubmissionsPage() {
         header: 'Type',
         cell: ({ getValue }) => {
           const type = getValue() as string
-          const config = eventTypeConfig[type] || { label: type, icon: IconBallBasketball, color: 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300' }
+          const config = eventTypeConfig[type] || { label: type, icon: IconBallBasketball, color: 'bg-gray-100 text-gray-700 dark:bg-portal-hover dark:text-gray-300' }
           const Icon = config.icon
           return (
             <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium ${config.color}`}>
@@ -648,7 +648,7 @@ export default function OSASubmissionsPage() {
         header: 'Status',
         cell: ({ getValue }) => {
           const status = getValue() as string
-          const config = statusConfig[status] || { label: status, icon: IconClock, color: 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300' }
+          const config = statusConfig[status] || { label: status, icon: IconClock, color: 'bg-gray-100 text-gray-700 dark:bg-portal-hover dark:text-gray-300' }
           const Icon = config.icon
           return (
             <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium ${config.color}`}>
@@ -665,7 +665,7 @@ export default function OSASubmissionsPage() {
         cell: ({ row }) => (
           <button
             onClick={() => setSelectedSubmission(row.original)}
-            className="p-1.5 text-gray-500 hover:text-blue-600 dark:text-gray-400 dark:hover:text-blue-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
+            className="p-1.5 text-gray-500 hover:text-blue-600 dark:text-gray-400 dark:hover:text-blue-400 hover:bg-gray-100 dark:hover:bg-portal-hover rounded"
             title="View details"
           >
             <IconEye className="h-4 w-4" />
@@ -689,7 +689,7 @@ export default function OSASubmissionsPage() {
   })
 
   return (
-    <div className="p-6">
+    <div className="p-6 portal-animate">
       {/* Detail Modal */}
       {selectedSubmission && (
         <OSADetailModal
@@ -702,14 +702,14 @@ export default function OSASubmissionsPage() {
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">OSA Submissions</h1>
+          <h1 className="text-2xl font-bold font-heading tracking-tight text-gray-900 dark:text-white">OSA Submissions</h1>
           <p className="text-gray-600 dark:text-gray-400 text-sm">Officiating Services Agreement requests</p>
         </div>
         <div className="flex gap-2">
           <button
             onClick={exportToCSV}
             disabled={submissions.length === 0}
-            className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50"
+            className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-xl hover:bg-green-700 disabled:opacity-50"
           >
             <IconDownload className="h-4 w-4" />
             Export CSV
@@ -717,7 +717,7 @@ export default function OSASubmissionsPage() {
           <button
             onClick={() => fetchSubmissions(pagination.page)}
             disabled={loading}
-            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 disabled:opacity-50"
           >
             <IconRefresh className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
             Refresh
@@ -726,7 +726,7 @@ export default function OSASubmissionsPage() {
       </div>
 
       {/* Filters */}
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow mb-4">
+      <div className="bg-white dark:bg-portal-surface rounded-xl border border-gray-200 dark:border-portal-border mb-4">
         <div className="p-4 flex items-center gap-4">
           {/* Search */}
           <div className="relative flex-1 max-w-md">
@@ -736,7 +736,7 @@ export default function OSASubmissionsPage() {
               placeholder="Search organization, contact, event..."
               value={filters.search}
               onChange={(e) => setFilters({ ...filters, search: e.target.value })}
-              className="w-full pl-9 pr-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full pl-9 pr-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-portal-hover text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
 
@@ -746,7 +746,7 @@ export default function OSASubmissionsPage() {
             className={`flex items-center gap-2 px-3 py-2 border rounded-lg text-sm ${
               hasActiveFilters
                 ? 'bg-blue-900/30 border-blue-700 text-blue-400'
-                : 'border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
+                : 'border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-portal-hover'
             }`}
           >
             <IconFilter className="h-4 w-4" />
@@ -771,13 +771,13 @@ export default function OSASubmissionsPage() {
 
         {/* Filter panel */}
         {showFilters && (
-          <div className="px-4 pb-4 pt-2 border-t border-gray-200 dark:border-gray-700 grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="px-4 pb-4 pt-2 border-t border-gray-200 dark:border-portal-border grid grid-cols-2 md:grid-cols-4 gap-4">
             <div>
               <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Event Type</label>
               <select
                 value={filters.event_type}
                 onChange={(e) => setFilters({ ...filters, event_type: e.target.value })}
-                className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                className="w-full pl-3 pr-8 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-portal-hover text-gray-900 dark:text-white"
               >
                 <option value="">All</option>
                 <option value="Exhibition Game(s)">Exhibition</option>
@@ -790,7 +790,7 @@ export default function OSASubmissionsPage() {
               <select
                 value={filters.status}
                 onChange={(e) => setFilters({ ...filters, status: e.target.value })}
-                className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                className="w-full pl-3 pr-8 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-portal-hover text-gray-900 dark:text-white"
               >
                 <option value="">All</option>
                 <option value="new">New</option>
@@ -806,7 +806,7 @@ export default function OSASubmissionsPage() {
                 type="date"
                 value={filters.startDate}
                 onChange={(e) => setFilters({ ...filters, startDate: e.target.value })}
-                className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-portal-hover text-gray-900 dark:text-white"
               />
             </div>
             <div>
@@ -815,7 +815,7 @@ export default function OSASubmissionsPage() {
                 type="date"
                 value={filters.endDate}
                 onChange={(e) => setFilters({ ...filters, endDate: e.target.value })}
-                className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-portal-hover text-gray-900 dark:text-white"
               />
             </div>
           </div>
@@ -830,10 +830,10 @@ export default function OSASubmissionsPage() {
       )}
 
       {/* Table */}
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
+      <div className="bg-white dark:bg-portal-surface rounded-xl border border-gray-200 dark:border-portal-border overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
-            <thead className="bg-gray-50 dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700">
+            <thead className="bg-gray-50 dark:bg-portal-bg border-b border-gray-200 dark:border-portal-border">
               {table.getHeaderGroups().map((headerGroup) => (
                 <tr key={headerGroup.id}>
                   {headerGroup.headers.map((header) => (
@@ -876,7 +876,7 @@ export default function OSASubmissionsPage() {
                 table.getRowModel().rows.map((row) => (
                   <tr
                     key={row.id}
-                    className="border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50 cursor-pointer"
+                    className="border-b border-gray-200 dark:border-portal-border hover:bg-gray-50 dark:hover:bg-portal-hover/50 cursor-pointer"
                     onClick={() => setSelectedSubmission(row.original)}
                   >
                     {row.getVisibleCells().map((cell) => (
@@ -892,7 +892,7 @@ export default function OSASubmissionsPage() {
         </div>
 
         {/* Pagination */}
-        <div className="flex items-center justify-between px-4 py-3 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
+        <div className="flex items-center justify-between px-4 py-3 border-t border-gray-200 dark:border-portal-border bg-gray-50 dark:bg-portal-bg">
           <div className="text-sm text-gray-600 dark:text-gray-400">
             {pagination.total > 0 ? (
               <>
@@ -908,14 +908,14 @@ export default function OSASubmissionsPage() {
             <button
               onClick={() => fetchSubmissions(1)}
               disabled={pagination.page === 1 || loading}
-              className="p-2 rounded text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="p-2 rounded text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-portal-hover disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <IconChevronsLeft className="h-4 w-4" />
             </button>
             <button
               onClick={() => fetchSubmissions(pagination.page - 1)}
               disabled={pagination.page === 1 || loading}
-              className="p-2 rounded text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="p-2 rounded text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-portal-hover disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <IconChevronLeft className="h-4 w-4" />
             </button>
@@ -925,14 +925,14 @@ export default function OSASubmissionsPage() {
             <button
               onClick={() => fetchSubmissions(pagination.page + 1)}
               disabled={pagination.page >= pagination.totalPages || loading}
-              className="p-2 rounded text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="p-2 rounded text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-portal-hover disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <IconChevronRight className="h-4 w-4" />
             </button>
             <button
               onClick={() => fetchSubmissions(pagination.totalPages)}
               disabled={pagination.page >= pagination.totalPages || loading}
-              className="p-2 rounded text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="p-2 rounded text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-portal-hover disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <IconChevronsRight className="h-4 w-4" />
             </button>

@@ -43,12 +43,12 @@ export default function UpcomingEventsWidget() {
 
   const getEventColor = (type: string) => {
     switch (type) {
-      case 'training': return 'bg-green-100 dark:bg-green-900/40 text-green-800 dark:text-green-300 border-green-200 dark:border-green-800'
-      case 'meeting': return 'bg-purple-100 dark:bg-purple-900/40 text-purple-800 dark:text-purple-300 border-purple-200 dark:border-purple-800'
-      case 'game': return 'bg-orange-100 dark:bg-orange-900/40 text-orange-800 dark:text-orange-300 border-orange-200 dark:border-orange-800'
-      case 'deadline': return 'bg-red-100 dark:bg-red-900/40 text-red-800 dark:text-red-300 border-red-200 dark:border-red-800'
-      case 'social': return 'bg-blue-900/40 text-blue-400 border-blue-800'
-      default: return 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300 border-gray-200 dark:border-gray-600'
+      case 'training': return 'bg-green-50 dark:bg-green-500/[0.06] text-green-700/80 dark:text-green-300/60 border-green-200 dark:border-green-500/10'
+      case 'meeting': return 'bg-purple-50 dark:bg-purple-500/[0.06] text-purple-700/80 dark:text-purple-300/60 border-purple-200 dark:border-purple-500/10'
+      case 'game': return 'bg-orange-50 dark:bg-orange-500/[0.06] text-orange-700/80 dark:text-orange-300/60 border-orange-200 dark:border-orange-500/10'
+      case 'deadline': return 'bg-red-50 dark:bg-red-500/[0.06] text-red-700/80 dark:text-red-300/60 border-red-200 dark:border-red-500/10'
+      case 'social': return 'bg-blue-50 dark:bg-blue-500/[0.06] text-blue-700/80 dark:text-blue-300/60 border-blue-200 dark:border-blue-500/10'
+      default: return 'bg-zinc-100 dark:bg-zinc-500/[0.06] text-zinc-600 dark:text-zinc-400 border-zinc-200 dark:border-zinc-500/10'
     }
   }
 
@@ -87,14 +87,14 @@ export default function UpcomingEventsWidget() {
 
   if (isLoading) {
     return (
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-        <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+      <div className="bg-white dark:bg-portal-surface rounded-xl border border-gray-200 dark:border-portal-border p-6">
+        <h2 className="font-heading text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
           <IconCalendar className="h-5 w-5 text-orange-500" />
           Upcoming Events
         </h2>
         <div className="animate-pulse space-y-3">
           {[1, 2, 3].map(i => (
-            <div key={i} className="h-16 bg-gray-200 dark:bg-gray-700 rounded"></div>
+            <div key={i} className="h-16 bg-gray-200 dark:bg-portal-hover rounded"></div>
           ))}
         </div>
       </div>
@@ -102,15 +102,15 @@ export default function UpcomingEventsWidget() {
   }
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 sm:p-6">
+    <div className="bg-white dark:bg-portal-surface rounded-xl border border-gray-200 dark:border-portal-border p-4 sm:p-6">
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+        <h2 className="font-heading text-base sm:text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
           <IconCalendar className="h-5 w-5 text-orange-500" />
           Upcoming Events
         </h2>
         <Link
           href="/portal/calendar"
-          className="text-sm text-orange-600 dark:text-orange-500 hover:text-orange-700 dark:hover:text-orange-400 font-medium flex items-center gap-1"
+          className="text-sm text-orange-600 dark:text-portal-accent hover:text-orange-700 dark:hover:text-portal-accent font-medium flex items-center gap-1"
         >
           View All
           <IconChevronRight className="h-4 w-4" />
@@ -128,7 +128,7 @@ export default function UpcomingEventsWidget() {
             <Link
               key={event.id}
               href="/portal/calendar"
-              className="block border border-gray-200 dark:border-gray-700 rounded-lg p-3 hover:shadow-md dark:hover:bg-gray-700/50 transition-shadow"
+              className="block border border-gray-200 dark:border-portal-border rounded-lg p-3 hover:shadow-md dark:hover:bg-gray-700/50 transition-shadow"
             >
               <div className="flex items-start justify-between gap-3">
                 <div className="flex-1 min-w-0">

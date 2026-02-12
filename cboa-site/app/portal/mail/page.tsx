@@ -362,17 +362,17 @@ export default function MailPage() {
   }
 
   return (
-    <div className="px-4 py-5 sm:p-6">
+    <div className="px-4 py-5 sm:p-6 portal-animate">
       {/* Header */}
       <div className="mb-6 sm:mb-8">
-        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">The Bounce</h1>
+        <h1 className="text-2xl sm:text-3xl font-bold font-heading tracking-tight text-gray-900 dark:text-white">The Bounce</h1>
         <p className="mt-1 sm:mt-2 text-sm sm:text-base text-gray-600 dark:text-gray-300">
           Send announcements and updates to members via email
         </p>
       </div>
 
       {/* Email Composer */}
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6 space-y-6">
+      <div className="bg-white dark:bg-portal-surface rounded-xl border border-gray-200 dark:border-portal-border p-6 space-y-6">
 
         {/* Subject Line */}
         <div>
@@ -384,7 +384,7 @@ export default function MailPage() {
             value={subject}
             onChange={(e) => setSubject(e.target.value)}
             placeholder="Enter email subject..."
-            className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400"
+            className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-white dark:bg-portal-hover text-gray-900 dark:text-white placeholder-gray-400"
           />
         </div>
 
@@ -441,7 +441,7 @@ export default function MailPage() {
           <select
             value={rankFilter}
             onChange={(e) => setRankFilter(e.target.value)}
-            className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+            className="w-full pl-4 pr-8 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-white dark:bg-portal-hover text-gray-900 dark:text-white"
           >
             <option value="">No rank filter</option>
             <option value="150+">Rank 150+</option>
@@ -471,20 +471,20 @@ export default function MailPage() {
               value={memberSearch}
               onChange={(e) => setMemberSearch(e.target.value)}
               placeholder="Search members by name or email..."
-              className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400"
+              className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-white dark:bg-portal-hover text-gray-900 dark:text-white placeholder-gray-400"
             />
             <div className="flex gap-2">
               <button
                 type="button"
                 onClick={selectAllMembers}
-                className="px-3 py-2 text-sm bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                className="px-3 py-2 text-sm bg-gray-100 dark:bg-portal-hover text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
               >
                 Select All
               </button>
               <button
                 type="button"
                 onClick={deselectAllMembers}
-                className="px-3 py-2 text-sm bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                className="px-3 py-2 text-sm bg-gray-100 dark:bg-portal-hover text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
               >
                 Clear
               </button>
@@ -505,10 +505,10 @@ export default function MailPage() {
                     <div
                       key={member.email}
                       onClick={() => toggleMemberSelection(member)}
-                      className={`px-4 py-2.5 cursor-pointer flex items-center gap-3 border-b border-gray-100 dark:border-gray-700 last:border-b-0 transition-colors ${
+                      className={`px-4 py-2.5 cursor-pointer flex items-center gap-3 border-b border-gray-100 dark:border-portal-border last:border-b-0 transition-colors ${
                         isSelected
                           ? 'bg-orange-50 dark:bg-orange-900/20'
-                          : 'hover:bg-gray-50 dark:hover:bg-gray-700'
+                          : 'hover:bg-gray-50 dark:hover:bg-portal-hover'
                       } ${isExcluded ? 'opacity-60' : ''}`}
                     >
                       <input
@@ -585,7 +585,7 @@ export default function MailPage() {
                 }
               }}
               placeholder="Enter non-member email address..."
-              className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400"
+              className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-white dark:bg-portal-hover text-gray-900 dark:text-white placeholder-gray-400"
             />
             <button
               type="button"
@@ -633,7 +633,7 @@ export default function MailPage() {
             <button
               type="button"
               onClick={() => setShowPreview(!showPreview)}
-              className="flex items-center gap-2 px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 transition-colors"
+              className="flex items-center gap-2 px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-portal-hover text-gray-700 dark:text-gray-300 transition-colors"
             >
               <IconEye className="h-4 w-4" />
               {showPreview ? 'Hide' : 'Show'} Preview
@@ -655,11 +655,11 @@ export default function MailPage() {
             {/* Live Preview */}
             {showPreview && (
               <div className="rounded-lg overflow-hidden border border-gray-300 dark:border-gray-600">
-                <div className="bg-gray-700 dark:bg-gray-900 text-white px-4 py-2 text-sm font-semibold flex items-center gap-2">
+                <div className="bg-gray-700 dark:bg-portal-bg text-white px-4 py-2 text-sm font-semibold flex items-center gap-2">
                   <IconEye className="h-4 w-4" />
                   Live Email Preview
                 </div>
-                <div className="bg-gray-100 dark:bg-gray-800 p-4">
+                <div className="bg-gray-100 dark:bg-portal-surface p-4">
                   <iframe
                     ref={iframeRef}
                     srcDoc={templateShell}
@@ -675,7 +675,7 @@ export default function MailPage() {
         </div>
 
         {/* Save as Announcement Checkbox */}
-        <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
+        <div className="border-t border-gray-200 dark:border-portal-border pt-4">
           <label className="flex items-center gap-3 cursor-pointer">
             <input
               type="checkbox"
@@ -690,7 +690,7 @@ export default function MailPage() {
           </label>
 
           {saveAsAnnouncement && (
-            <div className="mt-3 ml-8 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+            <div className="mt-3 ml-8 p-3 bg-gray-50 dark:bg-portal-hover rounded-lg">
               <p className="text-sm text-gray-700 dark:text-gray-300 mb-1">This will be saved as:</p>
               <ul className="text-xs text-gray-600 dark:text-gray-400 space-y-1 list-disc list-inside">
                 <li>Title: <span className="font-medium">{subject || '(Email Subject)'}</span></li>
@@ -717,7 +717,7 @@ export default function MailPage() {
         </div>
 
         {/* Send Button */}
-        <div className="flex flex-col sm:flex-row justify-end gap-2 pt-4 border-t border-gray-200 dark:border-gray-700">
+        <div className="flex flex-col sm:flex-row justify-end gap-2 pt-4 border-t border-gray-200 dark:border-portal-border">
           <button
             type="button"
             onClick={() => router.push('/portal')}

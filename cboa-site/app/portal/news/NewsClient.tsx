@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo } from 'react'
 import { IconPlus, IconEdit, IconTrash, IconDeviceFloppy, IconX, IconAlertCircle, IconSearch, IconFilter } from '@tabler/icons-react'
+import PortalFilterBar from '@/components/portal/PortalFilterBar'
 import { TinyMCEEditor, HTMLViewer } from '@/components/TinyMCEEditor'
 import { useRole } from '@/contexts/RoleContext'
 import { announcementsAPI } from '@/lib/api'
@@ -283,26 +284,26 @@ export default function NewsClient({ initialAnnouncements }: NewsClientProps) {
   const getCategoryColor = (category: string) => {
     switch (category) {
       // General categories
-      case 'general': return 'bg-blue-100 text-blue-800'
-      case 'rules': return 'bg-purple-100 text-purple-800'
-      case 'schedule': return 'bg-green-100 text-green-800'
-      case 'training': return 'bg-orange-100 text-orange-800'
-      case 'administrative': return 'bg-red-100 text-red-800'
+      case 'general': return 'bg-blue-100 text-blue-800 dark:bg-blue-900/80 dark:text-blue-300'
+      case 'rules': return 'bg-purple-100 text-purple-800 dark:bg-purple-900/80 dark:text-purple-300'
+      case 'schedule': return 'bg-green-100 text-green-800 dark:bg-green-900/80 dark:text-green-300'
+      case 'training': return 'bg-orange-100 text-orange-800 dark:bg-orange-900/80 dark:text-orange-300'
+      case 'administrative': return 'bg-red-100 text-red-800 dark:bg-red-900/80 dark:text-red-300'
       // Executive role categories
-      case 'president': return 'bg-amber-100 text-amber-800'
-      case 'vice-president': return 'bg-amber-100 text-amber-800'
-      case 'past-president': return 'bg-amber-100 text-amber-800'
-      case 'treasurer': return 'bg-emerald-100 text-emerald-800'
-      case 'secretary': return 'bg-sky-100 text-sky-800'
-      case 'performance-assessment': return 'bg-violet-100 text-violet-800'
-      case 'member-services': return 'bg-teal-100 text-teal-800'
-      case 'referee-development': return 'bg-indigo-100 text-indigo-800'
-      case 'assignor': return 'bg-rose-100 text-rose-800'
-      case 'scheduler': return 'bg-pink-100 text-pink-800'
-      case 'webmaster': return 'bg-cyan-100 text-cyan-800'
-      case 'officiating-coordinator': return 'bg-fuchsia-100 text-fuchsia-800'
-      case 'recruiting-coordinator': return 'bg-lime-100 text-lime-800'
-      default: return 'bg-gray-100 text-gray-800'
+      case 'president': return 'bg-amber-100 text-amber-800 dark:bg-amber-900/80 dark:text-amber-300'
+      case 'vice-president': return 'bg-amber-100 text-amber-800 dark:bg-amber-900/80 dark:text-amber-300'
+      case 'past-president': return 'bg-amber-100 text-amber-800 dark:bg-amber-900/80 dark:text-amber-300'
+      case 'treasurer': return 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/80 dark:text-emerald-300'
+      case 'secretary': return 'bg-sky-100 text-sky-800 dark:bg-sky-900/80 dark:text-sky-300'
+      case 'performance-assessment': return 'bg-violet-100 text-violet-800 dark:bg-violet-900/80 dark:text-violet-300'
+      case 'member-services': return 'bg-teal-100 text-teal-800 dark:bg-teal-900/80 dark:text-teal-300'
+      case 'referee-development': return 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900/80 dark:text-indigo-300'
+      case 'assignor': return 'bg-rose-100 text-rose-800 dark:bg-rose-900/80 dark:text-rose-300'
+      case 'scheduler': return 'bg-pink-100 text-pink-800 dark:bg-pink-900/80 dark:text-pink-300'
+      case 'webmaster': return 'bg-cyan-100 text-cyan-800 dark:bg-cyan-900/80 dark:text-cyan-300'
+      case 'officiating-coordinator': return 'bg-fuchsia-100 text-fuchsia-800 dark:bg-fuchsia-900/80 dark:text-fuchsia-300'
+      case 'recruiting-coordinator': return 'bg-lime-100 text-lime-800 dark:bg-lime-900/80 dark:text-lime-300'
+      default: return 'bg-gray-100 text-gray-800 dark:bg-portal-hover/80 dark:text-gray-300'
     }
   }
 
@@ -316,12 +317,12 @@ export default function NewsClient({ initialAnnouncements }: NewsClientProps) {
   }
 
   return (
-    <div className="px-4 py-5 sm:p-6">
+    <div className="px-4 py-5 sm:p-6 portal-animate">
 
       {/* Header */}
       <div className="mb-6 sm:mb-8 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">News & Announcements</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold font-heading tracking-tight text-gray-900 dark:text-white">News & Announcements</h1>
           <p className="mt-1 sm:mt-2 text-sm sm:text-base text-gray-600 dark:text-gray-300">
             Stay informed with the latest CBOA updates
           </p>
@@ -341,7 +342,7 @@ export default function NewsClient({ initialAnnouncements }: NewsClientProps) {
                 date: new Date().toISOString()
               })
             }}
-            className="bg-orange-500 text-white px-3 py-2 sm:px-4 rounded-lg hover:bg-orange-600 flex items-center gap-2 text-sm sm:text-base"
+            className="bg-orange-500 text-white px-3 py-2 sm:px-4 rounded-xl shadow-sm shadow-orange-500/20 hover:bg-orange-600 flex items-center gap-2 text-sm sm:text-base"
           >
             <IconPlus className="h-5 w-5" />
             New Announcement
@@ -351,7 +352,7 @@ export default function NewsClient({ initialAnnouncements }: NewsClientProps) {
 
       {/* Create New Announcement Form */}
       {isCreating && (
-        <div className="mb-6 bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
+        <div className="mb-6 bg-white dark:bg-portal-surface rounded-xl border border-gray-200 dark:border-portal-border p-6">
           <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-white">Create New Announcement</h2>
           
           <div className="space-y-4">
@@ -361,7 +362,7 @@ export default function NewsClient({ initialAnnouncements }: NewsClientProps) {
                 type="text"
                 value={newAnnouncement.title}
                 onChange={(e) => setNewAnnouncement({ ...newAnnouncement, title: e.target.value })}
-                className={`w-full px-3 py-2 border bg-white dark:bg-gray-700 text-gray-900 dark:text-white border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 ${
+                className={`w-full px-3 py-2 border bg-white dark:bg-portal-hover text-gray-900 dark:text-white border-gray-200 dark:border-portal-border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 ${
                   getFieldError(validationErrors, 'title') ? 'border-red-500' : ''
                 }`}
                 placeholder="Enter announcement title..."
@@ -377,7 +378,7 @@ export default function NewsClient({ initialAnnouncements }: NewsClientProps) {
                 <select
                   value={newAnnouncement.category}
                   onChange={(e) => setNewAnnouncement({ ...newAnnouncement, category: e.target.value as any })}
-                  className="w-full px-3 py-2 border bg-white dark:bg-gray-700 text-gray-900 dark:text-white border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                  className="w-full pl-3 pr-8 py-2 border bg-white dark:bg-portal-hover text-gray-900 dark:text-white border-gray-200 dark:border-portal-border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                 >
                   <optgroup label="General">
                     <option value="general">General</option>
@@ -409,7 +410,7 @@ export default function NewsClient({ initialAnnouncements }: NewsClientProps) {
                 <select
                   value={newAnnouncement.priority}
                   onChange={(e) => setNewAnnouncement({ ...newAnnouncement, priority: e.target.value as any })}
-                  className="w-full px-3 py-2 border bg-white dark:bg-gray-700 text-gray-900 dark:text-white border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                  className="w-full pl-3 pr-8 py-2 border bg-white dark:bg-portal-hover text-gray-900 dark:text-white border-gray-200 dark:border-portal-border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                 >
                   <option value="high">High</option>
                   <option value="normal">Normal</option>
@@ -422,7 +423,7 @@ export default function NewsClient({ initialAnnouncements }: NewsClientProps) {
                 <select
                   value={newAnnouncement.author}
                   onChange={(e) => setNewAnnouncement({ ...newAnnouncement, author: e.target.value })}
-                  className="w-full px-3 py-2 border bg-white dark:bg-gray-700 text-gray-900 dark:text-white border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                  className="w-full pl-3 pr-8 py-2 border bg-white dark:bg-portal-hover text-gray-900 dark:text-white border-gray-200 dark:border-portal-border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                 >
                   <optgroup label="Organization">
                     {AUTHOR_OPTIONS.filter(o => o.group === 'Organization').map(opt => (
@@ -459,7 +460,7 @@ export default function NewsClient({ initialAnnouncements }: NewsClientProps) {
             </div>
 
             {/* Send as Email Checkbox */}
-            <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
+            <div className="border-t border-gray-200 dark:border-portal-border pt-4">
               <label className="flex items-center gap-3 cursor-pointer">
                 <input
                   type="checkbox"
@@ -474,7 +475,7 @@ export default function NewsClient({ initialAnnouncements }: NewsClientProps) {
               </label>
 
               {sendAsEmail && (
-                <div className="mt-3 ml-8 p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
+                <div className="mt-3 ml-8 p-3 bg-gray-50 dark:bg-portal-surface/50 rounded-lg">
                   <p className="text-sm text-gray-700 dark:text-gray-300 mb-2">Recipients: <span className="font-medium">All Members</span></p>
                   <p className="text-xs text-gray-500 dark:text-gray-400">The announcement will be formatted in an email template and sent to all registered members.</p>
                 </div>
@@ -511,50 +512,19 @@ export default function NewsClient({ initialAnnouncements }: NewsClientProps) {
       )}
 
       {/* Search and Filters */}
-      <div className="mb-6 bg-white dark:bg-gray-800 rounded-lg shadow p-4">
-        <div className="flex flex-col gap-4">
-          <div className="flex flex-col sm:flex-row gap-4">
-            <div className="flex-1 min-w-0">
-              <input
-                type="text"
-                placeholder="Search announcements..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full px-3 py-2 border bg-white dark:bg-gray-700 text-gray-900 dark:text-white border-gray-300 dark:border-gray-700 rounded-md focus:outline-none focus:ring-orange-500 focus:border-orange-500"
-              />
-            </div>
-          </div>
-
-          {/* Category Filter Buttons - only show categories with posts */}
-          <div className="flex flex-wrap gap-2">
-            <button
-              onClick={() => setFilter('all')}
-              className={`px-3 py-2 rounded-md text-sm ${
-                filter === 'all'
-                  ? 'bg-orange-500 text-white'
-                  : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-700/50'
-              }`}
-            >
-              All
-            </button>
-            {(Object.keys(ALL_CATEGORIES) as CategoryKey[])
-              .filter(cat => categoriesWithPosts.has(cat))
-              .map(cat => (
-                <button
-                  key={cat}
-                  onClick={() => setFilter(cat)}
-                  className={`px-3 py-2 rounded-md text-sm ${
-                    filter === cat
-                      ? 'bg-orange-500 text-white'
-                      : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-700/50'
-                  }`}
-                >
-                  {ALL_CATEGORIES[cat]}
-                </button>
-              ))}
-          </div>
-        </div>
-      </div>
+      <PortalFilterBar
+        searchValue={searchTerm}
+        onSearchChange={setSearchTerm}
+        searchPlaceholder="Search announcements..."
+        categories={[
+          { value: 'all', label: 'All' },
+          ...(Object.keys(ALL_CATEGORIES) as CategoryKey[])
+            .filter(cat => categoriesWithPosts.has(cat))
+            .map(cat => ({ value: cat, label: ALL_CATEGORIES[cat] }))
+        ]}
+        selectedCategory={filter}
+        onCategoryChange={(val) => setFilter(val as 'all' | CategoryKey)}
+      />
 
       {/* Important Announcements Banner */}
       {filteredAnnouncements.some(a => a.priority === 'high') && (
@@ -574,7 +544,7 @@ export default function NewsClient({ initialAnnouncements }: NewsClientProps) {
       {/* Announcements List */}
       <div className="space-y-4">
         {filteredAnnouncements.map(announcement => (
-          <div key={announcement.id} className="bg-white dark:bg-gray-800 rounded-lg shadow hover:shadow-lg transition-shadow overflow-hidden">
+          <div key={announcement.id} className="bg-white dark:bg-portal-surface rounded-xl border border-gray-200 dark:border-portal-border hover:border-orange-200 dark:hover:border-orange-800/40 hover:shadow-sm transition-shadow overflow-hidden">
             {editingId === announcement.id ? (
               // Edit Mode
               <div className="p-6">
@@ -583,14 +553,14 @@ export default function NewsClient({ initialAnnouncements }: NewsClientProps) {
                     type="text"
                     value={editingData.title || ''}
                     onChange={(e) => handleEditChange('title', e.target.value)}
-                    className="w-full text-lg font-semibold px-3 py-2 border bg-white dark:bg-gray-700 text-gray-900 dark:text-white border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                    className="w-full text-lg font-semibold px-3 py-2 border bg-white dark:bg-portal-hover text-gray-900 dark:text-white border-gray-200 dark:border-portal-border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                   />
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                     <select
                       value={editingData.category || 'general'}
                       onChange={(e) => handleEditChange('category', e.target.value)}
-                      className="px-3 py-2 border bg-white dark:bg-gray-700 text-gray-900 dark:text-white border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                      className="pl-3 pr-8 py-2 border bg-white dark:bg-portal-hover text-gray-900 dark:text-white border-gray-200 dark:border-portal-border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                     >
                       <optgroup label="General">
                         <option value="general">General</option>
@@ -619,7 +589,7 @@ export default function NewsClient({ initialAnnouncements }: NewsClientProps) {
                     <select
                       value={editingData.priority || 'normal'}
                       onChange={(e) => handleEditChange('priority', e.target.value)}
-                      className="px-3 py-2 border bg-white dark:bg-gray-700 text-gray-900 dark:text-white border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                      className="pl-3 pr-8 py-2 border bg-white dark:bg-portal-hover text-gray-900 dark:text-white border-gray-200 dark:border-portal-border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                     >
                       <option value="high">High Priority</option>
                       <option value="normal">Normal</option>
@@ -629,7 +599,7 @@ export default function NewsClient({ initialAnnouncements }: NewsClientProps) {
                     <select
                       value={editingData.author || 'CBOA Executive'}
                       onChange={(e) => handleEditChange('author', e.target.value)}
-                      className="px-3 py-2 border bg-white dark:bg-gray-700 text-gray-900 dark:text-white border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                      className="pl-3 pr-8 py-2 border bg-white dark:bg-portal-hover text-gray-900 dark:text-white border-gray-200 dark:border-portal-border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                     >
                       <optgroup label="Organization">
                         {AUTHOR_OPTIONS.filter(o => o.group === 'Organization').map(opt => (
@@ -678,7 +648,7 @@ export default function NewsClient({ initialAnnouncements }: NewsClientProps) {
                 <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
                   <div className="flex-1 min-w-0 overflow-hidden">
                     <div className="flex flex-wrap items-center gap-2 mb-2">
-                      <span className={`px-2 py-1 text-xs font-semibold rounded-full ${getCategoryColor(announcement.category)}`}>
+                      <span className={`px-2 py-1 text-xs font-semibold rounded-lg ${getCategoryColor(announcement.category)}`}>
                         {ALL_CATEGORIES[announcement.category as CategoryKey] || announcement.category}
                       </span>
                       {announcement.priority === 'high' && (
@@ -696,7 +666,7 @@ export default function NewsClient({ initialAnnouncements }: NewsClientProps) {
                         className="break-words"
                       />
                     </div>
-                    <div className="flex flex-wrap items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
+                    <div className="flex flex-wrap items-center gap-2 text-sm text-gray-500 dark:text-gray-400 pt-3 mt-3 border-t border-gray-100 dark:border-portal-border/50">
                       <span>{new Date(announcement.date).toLocaleDateString('en-US', {
                         year: 'numeric',
                         month: 'long',
@@ -730,7 +700,7 @@ export default function NewsClient({ initialAnnouncements }: NewsClientProps) {
       </div>
 
       {filteredAnnouncements.length === 0 && (
-        <div className="text-center py-12 bg-white dark:bg-gray-800 rounded-lg">
+        <div className="text-center py-12 bg-white dark:bg-portal-surface rounded-xl">
           <svg className="mx-auto h-12 w-12 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
           </svg>
@@ -744,7 +714,7 @@ export default function NewsClient({ initialAnnouncements }: NewsClientProps) {
       )}
 
       {/* Subscription Notice */}
-      <div className="mt-8 p-4 bg-blue-900/20 rounded-lg border border-blue-800">
+      <div className="mt-8 p-4 bg-blue-900/20 rounded-xl border border-blue-800">
         <h3 className="text-sm font-medium text-blue-400 mb-2">Stay Updated</h3>
         <p className="text-sm text-blue-400">
           Important announcements are also sent via email. Make sure your contact information is up to date.
