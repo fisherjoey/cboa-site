@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { IconGavel, IconCalendar, IconFilter, IconSearch, IconPlus, IconEdit, IconTrash, IconDeviceFloppy, IconX } from '@tabler/icons-react'
+import { IconGavel, IconCalendar, IconFilter, IconSearch, IconPlus, IconEdit, IconTrash, IconDeviceFloppy, IconX, IconSortAscending, IconSortDescending } from '@tabler/icons-react'
 import { Accordion, AccordionButton, AccordionPanel, AccordionChevron } from '@/components/ui/Accordion'
 import Card from '@/components/ui/Card'
 import { ContentItem } from '@/lib/content'
@@ -28,6 +28,7 @@ export default function RuleModificationsClient({ modifications: initialModifica
   const categories = modifications.length > 0
     ? Array.from(new Set(modifications.map(mod => mod.category))).filter(Boolean).sort() as string[]
     : initialCategories
+  const [sortBy, setSortBy] = useState<'title-asc' | 'title-desc' | 'category' | 'newest' | 'oldest'>('title-asc')
   const [searchTerm, setSearchTerm] = useState('')
   const [isCreating, setIsCreating] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
@@ -68,6 +69,22 @@ export default function RuleModificationsClient({ modifications: initialModifica
       mod.content?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       mod.body?.toLowerCase().includes(searchTerm.toLowerCase())
     return matchesCategory && matchesSearch && mod.active !== false
+  }).sort((a, b) => {
+    switch (sortBy) {
+      case 'title-asc':
+        return (a.title || '').localeCompare(b.title || '')
+      case 'title-desc':
+        return (b.title || '').localeCompare(a.title || '')
+      case 'category':
+        const catCompare = (a.category || '').localeCompare(b.category || '')
+        return catCompare !== 0 ? catCompare : (a.title || '').localeCompare(b.title || '')
+      case 'newest':
+        return new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime()
+      case 'oldest':
+        return new Date(a.created_at || 0).getTime() - new Date(b.created_at || 0).getTime()
+      default:
+        return 0
+    }
   })
 
   const getCategoryColor = (category: string) => {
@@ -210,14 +227,30 @@ export default function RuleModificationsClient({ modifications: initialModifica
 
       {/* Search and Category Filter */}
       <div className="mb-6 bg-white dark:bg-gray-800 rounded-lg shadow p-3 sm:p-4">
-        <div className="flex-1 min-w-0">
-          <input
-            type="text"
-            placeholder="Search rule modifications..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full px-3 py-2 text-sm sm:text-base border border-gray-300 dark:border-gray-700 rounded-md focus:outline-none focus:ring-orange-500 focus:border-orange-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
-          />
+        <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
+          <div className="flex-1 min-w-0">
+            <input
+              type="text"
+              placeholder="Search rule modifications..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full px-3 py-2 text-sm sm:text-base border border-gray-300 dark:border-gray-700 rounded-md focus:outline-none focus:ring-orange-500 focus:border-orange-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+            />
+          </div>
+          <div className="flex items-center gap-2 sm:w-auto">
+            <IconSortAscending className="h-4 w-4 text-gray-500 dark:text-gray-400 flex-shrink-0" />
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
+              className="w-full sm:w-auto px-3 py-2 text-sm sm:text-base border border-gray-300 dark:border-gray-700 rounded-md focus:outline-none focus:ring-orange-500 focus:border-orange-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+            >
+              <option value="title-asc">Title (A–Z)</option>
+              <option value="title-desc">Title (Z–A)</option>
+              <option value="category">Category</option>
+              <option value="newest">Newest First</option>
+              <option value="oldest">Oldest First</option>
+            </select>
+          </div>
         </div>
 
         <div className="mt-3 sm:mt-4 flex flex-wrap gap-1.5 sm:gap-2">

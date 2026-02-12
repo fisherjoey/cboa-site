@@ -887,7 +887,8 @@ export const handler: Handler = async (event: HandlerEvent) => {
       const clientHtml = generateCBOAEmailTemplate({
         subject: `Confirmation of booking - ${formData.organizationName} (${eventCount} event${eventCount > 1 ? 's' : ''})`,
         content: clientContent,
-        previewText: `Thank you for booking ${eventCount} event${eventCount > 1 ? 's' : ''} with CBOA`
+        previewText: `Thank you for booking ${eventCount} event${eventCount > 1 ? 's' : ''} with CBOA`,
+        external: true
       })
 
       await sendEmail(

@@ -1,3 +1,4 @@
+import { Suspense } from 'react'
 import Hero from '@/components/content/Hero'
 import Card from '@/components/ui/Card'
 import ContactForm from '@/components/forms/ContactForm'
@@ -64,7 +65,9 @@ export default function ContactPage() {
               </p>
             </div>
             <Card>
-              <ContactForm />
+              <Suspense fallback={<div className="p-8 text-center text-gray-500">Loading form...</div>}>
+                <ContactForm />
+              </Suspense>
             </Card>
           </div>
         </div>

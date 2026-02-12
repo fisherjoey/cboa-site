@@ -6,10 +6,11 @@ export interface EmailTemplateOptions {
   content: string
   previewText?: string
   previewMode?: boolean // When true, uses dark outer background for preview display
+  external?: boolean // When true, hides Member Portal link and member-specific footer text
 }
 
 export function generateCBOAEmailTemplate(options: EmailTemplateOptions): string {
-  const { subject, content, previewText, previewMode } = options
+  const { subject, content, previewText, previewMode, external } = options
   const outerBgColor = previewMode ? '#1f2937' : '#f5f5f5'
 
   return `
@@ -209,18 +210,30 @@ export function generateCBOAEmailTemplate(options: EmailTemplateOptions): string
                   <td style="padding: 0 8px;">
                     <a href="https://cboa.ca" style="color: #F97316; text-decoration: none; font-size: 14px;">Website</a>
                   </td>
+                  ${external ? `
+                  <td style="padding: 0 8px;">
+                    <a href="https://cboa.ca/contact" style="color: #F97316; text-decoration: none; font-size: 14px;">Contact Us</a>
+                  </td>
+                  ` : `
                   <td style="padding: 0 8px;">
                     <a href="https://cboa.ca/portal" style="color: #F97316; text-decoration: none; font-size: 14px;">Member Portal</a>
                   </td>
                   <td style="padding: 0 8px;">
                     <a href="https://cboa.ca/contact?category=general" style="color: #F97316; text-decoration: none; font-size: 14px;">Contact Us</a>
                   </td>
+                  `}
                 </tr>
               </table>
 
+              ${external ? `
+              <p style="margin: 20px 0 10px 0; font-size: 13px; color: #9ca3af;">
+                You are receiving this email because you submitted a request through the CBOA website.
+              </p>
+              ` : `
               <p style="margin: 20px 0 10px 0; font-size: 13px; color: #9ca3af;">
                 You are receiving this email because you are a member of the Calgary Basketball Officials Association.
               </p>
+              `}
 
               <p style="margin: 0; font-size: 13px; color: #9ca3af;">
                 © ${new Date().getFullYear()} Calgary Basketball Officials Association. All rights reserved.
