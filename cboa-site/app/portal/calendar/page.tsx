@@ -571,7 +571,7 @@ function EventModal({
 
           {event.description && (
             <div className="mt-4">
-              <p className="text-gray-600 dark:text-gray-300">{event.description}</p>
+              <p className="text-gray-600 dark:text-gray-300 break-all">{event.description}</p>
             </div>
           )}
 

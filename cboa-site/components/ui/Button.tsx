@@ -21,10 +21,10 @@ export default function Button({
   className = '',
   disabled = false,
 }: ButtonProps) {
-  const baseStyles = 'inline-block font-semibold rounded-md transition-all cursor-pointer text-center'
-  
+  const baseStyles = 'inline-block font-semibold tracking-tight rounded-lg transition-all cursor-pointer text-center'
+
   const variantStyles = {
-    primary: 'bg-cboa-orange text-white hover:bg-opacity-90 hover:shadow-lg hover:-translate-y-0.5',
+    primary: 'bg-gradient-to-r from-cboa-orange to-orange-500 text-white hover:shadow-lg hover:shadow-orange-500/20 hover:-translate-y-0.5',
     secondary: 'bg-transparent text-white border-2 border-white hover:bg-white hover:text-cboa-blue',
     utility: 'bg-cboa-orange text-white rounded-full hover:bg-opacity-90',
   }

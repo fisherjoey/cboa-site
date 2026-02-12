@@ -48,6 +48,7 @@
     "date-fns": "^4.1.0",
     "decap-cms-app": "^3.8.3",
     "dompurify": "^3.2.6",
+    "fuse.js": "^7.1.0",
     "gotrue-js": "^0.9.29",
     "gray-matter": "^4.0.3",
     "js-yaml": "^4.1.0",

@@ -6,7 +6,7 @@ import { usePathname } from 'next/navigation'
 import { IconX } from '@tabler/icons-react'
 
 // Toggle this to enable/disable the campaign banner site-wide
-const CAMPAIGN_ENABLED = true
+const CAMPAIGN_ENABLED = false
 
 function PinkRibbonIcon({ className }: { className?: string }) {
   return (
