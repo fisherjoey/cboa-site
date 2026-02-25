@@ -9,11 +9,12 @@ const DAYS_OF_WEEK = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'S
 
 const LEVELS_OF_PLAY = [
   'U11', 'U13', 'U15', 'U17', 'U19',
-  'Junior High', 'HS-JV', 'HS-SV',
-  'College/University', 'Adult', 'Other'
+  'Junior High', 'HS-JV', 'HS-SV', 'Prep',
+  'College/University', 'Elite (National)', 'Adult',
+  'Other'
 ]
 
-const GENDERS = ['Male', 'Female']
+const GENDERS = ['Male', 'Female', 'Mixed']
 
 const EVENT_TYPES = ['Exhibition Game(s)', 'League', 'Tournament'] as const
 
@@ -43,12 +44,28 @@ function CheckboxGroup({
   error?: string
   required?: boolean
 }) {
+  const hasOther = options.includes('Other')
+  const otherEntry = value.find(v => v === 'Other' || v.startsWith('Other: '))
+  const isOtherChecked = !!otherEntry
+  const otherText = otherEntry?.startsWith('Other: ') ? otherEntry.slice(7) : ''
+
   const handleToggle = (option: string) => {
-    if (value.includes(option)) {
+    if (option === 'Other') {
+      if (isOtherChecked) {
+        onChange(value.filter(v => v !== 'Other' && !v.startsWith('Other: ')))
+      } else {
+        onChange([...value, 'Other'])
+      }
+    } else if (value.includes(option)) {
       onChange(value.filter(v => v !== option))
     } else {
       onChange([...value, option])
     }
+  }
+
+  const handleOtherTextChange = (text: string) => {
+    const filtered = value.filter(v => v !== 'Other' && !v.startsWith('Other: '))
+    onChange([...filtered, text ? `Other: ${text}` : 'Other'])
   }
 
   return (
@@ -61,7 +78,7 @@ function CheckboxGroup({
           <label key={option} className="flex items-center space-x-2 cursor-pointer">
             <input
               type="checkbox"
-              checked={value.includes(option)}
+              checked={option === 'Other' ? isOtherChecked : value.includes(option)}
               onChange={() => handleToggle(option)}
               className="w-4 h-4 text-cboa-orange border-gray-300 rounded focus:ring-cboa-orange"
             />
@@ -69,6 +86,20 @@ function CheckboxGroup({
           </label>
         ))}
       </div>
+      {hasOther && isOtherChecked && (
+        <div className="mt-2">
+          <input
+            type="text"
+            value={otherText}
+            onChange={(e) => handleOtherTextChange(e.target.value)}
+            placeholder="Please specify..."
+            className={inputStyles}
+          />
+          {isOtherChecked && !otherText && (
+            <p className={errorStyles}>Please specify the level of play</p>
+          )}
+        </div>
+      )}
       {error && <p className={errorStyles}>{error}</p>}
     </div>
   )
