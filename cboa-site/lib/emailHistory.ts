@@ -3,7 +3,7 @@
  * Records all sent emails to the email_history table for audit and tracking
  */
 
-export type EmailType = 'bulk' | 'invite' | 'password_reset' | 'welcome'
+export type EmailType = 'bulk' | 'invite' | 'password_reset' | 'welcome' | 'contact_form'
 export type EmailStatus = 'sent' | 'failed' | 'partial'
 
 export interface EmailHistoryRecord {
@@ -156,6 +156,41 @@ export function recordPasswordResetEmail(params: {
     recipient_email: params.recipientEmail,
     status: params.status || 'sent',
     error_message: params.errorMessage,
+  })
+}
+
+/**
+ * Helper to record a contact form email
+ */
+export function recordContactFormEmail(params: {
+  senderName: string
+  senderEmail: string
+  category: string
+  categoryLabel: string
+  recipientEmail: string
+  subject: string
+  message: string
+  htmlContent?: string
+  status?: EmailStatus
+  errorMessage?: string
+}): Promise<void> {
+  return recordEmailHistory({
+    email_type: 'contact_form',
+    sent_by_email: params.senderEmail,
+    subject: params.subject,
+    html_content: params.htmlContent,
+    recipient_count: 1,
+    recipient_email: params.recipientEmail,
+    recipient_name: params.categoryLabel,
+    status: params.status || 'sent',
+    error_message: params.errorMessage,
+    metadata: {
+      sender_name: params.senderName,
+      sender_email: params.senderEmail,
+      category: params.category,
+      category_label: params.categoryLabel,
+      message: params.message,
+    },
   })
 }
 
