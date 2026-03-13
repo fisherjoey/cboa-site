@@ -18,7 +18,7 @@ export const handler = createHandler({
           query = query.eq('level', parseInt(level))
         }
 
-        const { data, error } = await query
+        const { data, error } = await query.limit(200)
 
         if (error) throw error
         return { statusCode: 200, body: JSON.stringify(data) }

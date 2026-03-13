@@ -11,6 +11,7 @@ export const handler = createHandler({
           .select('*')
           .eq('active', true)
           .order('priority', { ascending: false })
+          .limit(200)
 
         if (error) throw error
 

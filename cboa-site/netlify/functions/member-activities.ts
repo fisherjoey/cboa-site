@@ -12,6 +12,7 @@ export const handler = createHandler({
           .from('member_activities')
           .select('*')
           .order('activity_date', { ascending: false })
+          .limit(500)
 
         if (member_id) {
           query = query.eq('member_id', member_id)

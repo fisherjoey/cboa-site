@@ -10,6 +10,7 @@ export const handler = createHandler({
           .from('calendar_events')
           .select('*')
           .order('start_date', { ascending: true })
+          .limit(500)
 
         if (error) throw error
 

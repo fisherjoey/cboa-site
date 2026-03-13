@@ -219,27 +219,29 @@ export const handler: Handler = async (event) => {
           .from('members')
           .select('*')
           .order('name', { ascending: true })
+          .limit(1000)
 
         if (error) throw error
 
         // Fetch auth users to check who has actually signed in
-        const { data: { users: authUsers } } = await supabase.auth.admin.listUsers()
+        // Paginate to handle any number of users, build a Map for O(1) lookups
+        const signedInUserIds = new Set<string>()
+        let page = 1
+        const perPage = 1000
+        while (true) {
+          const { data: { users } } = await supabase.auth.admin.listUsers({ page, perPage })
+          for (const u of users || []) {
+            if (u.last_sign_in_at) signedInUserIds.add(u.id)
+          }
+          if (!users || users.length < perPage) break
+          page++
+        }
 
         // Add account_setup_complete flag to each member
-        const membersWithStatus = data?.map(member => {
-          let accountSetupComplete = false
-
-          if (member.user_id) {
-            const authUser = authUsers?.find(u => u.id === member.user_id)
-            // Account is complete if user has signed in at least once
-            accountSetupComplete = !!authUser?.last_sign_in_at
-          }
-
-          return {
-            ...member,
-            account_setup_complete: accountSetupComplete
-          }
-        }) || []
+        const membersWithStatus = data?.map(member => ({
+          ...member,
+          account_setup_complete: !!(member.user_id && signedInUserIds.has(member.user_id))
+        })) || []
 
         return {
           statusCode: 200,

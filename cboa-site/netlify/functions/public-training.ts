@@ -29,6 +29,7 @@ export const handler = createHandler({
           .select('*')
           .order('priority', { ascending: false })
           .order('event_date', { ascending: true })
+          .limit(200)
 
         if (error) throw error
         return { statusCode: 200, body: JSON.stringify(data) }

@@ -10,6 +10,7 @@ export const handler = createHandler({
           .from('announcements')
           .select('*')
           .order('date', { ascending: false })
+          .limit(200)
 
         if (error) throw error
 
