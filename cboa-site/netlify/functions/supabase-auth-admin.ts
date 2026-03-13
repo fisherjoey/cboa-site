@@ -1,5 +1,5 @@
 import { Handler } from '@netlify/functions'
-import { createClient } from '@supabase/supabase-js'
+import { supabase as supabaseAdmin } from './_shared/handler'
 import { randomBytes } from 'crypto'
 import { Logger } from '../../lib/logger'
 import { recordInviteEmail, recordPasswordResetEmail } from '../../lib/emailHistory'
@@ -18,17 +18,7 @@ import {
   PORTAL_FEATURES,
 } from '../../lib/siteConfig'
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
 const siteUrl = SITE_URL
-
-// Create admin client with service role key
-const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
-  auth: {
-    autoRefreshToken: false,
-    persistSession: false
-  }
-})
 
 // ============================================================================
 // Invite Token Helpers (Proxy system - tokens never expire)

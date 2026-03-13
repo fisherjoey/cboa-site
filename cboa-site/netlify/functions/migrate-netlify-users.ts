@@ -1,16 +1,19 @@
 import { Handler } from '@netlify/functions'
-import { createClient } from '@supabase/supabase-js'
+import { supabase as supabaseAdmin } from './_shared/handler'
+import {
+  EMAIL_NO_REPLY,
+  ORG_NAME,
+  ORG_SHORT_NAME,
+  ORG_TAGLINE,
+  ORG_LOCATION,
+  ORG_LOGO_URL,
+  SITE_URL,
+  getContactUrl,
+  getCopyrightYear,
+  EMAIL_SUBJECTS,
+} from '../../lib/siteConfig'
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
-const siteUrl = process.env.URL || process.env.DEPLOY_PRIME_URL || 'https://cboa.ca'
-
-const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
-  auth: {
-    autoRefreshToken: false,
-    persistSession: false
-  }
-})
+const siteUrl = SITE_URL
 
 interface MemberToMigrate {
   name: string
@@ -50,7 +53,7 @@ async function sendMigrationEmail(
   resetUrl: string,
   name?: string
 ): Promise<void> {
-  const senderEmail = 'no-reply@cboa.ca'
+  const senderEmail = EMAIL_NO_REPLY
   const graphEndpoint = `https://graph.microsoft.com/v1.0/users/${senderEmail}/sendMail`
 
   const emailHtml = `
@@ -60,28 +63,28 @@ async function sendMigrationEmail(
       <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="max-width: 600px; width: 100%; margin: 0 auto; background-color: #ffffff;" align="center">
         <tr>
           <td style="background-color: #1f2937; padding: 24px 20px; border-bottom: 3px solid #F97316; text-align: center;">
-            <img src="https://i.imgur.com/BQe360J.png" alt="CBOA Logo" style="max-width: 70px; height: auto; display: inline-block; margin-bottom: 12px;">
-            <h1 style="color: #ffffff; margin: 0 0 4px 0; font-size: 18px; font-weight: 700;">Calgary Basketball Officials Association</h1>
-            <p style="color: #ffffff; margin: 0; font-size: 14px; font-weight: 500; opacity: 0.95;">Excellence in Basketball Officiating</p>
+            <img src="${ORG_LOGO_URL}" alt="Logo" style="max-width: 70px; height: auto; display: inline-block; margin-bottom: 12px;">
+            <h1 style="color: #ffffff; margin: 0 0 4px 0; font-size: 18px; font-weight: 700;">${ORG_NAME}</h1>
+            <p style="color: #ffffff; margin: 0; font-size: 14px; font-weight: 500; opacity: 0.95;">${ORG_TAGLINE}</p>
           </td>
         </tr>
         <tr>
           <td style="padding: 30px 20px; color: #333333; font-size: 16px; line-height: 1.6;">
-            <h1 style="color: #003DA5; font-size: 24px; margin-top: 0; margin-bottom: 16px; font-weight: 700;">CBOA Portal Update - Action Required</h1>
+            <h1 style="color: #003DA5; font-size: 24px; margin-top: 0; margin-bottom: 16px; font-weight: 700;">${ORG_SHORT_NAME} Portal Update - Action Required</h1>
             <p style="margin: 0 0 16px 0;">${name ? `Hi ${name},` : 'Hello,'}</p>
-            <p style="margin: 0 0 16px 0;">We've upgraded the CBOA member portal to provide you with a better experience. As part of this upgrade, you'll need to set a new password for your account.</p>
+            <p style="margin: 0 0 16px 0;">We've upgraded the ${ORG_SHORT_NAME} member portal to provide you with a better experience. As part of this upgrade, you'll need to set a new password for your account.</p>
             <p style="margin: 0 0 16px 0;"><strong>Your email address (${toEmail}) remains the same</strong> - you just need to create a new password.</p>
             <p style="text-align: center; margin: 24px 0;">
               <a href="${resetUrl}" style="display: inline-block; padding: 14px 28px; background-color: #F97316; color: #ffffff !important; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px;">Set New Password</a>
             </p>
-            <p style="margin: 0 0 16px 0;">This link will expire in 24 hours. If you have any questions, please <a href="https://cboa.ca/contact?category=general" style="color: #F97316;">contact us</a>.</p>
-            <p style="margin: 0;">Best regards,<br><strong style="color: #003DA5;">CBOA Executive Board</strong></p>
+            <p style="margin: 0 0 16px 0;">This link will expire in 24 hours. If you have any questions, please <a href="${getContactUrl('general')}" style="color: #F97316;">contact us</a>.</p>
+            <p style="margin: 0;">Best regards,<br><strong style="color: #003DA5;">${ORG_SHORT_NAME} Executive Board</strong></p>
           </td>
         </tr>
         <tr>
           <td style="background-color: #1F2937; color: #D1D5DB; padding: 30px 20px; text-align: center; font-size: 14px; border-top: 3px solid #F97316;">
-            <p style="margin: 0 0 10px 0; font-weight: 600; color: #ffffff;">Calgary Basketball Officials Association</p>
-            <p style="margin: 0;">Calgary, Alberta, Canada</p>
+            <p style="margin: 0 0 10px 0; font-weight: 600; color: #ffffff;">${ORG_NAME}</p>
+            <p style="margin: 0;">${ORG_LOCATION}</p>
           </td>
         </tr>
       </table>
@@ -92,7 +95,7 @@ async function sendMigrationEmail(
 
   const emailMessage = {
     message: {
-      subject: 'CBOA Portal Update - Set Your New Password',
+      subject: EMAIL_SUBJECTS.migrationPasswordReset,
       body: { contentType: 'HTML', content: emailHtml },
       from: { emailAddress: { address: senderEmail } },
       toRecipients: [{ emailAddress: { address: toEmail } }]

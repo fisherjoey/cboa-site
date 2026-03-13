@@ -1,17 +1,9 @@
 import { Handler } from '@netlify/functions'
-import { createClient } from '@supabase/supabase-js'
+import { supabase as supabaseAdmin } from './_shared/handler'
 import { Logger } from '../../lib/logger'
+import { SITE_URL, ORG_SHORT_NAME } from '../../lib/siteConfig'
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
-const siteUrl = process.env.URL || process.env.DEPLOY_PRIME_URL || 'https://cboa.ca'
-
-const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
-  auth: {
-    autoRefreshToken: false,
-    persistSession: false
-  }
-})
+const siteUrl = SITE_URL
 
 /**
  * Accept Invite - Proxy for Supabase magic links
@@ -69,7 +61,7 @@ export const handler: Handler = async (event) => {
         headers,
         body: JSON.stringify({
           error: 'Invalid invite token',
-          message: 'This invite link is not valid. Please request a new invite at cboa.ca/get-invite'
+          message: 'This invite link is not valid. Please request a new invite from our website.'
         })
       }
     }
@@ -102,7 +94,7 @@ export const handler: Handler = async (event) => {
         headers,
         body: JSON.stringify({
           error: 'Member not found',
-          message: 'Your membership could not be found. Please contact CBOA for assistance.'
+          message: `Your membership could not be found. Please contact ${ORG_SHORT_NAME} for assistance.`
         })
       }
     }
@@ -114,7 +106,7 @@ export const handler: Handler = async (event) => {
         headers,
         body: JSON.stringify({
           error: 'Membership inactive',
-          message: 'Your membership is not currently active. Please contact CBOA for assistance.'
+          message: `Your membership is not currently active. Please contact ${ORG_SHORT_NAME} for assistance.`
         })
       }
     }

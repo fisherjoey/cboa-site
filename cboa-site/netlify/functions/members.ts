@@ -1,5 +1,5 @@
 import { Handler } from '@netlify/functions'
-import { createClient } from '@supabase/supabase-js'
+import { supabase } from './_shared/handler'
 import { Logger } from '../../lib/logger'
 import {
   EMAIL_ANNOUNCEMENTS,
@@ -14,12 +14,6 @@ import {
   getCopyrightYear,
   EMAIL_SUBJECTS,
 } from '../../lib/siteConfig'
-
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
-const supabase = createClient(supabaseUrl, supabaseServiceKey, {
-  auth: { autoRefreshToken: false, persistSession: false }
-})
 
 // Microsoft Graph API for sending emails
 async function getMicrosoftAccessToken(): Promise<string> {

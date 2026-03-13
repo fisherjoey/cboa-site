@@ -1,9 +1,21 @@
 import { Handler } from '@netlify/functions'
-import { createClient } from '@supabase/supabase-js'
+import { supabase as supabaseAdmin } from './_shared/handler'
 import { Logger } from '../../lib/logger'
+import {
+  EMAIL_ANNOUNCEMENTS,
+  ORG_NAME,
+  ORG_SHORT_NAME,
+  ORG_TAGLINE,
+  ORG_LOCATION,
+  ORG_LOGO_URL,
+  SITE_URL,
+  getContactUrl,
+  getPortalUrl,
+  getCopyrightYear,
+  EMAIL_SUBJECTS,
+  PORTAL_FEATURES,
+} from '../../lib/siteConfig'
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
 const migrationSecret = process.env.MIGRATION_SECRET
 
 interface UserToEmail {
@@ -44,7 +56,7 @@ async function sendEmailViaGraph(
   subject: string,
   htmlContent: string
 ): Promise<void> {
-  const senderEmail = 'announcements@cboa.ca'
+  const senderEmail = EMAIL_ANNOUNCEMENTS
   const graphEndpoint = `https://graph.microsoft.com/v1.0/users/${senderEmail}/sendMail`
 
   const emailMessage = {
@@ -81,7 +93,6 @@ async function sendEmailViaGraph(
 
 // Generate invite email HTML (matches supabase-auth-admin.ts template)
 function generateInviteEmailHtml(inviteUrl: string, name?: string): string {
-  const siteUrl = 'https://cboa.ca'
   return `
 <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: #f5f5f5; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;">
   <tr>
@@ -90,45 +101,45 @@ function generateInviteEmailHtml(inviteUrl: string, name?: string): string {
         <!-- Header -->
         <tr>
           <td style="background-color: #1f2937; padding: 24px 20px; border-bottom: 3px solid #F97316; text-align: center;">
-            <img src="https://i.imgur.com/BQe360J.png" alt="CBOA Logo" style="max-width: 70px; height: auto; display: inline-block; margin-bottom: 12px;">
-            <h1 style="color: #ffffff; margin: 0 0 4px 0; font-size: 18px; font-weight: 700; letter-spacing: -0.5px; line-height: 1.3;">Calgary Basketball Officials Association</h1>
-            <p style="color: #ffffff; margin: 0; font-size: 14px; font-weight: 500; opacity: 0.95;">Excellence in Basketball Officiating</p>
+            <img src="${ORG_LOGO_URL}" alt="Logo" style="max-width: 70px; height: auto; display: inline-block; margin-bottom: 12px;">
+            <h1 style="color: #ffffff; margin: 0 0 4px 0; font-size: 18px; font-weight: 700; letter-spacing: -0.5px; line-height: 1.3;">${ORG_NAME}</h1>
+            <p style="color: #ffffff; margin: 0; font-size: 14px; font-weight: 500; opacity: 0.95;">${ORG_TAGLINE}</p>
           </td>
         </tr>
         <!-- Main Content -->
         <tr>
           <td style="padding: 30px 20px; color: #333333; font-size: 16px; line-height: 1.6;">
-            <h1 style="color: #003DA5; font-size: 24px; margin-top: 0; margin-bottom: 16px; font-weight: 700; line-height: 1.3;">You're Invited to Join CBOA!</h1>
+            <h1 style="color: #003DA5; font-size: 24px; margin-top: 0; margin-bottom: 16px; font-weight: 700; line-height: 1.3;">${EMAIL_SUBJECTS.invite.replace('!', '')}!</h1>
             <p style="margin: 0 0 16px 0; font-size: 16px; line-height: 1.6;">${name ? `Hi ${name.split(' ')[0]},` : 'Hello,'}</p>
-            <p style="margin: 0 0 16px 0; font-size: 16px; line-height: 1.6;">You have been invited to create an account on the <strong style="color: #003DA5; font-weight: 600;">Calgary Basketball Officials Association</strong> member portal.</p>
+            <p style="margin: 0 0 16px 0; font-size: 16px; line-height: 1.6;">You have been invited to create an account on the <strong style="color: #003DA5; font-weight: 600;">${ORG_NAME}</strong> member portal.</p>
             <p style="margin: 0 0 16px 0; font-size: 16px; line-height: 1.6;">As a member, you'll have access to:</p>
             <ul style="margin: 0 0 16px 0; padding-left: 20px;">
-              <li style="margin-bottom: 8px; font-size: 16px; line-height: 1.5;"><strong style="color: #003DA5;">Resources</strong> - Training materials, rulebooks, and guides</li>
-              <li style="margin-bottom: 8px; font-size: 16px; line-height: 1.5;"><strong style="color: #003DA5;">The Bounce</strong> - Our official newsletter</li>
-              <li style="margin-bottom: 8px; font-size: 16px; line-height: 1.5;"><strong style="color: #003DA5;">Calendar</strong> - Upcoming events and training sessions</li>
-              <li style="margin-bottom: 8px; font-size: 16px; line-height: 1.5;"><strong style="color: #003DA5;">Rule Modifications</strong> - League-specific rule changes</li>
+              <li style="margin-bottom: 8px; font-size: 16px; line-height: 1.5;"><strong style="color: #003DA5;">${PORTAL_FEATURES.resources}</strong> - ${PORTAL_FEATURES.resourcesDescription}</li>
+              <li style="margin-bottom: 8px; font-size: 16px; line-height: 1.5;"><strong style="color: #003DA5;">${PORTAL_FEATURES.newsletter}</strong> - ${PORTAL_FEATURES.newsletterDescription}</li>
+              <li style="margin-bottom: 8px; font-size: 16px; line-height: 1.5;"><strong style="color: #003DA5;">${PORTAL_FEATURES.calendar}</strong> - ${PORTAL_FEATURES.calendarDescription}</li>
+              <li style="margin-bottom: 8px; font-size: 16px; line-height: 1.5;"><strong style="color: #003DA5;">${PORTAL_FEATURES.ruleModifications}</strong> - ${PORTAL_FEATURES.ruleModificationsDescription}</li>
             </ul>
             <p style="text-align: center; margin: 24px 0;">
               <a href="${inviteUrl}" style="display: inline-block; padding: 14px 28px; min-height: 44px; background-color: #F97316; color: #ffffff !important; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px;">Accept Invitation</a>
             </p>
-            <p style="margin: 0 0 16px 0; font-size: 16px; line-height: 1.6;">If you have any questions about your membership, please don't hesitate to <a href="${siteUrl}/contact?category=membership" style="color: #F97316;">contact us</a>.</p>
+            <p style="margin: 0 0 16px 0; font-size: 16px; line-height: 1.6;">If you have any questions about your membership, please don't hesitate to <a href="${getContactUrl('membership')}" style="color: #F97316;">contact us</a>.</p>
             <p style="margin: 0 0 16px 0; font-size: 16px; line-height: 1.6;">We look forward to having you on our team!</p>
-            <p style="margin: 0; font-size: 16px; line-height: 1.6;">Best regards,<br><strong style="color: #003DA5; font-weight: 600;">CBOA Executive Board</strong></p>
+            <p style="margin: 0; font-size: 16px; line-height: 1.6;">Best regards,<br><strong style="color: #003DA5; font-weight: 600;">${ORG_SHORT_NAME} Executive Board</strong></p>
           </td>
         </tr>
         <!-- Footer -->
         <tr>
           <td style="background-color: #1F2937; color: #D1D5DB; padding: 30px 20px; text-align: center; font-size: 14px; line-height: 1.7; border-top: 3px solid #F97316;">
-            <p style="margin: 0 0 10px 0; font-weight: 600; color: #ffffff;">Calgary Basketball Officials Association</p>
-            <p style="margin: 0 0 15px 0;">Calgary, Alberta, Canada</p>
+            <p style="margin: 0 0 10px 0; font-weight: 600; color: #ffffff;">${ORG_NAME}</p>
+            <p style="margin: 0 0 15px 0;">${ORG_LOCATION}</p>
             <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin: 20px auto;">
               <tr>
-                <td style="padding: 0 8px;"><a href="${siteUrl}" style="color: #F97316; text-decoration: none; font-size: 14px;">Website</a></td>
-                <td style="padding: 0 8px;"><a href="${siteUrl}/portal" style="color: #F97316; text-decoration: none; font-size: 14px;">Member Portal</a></td>
-                <td style="padding: 0 8px;"><a href="${siteUrl}/contact?category=membership" style="color: #F97316; text-decoration: none; font-size: 14px;">Contact Us</a></td>
+                <td style="padding: 0 8px;"><a href="${SITE_URL}" style="color: #F97316; text-decoration: none; font-size: 14px;">Website</a></td>
+                <td style="padding: 0 8px;"><a href="${getPortalUrl()}" style="color: #F97316; text-decoration: none; font-size: 14px;">Member Portal</a></td>
+                <td style="padding: 0 8px;"><a href="${getContactUrl('membership')}" style="color: #F97316; text-decoration: none; font-size: 14px;">Contact Us</a></td>
               </tr>
             </table>
-            <p style="margin: 20px 0 0 0; font-size: 13px; color: #9ca3af;">&copy; 2025 Calgary Basketball Officials Association. All rights reserved.</p>
+            <p style="margin: 20px 0 0 0; font-size: 13px; color: #9ca3af;">&copy; ${getCopyrightYear()} ${ORG_NAME}. All rights reserved.</p>
           </td>
         </tr>
       </table>
@@ -163,10 +174,6 @@ const handler: Handler = async (event) => {
     return { statusCode: 401, headers, body: JSON.stringify({ error: 'Unauthorized' }) }
   }
 
-  const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
-    auth: { autoRefreshToken: false, persistSession: false }
-  })
-
   try {
     const body = JSON.parse(event.body || '{}')
     const { users, dryRun = false } = body as { users: UserToEmail[], dryRun?: boolean }
@@ -197,7 +204,7 @@ const handler: Handler = async (event) => {
 
     const supabaseUserMap = new Map(allSupabaseUsers.map(u => [u.email?.toLowerCase(), u]))
     const results: { email: string; status: string; error?: string }[] = []
-    const siteUrl = 'https://cboa.ca'
+    const siteUrl = SITE_URL
 
     // Get Graph API access token (only if not dry run)
     let accessToken: string | null = null
@@ -244,7 +251,7 @@ const handler: Handler = async (event) => {
         const emailHtml = generateInviteEmailHtml(inviteLink, user.name)
 
         // Send via Microsoft Graph
-        await sendEmailViaGraph(accessToken!, user.email, "You're Invited to Join CBOA!", emailHtml)
+        await sendEmailViaGraph(accessToken!, user.email, EMAIL_SUBJECTS.invite, emailHtml)
         results.push({ email: user.email, status: 'sent' })
 
         // Rate limiting

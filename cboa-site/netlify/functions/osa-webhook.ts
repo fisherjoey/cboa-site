@@ -2,15 +2,18 @@ import { Handler, HandlerEvent } from '@netlify/functions'
 import { generateCBOAEmailTemplate } from '../../lib/emailTemplate'
 import { Logger } from '../../lib/logger'
 import { osaExcelSync, OSASubmissionData } from '../../lib/excel-sync'
-import { createClient } from '@supabase/supabase-js'
+import { supabase } from './_shared/handler'
 import * as fs from 'fs'
 import * as path from 'path'
 import { v4 as uuidv4 } from 'uuid'
-
-// Supabase client for database operations
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
-const supabase = createClient(supabaseUrl, supabaseServiceKey)
+import {
+  ORG_NAME,
+  ORG_SHORT_NAME,
+  EMAIL_SCHEDULER,
+  EMAIL_TREASURER,
+  SITE_URL,
+  getContactUrl,
+} from '../../lib/siteConfig'
 
 /**
  * OSA (Officiating Services Agreement) Form Webhook
@@ -203,7 +206,7 @@ async function sendEmail(
   attachments?: Array<{ name: string; content: string; contentType: string }>,
   cc?: string[]
 ): Promise<void> {
-  const senderEmail = process.env.OSA_SENDER_EMAIL || 'scheduler@cboa.ca'
+  const senderEmail = process.env.OSA_SENDER_EMAIL || EMAIL_SCHEDULER
   const graphEndpoint = `https://graph.microsoft.com/v1.0/users/${senderEmail}/sendMail`
 
   const emailMessage: any = {
@@ -407,7 +410,7 @@ function generateMultiEventClientEmailContent(data: MultiEventFormData): string 
   return `
     <h1>Booking Confirmation</h1>
 
-    <p>Thank you for booking ${eventSummary} with the Calgary Basketball Officials Association.</p>
+    <p>Thank you for booking ${eventSummary} with ${ORG_NAME}.</p>
 
     <h2>Organization Information</h2>
     <table style="width: 100%; border-collapse: collapse; margin: 16px 0; background-color: #f9fafb; border: 2px solid #e5e7eb;">
@@ -429,17 +432,17 @@ function generateMultiEventClientEmailContent(data: MultiEventFormData): string 
 
     ${data.disciplinePolicy.toLowerCase().includes('own') ? `
     <p style="background-color: #FEF3C7; border-left: 4px solid #F59E0B; padding: 12px 16px; margin: 16px 0;">
-      <strong>Important:</strong> Since you are using your own document to address disciplinary issues, please provide a copy to the CBOA Vice President prior to the start of your event.
+      <strong>Important:</strong> Since you are using your own document to address disciplinary issues, please provide a copy to the ${ORG_SHORT_NAME} Vice President prior to the start of your event.
     </p>
     ` : ''}
 
-    <p>The CBOA Scheduling & Assigning team will review your submission and be in touch if any additional information is needed. If you were unable to provide all game dates or details in the form, please <a href="https://cboa.ca/contact?category=scheduling">contact our scheduling team</a> with your complete schedule.</p>
+    <p>The ${ORG_SHORT_NAME} Scheduling & Assigning team will review your submission and be in touch if any additional information is needed. If you were unable to provide all game dates or details in the form, please <a href="${getContactUrl('scheduling')}">contact our scheduling team</a> with your complete schedule.</p>
 
     <h2>Attached Documents</h2>
     <p>For your reference, we have attached:</p>
     <ul>
-      <li>CBOA Fee Schedule (Sept 2025 - Aug 2028)</li>
-      <li>CBOA Invoice Policy</li>
+      <li>${ORG_SHORT_NAME} Fee Schedule (Sept 2025 - Aug 2028)</li>
+      <li>${ORG_SHORT_NAME} Invoice Policy</li>
       ${data.events[0]?.eventType === 'League' ? `
       <li>League Scheduling Template (Excel) - use if you have Microsoft Excel</li>
       <li>League Scheduling Template (Google Sheets) - use if you prefer Google Sheets</li>
@@ -451,20 +454,20 @@ function generateMultiEventClientEmailContent(data: MultiEventFormData): string 
     </ul>
     ${data.events[0]?.eventType === 'League' || data.events[0]?.eventType === 'Tournament' ? `
     <p style="background-color: #EFF6FF; border-left: 4px solid #3B82F6; padding: 12px 16px; margin: 16px 0;">
-      <strong>Scheduling Template:</strong> Please fill out the attached scheduling template with your game schedule details and submit it through our <a href="https://cboa.ca/contact?category=scheduling">contact form</a> (select "Officiating Services / Booking"). We've included two versions - choose the Excel version if using Microsoft Excel, or the Google Sheets version if you'll be uploading to Google Drive.
+      <strong>Scheduling Template:</strong> Please fill out the attached scheduling template with your game schedule details and submit it through our <a href="${getContactUrl('scheduling')}">contact form</a> (select "Officiating Services / Booking"). We've included two versions - choose the Excel version if using Microsoft Excel, or the Google Sheets version if you'll be uploading to Google Drive.
     </p>
     ` : ''}
 
     <h2>Payment Information</h2>
-    <p>Payments can be made by cheque or e-transfer. <a href="https://cboa.ca/contact?category=billing">Contact our billing team</a> (select "Billing / Payments") for payment details.</p>
+    <p>Payments can be made by cheque or e-transfer. <a href="${getContactUrl('billing')}">Contact our billing team</a> (select "Billing / Payments") for payment details.</p>
 
-    <p>Thank you for booking your officials with the Calgary Basketball Officials Association. We look forward to providing our trained and certified referees to make your ${eventCount === 1 ? 'event' : 'events'} a success.</p>
+    <p>Thank you for booking your officials with ${ORG_NAME}. We look forward to providing our trained and certified referees to make your ${eventCount === 1 ? 'event' : 'events'} a success.</p>
 
     <p>Best Regards,<br>
-    <strong>Calgary Basketball Officials Association</strong><br>
+    <strong>${ORG_NAME}</strong><br>
     Scheduling Group<br>
-    <a href="https://cboa.ca/contact?category=scheduling">Contact us</a><br>
-    <a href="https://www.cboa.ca">www.cboa.ca</a></p>
+    <a href="${getContactUrl('scheduling')}">Contact us</a><br>
+    <a href="${SITE_URL}">${SITE_URL.replace('https://', 'www.')}</a></p>
   `
 }
 
@@ -811,20 +814,20 @@ export const handler: Handler = async (event: HandlerEvent) => {
     const accessToken = await getAccessToken()
 
     // Load attachments for client email
-    const feeSchedulePdf = await loadFileAsBase64('CBOA-Fee-Schedule-2025-2028.pdf')
-    const invoicePolicyPdf = await loadFileAsBase64('CBOA-Invoice-Policy.pdf')
+    const feeSchedulePdf = await loadFileAsBase64('Fee-Schedule.pdf')
+    const invoicePolicyPdf = await loadFileAsBase64('Invoice-Policy.pdf')
 
     const attachments: Array<{ name: string; content: string; contentType: string }> = []
     if (feeSchedulePdf) {
       attachments.push({
-        name: 'CBOA Fee Schedule 2025-2028.pdf',
+        name: 'Fee Schedule.pdf',
         content: feeSchedulePdf,
         contentType: 'application/pdf'
       })
     }
     if (invoicePolicyPdf) {
       attachments.push({
-        name: 'CBOA Invoice Policy.pdf',
+        name: 'Invoice Policy.pdf',
         content: invoicePolicyPdf,
         contentType: 'application/pdf'
       })
@@ -837,35 +840,35 @@ export const handler: Handler = async (event: HandlerEvent) => {
 
     // Add scheduling templates based on event type (League or Tournament only - not Exhibition)
     if (primaryEventType === 'League') {
-      const leagueExcel = await loadFileAsBase64('CBOA-League-Scheduling-Template.xlsx')
-      const leagueGoogle = await loadFileAsBase64('CBOA-League-Scheduling-Template-Google.xlsx')
+      const leagueExcel = await loadFileAsBase64('League-Scheduling-Template.xlsx')
+      const leagueGoogle = await loadFileAsBase64('League-Scheduling-Template-Google.xlsx')
       if (leagueExcel) {
         attachments.push({
-          name: 'CBOA League Scheduling Template (Excel).xlsx',
+          name: 'League Scheduling Template (Excel).xlsx',
           content: leagueExcel,
           contentType: getContentType('xlsx')
         })
       }
       if (leagueGoogle) {
         attachments.push({
-          name: 'CBOA League Scheduling Template (Google Sheets).xlsx',
+          name: 'League Scheduling Template (Google Sheets).xlsx',
           content: leagueGoogle,
           contentType: getContentType('xlsx')
         })
       }
     } else if (primaryEventType === 'Tournament') {
-      const tournamentExcel = await loadFileAsBase64('CBOA-Tournament-Scheduling-Template.xlsx')
-      const tournamentGoogle = await loadFileAsBase64('CBOA-Tournament-Scheduling-Template-Google.xlsx')
+      const tournamentExcel = await loadFileAsBase64('Tournament-Scheduling-Template.xlsx')
+      const tournamentGoogle = await loadFileAsBase64('Tournament-Scheduling-Template-Google.xlsx')
       if (tournamentExcel) {
         attachments.push({
-          name: 'CBOA Tournament Scheduling Template (Excel).xlsx',
+          name: 'Tournament Scheduling Template (Excel).xlsx',
           content: tournamentExcel,
           contentType: getContentType('xlsx')
         })
       }
       if (tournamentGoogle) {
         attachments.push({
-          name: 'CBOA Tournament Scheduling Template (Google Sheets).xlsx',
+          name: 'Tournament Scheduling Template (Google Sheets).xlsx',
           content: tournamentGoogle,
           contentType: getContentType('xlsx')
         })
@@ -879,7 +882,7 @@ export const handler: Handler = async (event: HandlerEvent) => {
       president: false
     }
 
-    const schedulerEmail = process.env.OSA_SCHEDULER_EMAIL || 'scheduler@cboa.ca'
+    const schedulerEmail = process.env.OSA_SCHEDULER_EMAIL || EMAIL_SCHEDULER
 
     // 1. Send email to CLIENT (with attachments, CC scheduler) - ONE email for all events
     try {
@@ -887,7 +890,7 @@ export const handler: Handler = async (event: HandlerEvent) => {
       const clientHtml = generateCBOAEmailTemplate({
         subject: `Confirmation of booking - ${formData.organizationName} (${eventCount} event${eventCount > 1 ? 's' : ''})`,
         content: clientContent,
-        previewText: `Thank you for booking ${eventCount} event${eventCount > 1 ? 's' : ''} with CBOA`,
+        previewText: `Thank you for booking ${eventCount} event${eventCount > 1 ? 's' : ''} with ${ORG_SHORT_NAME}`,
         external: true
       })
 
@@ -927,7 +930,7 @@ export const handler: Handler = async (event: HandlerEvent) => {
     }
 
     // 3. Send email to TREASURER - only if billing email is NEW (not already in database)
-    const treasurerEmail = process.env.OSA_TREASURER_EMAIL || 'treasurer@cboa.ca'
+    const treasurerEmail = process.env.OSA_TREASURER_EMAIL || EMAIL_TREASURER
 
     // Check if billing email already exists in the database
     let billingEmailExists = false

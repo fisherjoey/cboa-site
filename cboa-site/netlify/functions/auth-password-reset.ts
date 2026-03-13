@@ -1,18 +1,22 @@
 import { Handler } from '@netlify/functions'
-import { createClient } from '@supabase/supabase-js'
+import { supabase as supabaseAdmin } from './_shared/handler'
 import { Logger } from '../../lib/logger'
 import { recordPasswordResetEmail } from '../../lib/emailHistory'
+import {
+  EMAIL_NO_REPLY,
+  ORG_NAME,
+  ORG_SHORT_NAME,
+  ORG_TAGLINE,
+  ORG_LOCATION,
+  ORG_LOGO_URL,
+  SITE_URL,
+  getContactUrl,
+  getPortalUrl,
+  getCopyrightYear,
+  EMAIL_SUBJECTS,
+} from '../../lib/siteConfig'
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
-const siteUrl = process.env.URL || process.env.DEPLOY_PRIME_URL || 'https://cboa.ca'
-
-const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
-  auth: {
-    autoRefreshToken: false,
-    persistSession: false
-  }
-})
+const siteUrl = SITE_URL
 
 // Get Microsoft Graph access token
 async function getMicrosoftAccessToken(): Promise<string> {
@@ -47,7 +51,7 @@ async function sendEmailViaMicrosoftGraph(
   subject: string,
   htmlContent: string
 ): Promise<void> {
-  const senderEmail = 'no-reply@cboa.ca'
+  const senderEmail = EMAIL_NO_REPLY
   const graphEndpoint = `https://graph.microsoft.com/v1.0/users/${senderEmail}/sendMail`
 
   const emailMessage = {
@@ -91,15 +95,15 @@ function generatePasswordResetEmailHtml(resetUrl: string, email: string): string
       <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="max-width: 600px; width: 100%; margin: 0 auto; background-color: #ffffff;" align="center">
         <tr>
           <td style="background-color: #1f2937; padding: 24px 20px; border-bottom: 3px solid #F97316; text-align: center;">
-            <img src="https://i.imgur.com/BQe360J.png" alt="CBOA Logo" style="max-width: 70px; height: auto; display: inline-block; margin-bottom: 12px;">
-            <h1 style="color: #ffffff; margin: 0 0 4px 0; font-size: 18px; font-weight: 700;">Calgary Basketball Officials Association</h1>
-            <p style="color: #ffffff; margin: 0; font-size: 14px; opacity: 0.95;">Excellence in Basketball Officiating</p>
+            <img src="${ORG_LOGO_URL}" alt="Logo" style="max-width: 70px; height: auto; display: inline-block; margin-bottom: 12px;">
+            <h1 style="color: #ffffff; margin: 0 0 4px 0; font-size: 18px; font-weight: 700;">${ORG_NAME}</h1>
+            <p style="color: #ffffff; margin: 0; font-size: 14px; opacity: 0.95;">${ORG_TAGLINE}</p>
           </td>
         </tr>
         <tr>
           <td style="padding: 30px 20px; color: #333333; font-size: 16px; line-height: 1.6;">
             <h1 style="color: #003DA5; font-size: 24px; margin-top: 0; margin-bottom: 16px; font-weight: 700;">Reset Your Password</h1>
-            <p style="margin: 0 0 16px 0;">We received a request to reset the password for your <strong style="color: #003DA5;">CBOA Member Portal</strong> account associated with <strong style="color: #003DA5;">${email}</strong>.</p>
+            <p style="margin: 0 0 16px 0;">We received a request to reset the password for your <strong style="color: #003DA5;">${ORG_SHORT_NAME} Member Portal</strong> account associated with <strong style="color: #003DA5;">${email}</strong>.</p>
             <p style="margin: 0 0 16px 0;">Click the button below to set a new password:</p>
             <p style="text-align: center; margin: 24px 0;">
               <a href="${resetUrl}" style="display: inline-block; padding: 14px 28px; background-color: #F97316; color: #ffffff !important; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px;">Reset Password</a>
@@ -109,14 +113,14 @@ function generatePasswordResetEmailHtml(resetUrl: string, email: string): string
               <p style="margin: 0; font-size: 14px; color: #92400E;"><strong>Security Notice:</strong> If you didn't request a password reset, please ignore this email.</p>
             </div>
             <p style="margin: 0 0 16px 0; font-size: 14px; color: #6b7280;">If the button doesn't work, copy this link: ${resetUrl}</p>
-            <p style="margin: 0;">Best regards,<br><strong style="color: #003DA5;">CBOA Executive Board</strong></p>
+            <p style="margin: 0;">Best regards,<br><strong style="color: #003DA5;">${ORG_SHORT_NAME} Executive Board</strong></p>
           </td>
         </tr>
         <tr>
           <td style="background-color: #1F2937; color: #D1D5DB; padding: 30px 20px; text-align: center; font-size: 14px; border-top: 3px solid #F97316;">
-            <p style="margin: 0 0 10px 0; font-weight: 600; color: #ffffff;">Calgary Basketball Officials Association</p>
-            <p style="margin: 0 0 15px 0;">Calgary, Alberta, Canada</p>
-            <p style="margin: 0; font-size: 13px; color: #9ca3af;">&copy; 2025 CBOA. All rights reserved.</p>
+            <p style="margin: 0 0 10px 0; font-weight: 600; color: #ffffff;">${ORG_NAME}</p>
+            <p style="margin: 0 0 15px 0;">${ORG_LOCATION}</p>
+            <p style="margin: 0; font-size: 13px; color: #9ca3af;">&copy; ${getCopyrightYear()} ${ORG_SHORT_NAME}. All rights reserved.</p>
           </td>
         </tr>
       </table>
@@ -212,7 +216,7 @@ export const handler: Handler = async (event) => {
     await sendEmailViaMicrosoftGraph(
       msToken,
       email,
-      'Reset Your CBOA Portal Password',
+      EMAIL_SUBJECTS.passwordReset,
       emailHtml
     )
 
