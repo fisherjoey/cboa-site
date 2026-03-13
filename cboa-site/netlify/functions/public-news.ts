@@ -1,36 +1,16 @@
-import { Handler } from '@netlify/functions'
-import { createClient } from '@supabase/supabase-js'
-import { Logger } from '../../lib/logger'
+import { createHandler, supabase } from './_shared/handler'
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
-const supabase = createClient(supabaseUrl, supabaseServiceKey)
-
-const TABLE_NAME = 'public_news'
-
-export const handler: Handler = async (event) => {
-  const logger = Logger.fromEvent('public-news', event)
-
-  const headers = {
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Headers': 'Content-Type',
-    'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS'
-  }
-
-  // Handle CORS preflight
-  if (event.httpMethod === 'OPTIONS') {
-    return { statusCode: 200, headers, body: '' }
-  }
-
-  try {
+export const handler = createHandler({
+  name: 'public-news',
+  auth: { GET: 'public', POST: 'admin_or_executive', PUT: 'admin_or_executive', DELETE: 'admin_or_executive' },
+  handler: async ({ event, logger, user }) => {
     switch (event.httpMethod) {
       case 'GET': {
         const { slug } = event.queryStringParameters || {}
 
-        // Get single item by slug
         if (slug) {
           const { data, error } = await supabase
-            .from(TABLE_NAME)
+            .from('public_news')
             .select('*')
             .eq('slug', slug)
             .single()
@@ -38,25 +18,20 @@ export const handler: Handler = async (event) => {
           if (error) throw error
 
           if (!data) {
-            return {
-              statusCode: 404,
-              headers,
-              body: JSON.stringify({ error: 'News article not found' })
-            }
+            return { statusCode: 404, body: JSON.stringify({ error: 'News article not found' }) }
           }
 
-          return { statusCode: 200, headers, body: JSON.stringify(data) }
+          return { statusCode: 200, body: JSON.stringify(data) }
         }
 
-        // Get all items
         const { data, error } = await supabase
-          .from(TABLE_NAME)
+          .from('public_news')
           .select('*')
           .order('priority', { ascending: false })
           .order('published_date', { ascending: false })
 
         if (error) throw error
-        return { statusCode: 200, headers, body: JSON.stringify(data) }
+        return { statusCode: 200, body: JSON.stringify(data) }
       }
 
       case 'POST': {
@@ -65,19 +40,15 @@ export const handler: Handler = async (event) => {
           metadata: { title: body.title, slug: body.slug, author: body.author }
         })
 
-        // Validate required fields
         if (!body.title || !body.slug || !body.published_date || !body.author || !body.excerpt || !body.body) {
           return {
             statusCode: 400,
-            headers,
-            body: JSON.stringify({
-              error: 'Missing required fields: title, slug, published_date, author, excerpt, body'
-            })
+            body: JSON.stringify({ error: 'Missing required fields: title, slug, published_date, author, excerpt, body' })
           }
         }
 
         const { data, error } = await supabase
-          .from(TABLE_NAME)
+          .from('public_news')
           .insert([body])
           .select()
           .single()
@@ -85,13 +56,13 @@ export const handler: Handler = async (event) => {
         if (error) throw error
 
         await logger.audit('CREATE', 'news', data.id, {
-          actorId: 'system',
-          actorEmail: 'system',
+          actorId: user!.id,
+          actorEmail: user!.email,
           newValues: { title: body.title, slug: body.slug },
           description: `Created news article: ${body.title}`
         })
 
-        return { statusCode: 201, headers, body: JSON.stringify(data) }
+        return { statusCode: 201, body: JSON.stringify(data) }
       }
 
       case 'PUT': {
@@ -99,11 +70,7 @@ export const handler: Handler = async (event) => {
         const { id, ...updates } = body
 
         if (!id) {
-          return {
-            statusCode: 400,
-            headers,
-            body: JSON.stringify({ error: 'ID is required for updates' })
-          }
+          return { statusCode: 400, body: JSON.stringify({ error: 'ID is required for updates' }) }
         }
 
         logger.info('crud', 'update_public_news', `Updating news article ${id}`, {
@@ -111,7 +78,7 @@ export const handler: Handler = async (event) => {
         })
 
         const { data, error } = await supabase
-          .from(TABLE_NAME)
+          .from('public_news')
           .update(updates)
           .eq('id', id)
           .select()
@@ -120,59 +87,42 @@ export const handler: Handler = async (event) => {
         if (error) throw error
 
         await logger.audit('UPDATE', 'news', id, {
-          actorId: 'system',
-          actorEmail: 'system',
+          actorId: user!.id,
+          actorEmail: user!.email,
           newValues: updates,
           description: `Updated news article ${id}`
         })
 
-        return { statusCode: 200, headers, body: JSON.stringify(data) }
+        return { statusCode: 200, body: JSON.stringify(data) }
       }
 
       case 'DELETE': {
         const id = event.queryStringParameters?.id
 
         if (!id) {
-          return {
-            statusCode: 400,
-            headers,
-            body: JSON.stringify({ error: 'ID is required for deletion' })
-          }
+          return { statusCode: 400, body: JSON.stringify({ error: 'ID is required for deletion' }) }
         }
 
         logger.info('crud', 'delete_public_news', `Deleting news article ${id}`, { metadata: { id } })
 
         const { error } = await supabase
-          .from(TABLE_NAME)
+          .from('public_news')
           .delete()
           .eq('id', id)
 
         if (error) throw error
 
         await logger.audit('DELETE', 'news', id, {
-          actorId: 'system',
-          actorEmail: 'system',
+          actorId: user!.id,
+          actorEmail: user!.email,
           description: `Deleted news article ${id}`
         })
 
-        return { statusCode: 204, headers, body: '' }
+        return { statusCode: 204, body: '' }
       }
 
       default:
-        return {
-          statusCode: 405,
-          headers,
-          body: JSON.stringify({ error: 'Method not allowed' })
-        }
-    }
-  } catch (error) {
-    logger.error('crud', 'public_news_api_error', 'Public news API error', error instanceof Error ? error : new Error(String(error)))
-    return {
-      statusCode: 500,
-      headers,
-      body: JSON.stringify({
-        error: 'Internal server error'
-      })
+        return { statusCode: 405, body: JSON.stringify({ error: 'Method not allowed' }) }
     }
   }
-}
+})

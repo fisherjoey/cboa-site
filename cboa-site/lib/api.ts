@@ -17,6 +17,7 @@ import {
   CACHE_TTL,
   type CacheKey
 } from './cache'
+import { supabase } from './supabase'
 
 // Use /api route which redirects to /.netlify/functions (configured in netlify.toml)
 // In development, use NEXT_PUBLIC_API_URL to point to the Netlify proxy
@@ -29,13 +30,29 @@ const USE_MOCK_DATA = process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true' || proces
 // Helper to check if we're in browser (for cache)
 const isBrowser = () => typeof window !== 'undefined'
 
-// Enhanced fetch with better error handling and mock data fallback
+// Get Supabase auth token for authenticated API calls
+async function getAuthHeaders(): Promise<Record<string, string>> {
+  if (!isBrowser()) return {}
+  try {
+    const { data: { session } } = await supabase.auth.getSession()
+    if (session?.access_token) {
+      return { Authorization: `Bearer ${session.access_token}` }
+    }
+  } catch {
+    // Not logged in — no auth header
+  }
+  return {}
+}
+
+// Enhanced fetch with auth token injection and error handling
 async function apiFetch(url: string, options?: RequestInit): Promise<Response> {
   try {
+    const authHeaders = await getAuthHeaders()
     const response = await fetch(url, {
       ...options,
       headers: {
         'Content-Type': 'application/json',
+        ...authHeaders,
         ...options?.headers
       }
     })

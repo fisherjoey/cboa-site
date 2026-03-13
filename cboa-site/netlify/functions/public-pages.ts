@@ -1,34 +1,16 @@
-import { Handler } from '@netlify/functions'
-import { createClient } from '@supabase/supabase-js'
-import { Logger } from '../../lib/logger'
+import { createHandler, supabase } from './_shared/handler'
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
-const supabase = createClient(supabaseUrl, supabaseServiceKey)
-
-const TABLE_NAME = 'public_pages'
-
-export const handler: Handler = async (event) => {
-  const logger = Logger.fromEvent('public-pages', event)
-
-  const headers = {
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Headers': 'Content-Type',
-    'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS'
-  }
-
-  if (event.httpMethod === 'OPTIONS') {
-    return { statusCode: 200, headers, body: '' }
-  }
-
-  try {
+export const handler = createHandler({
+  name: 'public-pages',
+  auth: { GET: 'public', POST: 'admin', PUT: 'admin', DELETE: 'admin' },
+  handler: async ({ event, logger, user }) => {
     switch (event.httpMethod) {
       case 'GET': {
         const { page_name } = event.queryStringParameters || {}
 
         if (page_name) {
           const { data, error } = await supabase
-            .from(TABLE_NAME)
+            .from('public_pages')
             .select('*')
             .eq('page_name', page_name)
             .eq('active', true)
@@ -37,23 +19,19 @@ export const handler: Handler = async (event) => {
           if (error) throw error
 
           if (!data) {
-            return {
-              statusCode: 404,
-              headers,
-              body: JSON.stringify({ error: 'Page not found' })
-            }
+            return { statusCode: 404, body: JSON.stringify({ error: 'Page not found' }) }
           }
 
-          return { statusCode: 200, headers, body: JSON.stringify(data) }
+          return { statusCode: 200, body: JSON.stringify(data) }
         }
 
         const { data, error } = await supabase
-          .from(TABLE_NAME)
+          .from('public_pages')
           .select('*')
           .order('page_name', { ascending: true })
 
         if (error) throw error
-        return { statusCode: 200, headers, body: JSON.stringify(data) }
+        return { statusCode: 200, body: JSON.stringify(data) }
       }
 
       case 'POST': {
@@ -65,15 +43,12 @@ export const handler: Handler = async (event) => {
         if (!body.page_name || !body.title || !body.content) {
           return {
             statusCode: 400,
-            headers,
-            body: JSON.stringify({
-              error: 'Missing required fields: page_name, title, content'
-            })
+            body: JSON.stringify({ error: 'Missing required fields: page_name, title, content' })
           }
         }
 
         const { data, error } = await supabase
-          .from(TABLE_NAME)
+          .from('public_pages')
           .insert([body])
           .select()
           .single()
@@ -81,13 +56,13 @@ export const handler: Handler = async (event) => {
         if (error) throw error
 
         await logger.audit('CREATE', 'page', data.id, {
-          actorId: 'system',
-          actorEmail: 'system',
+          actorId: user!.id,
+          actorEmail: user!.email,
           newValues: { page_name: body.page_name, title: body.title },
           description: `Created page: ${body.page_name}`
         })
 
-        return { statusCode: 201, headers, body: JSON.stringify(data) }
+        return { statusCode: 201, body: JSON.stringify(data) }
       }
 
       case 'PUT': {
@@ -95,11 +70,7 @@ export const handler: Handler = async (event) => {
         const { id, ...updates } = body
 
         if (!id) {
-          return {
-            statusCode: 400,
-            headers,
-            body: JSON.stringify({ error: 'ID is required for updates' })
-          }
+          return { statusCode: 400, body: JSON.stringify({ error: 'ID is required for updates' }) }
         }
 
         logger.info('crud', 'update_public_page', `Updating page ${id}`, {
@@ -107,7 +78,7 @@ export const handler: Handler = async (event) => {
         })
 
         const { data, error } = await supabase
-          .from(TABLE_NAME)
+          .from('public_pages')
           .update(updates)
           .eq('id', id)
           .select()
@@ -116,59 +87,42 @@ export const handler: Handler = async (event) => {
         if (error) throw error
 
         await logger.audit('UPDATE', 'page', id, {
-          actorId: 'system',
-          actorEmail: 'system',
+          actorId: user!.id,
+          actorEmail: user!.email,
           newValues: updates,
           description: `Updated page ${id}`
         })
 
-        return { statusCode: 200, headers, body: JSON.stringify(data) }
+        return { statusCode: 200, body: JSON.stringify(data) }
       }
 
       case 'DELETE': {
         const id = event.queryStringParameters?.id
 
         if (!id) {
-          return {
-            statusCode: 400,
-            headers,
-            body: JSON.stringify({ error: 'ID is required for deletion' })
-          }
+          return { statusCode: 400, body: JSON.stringify({ error: 'ID is required for deletion' }) }
         }
 
         logger.info('crud', 'delete_public_page', `Deleting page ${id}`, { metadata: { id } })
 
         const { error } = await supabase
-          .from(TABLE_NAME)
+          .from('public_pages')
           .delete()
           .eq('id', id)
 
         if (error) throw error
 
         await logger.audit('DELETE', 'page', id, {
-          actorId: 'system',
-          actorEmail: 'system',
+          actorId: user!.id,
+          actorEmail: user!.email,
           description: `Deleted page ${id}`
         })
 
-        return { statusCode: 204, headers, body: '' }
+        return { statusCode: 204, body: '' }
       }
 
       default:
-        return {
-          statusCode: 405,
-          headers,
-          body: JSON.stringify({ error: 'Method not allowed' })
-        }
-    }
-  } catch (error) {
-    logger.error('crud', 'public_pages_api_error', 'Public pages API error', error instanceof Error ? error : new Error(String(error)))
-    return {
-      statusCode: 500,
-      headers,
-      body: JSON.stringify({
-        error: 'Internal server error'
-      })
+        return { statusCode: 405, body: JSON.stringify({ error: 'Method not allowed' }) }
     }
   }
-}
+})

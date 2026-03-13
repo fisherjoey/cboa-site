@@ -1,26 +1,9 @@
-import { Handler } from '@netlify/functions'
-import { createClient } from '@supabase/supabase-js'
-import { Logger } from '../../lib/logger'
+import { createHandler, supabase } from './_shared/handler'
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
-const supabase = createClient(supabaseUrl, supabaseServiceKey)
-
-export const handler: Handler = async (event) => {
-  const logger = Logger.fromEvent('newsletters', event)
-
-  const headers = {
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Headers': 'Content-Type',
-    'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS'
-  }
-
-  // Handle CORS preflight
-  if (event.httpMethod === 'OPTIONS') {
-    return { statusCode: 200, headers, body: '' }
-  }
-
-  try {
+export const handler = createHandler({
+  name: 'newsletters',
+  auth: { GET: 'authenticated', POST: 'admin_or_executive', PUT: 'admin_or_executive', DELETE: 'admin_or_executive' },
+  handler: async ({ event, logger, user }) => {
     switch (event.httpMethod) {
       case 'GET': {
         const { data, error } = await supabase
@@ -30,11 +13,7 @@ export const handler: Handler = async (event) => {
 
         if (error) throw error
 
-        return {
-          statusCode: 200,
-          headers,
-          body: JSON.stringify(data)
-        }
+        return { statusCode: 200, body: JSON.stringify(data) }
       }
 
       case 'POST': {
@@ -52,17 +31,13 @@ export const handler: Handler = async (event) => {
         if (error) throw error
 
         await logger.audit('CREATE', 'newsletter', data.id, {
-          actorId: 'system',
-          actorEmail: 'system',
+          actorId: user!.id,
+          actorEmail: user!.email,
           newValues: { title: body.title },
           description: `Created newsletter: ${body.title}`
         })
 
-        return {
-          statusCode: 201,
-          headers,
-          body: JSON.stringify(data)
-        }
+        return { statusCode: 201, body: JSON.stringify(data) }
       }
 
       case 'PUT': {
@@ -70,11 +45,7 @@ export const handler: Handler = async (event) => {
         const { id, ...updates } = body
 
         if (!id) {
-          return {
-            statusCode: 400,
-            headers,
-            body: JSON.stringify({ error: 'ID is required for updates' })
-          }
+          return { statusCode: 400, body: JSON.stringify({ error: 'ID is required for updates' }) }
         }
 
         logger.info('crud', 'update_newsletter', `Updating newsletter ${id}`, {
@@ -91,28 +62,20 @@ export const handler: Handler = async (event) => {
         if (error) throw error
 
         await logger.audit('UPDATE', 'newsletter', id, {
-          actorId: 'system',
-          actorEmail: 'system',
+          actorId: user!.id,
+          actorEmail: user!.email,
           newValues: updates,
           description: `Updated newsletter ${id}`
         })
 
-        return {
-          statusCode: 200,
-          headers,
-          body: JSON.stringify(data)
-        }
+        return { statusCode: 200, body: JSON.stringify(data) }
       }
 
       case 'DELETE': {
         const id = event.queryStringParameters?.id
 
         if (!id) {
-          return {
-            statusCode: 400,
-            headers,
-            body: JSON.stringify({ error: 'ID is required for deletion' })
-          }
+          return { statusCode: 400, body: JSON.stringify({ error: 'ID is required for deletion' }) }
         }
 
         logger.info('crud', 'delete_newsletter', `Deleting newsletter ${id}`, { metadata: { id } })
@@ -125,33 +88,16 @@ export const handler: Handler = async (event) => {
         if (error) throw error
 
         await logger.audit('DELETE', 'newsletter', id, {
-          actorId: 'system',
-          actorEmail: 'system',
+          actorId: user!.id,
+          actorEmail: user!.email,
           description: `Deleted newsletter ${id}`
         })
 
-        return {
-          statusCode: 204,
-          headers,
-          body: ''
-        }
+        return { statusCode: 204, body: '' }
       }
 
       default:
-        return {
-          statusCode: 405,
-          headers,
-          body: JSON.stringify({ error: 'Method not allowed' })
-        }
-    }
-  } catch (error) {
-    logger.error('crud', 'newsletter_api_error', 'Newsletter API error', error instanceof Error ? error : new Error(String(error)))
-    return {
-      statusCode: 500,
-      headers,
-      body: JSON.stringify({
-        error: 'Internal server error'
-      })
+        return { statusCode: 405, body: JSON.stringify({ error: 'Method not allowed' }) }
     }
   }
-}
+})

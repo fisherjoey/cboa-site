@@ -1,38 +1,20 @@
-import { Handler } from '@netlify/functions'
-import { createClient } from '@supabase/supabase-js'
-import { Logger } from '../../lib/logger'
+import { createHandler, supabase } from './_shared/handler'
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
-const supabase = createClient(supabaseUrl, supabaseServiceKey)
-
-export const handler: Handler = async (event) => {
-  const logger = Logger.fromEvent('calendar-events', event)
-
-  const headers = {
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Headers': 'Content-Type',
-    'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS'
-  }
-
-  // Handle CORS preflight
-  if (event.httpMethod === 'OPTIONS') {
-    return { statusCode: 200, headers, body: '' }
-  }
-
-  try {
+export const handler = createHandler({
+  name: 'calendar-events',
+  auth: { GET: 'authenticated', POST: 'admin_or_executive', PUT: 'admin_or_executive', DELETE: 'admin_or_executive' },
+  handler: async ({ event, logger, user }) => {
     switch (event.httpMethod) {
       case 'GET': {
         const { data, error } = await supabase
           .from('calendar_events')
           .select('*')
           .order('start_date', { ascending: true })
-        
+
         if (error) throw error
-        
+
         return {
           statusCode: 200,
-          headers,
           body: JSON.stringify(data)
         }
       }
@@ -51,15 +33,14 @@ export const handler: Handler = async (event) => {
         if (error) throw error
 
         await logger.audit('CREATE', 'calendar_event', data[0].id, {
-          actorId: 'system',
-          actorEmail: 'system',
+          actorId: user!.id,
+          actorEmail: user!.email,
           newValues: { title: body.title, start_date: body.start_date },
           description: `Created calendar event: ${body.title}`
         })
 
         return {
           statusCode: 201,
-          headers,
           body: JSON.stringify(data[0])
         }
       }
@@ -71,7 +52,6 @@ export const handler: Handler = async (event) => {
         if (!id) {
           return {
             statusCode: 400,
-            headers,
             body: JSON.stringify({ error: 'ID is required for update' })
           }
         }
@@ -89,15 +69,14 @@ export const handler: Handler = async (event) => {
         if (error) throw error
 
         await logger.audit('UPDATE', 'calendar_event', id, {
-          actorId: 'system',
-          actorEmail: 'system',
+          actorId: user!.id,
+          actorEmail: user!.email,
           newValues: updateData,
           description: `Updated calendar event ${id}`
         })
 
         return {
           statusCode: 200,
-          headers,
           body: JSON.stringify(data[0])
         }
       }
@@ -108,7 +87,6 @@ export const handler: Handler = async (event) => {
         if (!id) {
           return {
             statusCode: 400,
-            headers,
             body: JSON.stringify({ error: 'ID is required for deletion' })
           }
         }
@@ -123,31 +101,19 @@ export const handler: Handler = async (event) => {
         if (error) throw error
 
         await logger.audit('DELETE', 'calendar_event', id, {
-          actorId: 'system',
-          actorEmail: 'system',
+          actorId: user!.id,
+          actorEmail: user!.email,
           description: `Deleted calendar event ${id}`
         })
 
         return {
           statusCode: 204,
-          headers,
           body: ''
         }
       }
 
       default:
-        return {
-          statusCode: 405,
-          headers,
-          body: JSON.stringify({ error: 'Method not allowed' })
-        }
-    }
-  } catch (error) {
-    logger.error('crud', 'calendar_api_error', 'Calendar API error', error instanceof Error ? error : new Error(String(error)))
-    return {
-      statusCode: 500,
-      headers,
-      body: JSON.stringify({ error: 'Internal server error' })
+        return { statusCode: 405, body: JSON.stringify({ error: 'Method not allowed' }) }
     }
   }
-}
+})
