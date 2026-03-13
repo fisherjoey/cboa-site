@@ -1,7 +1,6 @@
 import { Handler, HandlerEvent, HandlerContext } from '@netlify/functions'
-import { getCorsHeaders } from './_shared/handler'
+import { getCorsHeaders, supabase } from './_shared/handler'
 import { checkRateLimit, getClientIp } from './_shared/rateLimit'
-import { createClient } from '@supabase/supabase-js'
 import { generateCBOAEmailTemplate } from '../../lib/emailTemplate'
 import { Logger } from '../../lib/logger'
 import { validateEmail } from '../../lib/emailValidation'
@@ -502,28 +501,23 @@ export const handler: Handler = async (
 
     // Save to contact_submissions table for admin tracking (fire-and-forget)
     try {
-      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-      const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY
-      if (supabaseUrl && supabaseKey) {
-        const supabase = createClient(supabaseUrl, supabaseKey)
-        supabase
-          .from('contact_submissions')
-          .insert({
-            sender_name: name,
-            sender_email: email,
-            category,
-            category_label: categoryLabel,
-            subject: emailSubject,
-            message,
-            recipient_email: recipientEmail,
-            attachment_urls: body.attachmentUrls && body.attachmentUrls.length > 0 ? body.attachmentUrls : null,
-          })
-          .then(({ error: insertError }) => {
-            if (insertError) {
-              console.error('[ContactForm] Failed to save submission:', insertError.message)
-            }
-          })
-      }
+      supabase
+        .from('contact_submissions')
+        .insert({
+          sender_name: name,
+          sender_email: email,
+          category,
+          category_label: categoryLabel,
+          subject: emailSubject,
+          message,
+          recipient_email: recipientEmail,
+          attachment_urls: body.attachmentUrls && body.attachmentUrls.length > 0 ? body.attachmentUrls : null,
+        })
+        .then(({ error: insertError }) => {
+          if (insertError) {
+            console.error('[ContactForm] Failed to save submission:', insertError.message)
+          }
+        })
     } catch (dbError) {
       console.error('[ContactForm] Failed to save submission:', dbError)
     }
