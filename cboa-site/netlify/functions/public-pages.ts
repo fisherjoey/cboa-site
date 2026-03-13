@@ -167,7 +167,7 @@ export const handler: Handler = async (event) => {
       statusCode: 500,
       headers,
       body: JSON.stringify({
-        error: error instanceof Error ? error.message : 'Internal server error'
+        error: 'Internal server error'
       })
     }
   }

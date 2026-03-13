@@ -1,4 +1,5 @@
 import { Handler } from '@netlify/functions';
+import { SITE_URL as CONFIG_SITE_URL } from '../../lib/siteConfig';
 
 /**
  * Netlify Function to resend invites to pending Identity users
@@ -12,7 +13,7 @@ import { Handler } from '@netlify/functions';
  * Requires admin role to execute.
  */
 
-const SITE_URL = process.env.URL || 'https://cboa.ca';
+const SITE_URL = CONFIG_SITE_URL;
 
 interface IdentityUser {
   id: string;
@@ -205,7 +206,7 @@ export const handler: Handler = async (event, context) => {
   } catch (error) {
     return {
       statusCode: 500,
-      body: JSON.stringify({ error: error instanceof Error ? error.message : 'Unknown error' })
+      body: JSON.stringify({ error: 'Internal server error' })
     };
   }
 };

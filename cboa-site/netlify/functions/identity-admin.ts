@@ -1,4 +1,5 @@
 import { Handler } from '@netlify/functions'
+import { SITE_URL as CONFIG_SITE_URL } from '../../lib/siteConfig'
 
 /**
  * Netlify Identity Admin API
@@ -11,7 +12,7 @@ import { Handler } from '@netlify/functions'
  * Requires admin role to execute.
  */
 
-const SITE_URL = process.env.URL || 'https://cboa.ca'
+const SITE_URL = CONFIG_SITE_URL
 
 interface IdentityUser {
   id: string
@@ -407,7 +408,7 @@ export const handler: Handler = async (event, context) => {
       statusCode: 500,
       headers,
       body: JSON.stringify({
-        error: error instanceof Error ? error.message : 'Internal server error'
+        error: 'Internal server error'
       })
     }
   }
