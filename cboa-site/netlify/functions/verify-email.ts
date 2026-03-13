@@ -1,5 +1,6 @@
 import { Handler } from '@netlify/functions'
 import { getCorsHeaders } from './_shared/handler'
+import { checkRateLimit, getClientIp } from './_shared/rateLimit'
 import { createHmac } from 'crypto'
 import { generateCBOAEmailTemplate } from '../../lib/emailTemplate'
 import { validateEmail } from '../../lib/emailValidation'
@@ -98,6 +99,12 @@ export const handler: Handler = async (event) => {
 
   if (event.httpMethod === 'OPTIONS') {
     return { statusCode: 200, headers, body: '' }
+  }
+
+  // Rate limit: 5 verification requests per minute per IP
+  const clientIp = getClientIp(event.headers)
+  if (checkRateLimit(clientIp, { maxRequests: 5, windowMs: 60_000, prefix: 'verify-email' })) {
+    return { statusCode: 429, headers, body: JSON.stringify({ error: 'Too many requests. Please try again later.' }) }
   }
 
   if (event.httpMethod !== 'POST') {

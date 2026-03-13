@@ -1,5 +1,6 @@
 import { Handler, HandlerEvent, HandlerContext } from '@netlify/functions'
 import { getCorsHeaders } from './_shared/handler'
+import { checkRateLimit, getClientIp } from './_shared/rateLimit'
 import { createClient } from '@supabase/supabase-js'
 import { generateCBOAEmailTemplate } from '../../lib/emailTemplate'
 import { Logger } from '../../lib/logger'
@@ -137,6 +138,12 @@ export const handler: Handler = async (
 
   if (event.httpMethod === 'OPTIONS') {
     return { statusCode: 200, headers, body: '' }
+  }
+
+  // Rate limit: 5 submissions per minute per IP
+  const clientIp = getClientIp(event.headers)
+  if (checkRateLimit(clientIp, { maxRequests: 5, windowMs: 60_000, prefix: 'contact' })) {
+    return { statusCode: 429, headers, body: JSON.stringify({ error: 'Too many requests. Please try again later.' }) }
   }
 
   if (event.httpMethod !== 'POST') {

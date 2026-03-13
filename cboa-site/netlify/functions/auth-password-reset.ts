@@ -1,5 +1,6 @@
 import { Handler } from '@netlify/functions'
 import { supabase as supabaseAdmin, getCorsHeaders } from './_shared/handler'
+import { checkRateLimit, getClientIp } from './_shared/rateLimit'
 import { Logger } from '../../lib/logger'
 import { recordPasswordResetEmail } from '../../lib/emailHistory'
 import {
@@ -138,6 +139,12 @@ export const handler: Handler = async (event) => {
 
   if (event.httpMethod === 'OPTIONS') {
     return { statusCode: 200, headers, body: '' }
+  }
+
+  // Rate limit: 3 reset requests per minute per IP
+  const clientIp = getClientIp(event.headers)
+  if (checkRateLimit(clientIp, { maxRequests: 3, windowMs: 60_000, prefix: 'pwd-reset' })) {
+    return { statusCode: 429, headers, body: JSON.stringify({ error: 'Too many requests. Please try again later.' }) }
   }
 
   if (event.httpMethod !== 'POST') {
