@@ -1,5 +1,5 @@
 import { Handler } from '@netlify/functions'
-import { supabase as supabaseAdmin } from './_shared/handler'
+import { supabase as supabaseAdmin, getCorsHeaders } from './_shared/handler'
 import { Logger } from '../../lib/logger'
 import { SITE_URL, ORG_SHORT_NAME } from '../../lib/siteConfig'
 
@@ -20,11 +20,8 @@ const siteUrl = SITE_URL
 export const handler: Handler = async (event) => {
   const logger = Logger.fromEvent('accept-invite', event)
 
-  const headers = {
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Headers': 'Content-Type',
-    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS'
-  }
+  const origin = event.headers.origin || event.headers.Origin
+  const headers = getCorsHeaders(origin, ['GET', 'POST'])
 
   if (event.httpMethod === 'OPTIONS') {
     return { statusCode: 200, headers, body: '' }

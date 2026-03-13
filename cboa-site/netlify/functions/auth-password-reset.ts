@@ -1,5 +1,5 @@
 import { Handler } from '@netlify/functions'
-import { supabase as supabaseAdmin } from './_shared/handler'
+import { supabase as supabaseAdmin, getCorsHeaders } from './_shared/handler'
 import { Logger } from '../../lib/logger'
 import { recordPasswordResetEmail } from '../../lib/emailHistory'
 import {
@@ -133,11 +133,8 @@ function generatePasswordResetEmailHtml(resetUrl: string, email: string): string
 export const handler: Handler = async (event) => {
   const logger = Logger.fromEvent('auth-password-reset', event)
 
-  const headers = {
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Headers': 'Content-Type',
-    'Access-Control-Allow-Methods': 'POST, OPTIONS'
-  }
+  const origin = event.headers.origin || event.headers.Origin
+  const headers = getCorsHeaders(origin, ['POST'])
 
   if (event.httpMethod === 'OPTIONS') {
     return { statusCode: 200, headers, body: '' }

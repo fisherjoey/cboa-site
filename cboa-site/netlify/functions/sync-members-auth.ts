@@ -1,5 +1,5 @@
 import { Handler } from '@netlify/functions'
-import { supabase } from './_shared/handler'
+import { supabase, getCorsHeaders } from './_shared/handler'
 import {
   EMAIL_ANNOUNCEMENTS,
   ORG_NAME,
@@ -99,10 +99,9 @@ function generateInviteEmailHtml(inviteUrl: string, name?: string): string {
 }
 
 export const handler: Handler = async (event) => {
+  const origin = event.headers.origin || event.headers.Origin
   const headers = {
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    ...getCorsHeaders(origin, ['POST']),
     'Content-Type': 'application/json'
   }
 

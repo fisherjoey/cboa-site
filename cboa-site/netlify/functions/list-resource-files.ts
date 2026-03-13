@@ -1,13 +1,11 @@
 import { Handler } from '@netlify/functions'
+import { getCorsHeaders } from './_shared/handler'
 import * as fs from 'fs'
 import * as path from 'path'
 
 export const handler: Handler = async (event) => {
-  const headers = {
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Headers': 'Content-Type',
-    'Access-Control-Allow-Methods': 'GET, OPTIONS'
-  }
+  const origin = event.headers.origin || event.headers.Origin
+  const headers = getCorsHeaders(origin, ['GET'])
 
   // Handle CORS preflight
   if (event.httpMethod === 'OPTIONS') {

@@ -1,5 +1,5 @@
 import { Handler } from '@netlify/functions'
-import { supabase as supabaseAdmin } from './_shared/handler'
+import { supabase as supabaseAdmin, getCorsHeaders } from './_shared/handler'
 import { Logger } from '../../lib/logger'
 import {
   EMAIL_ANNOUNCEMENTS,
@@ -152,10 +152,9 @@ function generateInviteEmailHtml(inviteUrl: string, name?: string): string {
 const handler: Handler = async (event) => {
   const logger = Logger.fromEvent('send-welcome-emails', event)
 
+  const origin = event.headers.origin || event.headers.Origin
   const headers = {
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    ...getCorsHeaders(origin, ['POST']),
     'Content-Type': 'application/json'
   }
 

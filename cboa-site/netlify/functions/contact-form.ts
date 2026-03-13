@@ -1,4 +1,5 @@
 import { Handler, HandlerEvent, HandlerContext } from '@netlify/functions'
+import { getCorsHeaders } from './_shared/handler'
 import { createClient } from '@supabase/supabase-js'
 import { generateCBOAEmailTemplate } from '../../lib/emailTemplate'
 import { Logger } from '../../lib/logger'
@@ -128,10 +129,9 @@ export const handler: Handler = async (
 ) => {
   const logger = Logger.fromEvent('contact-form', event)
 
+  const origin = event.headers.origin || event.headers.Origin
   const headers = {
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Headers': 'Content-Type',
-    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    ...getCorsHeaders(origin, ['POST']),
     'Content-Type': 'application/json',
   }
 

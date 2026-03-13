@@ -1,15 +1,12 @@
-import { Handler, HandlerEvent, HandlerContext } from '@netlify/functions'
+import { createHandler, supabase } from './_shared/handler'
 import { generateCBOAEmailTemplate } from '../../lib/emailTemplate'
-import { Logger } from '../../lib/logger'
 import { recordBulkEmail } from '../../lib/emailHistory'
+import { EMAIL_ANNOUNCEMENTS } from '../../lib/siteConfig'
 
 /**
  * Normalize URLs in HTML content to ensure they have proper protocols.
- * This fixes links like href="cboa.ca/..." to href="https://cboa.ca/..."
- * Only applied to email sending, not stored content.
  */
 function normalizeUrlsInHtml(html: string): string {
-  // Match href="..." attributes where the URL doesn't start with a protocol, #, /, or mailto:
   return html.replace(
     /href="(?!(https?:\/\/|mailto:|tel:|#|\/))/gi,
     'href="https://'
@@ -44,15 +41,12 @@ async function getAccessToken(): Promise<string> {
 
   const response = await fetch(tokenEndpoint, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/x-www-form-urlencoded'
-    },
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     body: params
   })
 
   if (!response.ok) {
-    const error = await response.text()
-    throw new Error(`Failed to get access token: ${error}`)
+    throw new Error('Failed to get Microsoft access token')
   }
 
   const data = await response.json()
@@ -60,20 +54,17 @@ async function getAccessToken(): Promise<string> {
 }
 
 // Send email via Microsoft Graph API
-async function sendEmail(
+async function sendEmailViaGraph(
   accessToken: string,
   toAddresses: string[],
   subject: string,
   htmlContent: string
 ): Promise<void> {
-  const senderEmail = 'announcements@cboa.ca'
+  const senderEmail = EMAIL_ANNOUNCEMENTS
   const graphEndpoint = `https://graph.microsoft.com/v1.0/users/${senderEmail}/sendMail`
 
-  // Microsoft Graph has a limit of 500 recipients per email
-  // We'll batch if needed
   const batchSize = 500
   const batches = []
-
   for (let i = 0; i < toAddresses.length; i += batchSize) {
     batches.push(toAddresses.slice(i, i + batchSize))
   }
@@ -81,32 +72,13 @@ async function sendEmail(
   for (const batch of batches) {
     const emailMessage = {
       message: {
-        subject: subject,
-        body: {
-          contentType: 'HTML',
-          content: htmlContent
-        },
-        from: {
-          emailAddress: {
-            address: 'announcements@cboa.ca'
-          }
-        },
-        // Send to self as the "To" recipient
-        toRecipients: [
-          {
-            emailAddress: {
-              address: senderEmail
-            }
-          }
-        ],
-        // BCC all actual recipients for privacy
-        bccRecipients: batch.map(email => ({
-          emailAddress: {
-            address: email
-          }
-        }))
+        subject,
+        body: { contentType: 'HTML', content: htmlContent },
+        from: { emailAddress: { address: senderEmail } },
+        toRecipients: [{ emailAddress: { address: senderEmail } }],
+        bccRecipients: batch.map(email => ({ emailAddress: { address: email } }))
       },
-      saveToSentItems: true // Save to Sent Items folder
+      saveToSentItems: true
     }
 
     const response = await fetch(graphEndpoint, {
@@ -119,8 +91,7 @@ async function sendEmail(
     })
 
     if (!response.ok) {
-      const error = await response.text()
-      throw new Error(`Failed to send email: ${error}`)
+      throw new Error('Failed to send email via Microsoft Graph')
     }
   }
 }
@@ -133,132 +104,66 @@ async function getRecipientEmails(
 ): Promise<string[]> {
   const emails = new Set<string>()
 
-  // Add custom emails
   customEmails.forEach(email => {
     if (email && email.includes('@')) {
       emails.add(email.toLowerCase())
     }
   })
 
-  // If no groups selected, just return custom emails
   if (recipientGroups.length === 0) {
     return Array.from(emails)
   }
 
-  // Fetch members from Supabase
-  try {
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-    const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+  // Use the shared Supabase client instead of raw REST
+  const { data: members, error } = await supabase
+    .from('members')
+    .select('email, role, certification_level, rank')
 
-    if (!supabaseUrl || !supabaseKey) {
-      console.error('Supabase credentials not configured')
-      return Array.from(emails)
+  if (error || !members) {
+    console.error('Failed to fetch members:', error?.message)
+    return Array.from(emails)
+  }
+
+  for (const member of members) {
+    if (!member.email) continue
+
+    let shouldInclude = false
+
+    for (const group of recipientGroups) {
+      if (group === 'all') { shouldInclude = true; break }
+      if (group === 'officials' && member.role === 'official') { shouldInclude = true; break }
+      if (group === 'executives' && member.role === 'executive') { shouldInclude = true; break }
+      if (group === 'admins' && member.role === 'admin') { shouldInclude = true; break }
+      if (group === 'evaluators' && member.role === 'evaluator') { shouldInclude = true; break }
+      if (group === 'mentors' && member.role === 'mentor') { shouldInclude = true; break }
+      if (group.startsWith('level') && member.certification_level) {
+        const levelNum = group.replace('level', '')
+        if (member.certification_level.includes(levelNum)) { shouldInclude = true; break }
+      }
     }
 
-    const response = await fetch(`${supabaseUrl}/rest/v1/members?select=email,role,certification_level,rank`, {
-      headers: {
-        'apikey': supabaseKey,
-        'Authorization': `Bearer ${supabaseKey}`,
-        'Content-Type': 'application/json'
+    if (shouldInclude && rankFilter) {
+      if (member.rank === undefined || member.rank === null) {
+        shouldInclude = false
+      } else {
+        const threshold = parseInt(rankFilter.replace('+', ''))
+        if (member.rank < threshold) shouldInclude = false
       }
-    })
-
-    if (!response.ok) {
-      console.error('Failed to fetch members from Supabase')
-      return Array.from(emails)
     }
 
-    const members: MemberRecord[] = await response.json()
-
-    // Filter members based on recipient groups
-    members.forEach(member => {
-      if (!member.email) return
-
-      let shouldInclude = false
-
-      for (const group of recipientGroups) {
-        if (group === 'all') {
-          shouldInclude = true
-          break
-        }
-
-        if (group === 'officials' && member.role === 'official') {
-          shouldInclude = true
-          break
-        }
-
-        if (group === 'executives' && member.role === 'executive') {
-          shouldInclude = true
-          break
-        }
-
-        if (group === 'admins' && member.role === 'admin') {
-          shouldInclude = true
-          break
-        }
-
-        if (group === 'evaluators' && member.role === 'evaluator') {
-          shouldInclude = true
-          break
-        }
-
-        if (group === 'mentors' && member.role === 'mentor') {
-          shouldInclude = true
-          break
-        }
-
-        // Level-based groups
-        if (group.startsWith('level') && member.certification_level) {
-          const levelNum = group.replace('level', '')
-          if (member.certification_level.includes(levelNum)) {
-            shouldInclude = true
-            break
-          }
-        }
-
-      }
-
-      // Apply rank filter if specified
-      if (shouldInclude && rankFilter) {
-        if (member.rank === undefined) {
-          shouldInclude = false
-        } else {
-          // Extract threshold number from format like "150+"
-          const threshold = parseInt(rankFilter.replace('+', ''))
-          if (member.rank < threshold) {
-            shouldInclude = false
-          }
-        }
-      }
-
-      if (shouldInclude) {
-        emails.add(member.email.toLowerCase())
-      }
-    })
-  } catch (error) {
-    console.error('Error fetching members:', error)
-    // Continue with custom emails at least
+    if (shouldInclude) {
+      emails.add(member.email.toLowerCase())
+    }
   }
 
   return Array.from(emails)
 }
 
-export const handler: Handler = async (
-  event: HandlerEvent,
-  context: HandlerContext
-) => {
-  const logger = Logger.fromEvent('send-email', event)
-
-  // Only allow POST
-  if (event.httpMethod !== 'POST') {
-    return {
-      statusCode: 405,
-      body: JSON.stringify({ error: 'Method not allowed' })
-    }
-  }
-
-  try {
-    // Parse request body
+export const handler = createHandler({
+  name: 'send-email',
+  methods: ['POST'],
+  auth: 'admin',
+  handler: async ({ event, logger, user }) => {
     const requestBody: EmailRequest = JSON.parse(event.body || '{}')
     const { subject, recipientGroups, customEmails, htmlContent, rankFilter } = requestBody
 
@@ -267,127 +172,87 @@ export const handler: Handler = async (
     })
 
     // Validation
-    if (!subject || !subject.trim()) {
-      return {
-        statusCode: 400,
-        body: JSON.stringify({ error: 'Subject is required' })
-      }
+    if (!subject?.trim()) {
+      return { statusCode: 400, body: JSON.stringify({ error: 'Subject is required' }) }
     }
-
-    if (!htmlContent || !htmlContent.trim()) {
-      return {
-        statusCode: 400,
-        body: JSON.stringify({ error: 'Email content is required' })
-      }
+    if (!htmlContent?.trim()) {
+      return { statusCode: 400, body: JSON.stringify({ error: 'Email content is required' }) }
     }
-
     if ((!recipientGroups || recipientGroups.length === 0) && (!customEmails || customEmails.length === 0)) {
-      return {
-        statusCode: 400,
-        body: JSON.stringify({ error: 'At least one recipient is required' })
-      }
+      return { statusCode: 400, body: JSON.stringify({ error: 'At least one recipient is required' }) }
     }
 
-    // Check environment variables
-    if (!process.env.MICROSOFT_TENANT_ID ||
-        !process.env.MICROSOFT_CLIENT_ID ||
-        !process.env.MICROSOFT_CLIENT_SECRET) {
+    if (!process.env.MICROSOFT_TENANT_ID || !process.env.MICROSOFT_CLIENT_ID || !process.env.MICROSOFT_CLIENT_SECRET) {
       logger.error('email', 'send_email_config_error', 'Microsoft Graph credentials not configured')
-      return {
-        statusCode: 500,
-        body: JSON.stringify({ error: 'Microsoft Graph credentials not configured' })
-      }
+      return { statusCode: 500, body: JSON.stringify({ error: 'Email service not configured' }) }
     }
 
-    // Get recipient emails
-    const recipientEmails = await getRecipientEmails(
-      recipientGroups || [],
-      customEmails || [],
-      rankFilter
-    )
+    try {
+      const recipientEmails = await getRecipientEmails(
+        recipientGroups || [],
+        customEmails || [],
+        rankFilter
+      )
 
-    if (recipientEmails.length === 0) {
-      logger.warn('email', 'send_email_no_recipients', 'No valid recipients found', {
-        metadata: { recipientGroups, customEmailCount: customEmails?.length || 0 }
+      if (recipientEmails.length === 0) {
+        return { statusCode: 400, body: JSON.stringify({ error: 'No valid recipients found' }) }
+      }
+
+      logger.info('email', 'send_email_recipients', `Found ${recipientEmails.length} recipients`, {
+        metadata: { recipientCount: recipientEmails.length, recipientGroups }
       })
-      return {
-        statusCode: 400,
-        body: JSON.stringify({ error: 'No valid recipients found' })
-      }
-    }
 
-    logger.info('email', 'send_email_recipients', `Found ${recipientEmails.length} recipients`, {
-      metadata: { recipientCount: recipientEmails.length, recipientGroups }
-    })
+      const accessToken = await getAccessToken()
+      const normalizedContent = normalizeUrlsInHtml(htmlContent)
+      const emailHtml = generateCBOAEmailTemplate({
+        subject,
+        content: normalizedContent,
+        previewText: subject
+      })
 
-    // Get access token
-    const accessToken = await getAccessToken()
+      await sendEmailViaGraph(accessToken, recipientEmails, subject, emailHtml)
 
-    // Normalize URLs to ensure they have https:// protocol
-    const normalizedContent = normalizeUrlsInHtml(htmlContent)
-
-    // Wrap content in CBOA email template
-    const emailHtml = generateCBOAEmailTemplate({
-      subject,
-      content: normalizedContent,
-      previewText: subject
-    })
-
-    // Send email
-    await sendEmail(accessToken, recipientEmails, subject, emailHtml)
-
-    // Record to email history
-    await recordBulkEmail({
-      subject,
-      htmlContent: emailHtml,
-      recipientCount: recipientEmails.length,
-      recipientList: recipientEmails,
-      recipientGroups: recipientGroups || [],
-      rankFilter,
-      status: 'sent',
-    })
-
-    // Audit log for bulk email
-    await logger.audit('EMAIL_SENT', 'email', null, {
-      actorId: 'system',
-      actorEmail: 'system',
-      newValues: { subject, recipientCount: recipientEmails.length, recipientGroups },
-      description: `Bulk email sent: "${subject}" to ${recipientEmails.length} recipients`
-    })
-
-    logger.info('email', 'send_email_success', `Email sent to ${recipientEmails.length} recipients`, {
-      metadata: { subject, recipientCount: recipientEmails.length }
-    })
-
-    return {
-      statusCode: 200,
-      body: JSON.stringify({
-        success: true,
+      await recordBulkEmail({
+        sentByEmail: user!.email,
+        subject,
+        htmlContent: emailHtml,
         recipientCount: recipientEmails.length,
-        message: `Email sent successfully to ${recipientEmails.length} recipients`
+        recipientList: recipientEmails,
+        recipientGroups: recipientGroups || [],
+        rankFilter,
+        status: 'sent',
       })
-    }
 
-  } catch (error: any) {
-    // Record failed email attempt
-    const requestBody: EmailRequest = JSON.parse(event.body || '{}')
-    await recordBulkEmail({
-      subject: requestBody.subject || 'Unknown',
-      htmlContent: requestBody.htmlContent || '',
-      recipientCount: 0,
-      recipientList: [],
-      recipientGroups: requestBody.recipientGroups || [],
-      rankFilter: requestBody.rankFilter,
-      status: 'failed',
-      errorMessage: error.message || 'Unknown error',
-    })
-
-    logger.error('email', 'send_email_error', 'Error sending email', error instanceof Error ? error : new Error(String(error)))
-    return {
-      statusCode: 500,
-      body: JSON.stringify({
-        error: error.message || 'Failed to send email'
+      await logger.audit('EMAIL_SENT', 'email', null, {
+        actorId: user!.id,
+        actorEmail: user!.email,
+        newValues: { subject, recipientCount: recipientEmails.length, recipientGroups },
+        description: `Bulk email sent: "${subject}" to ${recipientEmails.length} recipients`
       })
+
+      return {
+        statusCode: 200,
+        body: JSON.stringify({
+          success: true,
+          recipientCount: recipientEmails.length,
+          message: `Email sent successfully to ${recipientEmails.length} recipients`
+        })
+      }
+    } catch (error: any) {
+      await recordBulkEmail({
+        sentByEmail: user!.email,
+        subject: requestBody.subject || 'Unknown',
+        htmlContent: requestBody.htmlContent || '',
+        recipientCount: 0,
+        recipientList: [],
+        recipientGroups: requestBody.recipientGroups || [],
+        rankFilter: requestBody.rankFilter,
+        status: 'failed',
+        errorMessage: error.message || 'Unknown error',
+      })
+
+      // Re-throw so the shared handler logs it and returns generic error
+      throw error
     }
   }
-}
+})

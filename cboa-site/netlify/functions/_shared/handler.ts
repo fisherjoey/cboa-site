@@ -139,7 +139,8 @@ const ALLOWED_ORIGINS: string[] = [
   'http://localhost:9000',
 ].filter(Boolean) as string[]
 
-function getCorsHeaders(requestOrigin: string | undefined, methods: HttpMethod[]): Record<string, string> {
+/** Build CORS headers for a given request origin. Exported for functions that don't use createHandler. */
+export function getCorsHeaders(requestOrigin: string | undefined, methods: string[] = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE']): Record<string, string> {
   const headers: Record<string, string> = {
     'Access-Control-Allow-Headers': 'Content-Type, Authorization',
     'Access-Control-Allow-Methods': [...methods, 'OPTIONS'].join(', '),

@@ -1,4 +1,5 @@
 import { Handler } from '@netlify/functions'
+import { getCorsHeaders } from './_shared/handler'
 import { SITE_URL as CONFIG_SITE_URL } from '../../lib/siteConfig'
 
 /**
@@ -171,10 +172,9 @@ function decodeJwtPayload(token: string): any {
 }
 
 export const handler: Handler = async (event, context) => {
+  const origin = event.headers.origin || event.headers.Origin
   const headers = {
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-    'Access-Control-Allow-Methods': 'GET, POST, DELETE, OPTIONS',
+    ...getCorsHeaders(origin, ['GET', 'POST', 'DELETE']),
     'Content-Type': 'application/json'
   }
 

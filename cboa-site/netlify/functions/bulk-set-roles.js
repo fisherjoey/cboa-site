@@ -20,7 +20,7 @@ exports.handler = async (event, context) => {
     };
   }
 
-  const SITE_URL = process.env.URL || 'https://cboa.ca';
+  const SITE_URL = process.env.URL || process.env.SITE_URL || 'https://cboa.ca';
   const GOTRUE_URL = `${SITE_URL}/.netlify/identity`;
 
   // Delay function

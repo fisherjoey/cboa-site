@@ -1,4 +1,5 @@
 import { Handler } from '@netlify/functions'
+import { getCorsHeaders } from './_shared/handler'
 import { createHmac } from 'crypto'
 import { generateCBOAEmailTemplate } from '../../lib/emailTemplate'
 import { validateEmail } from '../../lib/emailValidation'
@@ -89,10 +90,9 @@ async function getAccessToken(): Promise<string> {
 }
 
 export const handler: Handler = async (event) => {
+  const origin = event.headers.origin || event.headers.Origin
   const headers = {
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Headers': 'Content-Type',
-    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    ...getCorsHeaders(origin, ['POST']),
     'Content-Type': 'application/json',
   }
 
