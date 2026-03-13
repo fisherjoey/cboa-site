@@ -6,7 +6,8 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { useAuth } from '@/contexts/AuthContext'
 import { membersAPI } from '@/lib/api'
 import { IconUser, IconPhone, IconHome, IconAlertCircle, IconLogout } from '@tabler/icons-react'
-import { memberRegistrationSchema, PROVINCES, type MemberRegistrationFormData } from '@/lib/schemas'
+import { memberRegistrationSchema, type MemberRegistrationFormData } from '@/lib/schemas'
+import { PROVINCES } from '@/lib/constants'
 
 interface MemberRegistrationProps {
   onComplete: () => void
@@ -219,7 +220,7 @@ export default function MemberRegistration({ onComplete }: MemberRegistrationPro
                   className="w-full pl-3 pr-8 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
                 >
                   {PROVINCES.map(prov => (
-                    <option key={prov} value={prov}>{prov}</option>
+                    <option key={prov.value} value={prov.value}>{prov.label}</option>
                   ))}
                 </select>
               </div>

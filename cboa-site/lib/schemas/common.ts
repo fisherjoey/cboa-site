@@ -44,9 +44,10 @@ export const requiredString = (fieldName: string) =>
 
 export const optionalString = z.string().optional().or(z.literal(''))
 
-// Province options for Canadian addresses
-export const PROVINCES = [
-  'AB', 'BC', 'SK', 'MB', 'ON', 'QC', 'NB', 'NS', 'PE', 'NL', 'YT', 'NT', 'NU'
-] as const
+// Province validation — codes from shared constants
+import { PROVINCE_CODES } from '../constants'
 
-export const provinceSchema = z.enum(PROVINCES)
+export const provinceSchema = z.string().refine(
+  val => PROVINCE_CODES.includes(val),
+  'Please select a valid province'
+)

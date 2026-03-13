@@ -2,39 +2,7 @@
 
 import React from 'react'
 import { Controller } from 'react-hook-form'
-
-// Province options
-const PROVINCES = [
-  { value: 'AB', label: 'Alberta' },
-  { value: 'BC', label: 'British Columbia' },
-  { value: 'SK', label: 'Saskatchewan' },
-  { value: 'MB', label: 'Manitoba' },
-  { value: 'ON', label: 'Ontario' },
-  { value: 'QC', label: 'Quebec' },
-  { value: 'NB', label: 'New Brunswick' },
-  { value: 'NS', label: 'Nova Scotia' },
-  { value: 'PE', label: 'Prince Edward Island' },
-  { value: 'NL', label: 'Newfoundland and Labrador' },
-  { value: 'NT', label: 'Northwest Territories' },
-  { value: 'NU', label: 'Nunavut' },
-  { value: 'YT', label: 'Yukon' },
-]
-
-// Format phone number as user types: (403) 555-1234
-const formatPhoneNumber = (value: string): string => {
-  const digits = value.replace(/\D/g, '')
-  if (digits.length === 0) return ''
-  if (digits.length <= 3) return `(${digits}`
-  if (digits.length <= 6) return `(${digits.slice(0, 3)}) ${digits.slice(3)}`
-  return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6, 10)}`
-}
-
-// Format postal code as user types: T2P 1A1
-const formatPostalCode = (value: string): string => {
-  const cleaned = value.replace(/[^a-zA-Z0-9]/g, '').toUpperCase()
-  if (cleaned.length <= 3) return cleaned
-  return `${cleaned.slice(0, 3)} ${cleaned.slice(3, 6)}`
-}
+import { PROVINCES, formatPhoneNumber, formatPostalCode } from '@/lib/constants'
 
 // Reusable styles
 const inputStyles = "w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-cboa-orange focus:border-transparent transition-colors"

@@ -2,6 +2,7 @@
 
 import { IconCheck, IconPencil } from '@tabler/icons-react'
 import { UseFormWatch } from 'react-hook-form'
+import { formatDate as formatDateUtil, PROVINCE_LABELS } from '@/lib/constants'
 
 interface Step5ReviewProps {
   watch: UseFormWatch<any>
@@ -9,11 +10,9 @@ interface Step5ReviewProps {
   eventCount: number
 }
 
-// Format date to readable string
 const formatDate = (dateString: string): string => {
   if (!dateString) return 'N/A'
-  const date = new Date(dateString)
-  return date.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
+  return formatDateUtil(dateString, 'full')
 }
 
 // Format time to 12-hour format
@@ -26,25 +25,7 @@ const formatTime = (timeString: string): string => {
   return `${displayHour}:${minutes} ${ampm}`
 }
 
-// Get province full name
-const getProvinceName = (code: string): string => {
-  const provinces: Record<string, string> = {
-    'AB': 'Alberta',
-    'BC': 'British Columbia',
-    'SK': 'Saskatchewan',
-    'MB': 'Manitoba',
-    'ON': 'Ontario',
-    'QC': 'Quebec',
-    'NB': 'New Brunswick',
-    'NS': 'Nova Scotia',
-    'PE': 'Prince Edward Island',
-    'NL': 'Newfoundland and Labrador',
-    'NT': 'Northwest Territories',
-    'NU': 'Nunavut',
-    'YT': 'Yukon',
-  }
-  return provinces[code] || code
-}
+const getProvinceName = (code: string): string => PROVINCE_LABELS[code] || code
 
 export default function Step5Review({ watch, onEditStep, eventCount }: Step5ReviewProps) {
   const organizationName = watch('organizationName')
