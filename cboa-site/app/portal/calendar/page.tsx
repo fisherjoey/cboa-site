@@ -506,7 +506,7 @@ function EventModal({
     watch,
     formState: { errors },
   } = useForm<CalendarEventFormData>({
-    resolver: zodResolver(calendarEventFormSchema),
+    resolver: zodResolver(calendarEventFormSchema) as any,
     defaultValues: {
       title: event.title,
       type: event.type,
@@ -515,7 +515,7 @@ function EventModal({
       location: event.location || '',
       description: event.description || '',
       instructor: event.instructor || '',
-      maxParticipants: event.maxParticipants?.toString() || '',
+      maxParticipants: event.maxParticipants || undefined,
       registrationLink: event.registrationLink || '',
     },
   })
@@ -624,7 +624,7 @@ function EventModal({
       title={event.id ? 'Edit Event' : 'Add New Event'}
       size="md"
     >
-      <form onSubmit={handleSubmit(onFormSubmit)} className="space-y-4">
+      <form onSubmit={handleSubmit(onFormSubmit as any)} className="space-y-4">
         <div>
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
             Event Title *

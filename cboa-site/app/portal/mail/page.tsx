@@ -648,7 +648,6 @@ export default function MailPage() {
                 onChange={setContent}
                 placeholder="Write your email content here using Markdown..."
                 height={500}
-                preview={false}
               />
             </div>
 

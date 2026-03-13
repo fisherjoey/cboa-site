@@ -1,6 +1,6 @@
 'use client'
 
-import { ReactNode } from 'react'
+import React, { ReactNode } from 'react'
 import { Disclosure, DisclosureButton, DisclosurePanel, Transition } from '@headlessui/react'
 import { IconChevronRight } from '@tabler/icons-react'
 
@@ -31,8 +31,8 @@ export function Accordion({ children, defaultOpen = false }: AccordionProps) {
 export function AccordionButton({ children, className = '' }: AccordionButtonProps) {
   return (
     <DisclosureButton className={`w-full text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2 rounded ${className}`}>
-      {({ open }) => (
-        typeof children === 'function' ? children({ open }) : children
+      {({ open }: { open: boolean }) => (
+        (typeof children === 'function' ? children({ open }) : children) as React.ReactElement
       )}
     </DisclosureButton>
   )

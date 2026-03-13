@@ -326,7 +326,7 @@ export default function StatisticsClient() {
   const [selectedSeason, setSelectedSeason] = useState('2025-2026')
   const [selectedMonth, setSelectedMonth] = useState('February 2026')
 
-  const data = viewType === 'season' ? mockSeasonData : mockMonthlyData as typeof mockSeasonData
+  const data = viewType === 'season' ? mockSeasonData : mockMonthlyData as unknown as typeof mockSeasonData
 
   // Transform leagues data for TanStack Table with subRows
   const leaguesData = useMemo((): LeagueRow[] => {
@@ -472,7 +472,7 @@ export default function StatisticsClient() {
                   <LabelList
                     dataKey="percent"
                     position="top"
-                    formatter={(value: number) => `${value}%`}
+                    formatter={(value: any) => `${value}%`}
                     fill="#f97316"
                     fontSize={11}
                   />

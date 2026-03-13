@@ -653,7 +653,7 @@ export default function PublicTrainingAdmin() {
                       </h3>
                       <div className="mt-2 space-y-1">
                         <p className="text-sm text-gray-600 flex items-center gap-1">
-                          <IconCalendar className="h-4 w-4" />
+                          <IconCalendarEvent className="h-4 w-4" />
                           {eventDate} {event.event_time && `at ${event.event_time}`}
                         </p>
                         {event.location && (

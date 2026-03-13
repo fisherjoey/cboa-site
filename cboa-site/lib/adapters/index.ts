@@ -40,7 +40,7 @@ export class AdapterFactory {
     if (!this.announcementAdapter) {
       const adapter = this.createAdapter()
       if ('getAnnouncements' in adapter) {
-        this.announcementAdapter = adapter as AnnouncementAdapter
+        this.announcementAdapter = adapter as unknown as AnnouncementAdapter
       } else {
         throw new Error('Current adapter does not support announcements')
       }

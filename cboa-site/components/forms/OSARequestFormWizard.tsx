@@ -354,7 +354,7 @@ export default function OSARequestFormWizard() {
     setValue,
     formState: { errors }
   } = useForm<OSAFormData>({
-    resolver: zodResolver(osaFormSchema),
+    resolver: zodResolver(osaFormSchema) as any,
     defaultValues: getDefaultValues(),
     mode: 'onTouched',
   })
@@ -579,7 +579,7 @@ export default function OSARequestFormWizard() {
   return (
     <div ref={formRef}>
     <Card>
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+      <form onSubmit={handleSubmit(onSubmit as any)} className="space-y-6">
         {/* Progress Indicator */}
         <ProgressIndicator
           currentStep={currentStep}

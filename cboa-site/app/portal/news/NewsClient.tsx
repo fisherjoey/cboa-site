@@ -198,8 +198,8 @@ export default function NewsClient({ initialAnnouncements }: NewsClientProps) {
       setIsCreating(false)
       setSendAsEmail(false)
       setEmailRecipients(['all-members'])
-    } catch (error) {
-      const errorMessage = parseAPIError(error)
+    } catch (err) {
+      const errorMessage = parseAPIError(err)
       error(`Failed to create announcement: ${errorMessage}`)
     }
   }
@@ -257,8 +257,8 @@ export default function NewsClient({ initialAnnouncements }: NewsClientProps) {
       setEditingId(null)
       setEditingData({})
       success('Announcement updated successfully')
-    } catch (error) {
-      const errorMessage = parseAPIError(error)
+    } catch (err) {
+      const errorMessage = parseAPIError(err)
       error(`Failed to update announcement: ${errorMessage}`)
     }
   }
@@ -274,8 +274,8 @@ export default function NewsClient({ initialAnnouncements }: NewsClientProps) {
         await announcementsAPI.delete(id)
         setAnnouncements(prev => prev.filter(a => a.id !== id))
         success('Announcement deleted successfully')
-      } catch (error) {
-        const errorMessage = parseAPIError(error)
+      } catch (err) {
+        const errorMessage = parseAPIError(err)
         error(`Failed to delete announcement: ${errorMessage}`)
       }
     }
@@ -448,7 +448,7 @@ export default function NewsClient({ initialAnnouncements }: NewsClientProps) {
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Content</label>
               <div className={getFieldError(validationErrors, 'content') ? 'border-2 border-red-500 rounded-lg' : ''}>
                 <TinyMCEEditor
-                  value={newAnnouncement.content}
+                  value={newAnnouncement.content || ''}
                   onChange={(val) => setNewAnnouncement({ ...newAnnouncement, content: val })}
                   height={400}
                   placeholder="Enter announcement content..."

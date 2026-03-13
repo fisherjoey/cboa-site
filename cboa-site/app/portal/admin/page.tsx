@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect } from 'react'
+import React, { useEffect } from 'react'
 import Link from 'next/link'
 import {
   IconWorld,
@@ -12,21 +12,27 @@ import {
   IconReportAnalytics,
   IconUsersGroup,
   IconMail,
-  IconClipboardList
+  IconClipboardList,
+  IconMessageCircle,
 } from '@tabler/icons-react'
 
 export default function PortalAdmin() {
   useEffect(() => {
     // Check if user has admin/executive role
     // In production, this would be a proper auth check
-    const userRole = 'executive' // Mock role
+    const userRole: string = 'executive' // Mock role
 
     if (userRole !== 'admin' && userRole !== 'executive') {
       window.location.href = '/portal'
     }
   }, [])
 
-  const adminSections = [
+  const adminSections: {
+    title: string
+    description: string
+    icon: React.ComponentType<{ className?: string }>
+    links: { label: string; href: string; icon?: React.ComponentType<{ className?: string }> }[]
+  }[] = [
     {
       title: 'Public Website Content',
       description: 'Manage all public-facing website content',
@@ -54,6 +60,14 @@ export default function PortalAdmin() {
       icon: IconMail,
       links: [
         { label: 'View Email History', href: '/portal/admin/email-history', icon: IconMail },
+      ]
+    },
+    {
+      title: 'Contact Submissions',
+      description: 'View and manage public contact form messages',
+      icon: IconMessageCircle,
+      links: [
+        { label: 'View Contact Submissions', href: '/portal/admin/contact-submissions', icon: IconMessageCircle },
       ]
     },
     {

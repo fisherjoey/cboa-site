@@ -288,7 +288,7 @@ describe('SelectInput Atom', () => {
       expect(adultOption).toBeInTheDocument()
 
       // Check the selected option has font-medium class
-      expect(within(adultOption!).getByText('Adult')).toHaveClass('font-medium')
+      expect(within(adultOption! as HTMLElement).getByText('Adult')).toHaveClass('font-medium')
     })
   })
 

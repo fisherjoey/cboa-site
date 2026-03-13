@@ -58,7 +58,7 @@ export default function PortalHeader() {
     }
   }
 
-  const portalLinks = [
+  const portalLinks: { href: string; label: string; icon: typeof IconHome; external?: boolean; executive?: boolean }[] = [
     { href: '/portal', label: 'Dashboard', icon: IconHome },
     { href: '/portal/calendar', label: 'Calendar', icon: IconCalendar },
     // { href: '/portal/statistics', label: 'Statistics', icon: IconChartBar },
@@ -82,7 +82,7 @@ export default function PortalHeader() {
             <Link href="/portal" className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
               <Image
                 src="/images/logos/cboa-logo.png"
-                alt="CBOA Logo"
+                alt="Organization Logo"
                 width={32}
                 height={32}
                 className="rounded invert sm:w-10 sm:h-10"

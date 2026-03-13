@@ -3,7 +3,7 @@
 import { useSearchParams } from 'next/navigation'
 import { useEffect, useState, useMemo, Suspense } from 'react'
 import Link from 'next/link'
-import Fuse from 'fuse.js'
+import Fuse, { IFuseOptions } from 'fuse.js'
 
 interface SearchItem {
   title: string
@@ -131,7 +131,7 @@ const searchableContent: SearchItem[] = [
   // },
 ]
 
-const fuseOptions: Fuse.IFuseOptions<SearchItem> = {
+const fuseOptions: IFuseOptions<SearchItem> = {
   keys: [
     { name: 'title', weight: 3 },
     { name: 'description', weight: 2 },

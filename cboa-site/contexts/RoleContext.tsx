@@ -10,6 +10,7 @@ interface User {
   role: UserRole
   level?: number
   avatar?: string
+  email?: string
 }
 
 interface RoleContextType {
@@ -27,6 +28,7 @@ export function RoleProvider({ children }: { children: ReactNode }) {
   const user: User = authUser ? {
     name: authUser.name,
     role: authUser.role,
+    email: authUser.email,
     level: authUser.user_metadata?.level,
     avatar: authUser.user_metadata?.avatar
   } : {

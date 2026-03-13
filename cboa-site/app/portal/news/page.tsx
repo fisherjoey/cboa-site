@@ -1,4 +1,5 @@
 import { getAllContent, sortByDate } from '@/lib/content'
+import type { Announcement } from '@/lib/adapters/types'
 import NewsClient from './NewsClient'
 
 export default function NewsAnnouncementsPage() {
@@ -8,8 +9,8 @@ export default function NewsAnnouncementsPage() {
       id: item.slug,
       title: item.title,
       content: item.body || item.content || '',
-      category: item.category || 'general',
-      priority: item.urgent ? 'high' : 'normal',
+      category: (item.category || 'general') as Announcement['category'],
+      priority: (item.urgent ? 'high' : 'normal') as Announcement['priority'],
       date: item.date,
       author: item.author || 'CBOA Executive',
       audience: item.audience || ['all'],

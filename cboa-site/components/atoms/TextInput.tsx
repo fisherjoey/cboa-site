@@ -12,7 +12,11 @@ interface TextInputProps {
   required?: boolean
   className?: string
   name?: string
+  // Allow additional HTML input attributes (e.g., from react-hook-form's register)
+  [key: string]: any
 }
+
+export type { TextInputProps }
 
 const TextInput = forwardRef<HTMLInputElement, TextInputProps>(function TextInput({
   label,

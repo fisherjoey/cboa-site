@@ -95,7 +95,7 @@ export default function PublicOfficialsAdmin() {
       email: official.email || '',
       phone: official.phone || '',
       photo_url: official.photo_url || '',
-      level: official.level || 1,
+      level: Number(official.level) || 1,
       years_experience: official.years_experience || 0,
       bio: official.bio || '',
       certifications: official.certifications?.join(', ') || '',
@@ -616,7 +616,7 @@ export default function PublicOfficialsAdmin() {
                       <div className="flex items-start justify-between gap-2">
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 flex-wrap mb-1">
-                            <span className={`px-2 py-0.5 rounded text-xs font-medium ${getLevelColor(official.level)}`}>
+                            <span className={`px-2 py-0.5 rounded text-xs font-medium ${getLevelColor(Number(official.level) || 0)}`}>
                               <IconMedal className="inline h-3 w-3 mr-1" />
                               Level {official.level}
                             </span>

@@ -11,7 +11,7 @@ const ALLOWED_ORIGINS = [
   'http://localhost:9000',
 ].filter(Boolean) as string[]
 
-export const handler: Handler = async (event) => {
+export const handler: Handler = async (event): Promise<{ statusCode: number; headers: Record<string, string>; body: string }> => {
   const logger = Logger.fromEvent('upload-file', event)
   const origin = event.headers.origin || event.headers.Origin
 

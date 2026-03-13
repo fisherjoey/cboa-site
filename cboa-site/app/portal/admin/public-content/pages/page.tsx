@@ -58,7 +58,7 @@ export default function PublicPagesAdmin() {
     setEditingPage({
       title: page.title || '',
       meta_description: page.meta_description || '',
-      content: page.content || ''
+      content: (typeof page.content === 'string' ? page.content : JSON.stringify(page.content)) || ''
     })
   }
 
@@ -269,7 +269,7 @@ export default function PublicPagesAdmin() {
                             <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
                               <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-2">Content Preview:</h4>
                               <div className="prose prose-sm dark:prose-invert max-w-none bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
-                                <HTMLViewer content={page.content} />
+                                <HTMLViewer content={typeof page.content === 'string' ? page.content : JSON.stringify(page.content)} />
                               </div>
                             </div>
                           )}
