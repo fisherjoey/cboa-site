@@ -48,7 +48,7 @@ export type UserRole = 'official' | 'executive' | 'admin' | 'evaluator' | 'mento
  */
 export type AuthLevel = 'public' | 'authenticated' | 'admin' | 'admin_or_executive' | UserRole[]
 
-export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'DELETE'
+export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE'
 
 export interface AuthUser {
   id: string
@@ -172,7 +172,7 @@ function getAuthLevel(
 
 export function createHandler(options: CreateHandlerOptions): Handler {
   const { name, auth, handler: handlerFn } = options
-  const allowedMethods: HttpMethod[] = options.methods || ['GET', 'POST', 'PUT', 'DELETE']
+  const allowedMethods: HttpMethod[] = options.methods || ['GET', 'POST', 'PUT', 'PATCH', 'DELETE']
 
   return async (event: HandlerEvent, _context: NetlifyContext) => {
     const logger = Logger.fromEvent(name, event)
