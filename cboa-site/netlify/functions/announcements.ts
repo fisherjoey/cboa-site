@@ -2,7 +2,7 @@ import { createHandler, supabase } from './_shared/handler'
 
 export const handler = createHandler({
   name: 'announcements',
-  auth: { GET: 'public', POST: 'admin_or_executive', PUT: 'admin_or_executive', DELETE: 'admin_or_executive' },
+  auth: { GET: 'authenticated', POST: 'admin_or_executive', PUT: 'admin_or_executive', DELETE: 'admin_or_executive' },
   handler: async ({ event, logger, user }) => {
     switch (event.httpMethod) {
       case 'GET': {
