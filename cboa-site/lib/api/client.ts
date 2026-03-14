@@ -2,7 +2,6 @@
  * Shared API client utilities — auth headers, fetch wrapper, config.
  */
 import { retryAsync, parseAPIError, AppError } from '../errorHandling'
-import { supabase } from '../supabase'
 import { createBrowserClient } from '@supabase/ssr'
 
 export { AppError }
@@ -15,11 +14,25 @@ export const USE_MOCK_DATA = process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true' ||
 
 export const isBrowser = () => typeof window !== 'undefined'
 
+// Lazily-created browser client that shares session with AuthContext
+let _browserClient: ReturnType<typeof createBrowserClient> | null = null
+function getBrowserClient() {
+  if (!isBrowser()) return null
+  if (!_browserClient) {
+    _browserClient = createBrowserClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    )
+  }
+  return _browserClient
+}
+
 // Get Supabase auth token for authenticated API calls
 async function getAuthHeaders(): Promise<Record<string, string>> {
-  if (!isBrowser()) return {}
+  const client = getBrowserClient()
+  if (!client) return {}
   try {
-    const { data: { session } } = await supabase.auth.getSession()
+    const { data: { session } } = await client.auth.getSession()
     if (session?.access_token) {
       return { Authorization: `Bearer ${session.access_token}` }
     }
@@ -67,18 +80,9 @@ export async function apiFetch(url: string, options?: RequestInit): Promise<Resp
 /** Re-export retryAsync for use in API modules */
 export { retryAsync }
 
-// Supabase browser client for getting auth token (used by auth admin API)
-const getSupabaseClient = () => {
-  if (typeof window === 'undefined') return null
-  return createBrowserClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  )
-}
-
 /** Get the current user's JWT token from Supabase session */
 export async function getAuthToken(): Promise<string | null> {
-  const client = getSupabaseClient()
+  const client = getBrowserClient()
   if (!client) return null
   try {
     const { data: { session } } = await client.auth.getSession()
