@@ -817,6 +817,9 @@ export const handler: Handler = async (event: HandlerEvent) => {
     const feeSchedulePdf = await loadFileAsBase64('Fee-Schedule.pdf')
     const invoicePolicyPdf = await loadFileAsBase64('Invoice-Policy.pdf')
 
+    if (!feeSchedulePdf) logger.warn('osa', 'attachment_missing', 'Fee-Schedule.pdf not found — will send email without it')
+    if (!invoicePolicyPdf) logger.warn('osa', 'attachment_missing', 'Invoice-Policy.pdf not found — will send email without it')
+
     const attachments: Array<{ name: string; content: string; contentType: string }> = []
     if (feeSchedulePdf) {
       attachments.push({
@@ -848,6 +851,8 @@ export const handler: Handler = async (event: HandlerEvent) => {
           content: leagueExcel,
           contentType: getContentType('xlsx')
         })
+      } else {
+        logger.warn('osa', 'attachment_missing', 'League-Scheduling-Template.xlsx not found')
       }
       if (leagueGoogle) {
         attachments.push({
@@ -855,6 +860,8 @@ export const handler: Handler = async (event: HandlerEvent) => {
           content: leagueGoogle,
           contentType: getContentType('xlsx')
         })
+      } else {
+        logger.warn('osa', 'attachment_missing', 'League-Scheduling-Template-Google.xlsx not found')
       }
     } else if (primaryEventType === 'Tournament') {
       const tournamentExcel = await loadFileAsBase64('Tournament-Scheduling-Template.xlsx')
@@ -865,6 +872,8 @@ export const handler: Handler = async (event: HandlerEvent) => {
           content: tournamentExcel,
           contentType: getContentType('xlsx')
         })
+      } else {
+        logger.warn('osa', 'attachment_missing', 'Tournament-Scheduling-Template.xlsx not found')
       }
       if (tournamentGoogle) {
         attachments.push({
@@ -872,8 +881,12 @@ export const handler: Handler = async (event: HandlerEvent) => {
           content: tournamentGoogle,
           contentType: getContentType('xlsx')
         })
+      } else {
+        logger.warn('osa', 'attachment_missing', 'Tournament-Scheduling-Template-Google.xlsx not found')
       }
     }
+
+    logger.info('osa', 'attachments_loaded', `Loaded ${attachments.length} attachment(s) for client email`)
 
     const results = {
       client: false,
@@ -1054,8 +1067,10 @@ export const handler: Handler = async (event: HandlerEvent) => {
             status: 'new',
             notes: eventCount > 1 ? `Event ${event.eventIndex} of ${eventCount} (Group: ${submissionGroupId})` : ''
           }
-          await osaExcelSync.addSubmission(excelData)
-          logger.info('osa', 'excel_synced', `OSA event ${event.eventIndex} synced to Excel`)
+          if (osaExcelSync.isConfigured()) {
+            await osaExcelSync.addSubmission(excelData)
+            logger.info('osa', 'excel_synced', `OSA event ${event.eventIndex} synced to Excel`)
+          }
         } catch (error) {
           logger.error('osa', 'excel_sync_error', `Failed to sync event ${event.eventIndex} to Excel (non-fatal)`, error as Error)
         }
