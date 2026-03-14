@@ -9,7 +9,7 @@ import { TinyMCEEditor } from '@/components/TinyMCEEditor'
 import { generateCBOAEmailTemplate } from '@/lib/emailTemplate'
 
 export default function MailPage() {
-  const { user } = useAuth()
+  const { user, getAccessToken } = useAuth()
   const router = useRouter()
   const { addToast } = useToast()
 
@@ -283,11 +283,15 @@ export default function MailPage() {
         ? '/.netlify/functions'
         : 'http://localhost:9000/.netlify/functions'
 
+      // Get auth token for the request
+      const token = await getAccessToken()
+
       // Send computed email list directly instead of groups
       const response = await fetch(`${API_BASE}/send-email`, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
         },
         body: JSON.stringify({
           subject,
