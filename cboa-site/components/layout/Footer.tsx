@@ -9,9 +9,9 @@ export default function Footer() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6 sm:gap-8 mb-8">
           <div>
             <div className="flex items-center gap-3 mb-3 sm:mb-4">
-              <Image 
-                src="/images/logos/cboa-logo.png" 
-                alt="CBOA Logo" 
+              <Image
+                src="/images/logos/cboa-logo.png"
+                alt="Organization Logo" 
                 width={50} 
                 height={50}
                 className="rounded invert sm:w-[60px] sm:h-[60px]"

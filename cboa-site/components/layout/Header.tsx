@@ -51,9 +51,9 @@ export default function Header() {
           <div className="flex justify-between items-center py-3 md:py-4">
             {/* Logo */}
             <Link href="/" className="flex items-center gap-2 md:gap-4">
-              <Image 
-                src="/images/logos/cboa-logo.png" 
-                alt="CBOA Logo" 
+              <Image
+                src="/images/logos/cboa-logo.png"
+                alt="Organization Logo" 
                 width={45} 
                 height={45}
                 className="rounded invert md:w-[60px] md:h-[60px]"

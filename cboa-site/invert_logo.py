@@ -23,7 +23,7 @@ b_inv = ImageOps.invert(b)
 inverted = Image.merge('RGBA', (r_inv, g_inv, b_inv, a))
 
 # Save to public folder
-output_path = "public/cboa-logo-inverted.png"
+output_path = "public/logo-inverted.png"
 print(f"Saving inverted logo to {output_path}...")
 inverted.save(output_path)
 

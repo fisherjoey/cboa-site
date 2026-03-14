@@ -32,8 +32,8 @@ This guide sets up automated email responses when a client submits an OSA reques
 Copy the PDFs to your website's public folder:
 
 ```
-cboa-site/public/documents/CBOA-Fee-Schedule-2025-2028.pdf
-cboa-site/public/documents/CBOA-Invoice-Policy.pdf
+public/documents/Fee-Schedule.pdf
+public/documents/Invoice-Policy.pdf
 ```
 
 ### 1.2 Add Environment Variables
@@ -430,8 +430,8 @@ If you prefer to paste the entire flow definition, use **Code View** in Power Au
 
 ### PDFs not attaching
 - Verify files exist at:
-  - `public/documents/CBOA-Fee-Schedule-2025-2028.pdf`
-  - `public/documents/CBOA-Invoice-Policy.pdf`
+  - `public/documents/Fee-Schedule.pdf`
+  - `public/documents/Invoice-Policy.pdf`
 - Redeploy after adding files
 
 ### Flow not triggering

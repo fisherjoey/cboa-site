@@ -42,9 +42,9 @@ export default function Hero({
           {showLogo && (
             <div className="mb-8 flex justify-center">
               <div className="w-[150px] h-[150px] rounded-full flex items-center justify-center">
-                <Image 
-                  src="/images/logos/cboa-logo.png" 
-                  alt="CBOA Logo" 
+                <Image
+                  src="/images/logos/cboa-logo.png"
+                  alt="Organization Logo" 
                   width={150} 
                   height={150}
                   className="rounded-full object-contain brightness-0 invert"

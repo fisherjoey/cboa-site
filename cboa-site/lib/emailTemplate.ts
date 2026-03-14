@@ -1,5 +1,16 @@
-// CBOA Email Template
+// Organization Email Template
 // Creates a professional, branded HTML email wrapper
+
+import {
+  ORG_NAME,
+  ORG_TAGLINE,
+  ORG_LOCATION,
+  SITE_URL,
+  ORG_LOGO_URL,
+  getPortalUrl,
+  getContactUrl,
+  getCopyrightYear,
+} from './siteConfig'
 
 export interface EmailTemplateOptions {
   subject: string
@@ -186,9 +197,9 @@ export function generateCBOAEmailTemplate(options: EmailTemplateOptions): string
           <!-- Header -->
           <tr>
             <td style="background-color: #1f2937; padding: 24px 20px; border-bottom: 3px solid #F97316; text-align: center;">
-              <img src="https://i.imgur.com/BQe360J.png" alt="CBOA Logo" style="max-width: 70px; height: auto; display: inline-block; margin-bottom: 12px;">
-              <h1 style="color: #ffffff; margin: 0 0 4px 0; font-size: 18px; font-weight: 700; letter-spacing: -0.5px; line-height: 1.3;">Calgary Basketball Officials Association</h1>
-              <p style="color: #ffffff; margin: 0; font-size: 14px; font-weight: 500; opacity: 0.95;">Excellence in Basketball Officiating</p>
+              <img src="${ORG_LOGO_URL}" alt="Logo" style="max-width: 70px; height: auto; display: inline-block; margin-bottom: 12px;">
+              <h1 style="color: #ffffff; margin: 0 0 4px 0; font-size: 18px; font-weight: 700; letter-spacing: -0.5px; line-height: 1.3;">${ORG_NAME}</h1>
+              <p style="color: #ffffff; margin: 0; font-size: 14px; font-weight: 500; opacity: 0.95;">${ORG_TAGLINE}</p>
             </td>
           </tr>
 
@@ -202,24 +213,24 @@ export function generateCBOAEmailTemplate(options: EmailTemplateOptions): string
           <!-- Footer -->
           <tr>
             <td style="background-color: #1F2937; color: #D1D5DB; padding: 30px 20px; text-align: center; font-size: 14px; line-height: 1.7; border-top: 3px solid #F97316;">
-              <p style="margin: 0 0 10px 0; font-weight: 600; color: #ffffff;">Calgary Basketball Officials Association</p>
-              <p style="margin: 0 0 15px 0;">Calgary, Alberta, Canada</p>
+              <p style="margin: 0 0 10px 0; font-weight: 600; color: #ffffff;">${ORG_NAME}</p>
+              <p style="margin: 0 0 15px 0;">${ORG_LOCATION}</p>
 
               <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin: 20px auto;">
                 <tr>
                   <td style="padding: 0 8px;">
-                    <a href="https://cboa.ca" style="color: #F97316; text-decoration: none; font-size: 14px;">Website</a>
+                    <a href="${SITE_URL}" style="color: #F97316; text-decoration: none; font-size: 14px;">Website</a>
                   </td>
                   ${external ? `
                   <td style="padding: 0 8px;">
-                    <a href="https://cboa.ca/contact" style="color: #F97316; text-decoration: none; font-size: 14px;">Contact Us</a>
+                    <a href="${getContactUrl()}" style="color: #F97316; text-decoration: none; font-size: 14px;">Contact Us</a>
                   </td>
                   ` : `
                   <td style="padding: 0 8px;">
-                    <a href="https://cboa.ca/portal" style="color: #F97316; text-decoration: none; font-size: 14px;">Member Portal</a>
+                    <a href="${getPortalUrl()}" style="color: #F97316; text-decoration: none; font-size: 14px;">Member Portal</a>
                   </td>
                   <td style="padding: 0 8px;">
-                    <a href="https://cboa.ca/contact?category=general" style="color: #F97316; text-decoration: none; font-size: 14px;">Contact Us</a>
+                    <a href="${getContactUrl('general')}" style="color: #F97316; text-decoration: none; font-size: 14px;">Contact Us</a>
                   </td>
                   `}
                 </tr>
@@ -227,16 +238,16 @@ export function generateCBOAEmailTemplate(options: EmailTemplateOptions): string
 
               ${external ? `
               <p style="margin: 20px 0 10px 0; font-size: 13px; color: #9ca3af;">
-                You are receiving this email because you submitted a request through the CBOA website.
+                You are receiving this email because you submitted a request through our website.
               </p>
               ` : `
               <p style="margin: 20px 0 10px 0; font-size: 13px; color: #9ca3af;">
-                You are receiving this email because you are a member of the Calgary Basketball Officials Association.
+                You are receiving this email because you are a member of ${ORG_NAME}.
               </p>
               `}
 
               <p style="margin: 0; font-size: 13px; color: #9ca3af;">
-                © ${new Date().getFullYear()} Calgary Basketball Officials Association. All rights reserved.
+                &copy; ${getCopyrightYear()} ${ORG_NAME}. All rights reserved.
               </p>
             </td>
           </tr>

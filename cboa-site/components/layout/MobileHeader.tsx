@@ -73,9 +73,9 @@ export default function MobileHeader() {
           <div className="flex justify-between items-center h-16">
             {/* Logo */}
             <Link href="/" className="flex items-center gap-3">
-              <Image 
-                src="/images/logos/cboa-logo.png" 
-                alt="CBOA Logo" 
+              <Image
+                src="/images/logos/cboa-logo.png"
+                alt="Organization Logo" 
                 width={40} 
                 height={40}
                 className="rounded invert"

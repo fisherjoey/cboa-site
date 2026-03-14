@@ -196,8 +196,8 @@ SUPABASE_SERVICE_ROLE_KEY=xxx
 ## Step 5: Upload PDF Documents
 
 Ensure these files exist in `/public/documents/`:
-- `CBOA-Fee-Schedule-2025-2028.pdf`
-- `CBOA-Invoice-Policy.pdf`
+- `Fee-Schedule.pdf`
+- `Invoice-Policy.pdf`
 
 These are attached to the confirmation email sent to clients.
 
