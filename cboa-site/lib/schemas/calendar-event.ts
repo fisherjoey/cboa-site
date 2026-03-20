@@ -1,7 +1,7 @@
 import { z } from 'zod'
 import { optionalString } from './common'
 
-export const EVENT_TYPES = ['training', 'meeting', 'league', 'social'] as const
+export const EVENT_TYPES = ['training', 'meeting', 'league', 'tournament', 'social'] as const
 
 // Schema for form inputs (dates as strings from datetime-local)
 export const calendarEventFormSchema = z.object({

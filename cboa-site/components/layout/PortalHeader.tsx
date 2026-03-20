@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { usePathname } from 'next/navigation'
@@ -22,7 +22,8 @@ import {
   IconUsers,
   IconMail,
   IconChartBar,
-  IconClipboardCheck
+  IconClipboardCheck,
+  IconClockEdit
 } from '@tabler/icons-react'
 import ThemeToggle from '../ui/ThemeToggle'
 
@@ -33,7 +34,27 @@ export default function PortalHeader() {
   const { logout } = useAuth()
   const [profileMenuOpen, setProfileMenuOpen] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [updatesMenuOpen, setUpdatesMenuOpen] = useState(false)
+  const updatesMenuRef = useRef<HTMLLIElement>(null)
   const pathname = usePathname()
+
+  // Close updates dropdown on outside click
+  useEffect(() => {
+    const handleClick = (e: MouseEvent) => {
+      if (updatesMenuRef.current && !updatesMenuRef.current.contains(e.target as Node)) {
+        setUpdatesMenuOpen(false)
+      }
+    }
+    if (updatesMenuOpen) document.addEventListener('mousedown', handleClick)
+    return () => document.removeEventListener('mousedown', handleClick)
+  }, [updatesMenuOpen])
+
+  // Close mobile menu and dropdowns on route change
+  useEffect(() => {
+    setMobileMenuOpen(false)
+    setUpdatesMenuOpen(false)
+    setProfileMenuOpen(false)
+  }, [pathname])
 
   // Check if in dev mode
   const isDevMode = process.env.NODE_ENV === 'development' && process.env.NEXT_PUBLIC_DISABLE_AUTH_DEV === 'true'
@@ -58,19 +79,27 @@ export default function PortalHeader() {
     }
   }
 
-  const portalLinks: { href: string; label: string; icon: typeof IconHome; external?: boolean; executive?: boolean }[] = [
+  type PortalLink = { href: string; label: string; icon: typeof IconHome; external?: boolean; executive?: boolean }
+
+  const topLinks: PortalLink[] = [
     { href: '/portal', label: 'Dashboard', icon: IconHome },
     { href: '/portal/calendar', label: 'Calendar', icon: IconCalendar },
-    // { href: '/portal/statistics', label: 'Statistics', icon: IconChartBar },
     { href: '/portal/resources', label: 'Resources', icon: IconBooks },
     { href: '/portal/evaluations', label: 'Evaluations', icon: IconClipboardCheck },
-    { href: '/portal/news', label: 'News & Announcements', icon: IconNews },
-    { href: '/portal/rule-modifications', label: 'Rule Modifications', icon: IconGavel },
-    { href: '/portal/the-bounce', label: 'The Bounce', icon: IconNotebook },
     ...(user.role === 'admin' || user.role === 'executive'
       ? [{ href: '/portal/mail', label: 'Send Email', icon: IconMail }]
       : []),
   ]
+
+  const updatesLinks: PortalLink[] = [
+    { href: '/portal/news', label: 'News & Announcements', icon: IconNews },
+    { href: '/portal/scheduler-updates', label: 'Scheduler Updates', icon: IconClockEdit },
+    { href: '/portal/rule-modifications', label: 'Rule Modifications', icon: IconGavel },
+    { href: '/portal/the-bounce', label: 'The Bounce', icon: IconNotebook },
+  ]
+
+  const updatesIsActive = updatesLinks.some(l => pathname === l.href)
+  const allLinks = [...topLinks.slice(0, 4), ...updatesLinks, ...topLinks.slice(4)]
 
   return (
     <header className="sticky top-0 z-50">
@@ -160,39 +189,57 @@ export default function PortalHeader() {
         <div className="container mx-auto px-4">
           {/* Desktop Navigation */}
           <ul className="hidden md:flex">
-            {portalLinks.map(link => (
+            {topLinks.map(link => (
               <li key={link.href}>
-                {link.external ? (
-                  <a
-                    href={link.href}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-2 px-4 py-3 text-sm font-medium text-slate-400 border-b-2 border-transparent hover:text-slate-200 hover:bg-white/[0.03] rounded-t-md transition-all duration-200"
-                  >
-                    <link.icon className="h-4 w-4" />
-                    <span>{link.label}</span>
-                    <IconExternalLink className="h-3 w-3 ml-1" />
-                  </a>
-                ) : (
-                  <Link
-                    href={link.href}
-                    className={`flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 rounded-t-md transition-all duration-200 ${
-                      pathname === link.href
-                        ? 'text-cboa-orange bg-cboa-orange/5 border-cboa-orange font-semibold'
-                        : 'text-slate-300 border-transparent hover:text-white hover:bg-white/[0.05]'
-                    } ${
-                      link.executive ? 'bg-purple-900 bg-opacity-30 font-semibold' : ''
-                    }`}
-                  >
-                    <link.icon className="h-4 w-4" />
-                    <span>{link.label}</span>
-                    {link.executive && (
-                      <span className="ml-1 px-1.5 py-0.5 text-xs bg-purple-600 rounded">EXEC</span>
-                    )}
-                  </Link>
-                )}
+                <Link
+                  href={link.href}
+                  className={`flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 rounded-t-md transition-all duration-200 ${
+                    pathname === link.href
+                      ? 'text-cboa-orange bg-cboa-orange/5 border-cboa-orange font-semibold'
+                      : 'text-slate-300 border-transparent hover:text-white hover:bg-white/[0.05]'
+                  }`}
+                >
+                  <link.icon className="h-4 w-4" />
+                  <span>{link.label}</span>
+                </Link>
               </li>
             ))}
+
+            {/* Updates Dropdown */}
+            <li className="relative" ref={updatesMenuRef}>
+              <button
+                onClick={() => setUpdatesMenuOpen(!updatesMenuOpen)}
+                className={`flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 rounded-t-md transition-all duration-200 ${
+                  updatesIsActive
+                    ? 'text-cboa-orange bg-cboa-orange/5 border-cboa-orange font-semibold'
+                    : 'text-slate-300 border-transparent hover:text-white hover:bg-white/[0.05]'
+                }`}
+              >
+                <IconNews className="h-4 w-4" />
+                <span>Updates</span>
+                <IconChevronDown className={`h-3.5 w-3.5 transition-transform duration-200 ${updatesMenuOpen ? 'rotate-180' : ''}`} />
+              </button>
+
+              {updatesMenuOpen && (
+                <div className="absolute left-0 top-full mt-0 w-56 bg-cboa-dark rounded-b-xl border border-white/10 border-t-0 shadow-lg py-1 z-50">
+                  {updatesLinks.map(link => (
+                    <Link
+                      key={link.href}
+                      href={link.href}
+                      onClick={() => setUpdatesMenuOpen(false)}
+                      className={`flex items-center gap-2.5 px-4 py-2.5 text-sm transition-all duration-200 ${
+                        pathname === link.href
+                          ? 'text-cboa-orange bg-cboa-orange/5 font-semibold'
+                          : 'text-slate-300 hover:text-white hover:bg-white/[0.05]'
+                      }`}
+                    >
+                      <link.icon className="h-4 w-4" />
+                      <span>{link.label}</span>
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </li>
           </ul>
 
           {/* Mobile Navigation */}
@@ -216,40 +263,32 @@ export default function PortalHeader() {
                 </div>
               </div>
 
-              {/* Mobile Links */}
-              {portalLinks.map(link => (
-                link.external ? (
-                  <a
-                    key={link.href}
-                    href={link.href}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-300 hover:text-white hover:bg-white/[0.05] transition-all duration-200"
-                  >
-                    <link.icon className="h-4 w-4" />
-                    <span>{link.label}</span>
-                    <IconExternalLink className="h-3 w-3 ml-1" />
-                  </a>
-                ) : (
-                  <Link
-                    key={link.href}
-                    href={link.href}
-                    className={`flex items-center gap-2 px-4 py-2 text-sm font-medium transition-all duration-200 ${
-                      pathname === link.href
-                        ? 'text-cboa-orange bg-cboa-orange/5 font-semibold'
-                        : 'text-slate-300 hover:text-white hover:bg-white/[0.05]'
-                    } ${
-                      link.executive ? 'bg-purple-900 bg-opacity-30' : ''
-                    }`}
-                  >
-                    <link.icon className="h-4 w-4" />
-                    <span>{link.label}</span>
-                    {link.executive && (
-                      <span className="ml-1 px-1.5 py-0.5 text-xs bg-purple-600 rounded">EXEC</span>
+              {/* Mobile Links — all flat, grouped visually */}
+              {allLinks.map((link, i) => {
+                // Insert a subtle section label before the updates group
+                const showUpdatesHeader = i === topLinks.slice(0, 4).length
+                return (
+                  <div key={link.href}>
+                    {showUpdatesHeader && (
+                      <div className="px-4 pt-3 pb-1">
+                        <span className="text-[10px] font-semibold uppercase tracking-widest text-slate-500">Updates</span>
+                      </div>
                     )}
-                  </Link>
+                    <Link
+                      href={link.href}
+                      onClick={() => setMobileMenuOpen(false)}
+                      className={`flex items-center gap-2 px-4 py-2 text-sm font-medium transition-all duration-200 ${
+                        pathname === link.href
+                          ? 'text-cboa-orange bg-cboa-orange/5 font-semibold'
+                          : 'text-slate-300 hover:text-white hover:bg-white/[0.05]'
+                      }`}
+                    >
+                      <link.icon className="h-4 w-4" />
+                      <span>{link.label}</span>
+                    </Link>
+                  </div>
                 )
-              ))}
+              })}
 
               <hr className="border-white/10" />
 

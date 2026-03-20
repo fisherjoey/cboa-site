@@ -9,7 +9,7 @@ import listPlugin from '@fullcalendar/list'
 import interactionPlugin from '@fullcalendar/interaction'
 import { EventClickArg, DateSelectArg } from '@fullcalendar/core'
 import './calendar.css'
-import { IconPlus, IconEdit, IconTrash, IconCalendar, IconClock, IconMapPin, IconUsers, IconCalendarEvent, IconChartBar, IconX, IconFilter, IconFilterOff } from '@tabler/icons-react'
+import { IconPlus, IconEdit, IconTrash, IconCalendar, IconClock, IconMapPin, IconUsers, IconCalendarEvent, IconChartBar, IconX, IconFilter, IconFilterOff, IconTrophy, IconBuilding, IconMapPins, IconTag } from '@tabler/icons-react'
 import Modal from '@/components/ui/Modal'
 import { calendarAPI } from '@/lib/api'
 import { useRole } from '@/contexts/RoleContext'
@@ -19,18 +19,47 @@ import { calendarEventFormSchema, formDataToEvent, EVENT_TYPES, type CalendarEve
 // Calendar view mode type
 type CalendarViewMode = 'events' | 'statistics'
 
+interface TournamentDetails {
+  school: string
+  divisions: string[]
+  levels: string[]
+  genders: string[]
+  multiLocation: boolean
+  gamesInArbiter: boolean
+}
+
 interface CBOAEvent {
   id?: string
   title: string
   start: Date
   end: Date
-  type: 'training' | 'meeting' | 'league' | 'social'
+  type: 'training' | 'meeting' | 'league' | 'tournament' | 'social'
   description?: string
   location?: string
   instructor?: string
   maxParticipants?: number
   registrationLink?: string
+  tournamentDetails?: TournamentDetails
 }
+
+// Tournament configuration — checkboxes for scheduler, tags for members
+const TOURNAMENT_DIVISIONS = [
+  'U9', 'U11', 'U13', 'U15', 'U17',
+  'Prep', 'Junior High', 'HS-JV', 'HS-SV', 'Senior',
+] as const
+
+const TOURNAMENT_LEVELS = [
+  '1A/2A', '3A', '4A', '5A',
+  'Div 1/2',
+  'Calgary', 'Rockyview', 'Foothills',
+  'CBE', 'CCSD',
+  'South Central Zones',
+  'Recreational Adult',
+  'CJBL',
+  'Edge PWBL', 'Edge Elite (National)',
+] as const
+
+const TOURNAMENT_GENDERS = ['Boys', 'Girls'] as const
 
 // Mock daily game data for Statistics view (February 2026)
 const mockDailyGames: Record<string, { games: number; assignments: number; leagues: { name: string; games: number }[] }> = {
@@ -50,6 +79,7 @@ const eventTypeColors: Record<string, string> = {
   training: '#10b981', // green
   meeting: '#8b5cf6',  // purple
   league: '#ef4444',   // red
+  tournament: '#f59e0b', // amber
   social: '#3b82f6',   // blue
 }
 
@@ -61,7 +91,7 @@ export default function CalendarPage() {
   const [selectedEvent, setSelectedEvent] = useState<CBOAEvent | null>(null)
   const [isEditing, setIsEditing] = useState(false)
   const [selectedStatDate, setSelectedStatDate] = useState<string | null>(null)
-  const [activeTypes, setActiveTypes] = useState<Set<string>>(new Set(['training', 'meeting', 'league', 'social']))
+  const [activeTypes, setActiveTypes] = useState<Set<string>>(new Set(['training', 'meeting', 'league', 'tournament', 'social']))
   const [isMobile, setIsMobile] = useState(false)
 
   // Track viewport width for responsive calendar settings
@@ -84,7 +114,8 @@ export default function CalendarPage() {
       const eventsWithDates = data.map((e: any) => ({
         ...e,
         start: new Date(e.start_date),
-        end: new Date(e.end_date)
+        end: new Date(e.end_date),
+        tournamentDetails: e.tournament_details || undefined,
       }))
       setEvents(eventsWithDates)
     } catch (error) {
@@ -138,10 +169,10 @@ export default function CalendarPage() {
     })
   }
 
-  const allTypesActive = activeTypes.size === 4
+  const allTypesActive = activeTypes.size === EVENT_TYPES.length
 
   const resetFilters = () => {
-    setActiveTypes(new Set(['training', 'meeting', 'league', 'social']))
+    setActiveTypes(new Set(EVENT_TYPES))
   }
 
   // Convert events to FullCalendar format (filtered by active types)
@@ -198,7 +229,8 @@ export default function CalendarPage() {
         registration_link: eventData.registrationLink,
         start_date: eventData.start.toISOString(),
         end_date: eventData.end.toISOString(),
-        created_by: 'CBOA Executive'
+        created_by: 'CBOA Executive',
+        tournament_details: eventData.type === 'tournament' ? eventData.tournamentDetails || null : null,
       }
 
       if (selectedEvent?.id) {
@@ -207,7 +239,8 @@ export default function CalendarPage() {
           e.id === selectedEvent.id ? {
             ...updated,
             start: new Date(updated.start_date),
-            end: new Date(updated.end_date)
+            end: new Date(updated.end_date),
+            tournamentDetails: updated.tournament_details || undefined,
           } : e
         ))
       } else {
@@ -215,7 +248,8 @@ export default function CalendarPage() {
         setEvents(prev => [...prev, {
           ...created,
           start: new Date(created.start_date),
-          end: new Date(created.end_date)
+          end: new Date(created.end_date),
+          tournamentDetails: created.tournament_details || undefined,
         }])
       }
       setShowEventModal(false)
@@ -243,43 +277,11 @@ export default function CalendarPage() {
   const selectedStatDayData = selectedStatDate ? mockDailyGames[selectedStatDate] : null
 
   return (
-    <div className="p-4 sm:p-6 portal-animate">
-      {/* Header */}
-      <div className="mb-4 sm:mb-6 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-bold font-heading tracking-tight text-gray-900 dark:text-white">CBOA Calendar</h1>
-          <p className="text-sm sm:text-base text-gray-600 dark:text-gray-300 mt-1">
-            {calendarMode === 'events'
-              ? 'Training events, meetings, and important dates'
-              : 'Game statistics and assignment data'}
-          </p>
-        </div>
-        <div className="flex items-center gap-3">
-          {/* Calendar Mode Toggle - Statistics tab commented out */}
-          {/* <div className="flex bg-gray-100 dark:bg-portal-surface/50 rounded-lg p-1">
-            <button
-              onClick={() => setCalendarMode('events')}
-              className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors flex items-center gap-1.5 ${
-                calendarMode === 'events'
-                  ? 'bg-white dark:bg-portal-surface shadow text-gray-900 dark:text-white'
-                  : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white'
-              }`}
-            >
-              <IconCalendarEvent className="h-4 w-4" />
-              Events
-            </button>
-            <button
-              onClick={() => setCalendarMode('statistics')}
-              className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors flex items-center gap-1.5 ${
-                calendarMode === 'statistics'
-                  ? 'bg-white dark:bg-portal-surface shadow text-gray-900 dark:text-white'
-                  : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white'
-              }`}
-            >
-              <IconChartBar className="h-4 w-4" />
-              Statistics
-            </button>
-          </div> */}
+    <div className="p-3 sm:p-6 portal-animate max-w-5xl mx-auto">
+      {/* Header — compact: title + filters + add button */}
+      <div className="mb-3 sm:mb-4 flex flex-col gap-2">
+        <div className="flex items-center justify-between">
+          <h1 className="text-xl sm:text-2xl font-bold font-heading tracking-tight text-gray-900 dark:text-white">Calendar</h1>
           {canEdit && calendarMode === 'events' && (
             <button
               onClick={() => {
@@ -292,39 +294,37 @@ export default function CalendarPage() {
                 setIsEditing(true)
                 setShowEventModal(true)
               }}
-              className="bg-orange-500 text-white px-4 py-2 rounded-xl hover:bg-orange-600 flex items-center justify-center gap-2 text-sm sm:text-base"
+              className="bg-orange-500 text-white px-3 py-1.5 rounded-lg hover:bg-orange-600 flex items-center gap-1.5 text-sm"
             >
-              <IconPlus className="h-5 w-5" />
-              Add Event
+              <IconPlus className="h-4 w-4" />
+              <span className="hidden sm:inline">Add Event</span>
+              <span className="sm:hidden">Add</span>
             </button>
           )}
         </div>
-      </div>
 
-      {/* Events Mode Content */}
-      {calendarMode === 'events' && (
-        <>
-          {/* Filter Pills */}
-          <div className="mb-3 sm:mb-4 flex flex-wrap items-center gap-1.5 sm:gap-2">
-            <IconFilter className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-gray-400 dark:text-gray-500" />
+        {/* Inline Filters */}
+        {calendarMode === 'events' && (
+          <div className="flex items-center gap-1 sm:gap-1.5 overflow-x-auto scrollbar-hide -mx-1 px-1">
             {([
-              { type: 'training', label: 'Training', color: 'bg-green-500', ring: 'ring-green-500/30' },
-              { type: 'meeting', label: 'Meeting', color: 'bg-purple-500', ring: 'ring-purple-500/30' },
-              { type: 'league', label: 'League', color: 'bg-red-500', ring: 'ring-red-500/30' },
-              { type: 'social', label: 'Social', color: 'bg-blue-500', ring: 'ring-blue-500/30' },
-            ] as const).map(({ type, label, color, ring }) => {
+              { type: 'training', label: 'Training', dot: 'bg-green-500', text: 'text-green-600 dark:text-green-400' },
+              { type: 'meeting', label: 'Meeting', dot: 'bg-purple-500', text: 'text-purple-600 dark:text-purple-400' },
+              { type: 'league', label: 'League', dot: 'bg-red-500', text: 'text-red-600 dark:text-red-400' },
+              { type: 'tournament', label: 'Tournament', dot: 'bg-amber-500', text: 'text-amber-600 dark:text-amber-400' },
+              { type: 'social', label: 'Social', dot: 'bg-blue-500', text: 'text-blue-600 dark:text-blue-400' },
+            ] as const).map(({ type, label, dot, text }) => {
               const isActive = activeTypes.has(type)
               return (
                 <button
                   key={type}
                   onClick={() => toggleType(type)}
-                  className={`flex items-center gap-1 sm:gap-1.5 px-2 sm:px-2.5 py-1 sm:py-1.5 rounded-full text-[11px] sm:text-sm font-medium transition-all duration-200 ${
+                  className={`flex-shrink-0 flex items-center gap-1.5 px-2 sm:px-2.5 py-1 rounded-md text-[11px] sm:text-xs font-medium transition-all duration-200 ${
                     isActive
-                      ? `${color} text-white shadow-sm ring-2 ${ring}`
-                      : 'bg-gray-100 dark:bg-portal-hover text-gray-400 dark:text-gray-500'
+                      ? `${text} bg-gray-100 dark:bg-white/[0.08]`
+                      : 'text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300'
                   }`}
                 >
-                  <div className={`w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full ${isActive ? 'bg-white/80' : color + ' opacity-40'}`} />
+                  <div className={`w-1.5 h-1.5 rounded-full ${dot} ${isActive ? '' : 'opacity-30'}`} />
                   {label}
                 </button>
               )
@@ -332,16 +332,21 @@ export default function CalendarPage() {
             {!allTypesActive && (
               <button
                 onClick={resetFilters}
-                className="flex items-center gap-1 px-1.5 sm:px-2 py-1 sm:py-1.5 text-[11px] sm:text-xs text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors"
+                className="flex-shrink-0 flex items-center gap-1 px-1.5 py-1 text-[10px] sm:text-xs text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors"
               >
-                <IconFilterOff className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
+                <IconFilterOff className="h-3 w-3" />
                 Reset
               </button>
             )}
           </div>
+        )}
+      </div>
 
+      {/* Events Mode Content */}
+      {calendarMode === 'events' && (
+        <>
           {/* FullCalendar */}
-          <div className="bg-white dark:bg-portal-surface rounded-xl border border-gray-200 dark:border-portal-border p-2 sm:p-4">
+          <div className="bg-white dark:bg-portal-surface rounded-xl border border-gray-200 dark:border-portal-border p-1.5 sm:p-4">
             <FullCalendar
               plugins={[dayGridPlugin, listPlugin, interactionPlugin]}
               initialView="dayGridMonth"
@@ -522,13 +527,37 @@ function EventModal({
 
   const eventType = watch('type')
 
+  // Tournament-specific state (managed outside react-hook-form)
+  const [tournamentSchool, setTournamentSchool] = useState(event.tournamentDetails?.school || '')
+  const [tournamentDivisions, setTournamentDivisions] = useState<string[]>(event.tournamentDetails?.divisions || [])
+  const [tournamentLevels, setTournamentLevels] = useState<string[]>(event.tournamentDetails?.levels || [])
+  const [tournamentGenders, setTournamentGenders] = useState<string[]>(event.tournamentDetails?.genders || [])
+  const [multiLocation, setMultiLocation] = useState(event.tournamentDetails?.multiLocation || false)
+  const [gamesInArbiter, setGamesInArbiter] = useState(event.tournamentDetails?.gamesInArbiter || false)
+
+  const toggleArrayItem = (arr: string[], setArr: React.Dispatch<React.SetStateAction<string[]>>, item: string) => {
+    setArr(prev => prev.includes(item) ? prev.filter(i => i !== item) : [...prev, item])
+  }
+
   const onFormSubmit = (data: CalendarEventFormData) => {
     const eventData = formDataToEvent(data)
-    onSave({ ...eventData, id: event.id })
+    const tournamentDetails: TournamentDetails | undefined = data.type === 'tournament' ? {
+      school: tournamentSchool,
+      divisions: tournamentDivisions,
+      levels: tournamentLevels,
+      genders: tournamentGenders,
+      multiLocation,
+      gamesInArbiter,
+    } : undefined
+    onSave({ ...eventData, id: event.id, tournamentDetails })
   }
 
   const inputClassName = (hasError: boolean) =>
     `w-full px-3 py-2 border ${hasError ? 'border-red-500' : 'border-gray-200 dark:border-portal-border'} bg-white dark:bg-portal-surface text-gray-900 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500`
+
+  const td = event.tournamentDetails
+  const hasTournamentTags = event.type === 'tournament' && td &&
+    (td.divisions.length > 0 || td.levels.length > 0 || td.genders.length > 0)
 
   if (!isEditing) {
     // View mode
@@ -537,12 +566,15 @@ function EventModal({
         isOpen={true}
         onClose={onClose}
         title={event.title}
-        size="sm"
+        size={event.type === 'tournament' ? 'md' : 'sm'}
       >
         <div className="space-y-3">
           {event.type && (
             <div className="flex items-center gap-2">
-              <IconCalendar className="h-5 w-5 text-gray-500 dark:text-gray-400" />
+              {event.type === 'tournament'
+                ? <IconTrophy className="h-5 w-5 text-amber-500" />
+                : <IconCalendar className="h-5 w-5 text-gray-500 dark:text-gray-400" />
+              }
               <span className="capitalize text-gray-900 dark:text-white">{event.type}</span>
             </div>
           )}
@@ -551,7 +583,9 @@ function EventModal({
             <IconClock className="h-5 w-5 text-gray-500 dark:text-gray-400" />
             <span className="text-gray-900 dark:text-white">
               {moment(event.start).format('MMM DD, YYYY h:mm A')} -
-              {moment(event.end).format('h:mm A')}
+              {moment(event.start).isSame(event.end, 'day')
+                ? moment(event.end).format('h:mm A')
+                : moment(event.end).format('MMM DD, YYYY h:mm A')}
             </span>
           </div>
 
@@ -560,6 +594,63 @@ function EventModal({
               <IconMapPin className="h-5 w-5 text-gray-500 dark:text-gray-400" />
               <span className="text-gray-900 dark:text-white">{event.location}</span>
             </div>
+          )}
+
+          {/* Tournament-specific view details */}
+          {event.type === 'tournament' && td && (
+            <>
+              {td.school && (
+                <div className="flex items-center gap-2">
+                  <IconBuilding className="h-5 w-5 text-gray-500 dark:text-gray-400" />
+                  <span className="text-gray-900 dark:text-white">{td.school}</span>
+                </div>
+              )}
+
+              {td.multiLocation && (
+                <div className="flex items-center gap-2">
+                  <IconMapPins className="h-5 w-5 text-amber-500" />
+                  <span className="text-amber-700 dark:text-amber-400 text-sm font-medium">Multiple Locations</span>
+                </div>
+              )}
+
+              {td.gamesInArbiter && (
+                <div className="flex items-center gap-2">
+                  <span className="flex items-center gap-2 px-2.5 py-1 rounded-lg bg-green-100 dark:bg-green-900/30 border border-green-300 dark:border-green-700">
+                    <span className="relative flex h-2.5 w-2.5">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-green-500"></span>
+                    </span>
+                    <span className="text-green-700 dark:text-green-300 text-sm font-medium">Games in Arbiter</span>
+                  </span>
+                </div>
+              )}
+
+              {hasTournamentTags && (
+                <div className="pt-2 border-t border-gray-100 dark:border-portal-border/50">
+                  <div className="flex items-center gap-1.5 mb-2">
+                    <IconTag className="h-4 w-4 text-gray-400" />
+                    <span className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Tournament Details</span>
+                  </div>
+                  <div className="flex flex-wrap gap-1.5">
+                    {td.genders.map(g => (
+                      <span key={g} className="px-2 py-0.5 text-xs font-medium rounded-full bg-pink-100 text-pink-700 dark:bg-pink-900/40 dark:text-pink-300">
+                        {g}
+                      </span>
+                    ))}
+                    {td.levels.map(l => (
+                      <span key={l} className="px-2 py-0.5 text-xs font-medium rounded-full bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300">
+                        {l}
+                      </span>
+                    ))}
+                    {td.divisions.map(d => (
+                      <span key={d} className="px-2 py-0.5 text-xs font-medium rounded-full bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300">
+                        {d}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </>
           )}
 
           {event.instructor && (
@@ -650,6 +741,7 @@ function EventModal({
             <option value="training">Training</option>
             <option value="meeting">Meeting</option>
             <option value="league">League Date</option>
+            <option value="tournament">Tournament</option>
             <option value="social">Social</option>
           </select>
           {errors.type && (
@@ -747,6 +839,131 @@ function EventModal({
               )}
             </div>
           </>
+        )}
+
+        {eventType === 'tournament' && (
+          <div className="border-t border-gray-200 dark:border-portal-border pt-4 space-y-4">
+            <h3 className="text-sm font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+              <IconTrophy className="h-4 w-4 text-amber-500" />
+              Tournament Details
+            </h3>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                School / Club Affiliation
+              </label>
+              <input
+                type="text"
+                value={tournamentSchool}
+                onChange={(e) => setTournamentSchool(e.target.value)}
+                className={inputClassName(false)}
+                placeholder="e.g. Edge School, Bishop O'Byrne"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Gender
+              </label>
+              <div className="flex flex-wrap gap-2">
+                {TOURNAMENT_GENDERS.map(g => (
+                  <label key={g} className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border cursor-pointer transition-colors ${
+                    tournamentGenders.includes(g)
+                      ? 'bg-pink-50 border-pink-300 text-pink-700 dark:bg-pink-900/30 dark:border-pink-700 dark:text-pink-300'
+                      : 'bg-white dark:bg-portal-surface border-gray-200 dark:border-portal-border text-gray-600 dark:text-gray-400 hover:border-gray-300'
+                  }`}>
+                    <input
+                      type="checkbox"
+                      checked={tournamentGenders.includes(g)}
+                      onChange={() => toggleArrayItem(tournamentGenders, setTournamentGenders, g)}
+                      className="sr-only"
+                    />
+                    <span className="text-sm">{g}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Level of Play
+              </label>
+              <div className="flex flex-wrap gap-2">
+                {TOURNAMENT_LEVELS.map(l => (
+                  <label key={l} className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border cursor-pointer transition-colors ${
+                    tournamentLevels.includes(l)
+                      ? 'bg-amber-50 border-amber-300 text-amber-700 dark:bg-amber-900/30 dark:border-amber-700 dark:text-amber-300'
+                      : 'bg-white dark:bg-portal-surface border-gray-200 dark:border-portal-border text-gray-600 dark:text-gray-400 hover:border-gray-300'
+                  }`}>
+                    <input
+                      type="checkbox"
+                      checked={tournamentLevels.includes(l)}
+                      onChange={() => toggleArrayItem(tournamentLevels, setTournamentLevels, l)}
+                      className="sr-only"
+                    />
+                    <span className="text-sm">{l}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Divisions
+              </label>
+              <div className="flex flex-wrap gap-2">
+                {TOURNAMENT_DIVISIONS.map(d => (
+                  <label key={d} className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border cursor-pointer transition-colors ${
+                    tournamentDivisions.includes(d)
+                      ? 'bg-blue-50 border-blue-300 text-blue-700 dark:bg-blue-900/30 dark:border-blue-700 dark:text-blue-300'
+                      : 'bg-white dark:bg-portal-surface border-gray-200 dark:border-portal-border text-gray-600 dark:text-gray-400 hover:border-gray-300'
+                  }`}>
+                    <input
+                      type="checkbox"
+                      checked={tournamentDivisions.includes(d)}
+                      onChange={() => toggleArrayItem(tournamentDivisions, setTournamentDivisions, d)}
+                      className="sr-only"
+                    />
+                    <span className="text-sm">{d}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            <label className={`flex items-center gap-3 px-3 py-2.5 rounded-lg border cursor-pointer transition-colors ${
+              multiLocation
+                ? 'bg-amber-50 border-amber-300 dark:bg-amber-900/30 dark:border-amber-700'
+                : 'bg-white dark:bg-portal-surface border-gray-200 dark:border-portal-border hover:border-gray-300'
+            }`}>
+              <input
+                type="checkbox"
+                checked={multiLocation}
+                onChange={(e) => setMultiLocation(e.target.checked)}
+                className="h-4 w-4 text-amber-600 border-gray-300 rounded focus:ring-amber-500"
+              />
+              <div>
+                <span className="text-sm font-medium text-gray-900 dark:text-white">Multiple Locations</span>
+                <p className="text-xs text-gray-500 dark:text-gray-400">Tournament is hosted across more than one venue</p>
+              </div>
+            </label>
+
+            <label className={`flex items-center gap-3 px-3 py-2.5 rounded-lg border cursor-pointer transition-colors ${
+              gamesInArbiter
+                ? 'bg-green-50 border-green-300 dark:bg-green-900/30 dark:border-green-700'
+                : 'bg-white dark:bg-portal-surface border-gray-200 dark:border-portal-border hover:border-gray-300'
+            }`}>
+              <input
+                type="checkbox"
+                checked={gamesInArbiter}
+                onChange={(e) => setGamesInArbiter(e.target.checked)}
+                className="h-4 w-4 text-green-600 border-gray-300 rounded focus:ring-green-500"
+              />
+              <div>
+                <span className="text-sm font-medium text-gray-900 dark:text-white">Games in Arbiter</span>
+                <p className="text-xs text-gray-500 dark:text-gray-400">Tournament games have been added to Arbiter</p>
+              </div>
+            </label>
+          </div>
         )}
 
         <div className="flex gap-2 pt-4">

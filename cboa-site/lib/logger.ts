@@ -55,6 +55,7 @@ export type AuditEntityType =
   | 'file'
   | 'osa'
   | 'executive_team'
+  | 'scheduler_update'
   | 'news'
   | 'page'
   | 'training_event'

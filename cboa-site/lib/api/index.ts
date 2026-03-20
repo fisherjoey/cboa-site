@@ -6,7 +6,7 @@
  */
 
 // Portal content
-export { calendarAPI, announcementsAPI, ruleModificationsAPI, newslettersAPI } from './portal'
+export { calendarAPI, announcementsAPI, schedulerUpdatesAPI, ruleModificationsAPI, newslettersAPI } from './portal'
 
 // Members & activities
 export { membersAPI, memberActivitiesAPI } from './members'

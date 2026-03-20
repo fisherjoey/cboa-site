@@ -112,6 +112,42 @@ export const ruleModificationsAPI = {
   }
 }
 
+export const schedulerUpdatesAPI = {
+  async getAll(options?: { forceRefresh?: boolean }) {
+    const cacheKey = 'schedulerUpdates'
+
+    if (!options?.forceRefresh && isBrowser()) {
+      const cached = getFromCache(cacheKey)
+      if (cached) return cached
+    }
+
+    const data = await retryAsync(async () => {
+      const res = await apiFetch(`${API_BASE}/scheduler-updates`)
+      return res.json()
+    })
+
+    if (isBrowser()) saveToCache(cacheKey, data)
+    return data
+  },
+
+  async create(update: any) {
+    const res = await apiFetch(`${API_BASE}/scheduler-updates`, { method: 'POST', body: JSON.stringify(update) })
+    invalidateCache('schedulerUpdates')
+    return res.json()
+  },
+
+  async update(update: any) {
+    const res = await apiFetch(`${API_BASE}/scheduler-updates`, { method: 'PUT', body: JSON.stringify(update) })
+    invalidateCache('schedulerUpdates')
+    return res.json()
+  },
+
+  async delete(id: string) {
+    await apiFetch(`${API_BASE}/scheduler-updates?id=${id}`, { method: 'DELETE' })
+    invalidateCache('schedulerUpdates')
+  }
+}
+
 export const newslettersAPI = {
   async getAll(options?: { forceRefresh?: boolean }) {
     const cacheKey = 'newsletters'

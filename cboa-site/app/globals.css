@@ -102,6 +102,15 @@ body {
 
 /* Mobile utility classes */
 @layer utilities {
+  /* Hide scrollbar while keeping scroll functionality */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+
   /* Safe area padding for notched devices */
   .safe-top {
     padding-top: env(safe-area-inset-top);
