@@ -42,6 +42,27 @@ import {
   IconLayoutGrid
 } from '@tabler/icons-react'
 
+// Simple accordion for resource category groups
+function ResourceCategoryAccordion({ label, count, icon: Icon, children }: {
+  label: string
+  count: number
+  icon: React.ComponentType<{ className?: string }>
+  children: React.ReactNode
+}) {
+  const [open, setOpen] = useState(true)
+  return (
+    <div>
+      <button onClick={() => setOpen(!open)} className="w-full flex items-center gap-2 px-3 py-2 hover:bg-gray-50 dark:hover:bg-portal-hover/50 transition-colors">
+        <IconChevronDown className={`h-3.5 w-3.5 text-gray-400 transition-transform duration-200 ${open ? 'rotate-180' : ''}`} />
+        <Icon className="h-3.5 w-3.5 text-gray-400" />
+        <span className="text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide">{label}</span>
+        <span className="text-[10px] text-gray-400 dark:text-gray-500">{count}</span>
+      </button>
+      {open && children}
+    </div>
+  )
+}
+
 type ResourceType = 'file' | 'link' | 'video' | 'text'
 
 interface Resource {
@@ -673,57 +694,60 @@ export default function ResourcesClient() {
       }
     }
 
-    // Single flat row — works on both mobile and desktop
+    // Flat row — title wraps, primary action prominent, admin actions subtle
     return (
       <div
         key={resource.id}
         id={`resource-${resource.id}`}
-        className={`flex items-center gap-3 px-3 py-2.5 cursor-pointer hover:bg-gray-50 dark:hover:bg-portal-hover/50 transition-colors ${
+        className={`px-3 py-2.5 cursor-pointer hover:bg-gray-50 dark:hover:bg-portal-hover/50 transition-colors ${
           resource.featured ? 'bg-orange-50/50 dark:bg-orange-900/10' : ''
         }`}
         onClick={handleResourceClick}
       >
-        <div className={`w-8 h-8 rounded-md flex items-center justify-center flex-shrink-0 ${resourceIcon.bg}`}>
-          <IconComponent className={`h-4 w-4 ${resourceIcon.color}`} />
-        </div>
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-1.5">
-            <h3 className="font-medium text-sm text-gray-900 dark:text-white truncate">{resource.title}</h3>
-            {resource.featured && (
-              <span className="flex-shrink-0 text-[9px] font-semibold uppercase tracking-wide text-orange-600 dark:text-orange-400">Featured</span>
+        <div className="flex items-start gap-2.5">
+          <div className={`w-8 h-8 rounded-md flex items-center justify-center flex-shrink-0 mt-0.5 ${resourceIcon.bg}`}>
+            <IconComponent className={`h-4 w-4 ${resourceIcon.color}`} />
+          </div>
+          <div className="flex-1 min-w-0">
+            <h3 className="font-medium text-sm text-gray-900 dark:text-white leading-snug">
+              {resource.title}
+              {resource.featured && (
+                <span className="ml-1.5 text-[9px] font-semibold uppercase tracking-wide text-orange-600 dark:text-orange-400">Featured</span>
+              )}
+            </h3>
+            <div className="flex items-center gap-2 text-[11px] text-gray-500 dark:text-gray-400 mt-0.5">
+              <span>{formatDate(resource.lastUpdated)}</span>
+              {resource.fileSize && <span>{resource.fileSize}</span>}
+            </div>
+          </div>
+          {/* Primary action only — download or open */}
+          <div className="flex items-center gap-0.5 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
+            {resource.fileUrl && (
+              <a href={resource.fileUrl} download className="p-2 text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/30 rounded" title="Download">
+                <IconDownload className="h-4 w-4" />
+              </a>
+            )}
+            {resource.externalLink && (
+              <a href={resource.externalLink} target="_blank" rel="noopener noreferrer" className="p-2 text-blue-400 hover:bg-blue-900/30 rounded" title="Open">
+                <IconExternalLink className="h-4 w-4" />
+              </a>
+            )}
+            {canEdit && (
+              <>
+                <button onClick={() => startEditing(resource)} className="p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 rounded hidden sm:block" title="Edit">
+                  <IconEdit className="h-3.5 w-3.5" />
+                </button>
+                <button onClick={() => handleDelete(resource.id)} className="p-1.5 text-gray-400 hover:text-red-500 rounded hidden sm:block" title="Delete">
+                  <IconTrash className="h-3.5 w-3.5" />
+                </button>
+              </>
+            )}
+            {isTextResource && (
+              <button onClick={() => toggleTextResourceExpanded(resource.id)} className="p-1.5 text-gray-400 hover:bg-gray-100 dark:hover:bg-portal-hover rounded">
+                {isExpanded ? <IconChevronUp className="h-4 w-4" /> : <IconChevronDown className="h-4 w-4" />}
+              </button>
             )}
           </div>
-          <div className="flex items-center gap-2 text-[11px] text-gray-500 dark:text-gray-400 mt-0.5">
-            <span>{formatDate(resource.lastUpdated)}</span>
-            {resource.fileSize && <span>{resource.fileSize}</span>}
-          </div>
-        </div>
-        <div className="flex items-center gap-0.5 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
-          {resource.fileUrl && (
-            <a href={resource.fileUrl} download className="p-1.5 text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/30 rounded" title="Download">
-              <IconDownload className="h-4 w-4" />
-            </a>
-          )}
-          {resource.externalLink && (
-            <a href={resource.externalLink} target="_blank" rel="noopener noreferrer" className="p-1.5 text-blue-400 hover:bg-blue-900/30 rounded" title="Open">
-              <IconExternalLink className="h-4 w-4" />
-            </a>
-          )}
-          {canEdit && (
-            <>
-              <button onClick={() => startEditing(resource)} className="p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-portal-hover rounded" title="Edit">
-                <IconEdit className="h-3.5 w-3.5" />
-              </button>
-              <button onClick={() => handleDelete(resource.id)} className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 rounded" title="Delete">
-                <IconTrash className="h-3.5 w-3.5" />
-              </button>
-            </>
-          )}
-          {isTextResource && (
-            <button onClick={() => toggleTextResourceExpanded(resource.id)} className="p-1.5 text-gray-400 hover:bg-gray-100 dark:hover:bg-portal-hover rounded">
-              {isExpanded ? <IconChevronUp className="h-4 w-4" /> : <IconChevronDown className="h-4 w-4" />}
-            </button>
-          )}
         </div>
       </div>
     )
@@ -1065,24 +1089,19 @@ export default function ResourcesClient() {
           </p>
         </div>
       ) : groupedResources ? (
-        /* Grouped view — each category is a section with a small header */
-        <div className="space-y-3">
-          {Object.entries(groupedResources).map(([categoryKey, { label, resources: categoryResources }]) => (
-            <div key={categoryKey}>
-              <div className="flex items-center gap-2 mb-1 px-1">
-                {(() => {
-                  const cat = categories.find(c => c.value === categoryKey)
-                  const CatIcon = cat?.icon || IconFile
-                  return <CatIcon className="h-3.5 w-3.5 text-gray-400" />
-                })()}
-                <span className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">{label}</span>
-                <span className="text-[10px] text-gray-400">({categoryResources.length})</span>
-              </div>
-              <div className="bg-white dark:bg-portal-surface rounded-md border border-gray-200 dark:border-portal-border divide-y divide-gray-100 dark:divide-portal-border">
-                {categoryResources.map(resource => renderResource(resource))}
-              </div>
-            </div>
-          ))}
+        /* Grouped view — accordion per category */
+        <div className="bg-white dark:bg-portal-surface rounded-md border border-gray-200 dark:border-portal-border divide-y divide-gray-200 dark:divide-portal-border">
+          {Object.entries(groupedResources).map(([categoryKey, { label, resources: categoryResources }]) => {
+            const cat = categories.find(c => c.value === categoryKey)
+            const CatIcon = cat?.icon || IconFile
+            return (
+              <ResourceCategoryAccordion key={categoryKey} label={label} count={categoryResources.length} icon={CatIcon}>
+                <div className="divide-y divide-gray-100 dark:divide-portal-border/50">
+                  {categoryResources.map(resource => renderResource(resource))}
+                </div>
+              </ResourceCategoryAccordion>
+            )
+          })}
         </div>
       ) : (
         /* Flat list */
