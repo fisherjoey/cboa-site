@@ -563,7 +563,7 @@ export default function NewsClient({ initialAnnouncements }: NewsClientProps) {
                     author: 'CBOA Executive'
                   })
                 }}
-                className="bg-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-400 flex items-center gap-2"
+                className="bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 px-4 py-2 rounded-lg hover:bg-gray-400 flex items-center gap-2"
               >
                 <IconX className="h-5 w-5" />
                 Cancel
