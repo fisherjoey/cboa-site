@@ -21,7 +21,7 @@ const MAX_ANNOUNCEMENTS = 10
 export default function LatestAnnouncementWidget() {
   const [announcements, setAnnouncements] = useState<Announcement[]>([])
   const [isLoading, setIsLoading] = useState(true)
-  const [expandedId, setExpandedId] = useState<string | null>(null)
+  const [expandedId, setExpandedId] = useState<string | null>('__pending__')
 
   useEffect(() => {
     loadAnnouncements()
@@ -34,7 +34,9 @@ export default function LatestAnnouncementWidget() {
         const sorted = data.sort((a: Announcement, b: Announcement) =>
           new Date(b.date).getTime() - new Date(a.date).getTime()
         )
-        setAnnouncements(sorted.slice(0, MAX_ANNOUNCEMENTS))
+        const sliced = sorted.slice(0, MAX_ANNOUNCEMENTS)
+        setAnnouncements(sliced)
+        if (sliced.length > 0) setExpandedId(sliced[0].id)
       }
     } catch (error) {
       console.error('Failed to load announcements:', error)
