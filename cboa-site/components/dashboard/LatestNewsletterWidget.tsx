@@ -77,59 +77,44 @@ export default function LatestNewsletterWidget() {
   }
 
   return (
-    <div className="bg-gradient-to-r from-orange-50 to-orange-100 dark:from-portal-surface dark:to-portal-surface/80 rounded-lg border border-gray-200 dark:border-portal-border p-3 sm:p-4 border-l-4 border-l-orange-500">
-      <div className="flex items-center justify-between mb-3">
-        <h2 className="font-heading text-base sm:text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-          <IconNotebook className="h-5 w-5 text-orange-600 dark:text-portal-accent" />
-          The Bounce Newsletter
+    <div className="bg-white dark:bg-portal-surface rounded-lg border border-gray-200 dark:border-portal-border border-l-4 border-l-orange-500 p-3 sm:p-4">
+      <div className="flex items-center justify-between mb-2">
+        <h2 className="font-heading text-sm font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+          <IconNotebook className="h-4 w-4 text-orange-500" />
+          The Bounce
         </h2>
         <Link
           href="/portal/the-bounce"
-          className="text-sm text-orange-600 dark:text-portal-accent hover:text-orange-700 dark:hover:text-portal-accent font-medium flex items-center gap-1"
+          className="text-xs text-orange-600 dark:text-portal-accent hover:text-orange-700 font-medium flex items-center gap-0.5"
         >
-          View All
-          <IconChevronRight className="h-4 w-4" />
+          All Issues
+          <IconChevronRight className="h-3 w-3" />
         </Link>
       </div>
 
-      <div>
-        <div className="mb-1">
-          <span className="text-[10px] uppercase tracking-wide text-orange-600 dark:text-portal-accent font-semibold">Latest Issue</span>
-        </div>
-        <h3 className="font-semibold text-gray-900 dark:text-white mb-1 text-sm sm:text-base">
-          {newsletter.title}
-        </h3>
-        {newsletter.description && (
-          <p className="text-sm text-gray-700 dark:text-gray-300 mb-3 line-clamp-2">
-            {newsletter.description}
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex-1 min-w-0">
+          <h3 className="font-medium text-sm text-gray-900 dark:text-white leading-snug">{newsletter.title}</h3>
+          <p className="text-[11px] text-gray-500 dark:text-gray-400 mt-0.5">
+            {new Date(newsletter.date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
           </p>
-        )}
-        <div className="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400 mb-3">
-          <span>
-            Published: {new Date(newsletter.date).toLocaleDateString('en-US', {
-              month: 'long',
-              day: 'numeric',
-              year: 'numeric'
-            })}
-          </span>
         </div>
-
-        <div className="flex flex-col sm:flex-row gap-2">
+        <div className="flex items-center gap-1 flex-shrink-0">
           <button
             onClick={() => setShowViewer(true)}
-            className="flex-1 bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700 transition-colors flex items-center justify-center gap-2 text-sm font-medium"
+            className="p-2 text-orange-500 hover:bg-orange-50 dark:hover:bg-orange-900/20 rounded"
+            title="Read"
           >
             <IconEye className="h-4 w-4" />
-            Read Now
           </button>
           {newsletter.file_url && (
             <a
               href={newsletter.file_url}
               download
-              className="flex-1 border-2 border-orange-600 text-orange-600 dark:text-portal-accent px-4 py-2 rounded-lg hover:bg-orange-600 hover:text-white transition-colors flex items-center justify-center gap-2 text-sm font-medium"
+              className="p-2 text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/30 rounded"
+              title="Download"
             >
               <IconDownload className="h-4 w-4" />
-              Download PDF
             </a>
           )}
         </div>

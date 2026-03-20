@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useMemo } from 'react'
-import { IconPlus, IconEdit, IconTrash, IconDeviceFloppy, IconX, IconAlertCircle, IconSearch, IconFilter } from '@tabler/icons-react'
+import { IconPlus, IconEdit, IconTrash, IconDeviceFloppy, IconX, IconAlertCircle, IconChevronDown } from '@tabler/icons-react'
 import PortalFilterBar from '@/components/portal/PortalFilterBar'
 import { TinyMCEEditor, HTMLViewer } from '@/components/TinyMCEEditor'
 import { useRole } from '@/contexts/RoleContext'
@@ -91,6 +91,73 @@ interface Announcement {
 
 interface NewsClientProps {
   initialAnnouncements: Announcement[]
+}
+
+// Accordion row for a single announcement
+function AnnouncementRow({ announcement, canEdit, getCategoryColor, onEdit, onDelete }: {
+  announcement: { id: string; title: string; content: string; category: string; priority: string; date: string; author: string }
+  canEdit: boolean
+  getCategoryColor: (cat: string) => string
+  onEdit: () => void
+  onDelete: () => void
+}) {
+  const [expanded, setExpanded] = useState(false)
+  return (
+    <div>
+      <button
+        onClick={() => setExpanded(!expanded)}
+        className={`w-full text-left flex items-start gap-2 px-3 py-2.5 hover:bg-gray-50 dark:hover:bg-portal-hover/50 transition-colors ${
+          announcement.priority === 'high' ? 'border-l-2 border-l-red-500' : ''
+        }`}
+      >
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-1.5 mb-0.5">
+            <span className={`text-[10px] px-1.5 py-0.5 rounded font-semibold leading-none ${getCategoryColor(announcement.category)}`}>
+              {announcement.category}
+            </span>
+            <span className="text-[10px] text-gray-400 dark:text-gray-500">
+              {new Date(announcement.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+            </span>
+            {announcement.priority === 'high' && (
+              <IconAlertCircle className="h-3 w-3 text-red-500" />
+            )}
+          </div>
+          <h3 className={`font-medium text-sm text-gray-900 dark:text-white ${expanded ? '' : 'line-clamp-2'}`}>
+            {announcement.title}
+          </h3>
+        </div>
+        <div className="flex items-center gap-0.5 flex-shrink-0 mt-1">
+          {canEdit && (
+            <>
+              <span onClick={(e) => { e.stopPropagation(); onEdit() }} className="p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 rounded hidden sm:block">
+                <IconEdit className="h-3.5 w-3.5" />
+              </span>
+              <span onClick={(e) => { e.stopPropagation(); onDelete() }} className="p-1.5 text-gray-400 hover:text-red-500 rounded hidden sm:block">
+                <IconTrash className="h-3.5 w-3.5" />
+              </span>
+            </>
+          )}
+          <IconChevronDown className={`h-4 w-4 text-gray-400 transition-transform duration-200 ${expanded ? 'rotate-180' : ''}`} />
+        </div>
+      </button>
+      {expanded && (
+        <div className="px-3 pb-3">
+          <div className="bg-gray-50 dark:bg-portal-hover/30 rounded-md p-2.5">
+            <HTMLViewer content={announcement.content} className="tinymce-content-compact" />
+            <div className="mt-2 pt-2 border-t border-gray-200 dark:border-portal-border flex items-center justify-between">
+              <span className="text-[10px] text-gray-400 dark:text-gray-500">Posted by {announcement.author}</span>
+              {canEdit && (
+                <div className="flex gap-2 sm:hidden">
+                  <button onClick={onEdit} className="text-xs text-gray-500 hover:text-gray-700 dark:hover:text-gray-300">Edit</button>
+                  <button onClick={onDelete} className="text-xs text-red-500 hover:text-red-700">Delete</button>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  )
 }
 
 export default function NewsClient({ initialAnnouncements }: NewsClientProps) {
@@ -536,185 +603,69 @@ export default function NewsClient({ initialAnnouncements }: NewsClientProps) {
         </div>
       )}
 
-      {/* Announcements List */}
-      <div className="space-y-4">
-        {filteredAnnouncements.map(announcement => (
-          <div key={announcement.id} className="bg-white dark:bg-portal-surface rounded-lg border border-gray-200 dark:border-portal-border hover:border-orange-200 dark:hover:border-orange-800/40 hover:shadow-sm transition-shadow overflow-hidden">
-            {editingId === announcement.id ? (
-              // Edit Mode
-              <div className="p-4">
-                <div className="space-y-4">
+      {/* Announcements List — accordion rows */}
+      {filteredAnnouncements.length === 0 ? (
+        <div className="text-center py-8 bg-white dark:bg-portal-surface rounded-md border border-gray-200 dark:border-portal-border">
+          <p className="text-sm text-gray-500 dark:text-gray-400">
+            {canEdit ? 'No announcements yet. Click "New" to create one.' : 'Announcements will appear here.'}
+          </p>
+        </div>
+      ) : (
+        <div className="bg-white dark:bg-portal-surface rounded-md border border-gray-200 dark:border-portal-border divide-y divide-gray-100 dark:divide-portal-border">
+          {filteredAnnouncements.map(announcement => (
+            editingId === announcement.id ? (
+              <div key={announcement.id} className="p-3 sm:p-4">
+                <div className="space-y-3">
                   <input
                     type="text"
                     value={editingData.title || ''}
                     onChange={(e) => handleEditChange('title', e.target.value)}
-                    className="w-full text-lg font-semibold px-3 py-2 border bg-white dark:bg-portal-hover text-gray-900 dark:text-white border-gray-200 dark:border-portal-border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                    className="w-full font-medium px-3 py-1.5 text-sm border bg-white dark:bg-portal-hover text-gray-900 dark:text-white border-gray-200 dark:border-portal-border rounded-md focus:outline-none focus:ring-1 focus:ring-orange-500"
                   />
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                    <select
-                      value={editingData.category || 'general'}
-                      onChange={(e) => handleEditChange('category', e.target.value)}
-                      className="pl-3 pr-8 py-2 border bg-white dark:bg-portal-hover text-gray-900 dark:text-white border-gray-200 dark:border-portal-border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
-                    >
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                    <select value={editingData.category || 'general'} onChange={(e) => handleEditChange('category', e.target.value)}
+                      className="pl-2 pr-6 py-1.5 text-xs border bg-white dark:bg-portal-hover text-gray-900 dark:text-white border-gray-200 dark:border-portal-border rounded-md focus:outline-none focus:ring-1 focus:ring-orange-500">
                       <optgroup label="General">
-                        <option value="general">General</option>
-                        <option value="rules">Rules</option>
-                        <option value="schedule">Schedule</option>
-                        <option value="training">Training</option>
-                        <option value="administrative">Administrative</option>
+                        <option value="general">General</option><option value="rules">Rules</option><option value="schedule">Schedule</option>
+                        <option value="training">Training</option><option value="administrative">Administrative</option>
                       </optgroup>
                       <optgroup label="Executive">
-                        <option value="president">President</option>
-                        <option value="vice-president">Vice President</option>
-                        <option value="past-president">Past President</option>
-                        <option value="treasurer">Treasurer</option>
-                        <option value="secretary">Secretary</option>
-                        <option value="performance-assessment">Performance &amp; Assessment</option>
-                        <option value="member-services">Member Services</option>
-                        <option value="referee-development">Referee Development</option>
-                        <option value="assignor">Assignor</option>
-                        <option value="scheduler">Scheduler</option>
-                        <option value="webmaster">Webmaster</option>
-                        <option value="officiating-coordinator">Officiating Coordinator</option>
-                        <option value="recruiting-coordinator">Recruiting Coordinator</option>
+                        <option value="president">President</option><option value="vice-president">Vice President</option>
+                        <option value="treasurer">Treasurer</option><option value="secretary">Secretary</option>
+                        <option value="scheduler">Scheduler</option><option value="webmaster">Webmaster</option>
                       </optgroup>
                     </select>
-
-                    <select
-                      value={editingData.priority || 'normal'}
-                      onChange={(e) => handleEditChange('priority', e.target.value)}
-                      className="pl-3 pr-8 py-2 border bg-white dark:bg-portal-hover text-gray-900 dark:text-white border-gray-200 dark:border-portal-border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
-                    >
-                      <option value="high">High Priority</option>
-                      <option value="normal">Normal</option>
-                      <option value="low">Low</option>
+                    <select value={editingData.priority || 'normal'} onChange={(e) => handleEditChange('priority', e.target.value)}
+                      className="pl-2 pr-6 py-1.5 text-xs border bg-white dark:bg-portal-hover text-gray-900 dark:text-white border-gray-200 dark:border-portal-border rounded-md focus:outline-none focus:ring-1 focus:ring-orange-500">
+                      <option value="high">High</option><option value="normal">Normal</option><option value="low">Low</option>
                     </select>
-
-                    <select
-                      value={editingData.author || 'CBOA Executive'}
-                      onChange={(e) => handleEditChange('author', e.target.value)}
-                      className="pl-3 pr-8 py-2 border bg-white dark:bg-portal-hover text-gray-900 dark:text-white border-gray-200 dark:border-portal-border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
-                    >
-                      <optgroup label="Organization">
-                        {AUTHOR_OPTIONS.filter(o => o.group === 'Organization').map(opt => (
-                          <option key={opt.value} value={opt.value}>{opt.label}</option>
-                        ))}
-                      </optgroup>
-                      <optgroup label="Executive">
-                        {AUTHOR_OPTIONS.filter(o => o.group === 'Executive').map(opt => (
-                          <option key={opt.value} value={opt.value}>{opt.label}</option>
-                        ))}
-                      </optgroup>
-                      <optgroup label="Role Only">
-                        {AUTHOR_OPTIONS.filter(o => o.group === 'Role Only').map(opt => (
-                          <option key={opt.value} value={opt.value}>{opt.label}</option>
-                        ))}
-                      </optgroup>
+                    <select value={editingData.author || 'CBOA Executive'} onChange={(e) => handleEditChange('author', e.target.value)}
+                      className="pl-2 pr-6 py-1.5 text-xs border bg-white dark:bg-portal-hover text-gray-900 dark:text-white border-gray-200 dark:border-portal-border rounded-md focus:outline-none focus:ring-1 focus:ring-orange-500 col-span-2 sm:col-span-1">
+                      {AUTHOR_OPTIONS.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
                     </select>
                   </div>
-
-                  <TinyMCEEditor
-                    value={editingData.content || ''}
-                    onChange={(val) => handleEditChange('content', val)}
-                    height={400}
-                  />
-
+                  <TinyMCEEditor value={editingData.content || ''} onChange={(val) => handleEditChange('content', val)} height={300} />
                   <div className="flex gap-2">
-                    <button
-                      onClick={() => saveEdit(announcement.id)}
-                      className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 flex items-center gap-2"
-                    >
-                      <IconDeviceFloppy className="h-5 w-5" />
-                      Save Changes
+                    <button onClick={() => saveEdit(announcement.id)} className="bg-green-600 text-white px-3 py-1.5 rounded-md hover:bg-green-700 flex items-center gap-1.5 text-sm">
+                      <IconDeviceFloppy className="h-4 w-4" /> Save
                     </button>
-                    <button
-                      onClick={cancelEdit}
-                      className="bg-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-400"
-                    >
-                      Cancel
-                    </button>
+                    <button onClick={cancelEdit} className="text-gray-600 dark:text-gray-400 px-3 py-1.5 rounded-md hover:bg-gray-100 dark:hover:bg-portal-hover text-sm">Cancel</button>
                   </div>
                 </div>
               </div>
             ) : (
-              // View Mode
-              <div className="p-4 overflow-hidden">
-                <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-                  <div className="flex-1 min-w-0 overflow-hidden">
-                    <div className="flex flex-wrap items-center gap-2 mb-2">
-                      <span className={`px-2 py-1 text-xs font-semibold rounded-lg ${getCategoryColor(announcement.category)}`}>
-                        {ALL_CATEGORIES[announcement.category as CategoryKey] || announcement.category}
-                      </span>
-                      {announcement.priority === 'high' && (
-                        <span className={`text-xs font-medium ${getPriorityBadge(announcement.priority).color}`}>
-                          {getPriorityBadge(announcement.priority).icon} {getPriorityBadge(announcement.priority).text}
-                        </span>
-                      )}
-                    </div>
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-                      {announcement.title}
-                    </h3>
-                    <div className="text-gray-600 dark:text-gray-300 mb-3 overflow-hidden">
-                      <HTMLViewer
-                        content={announcement.content}
-                        className="break-words"
-                      />
-                    </div>
-                    <div className="flex flex-wrap items-center gap-2 text-sm text-gray-500 dark:text-gray-400 pt-3 mt-3 border-t border-gray-100 dark:border-portal-border/50">
-                      <span>{new Date(announcement.date).toLocaleDateString('en-US', {
-                        year: 'numeric',
-                        month: 'long',
-                        day: 'numeric'
-                      })}</span>
-                      <span className="hidden sm:inline">•</span>
-                      <span>Posted by {announcement.author}</span>
-                    </div>
-                  </div>
-                  {canEdit && (
-                    <div className="flex gap-2 sm:ml-4">
-                      <button
-                        onClick={() => startEditing(announcement)}
-                        className="text-blue-400 hover:text-blue-800"
-                      >
-                        <IconEdit className="h-5 w-5" />
-                      </button>
-                      <button
-                        onClick={() => handleDelete(announcement.id)}
-                        className="text-red-600 hover:text-red-800"
-                      >
-                        <IconTrash className="h-5 w-5" />
-                      </button>
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
-          </div>
-        ))}
-      </div>
-
-      {filteredAnnouncements.length === 0 && (
-        <div className="text-center py-12 bg-white dark:bg-portal-surface rounded-lg">
-          <svg className="mx-auto h-12 w-12 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-          </svg>
-          <h3 className="mt-2 text-sm font-medium text-gray-900 dark:text-white">No announcements yet</h3>
-          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-            {canEdit
-              ? 'Click "New Announcement" to create your first announcement.'
-              : 'Announcements will appear here once added by administrators.'}
-          </p>
+              <AnnouncementRow
+                key={announcement.id}
+                announcement={announcement}
+                canEdit={canEdit}
+                getCategoryColor={getCategoryColor}
+                onEdit={() => startEditing(announcement)}
+                onDelete={() => handleDelete(announcement.id)}
+              />
+            )
+          ))}
         </div>
       )}
-
-      {/* Subscription Notice */}
-      <div className="mt-8 p-4 bg-blue-900/20 rounded-lg border border-blue-800">
-        <h3 className="text-sm font-medium text-blue-400 mb-2">Stay Updated</h3>
-        <p className="text-sm text-blue-400">
-          Important announcements are also sent via email. Make sure your contact information is up to date.
-        </p>
-      </div>
     </div>
   )
 }
