@@ -26,7 +26,7 @@ export default function PortalLayout({
                     <PortalHeader />
 
                     {/* Portal Content */}
-                    <main className="container mx-auto px-2 sm:px-4 py-3 sm:py-6">
+                    <main className="container mx-auto px-2 sm:px-4 py-2 sm:py-4">
                       <div className="max-w-7xl mx-auto">
                         {children}
                       </div>

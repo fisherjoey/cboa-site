@@ -518,7 +518,7 @@ export default function ResourcesClient() {
     // Check if editing this resource
     if (editingId === resource.id && editingData) {
       return (
-        <div key={resource.id} className="bg-white dark:bg-portal-surface rounded-xl border border-gray-200 dark:border-portal-border p-4 col-span-full">
+        <div key={resource.id} className="bg-white dark:bg-portal-surface rounded-lg border border-gray-200 dark:border-portal-border p-4 col-span-full">
           <div className="space-y-3">
             {/* Resource Type Selector */}
             <div>
@@ -680,7 +680,7 @@ export default function ResourcesClient() {
         <div
           key={resource.id}
           id={`resource-${resource.id}`}
-          className="bg-white dark:bg-portal-surface rounded-xl border border-gray-200 dark:border-portal-border hover:border-orange-200 dark:hover:border-orange-800/40 hover:shadow-sm transition-shadow p-4 flex flex-col cursor-pointer"
+          className="bg-white dark:bg-portal-surface rounded-lg border border-gray-200 dark:border-portal-border hover:border-orange-200 dark:hover:border-orange-800/40 hover:shadow-sm transition-shadow p-4 flex flex-col cursor-pointer"
           onClick={handleResourceClick}
         >
           <div className="flex items-start gap-3 mb-3">
@@ -745,7 +745,7 @@ export default function ResourcesClient() {
 
     // List view row - renders as card on mobile, row on desktop
     return (
-      <div key={resource.id} id={`resource-${resource.id}`} className="bg-white dark:bg-portal-surface rounded-xl border border-gray-200 dark:border-portal-border hover:border-orange-200 dark:hover:border-orange-800/40 hover:shadow-sm transition-shadow cursor-pointer" onClick={handleResourceClick}>
+      <div key={resource.id} id={`resource-${resource.id}`} className="bg-white dark:bg-portal-surface rounded-lg border border-gray-200 dark:border-portal-border hover:border-orange-200 dark:hover:border-orange-800/40 hover:shadow-sm transition-shadow cursor-pointer" onClick={handleResourceClick}>
         {/* Mobile card layout */}
         <div className="sm:hidden p-4">
           <div className="flex items-start gap-3 mb-3">
@@ -866,18 +866,15 @@ export default function ResourcesClient() {
   }
 
   return (
-    <div className="px-4 py-5 sm:p-6 portal-animate">
+    <div className="px-3 py-3 sm:p-5 portal-animate">
 
-      <div className="mb-6 sm:mb-8 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-bold font-heading tracking-tight text-gray-900 dark:text-white">Resources</h1>
-          <p className="mt-1 sm:mt-2 text-sm sm:text-base text-gray-600 dark:text-gray-300">Training materials, forms, and official documents</p>
-        </div>
+      {/* Header — compact */}
+      <div className="mb-3 flex items-center justify-between gap-2">
+        <h1 className="text-xl sm:text-2xl font-bold font-heading tracking-tight text-gray-900 dark:text-white">Resources</h1>
         {canEdit && !isCreating && (
           <button
             onClick={() => {
               setIsCreating(true)
-              // Pre-select the category based on the current tab
               const category = selectedCategory === 'all' ? 'rulebooks' : selectedCategory
               setNewResource({
                 title: '',
@@ -887,17 +884,18 @@ export default function ResourcesClient() {
                 accessLevel: 'all'
               })
             }}
-            className="bg-orange-500 text-white px-3 py-2 sm:px-4 rounded-xl shadow-sm shadow-orange-500/20 hover:bg-orange-600 flex items-center gap-2 text-sm sm:text-base"
+            className="bg-orange-500 text-white px-3 py-1.5 rounded-lg hover:bg-orange-600 flex items-center gap-1.5 text-sm flex-shrink-0"
           >
-            <IconPlus className="h-5 w-5" />
-            Add Resource
+            <IconPlus className="h-4 w-4" />
+            <span className="hidden sm:inline">Add Resource</span>
+            <span className="sm:hidden">Add</span>
           </button>
         )}
       </div>
 
       {/* Create New Resource Form */}
       {isCreating && (
-        <div className="mb-6 bg-white dark:bg-portal-surface rounded-xl border border-gray-200 dark:border-portal-border p-4 sm:p-6">
+        <div className="mb-6 bg-white dark:bg-portal-surface rounded-lg border border-gray-200 dark:border-portal-border p-4 sm:p-6">
           <h2 className="text-lg sm:text-xl font-semibold mb-4 text-gray-900 dark:text-white">Add New Resource</h2>
 
           <div className="space-y-4">
@@ -1127,37 +1125,72 @@ export default function ResourcesClient() {
         </div>
       )}
 
-      {/* Search and Category Filter */}
-      <PortalFilterBar
-        searchValue={searchTerm}
-        onSearchChange={setSearchTerm}
-        searchPlaceholder="Search resources..."
-        categories={categories}
-        selectedCategory={selectedCategory}
-        onCategoryChange={setSelectedCategory}
-        sortOptions={[
-          { value: 'date', label: 'Date' },
-          { value: 'title', label: 'Title' },
-          { value: 'type', label: 'Type' },
-        ]}
-        sortValue={sortBy}
-        onSortChange={(val) => setSortBy(val as 'title' | 'date' | 'type')}
-        sortDirection={sortOrder}
-        onSortDirectionChange={setSortOrder}
-        viewMode={viewMode}
-        onViewModeChange={setViewMode}
-        extraControls={selectedCategory === 'all' ? (
-          <label className="flex items-center gap-1.5 text-sm text-gray-600 dark:text-gray-300">
+      {/* Search + Sort — compact inline */}
+      <div className="mb-2 flex gap-2">
+        <div className="flex-1 relative">
+          <IconFile className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-400" />
+          <input
+            type="text"
+            placeholder="Search resources..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full pl-8 pr-3 py-1.5 text-sm border border-gray-300 dark:border-portal-border rounded-md bg-white dark:bg-portal-surface text-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-orange-500"
+          />
+        </div>
+        <select
+          value={sortBy}
+          onChange={(e) => setSortBy(e.target.value as 'title' | 'date' | 'type')}
+          className="text-xs border border-gray-300 dark:border-portal-border bg-white dark:bg-portal-surface text-gray-700 dark:text-gray-300 rounded-md pl-2 pr-6 py-1.5 focus:outline-none focus:ring-1 focus:ring-orange-500"
+        >
+          <option value="date">Date</option>
+          <option value="title">Title</option>
+          <option value="type">Type</option>
+        </select>
+        <button
+          onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
+          className="p-1.5 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 border border-gray-300 dark:border-portal-border rounded-md bg-white dark:bg-portal-surface"
+        >
+          {sortOrder === 'asc' ? <IconSortAscending className="h-4 w-4" /> : <IconSortDescending className="h-4 w-4" />}
+        </button>
+        <button
+          onClick={() => setViewMode(viewMode === 'list' ? 'grid' : 'list')}
+          className="p-1.5 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 border border-gray-300 dark:border-portal-border rounded-md bg-white dark:bg-portal-surface"
+        >
+          {viewMode === 'list' ? <IconLayoutGrid className="h-4 w-4" /> : <IconLayoutList className="h-4 w-4" />}
+        </button>
+      </div>
+
+      {/* Category pills — horizontal scroll */}
+      <div className="mb-3 flex items-center gap-1.5 overflow-x-auto scrollbar-hide pb-1">
+        {categories.map(cat => {
+          const Icon = cat.icon
+          return (
+            <button
+              key={cat.value}
+              onClick={() => setSelectedCategory(cat.value)}
+              className={`flex-shrink-0 flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-medium transition-all ${
+                selectedCategory === cat.value
+                  ? 'bg-orange-500 text-white'
+                  : 'bg-gray-100 dark:bg-portal-hover text-gray-600 dark:text-gray-400'
+              }`}
+            >
+              <Icon className="h-3 w-3" />
+              {cat.label}
+            </button>
+          )
+        })}
+        {selectedCategory === 'all' && (
+          <label className="flex-shrink-0 flex items-center gap-1.5 ml-2 text-xs text-gray-500 dark:text-gray-400">
             <input
               type="checkbox"
               checked={groupByCategory}
               onChange={(e) => setGroupByCategory(e.target.checked)}
-              className="rounded text-orange-500 focus:ring-orange-500"
+              className="rounded text-orange-500 focus:ring-orange-500 h-3.5 w-3.5"
             />
-            Group by category
+            Group
           </label>
-        ) : undefined}
-      />
+        )}
+      </div>
 
       {/* Featured Resources */}
       {filteredResources.some(r => r.featured) && (
@@ -1202,7 +1235,7 @@ export default function ResourcesClient() {
               return (
                 <div
                   key={resource.id}
-                  className="bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-xl p-3 sm:p-4 cursor-pointer hover:bg-orange-100 dark:hover:bg-orange-900/30 transition-colors"
+                  className="bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg p-3 sm:p-4 cursor-pointer hover:bg-orange-100 dark:hover:bg-orange-900/30 transition-colors"
                   onClick={handleFeaturedClick}
                 >
                   <div className="flex items-center gap-3">

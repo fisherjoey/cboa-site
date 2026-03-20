@@ -87,8 +87,8 @@ export default function UpcomingEventsWidget() {
 
   if (isLoading) {
     return (
-      <div className="bg-white dark:bg-portal-surface rounded-xl border border-gray-200 dark:border-portal-border p-6">
-        <h2 className="font-heading text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+      <div className="bg-white dark:bg-portal-surface rounded-lg border border-gray-200 dark:border-portal-border p-6">
+        <h2 className="font-heading text-lg font-semibold text-gray-900 dark:text-white mb-3 flex items-center gap-2">
           <IconCalendar className="h-5 w-5 text-orange-500" />
           Upcoming Events
         </h2>
@@ -102,8 +102,8 @@ export default function UpcomingEventsWidget() {
   }
 
   return (
-    <div className="bg-white dark:bg-portal-surface rounded-xl border border-gray-200 dark:border-portal-border p-4 sm:p-6">
-      <div className="flex items-center justify-between mb-4">
+    <div className="bg-white dark:bg-portal-surface rounded-lg border border-gray-200 dark:border-portal-border p-3 sm:p-4">
+      <div className="flex items-center justify-between mb-3">
         <h2 className="font-heading text-base sm:text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
           <IconCalendar className="h-5 w-5 text-orange-500" />
           Upcoming Events

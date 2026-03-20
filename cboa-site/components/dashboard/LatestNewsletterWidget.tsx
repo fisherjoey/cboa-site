@@ -48,8 +48,8 @@ export default function LatestNewsletterWidget() {
 
   if (isLoading) {
     return (
-      <div className="bg-gradient-to-r from-orange-50 to-orange-100 dark:from-portal-surface dark:to-portal-surface/80 rounded-xl border border-gray-200 dark:border-portal-border p-6 border-l-4 border-l-orange-500">
-        <h2 className="font-heading text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+      <div className="bg-gradient-to-r from-orange-50 to-orange-100 dark:from-portal-surface dark:to-portal-surface/80 rounded-lg border border-gray-200 dark:border-portal-border p-6 border-l-4 border-l-orange-500">
+        <h2 className="font-heading text-lg font-semibold text-gray-900 dark:text-white mb-3 flex items-center gap-2">
           <IconNotebook className="h-5 w-5 text-orange-600 dark:text-portal-accent" />
           Latest Newsletter
         </h2>
@@ -63,8 +63,8 @@ export default function LatestNewsletterWidget() {
 
   if (!newsletter) {
     return (
-      <div className="bg-gradient-to-r from-orange-50 to-orange-100 dark:from-portal-surface dark:to-portal-surface/80 rounded-xl border border-gray-200 dark:border-portal-border p-4 sm:p-6 border-l-4 border-l-orange-500">
-        <h2 className="font-heading text-base sm:text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+      <div className="bg-gradient-to-r from-orange-50 to-orange-100 dark:from-portal-surface dark:to-portal-surface/80 rounded-lg border border-gray-200 dark:border-portal-border p-3 sm:p-4 border-l-4 border-l-orange-500">
+        <h2 className="font-heading text-base sm:text-lg font-semibold text-gray-900 dark:text-white mb-3 flex items-center gap-2">
           <IconNotebook className="h-5 w-5 text-orange-600 dark:text-portal-accent" />
           Latest Newsletter
         </h2>
@@ -77,8 +77,8 @@ export default function LatestNewsletterWidget() {
   }
 
   return (
-    <div className="bg-gradient-to-r from-orange-50 to-orange-100 dark:from-portal-surface dark:to-portal-surface/80 rounded-xl border border-gray-200 dark:border-portal-border p-4 sm:p-6 border-l-4 border-l-orange-500">
-      <div className="flex items-center justify-between mb-4">
+    <div className="bg-gradient-to-r from-orange-50 to-orange-100 dark:from-portal-surface dark:to-portal-surface/80 rounded-lg border border-gray-200 dark:border-portal-border p-3 sm:p-4 border-l-4 border-l-orange-500">
+      <div className="flex items-center justify-between mb-3">
         <h2 className="font-heading text-base sm:text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
           <IconNotebook className="h-5 w-5 text-orange-600 dark:text-portal-accent" />
           The Bounce Newsletter
@@ -93,10 +93,10 @@ export default function LatestNewsletterWidget() {
       </div>
 
       <div>
-        <div className="mb-2">
-          <span className="text-xs text-orange-600 dark:text-portal-accent font-medium">Latest Issue</span>
+        <div className="mb-1">
+          <span className="text-[10px] uppercase tracking-wide text-orange-600 dark:text-portal-accent font-semibold">Latest Issue</span>
         </div>
-        <h3 className="font-semibold text-gray-900 dark:text-white mb-2 text-base sm:text-lg">
+        <h3 className="font-semibold text-gray-900 dark:text-white mb-1 text-sm sm:text-base">
           {newsletter.title}
         </h3>
         {newsletter.description && (
@@ -104,7 +104,7 @@ export default function LatestNewsletterWidget() {
             {newsletter.description}
           </p>
         )}
-        <div className="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400 mb-4">
+        <div className="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400 mb-3">
           <span>
             Published: {new Date(newsletter.date).toLocaleDateString('en-US', {
               month: 'long',

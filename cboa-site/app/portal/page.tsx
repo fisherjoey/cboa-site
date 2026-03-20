@@ -117,26 +117,30 @@ export default function PortalDashboard() {
       : officialSections;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* Welcome Section */}
-      <div className="bg-white dark:bg-portal-surface rounded-xl border border-gray-200 dark:border-portal-border p-4 sm:p-6 relative overflow-hidden portal-animate">
+      <div className="bg-white dark:bg-portal-surface rounded-lg border border-gray-200 dark:border-portal-border p-3 sm:p-4 relative overflow-hidden portal-animate">
         <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-cboa-orange to-orange-400" />
-        <p className="text-xs sm:text-sm font-semibold uppercase tracking-wider text-cboa-orange mb-1">Welcome back</p>
-        <h1 className="font-heading text-xl sm:text-2xl font-extrabold text-gray-900 dark:text-white tracking-tight">
-          {user.name}
-        </h1>
-        <span className="inline-flex items-center gap-1.5 mt-3 px-3 py-1 rounded-full text-xs font-semibold bg-orange-50 dark:bg-portal-accent/10 text-cboa-orange border border-orange-200 dark:border-portal-accent/20">
-          <span className="w-1.5 h-1.5 rounded-full bg-cboa-orange" />
-          {user.role === 'admin' ? 'Administrator' :
-           user.role === 'executive' ? 'Executive Member' :
-           user.role === 'evaluator' ? 'Evaluator' :
-           user.role === 'mentor' ? 'Mentor' :
-           'Official'}
-        </span>
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-cboa-orange mb-0.5">Welcome back</p>
+            <h1 className="font-heading text-lg sm:text-xl font-extrabold text-gray-900 dark:text-white tracking-tight">
+              {user.name}
+            </h1>
+          </div>
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] sm:text-xs font-semibold bg-orange-50 dark:bg-portal-accent/10 text-cboa-orange border border-orange-200 dark:border-portal-accent/20">
+            <span className="w-1.5 h-1.5 rounded-full bg-cboa-orange" />
+            {user.role === 'admin' ? 'Administrator' :
+             user.role === 'executive' ? 'Executive Member' :
+             user.role === 'evaluator' ? 'Evaluator' :
+             user.role === 'mentor' ? 'Mentor' :
+             'Official'}
+          </span>
+        </div>
       </div>
 
       {/* Dashboard Widgets Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 portal-animate">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 portal-animate">
         {/* Latest Announcement */}
         <LatestAnnouncementWidget />
 
@@ -148,13 +152,13 @@ export default function PortalDashboard() {
       <LatestNewsletterWidget />
 
       {/* Quick Links Section */}
-      <div className="bg-white dark:bg-portal-surface rounded-xl border border-gray-200 dark:border-portal-border p-4 sm:p-6">
-        <h3 className="font-heading text-base sm:text-lg font-semibold text-gray-900 dark:text-white mb-4">Quick Links</h3>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+      <div className="bg-white dark:bg-portal-surface rounded-lg border border-gray-200 dark:border-portal-border p-3 sm:p-4">
+        <h3 className="font-heading text-sm sm:text-base font-semibold text-gray-900 dark:text-white mb-3">Quick Links</h3>
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
           {/* Portal Links */}
           <Link
             href="/portal/profile"
-            className="flex items-center gap-2 p-3 bg-white dark:bg-portal-surface rounded-xl border border-gray-200 dark:border-portal-border hover:border-orange-200 dark:hover:border-portal-accent/30 hover:shadow-sm transition-all duration-200"
+            className="flex items-center gap-2 p-2.5 bg-white dark:bg-portal-surface rounded-md border border-gray-200 dark:border-portal-border hover:border-orange-200 dark:hover:border-portal-accent/30 hover:shadow-sm transition-all duration-200"
           >
             <div className="bg-orange-50 dark:bg-portal-accent/10 p-1.5 rounded-lg">
               <IconUser className="h-5 w-5 text-orange-600 dark:text-portal-accent flex-shrink-0" />
@@ -163,7 +167,7 @@ export default function PortalDashboard() {
           </Link>
           <Link
             href="/portal/resources"
-            className="flex items-center gap-2 p-3 bg-white dark:bg-portal-surface rounded-xl border border-gray-200 dark:border-portal-border hover:border-orange-200 dark:hover:border-portal-accent/30 hover:shadow-sm transition-all duration-200"
+            className="flex items-center gap-2 p-2.5 bg-white dark:bg-portal-surface rounded-md border border-gray-200 dark:border-portal-border hover:border-orange-200 dark:hover:border-portal-accent/30 hover:shadow-sm transition-all duration-200"
           >
             <div className="bg-blue-50 dark:bg-blue-500/[0.06] p-1.5 rounded-lg">
               <IconBooks className="h-5 w-5 text-blue-600 dark:text-blue-300/60 flex-shrink-0" />
@@ -172,7 +176,7 @@ export default function PortalDashboard() {
           </Link>
           <Link
             href="/portal/news"
-            className="flex items-center gap-2 p-3 bg-white dark:bg-portal-surface rounded-xl border border-gray-200 dark:border-portal-border hover:border-orange-200 dark:hover:border-portal-accent/30 hover:shadow-sm transition-all duration-200"
+            className="flex items-center gap-2 p-2.5 bg-white dark:bg-portal-surface rounded-md border border-gray-200 dark:border-portal-border hover:border-orange-200 dark:hover:border-portal-accent/30 hover:shadow-sm transition-all duration-200"
           >
             <div className="bg-purple-50 dark:bg-purple-500/[0.06] p-1.5 rounded-lg">
               <IconNews className="h-5 w-5 text-purple-600 dark:text-purple-300/60 flex-shrink-0" />
@@ -181,7 +185,7 @@ export default function PortalDashboard() {
           </Link>
           <Link
             href="/portal/calendar"
-            className="flex items-center gap-2 p-3 bg-white dark:bg-portal-surface rounded-xl border border-gray-200 dark:border-portal-border hover:border-orange-200 dark:hover:border-portal-accent/30 hover:shadow-sm transition-all duration-200"
+            className="flex items-center gap-2 p-2.5 bg-white dark:bg-portal-surface rounded-md border border-gray-200 dark:border-portal-border hover:border-orange-200 dark:hover:border-portal-accent/30 hover:shadow-sm transition-all duration-200"
           >
             <div className="bg-green-50 dark:bg-green-500/[0.06] p-1.5 rounded-lg">
               <IconCalendar className="h-5 w-5 text-green-600 dark:text-green-300/60 flex-shrink-0" />
@@ -190,7 +194,7 @@ export default function PortalDashboard() {
           </Link>
           <Link
             href="/portal/the-bounce"
-            className="flex items-center gap-2 p-3 bg-white dark:bg-portal-surface rounded-xl border border-gray-200 dark:border-portal-border hover:border-orange-200 dark:hover:border-portal-accent/30 hover:shadow-sm transition-all duration-200"
+            className="flex items-center gap-2 p-2.5 bg-white dark:bg-portal-surface rounded-md border border-gray-200 dark:border-portal-border hover:border-orange-200 dark:hover:border-portal-accent/30 hover:shadow-sm transition-all duration-200"
           >
             <div className="bg-amber-50 dark:bg-amber-500/[0.06] p-1.5 rounded-lg">
               <IconNotebook className="h-5 w-5 text-amber-600 dark:text-amber-300/60 flex-shrink-0" />
@@ -199,7 +203,7 @@ export default function PortalDashboard() {
           </Link>
           <Link
             href="/portal/rule-modifications"
-            className="flex items-center gap-2 p-3 bg-white dark:bg-portal-surface rounded-xl border border-gray-200 dark:border-portal-border hover:border-orange-200 dark:hover:border-portal-accent/30 hover:shadow-sm transition-all duration-200"
+            className="flex items-center gap-2 p-2.5 bg-white dark:bg-portal-surface rounded-md border border-gray-200 dark:border-portal-border hover:border-orange-200 dark:hover:border-portal-accent/30 hover:shadow-sm transition-all duration-200"
           >
             <div className="bg-red-50 dark:bg-red-500/[0.06] p-1.5 rounded-lg">
               <IconGavel className="h-5 w-5 text-red-600 dark:text-red-300/60 flex-shrink-0" />
@@ -210,7 +214,7 @@ export default function PortalDashboard() {
             <>
               <Link
                 href="/portal/members"
-                className="flex items-center gap-2 p-3 bg-white dark:bg-portal-surface rounded-xl border border-gray-200 dark:border-portal-border hover:border-orange-200 dark:hover:border-portal-accent/30 hover:shadow-sm transition-all duration-200"
+                className="flex items-center gap-2 p-2.5 bg-white dark:bg-portal-surface rounded-md border border-gray-200 dark:border-portal-border hover:border-orange-200 dark:hover:border-portal-accent/30 hover:shadow-sm transition-all duration-200"
               >
                 <div className="bg-indigo-50 dark:bg-indigo-500/[0.06] p-1.5 rounded-lg">
                   <IconUsers className="h-5 w-5 text-indigo-600 dark:text-indigo-300/60 flex-shrink-0" />
@@ -219,7 +223,7 @@ export default function PortalDashboard() {
               </Link>
               <Link
                 href="/portal/evaluations"
-                className="flex items-center gap-2 p-3 bg-white dark:bg-portal-surface rounded-xl border border-gray-200 dark:border-portal-border hover:border-orange-200 dark:hover:border-portal-accent/30 hover:shadow-sm transition-all duration-200"
+                className="flex items-center gap-2 p-2.5 bg-white dark:bg-portal-surface rounded-md border border-gray-200 dark:border-portal-border hover:border-orange-200 dark:hover:border-portal-accent/30 hover:shadow-sm transition-all duration-200"
               >
                 <div className="bg-teal-50 dark:bg-teal-500/[0.06] p-1.5 rounded-lg">
                   <IconClipboard className="h-5 w-5 text-teal-600 dark:text-teal-300/60 flex-shrink-0" />
@@ -232,7 +236,7 @@ export default function PortalDashboard() {
             <>
               <Link
                 href="/portal/admin"
-                className="flex items-center gap-2 p-3 bg-white dark:bg-portal-surface rounded-xl border border-gray-200 dark:border-portal-border hover:border-orange-200 dark:hover:border-portal-accent/30 hover:shadow-sm transition-all duration-200"
+                className="flex items-center gap-2 p-2.5 bg-white dark:bg-portal-surface rounded-md border border-gray-200 dark:border-portal-border hover:border-orange-200 dark:hover:border-portal-accent/30 hover:shadow-sm transition-all duration-200"
               >
                 <div className="bg-slate-100 dark:bg-slate-700 p-1.5 rounded-lg">
                   <IconSettings className="h-5 w-5 text-slate-600 dark:text-slate-400 flex-shrink-0" />
@@ -241,7 +245,7 @@ export default function PortalDashboard() {
               </Link>
               <Link
                 href="/portal/admin/logs"
-                className="flex items-center gap-2 p-3 bg-white dark:bg-portal-surface rounded-xl border border-gray-200 dark:border-portal-border hover:border-orange-200 dark:hover:border-portal-accent/30 hover:shadow-sm transition-all duration-200"
+                className="flex items-center gap-2 p-2.5 bg-white dark:bg-portal-surface rounded-md border border-gray-200 dark:border-portal-border hover:border-orange-200 dark:hover:border-portal-accent/30 hover:shadow-sm transition-all duration-200"
               >
                 <div className="bg-slate-100 dark:bg-slate-700 p-1.5 rounded-lg">
                   <IconReportAnalytics className="h-5 w-5 text-slate-600 dark:text-slate-400 flex-shrink-0" />
@@ -250,7 +254,7 @@ export default function PortalDashboard() {
               </Link>
               <Link
                 href="/portal/admin/email-history"
-                className="flex items-center gap-2 p-3 bg-white dark:bg-portal-surface rounded-xl border border-gray-200 dark:border-portal-border hover:border-orange-200 dark:hover:border-portal-accent/30 hover:shadow-sm transition-all duration-200"
+                className="flex items-center gap-2 p-2.5 bg-white dark:bg-portal-surface rounded-md border border-gray-200 dark:border-portal-border hover:border-orange-200 dark:hover:border-portal-accent/30 hover:shadow-sm transition-all duration-200"
               >
                 <div className="bg-slate-100 dark:bg-slate-700 p-1.5 rounded-lg">
                   <IconMail className="h-5 w-5 text-slate-600 dark:text-slate-400 flex-shrink-0" />
@@ -264,7 +268,7 @@ export default function PortalDashboard() {
             href="https://app.arbitersports.com/login"
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center gap-2 p-3 bg-white dark:bg-portal-surface rounded-xl border border-gray-200 dark:border-portal-border hover:border-orange-200 dark:hover:border-portal-accent/30 hover:shadow-sm transition-all duration-200"
+            className="flex items-center gap-2 p-2.5 bg-white dark:bg-portal-surface rounded-md border border-gray-200 dark:border-portal-border hover:border-orange-200 dark:hover:border-portal-accent/30 hover:shadow-sm transition-all duration-200"
           >
             <div className="bg-gray-100 dark:bg-portal-hover p-1.5 rounded-lg">
               <IconCalendarEvent className="h-5 w-5 text-gray-600 dark:text-gray-400 flex-shrink-0" />
@@ -276,7 +280,7 @@ export default function PortalDashboard() {
             href="https://gameplanbasketball.ca/"
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center gap-2 p-3 bg-white dark:bg-portal-surface rounded-xl border border-gray-200 dark:border-portal-border hover:border-orange-200 dark:hover:border-portal-accent/30 hover:shadow-sm transition-all duration-200"
+            className="flex items-center gap-2 p-2.5 bg-white dark:bg-portal-surface rounded-md border border-gray-200 dark:border-portal-border hover:border-orange-200 dark:hover:border-portal-accent/30 hover:shadow-sm transition-all duration-200"
           >
             <div className="bg-gray-100 dark:bg-portal-hover p-1.5 rounded-lg">
               <IconBallBasketball className="h-5 w-5 text-gray-600 dark:text-gray-400 flex-shrink-0" />
@@ -288,7 +292,7 @@ export default function PortalDashboard() {
             href="https://discord.com/invite/CeqKGMyVhh"
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center gap-2 p-3 bg-white dark:bg-portal-surface rounded-xl border border-gray-200 dark:border-portal-border hover:border-orange-200 dark:hover:border-portal-accent/30 hover:shadow-sm transition-all duration-200"
+            className="flex items-center gap-2 p-2.5 bg-white dark:bg-portal-surface rounded-md border border-gray-200 dark:border-portal-border hover:border-orange-200 dark:hover:border-portal-accent/30 hover:shadow-sm transition-all duration-200"
           >
             <div className="bg-gray-100 dark:bg-portal-hover p-1.5 rounded-lg">
               <IconBrandDiscord className="h-5 w-5 text-gray-600 dark:text-gray-400 flex-shrink-0" />
@@ -300,7 +304,7 @@ export default function PortalDashboard() {
             href="https://sites.google.com/view/cboa-resource-centre/"
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center gap-2 p-3 bg-white dark:bg-portal-surface rounded-xl border border-gray-200 dark:border-portal-border hover:border-orange-200 dark:hover:border-portal-accent/30 hover:shadow-sm transition-all duration-200"
+            className="flex items-center gap-2 p-2.5 bg-white dark:bg-portal-surface rounded-md border border-gray-200 dark:border-portal-border hover:border-orange-200 dark:hover:border-portal-accent/30 hover:shadow-sm transition-all duration-200"
           >
             <div className="bg-gray-100 dark:bg-portal-hover p-1.5 rounded-lg">
               <IconArchive className="h-5 w-5 text-gray-600 dark:text-gray-400 flex-shrink-0" />

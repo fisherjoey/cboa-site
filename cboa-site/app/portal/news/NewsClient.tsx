@@ -317,16 +317,11 @@ export default function NewsClient({ initialAnnouncements }: NewsClientProps) {
   }
 
   return (
-    <div className="px-4 py-5 sm:p-6 portal-animate">
+    <div className="px-3 py-4 sm:p-5 portal-animate">
 
       {/* Header */}
-      <div className="mb-6 sm:mb-8 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-bold font-heading tracking-tight text-gray-900 dark:text-white">News & Announcements</h1>
-          <p className="mt-1 sm:mt-2 text-sm sm:text-base text-gray-600 dark:text-gray-300">
-            Stay informed with the latest CBOA updates
-          </p>
-        </div>
+      <div className="mb-4 sm:mb-5 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
+        <h1 className="text-xl sm:text-2xl font-bold font-heading tracking-tight text-gray-900 dark:text-white">News & Announcements</h1>
         {canEdit && !isCreating && (
           <button
             onClick={() => {
@@ -342,7 +337,7 @@ export default function NewsClient({ initialAnnouncements }: NewsClientProps) {
                 date: new Date().toISOString()
               })
             }}
-            className="bg-orange-500 text-white px-3 py-2 sm:px-4 rounded-xl shadow-sm shadow-orange-500/20 hover:bg-orange-600 flex items-center gap-2 text-sm sm:text-base"
+            className="bg-orange-500 text-white px-3 py-2 sm:px-4 rounded-lg shadow-sm shadow-orange-500/20 hover:bg-orange-600 flex items-center gap-2 text-sm sm:text-base"
           >
             <IconPlus className="h-5 w-5" />
             New Announcement
@@ -352,7 +347,7 @@ export default function NewsClient({ initialAnnouncements }: NewsClientProps) {
 
       {/* Create New Announcement Form */}
       {isCreating && (
-        <div className="mb-6 bg-white dark:bg-portal-surface rounded-xl border border-gray-200 dark:border-portal-border p-6">
+        <div className="mb-4 bg-white dark:bg-portal-surface rounded-lg border border-gray-200 dark:border-portal-border p-4">
           <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-white">Create New Announcement</h2>
           
           <div className="space-y-4">
@@ -544,10 +539,10 @@ export default function NewsClient({ initialAnnouncements }: NewsClientProps) {
       {/* Announcements List */}
       <div className="space-y-4">
         {filteredAnnouncements.map(announcement => (
-          <div key={announcement.id} className="bg-white dark:bg-portal-surface rounded-xl border border-gray-200 dark:border-portal-border hover:border-orange-200 dark:hover:border-orange-800/40 hover:shadow-sm transition-shadow overflow-hidden">
+          <div key={announcement.id} className="bg-white dark:bg-portal-surface rounded-lg border border-gray-200 dark:border-portal-border hover:border-orange-200 dark:hover:border-orange-800/40 hover:shadow-sm transition-shadow overflow-hidden">
             {editingId === announcement.id ? (
               // Edit Mode
-              <div className="p-6">
+              <div className="p-4">
                 <div className="space-y-4">
                   <input
                     type="text"
@@ -644,7 +639,7 @@ export default function NewsClient({ initialAnnouncements }: NewsClientProps) {
               </div>
             ) : (
               // View Mode
-              <div className="p-6 overflow-hidden">
+              <div className="p-4 overflow-hidden">
                 <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
                   <div className="flex-1 min-w-0 overflow-hidden">
                     <div className="flex flex-wrap items-center gap-2 mb-2">
@@ -700,7 +695,7 @@ export default function NewsClient({ initialAnnouncements }: NewsClientProps) {
       </div>
 
       {filteredAnnouncements.length === 0 && (
-        <div className="text-center py-12 bg-white dark:bg-portal-surface rounded-xl">
+        <div className="text-center py-12 bg-white dark:bg-portal-surface rounded-lg">
           <svg className="mx-auto h-12 w-12 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
           </svg>
@@ -714,7 +709,7 @@ export default function NewsClient({ initialAnnouncements }: NewsClientProps) {
       )}
 
       {/* Subscription Notice */}
-      <div className="mt-8 p-4 bg-blue-900/20 rounded-xl border border-blue-800">
+      <div className="mt-8 p-4 bg-blue-900/20 rounded-lg border border-blue-800">
         <h3 className="text-sm font-medium text-blue-400 mb-2">Stay Updated</h3>
         <p className="text-sm text-blue-400">
           Important announcements are also sent via email. Make sure your contact information is up to date.

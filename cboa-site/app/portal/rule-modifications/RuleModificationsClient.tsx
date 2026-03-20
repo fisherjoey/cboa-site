@@ -196,62 +196,87 @@ export default function RuleModificationsClient({ modifications: initialModifica
   }
 
   return (
-    <div className="py-5 sm:py-6 portal-animate">
+    <div className="px-1 py-3 sm:py-4 portal-animate">
 
-      {/* Header */}
-      <div className="mb-6 sm:mb-8 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-bold font-heading tracking-tight text-gray-900 dark:text-white">Rule Modifications</h1>
-          <p className="mt-1 sm:mt-2 text-sm sm:text-base text-gray-600 dark:text-gray-300">
-            Official rule modifications and clarifications for CBOA officials
-          </p>
-        </div>
+      {/* Header — compact */}
+      <div className="mb-3 flex items-center justify-between gap-2 px-2">
+        <h1 className="text-xl sm:text-2xl font-bold font-heading tracking-tight text-gray-900 dark:text-white">Rule Modifications</h1>
         {canEdit && !isCreating && (
           <button
             onClick={() => {
               setIsCreating(true)
-              // Pre-select the category based on the current tab
               const category = selectedCategory === 'all' ? (categories[0] || 'Club Tournament') : selectedCategory
-              setNewModification({
-                title: '',
-                category: category,
-                summary: '',
-                content: ''
-              })
+              setNewModification({ title: '', category, summary: '', content: '' })
             }}
-            className="bg-orange-500 text-white px-3 py-2 sm:px-4 rounded-xl hover:bg-orange-600 flex items-center gap-2 text-sm sm:text-base"
+            className="bg-orange-500 text-white px-3 py-1.5 rounded-lg hover:bg-orange-600 flex items-center gap-1.5 text-sm flex-shrink-0"
           >
-            <IconPlus className="h-5 w-5" />
-            Add Rule Modification
+            <IconPlus className="h-4 w-4" />
+            <span className="hidden sm:inline">Add Rule</span>
+            <span className="sm:hidden">Add</span>
           </button>
         )}
       </div>
 
-      {/* Search and Category Filter */}
-      <PortalFilterBar
-        searchValue={searchTerm}
-        onSearchChange={setSearchTerm}
-        searchPlaceholder="Search rule modifications..."
-        sortOptions={[
-          { value: 'title', label: 'Title' },
-          { value: 'category', label: 'Category' },
-          { value: 'date', label: 'Date Added' },
-        ]}
-        sortValue={sortField}
-        onSortChange={(val) => setSortField(val as 'title' | 'date' | 'category')}
-        sortDirection={sortDirection}
-        onSortDirectionChange={setSortDirection}
-        categories={[
-          { value: 'all', label: 'All Categories', icon: IconGavel },
-          ...categories.map(cat => ({ value: cat, label: cat }))
-        ]}
-        selectedCategory={selectedCategory}
-        onCategoryChange={setSelectedCategory}
-      />
+      {/* Search + Sort — compact inline row */}
+      <div className="mb-2 px-2 flex gap-2">
+        <div className="flex-1 relative">
+          <IconSearch className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-400" />
+          <input
+            type="text"
+            placeholder="Search..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full pl-8 pr-3 py-1.5 text-sm border border-gray-300 dark:border-portal-border rounded-lg bg-white dark:bg-portal-surface text-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-orange-500"
+          />
+        </div>
+        <select
+          value={sortField}
+          onChange={(e) => setSortField(e.target.value as 'title' | 'date' | 'category')}
+          className="text-xs border border-gray-300 dark:border-portal-border bg-white dark:bg-portal-surface text-gray-700 dark:text-gray-300 rounded-lg pl-2 pr-6 py-1.5 focus:outline-none focus:ring-1 focus:ring-orange-500"
+        >
+          <option value="title">Title</option>
+          <option value="category">Category</option>
+          <option value="date">Date</option>
+        </select>
+        <button
+          onClick={() => setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc')}
+          className="p-1.5 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 border border-gray-300 dark:border-portal-border rounded-lg bg-white dark:bg-portal-surface"
+          title={sortDirection === 'asc' ? 'Ascending' : 'Descending'}
+        >
+          {sortDirection === 'asc' ? <IconSortAscending className="h-4 w-4" /> : <IconSortDescending className="h-4 w-4" />}
+        </button>
+      </div>
+
+      {/* Category pills — horizontal scroll, no wrap */}
+      <div className="mb-3 flex items-center gap-1.5 overflow-x-auto scrollbar-hide px-2 pb-1">
+        <button
+          onClick={() => setSelectedCategory('all')}
+          className={`flex-shrink-0 px-2.5 py-1 rounded text-xs font-medium transition-all ${
+            selectedCategory === 'all'
+              ? 'bg-orange-500 text-white'
+              : 'bg-gray-100 dark:bg-portal-hover text-gray-600 dark:text-gray-400'
+          }`}
+        >
+          All
+        </button>
+        {categories.map(cat => (
+          <button
+            key={cat}
+            onClick={() => setSelectedCategory(cat)}
+            className={`flex-shrink-0 px-2.5 py-1 rounded text-xs font-medium transition-all ${
+              selectedCategory === cat
+                ? 'bg-orange-500 text-white'
+                : 'bg-gray-100 dark:bg-portal-hover text-gray-600 dark:text-gray-400'
+            }`}
+          >
+            {cat}
+          </button>
+        ))}
+      </div>
 
       {/* Create New Rule Form */}
       {isCreating && (
-        <div className="mb-6 bg-white dark:bg-portal-surface rounded-xl border border-gray-200 dark:border-portal-border p-4 sm:p-6">
+        <div className="mb-6 bg-white dark:bg-portal-surface rounded-md border border-gray-200 dark:border-portal-border p-3 sm:p-4">
           <h2 className="text-lg sm:text-xl font-semibold mb-4 text-gray-900 dark:text-white">Add New Rule Modification</h2>
 
           <div className="space-y-4">
@@ -344,11 +369,7 @@ export default function RuleModificationsClient({ modifications: initialModifica
 
       {/* Rule Modifications List */}
       {filteredModifications.length > 0 ? (
-        <div className="space-y-3 sm:space-y-4">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-            {selectedCategory === 'all' ? 'All Rule Modifications' : `${selectedCategory} Rules`}
-          </h2>
-
+        <div className="space-y-2 px-2">
           {filteredModifications.map((modification) => {
             const isEditing = editingId === modification.id
             const effectiveDate = modification.effectiveDate
@@ -361,7 +382,7 @@ export default function RuleModificationsClient({ modifications: initialModifica
 
             if (isEditing && editingData) {
               return (
-                <div key={modification.id} className="bg-white dark:bg-portal-surface rounded-xl border border-gray-200 dark:border-portal-border p-4 sm:p-6">
+                <div key={modification.id} className="bg-white dark:bg-portal-surface rounded-md border border-gray-200 dark:border-portal-border p-3 sm:p-4">
                   <h3 className="text-lg sm:text-xl font-semibold mb-4 text-gray-900 dark:text-white">Edit Rule Modification</h3>
                   <div className="space-y-4">
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -436,10 +457,10 @@ export default function RuleModificationsClient({ modifications: initialModifica
 
             return (
               <Accordion key={modification.id}>
-                <div className="bg-white dark:bg-portal-surface border border-gray-200 dark:border-portal-border rounded-lg hover:border-gray-300 dark:hover:border-gray-600 transition-colors">
+                <div className="bg-white dark:bg-portal-surface border border-gray-200 dark:border-portal-border rounded-md hover:border-gray-300 dark:hover:border-gray-600 transition-colors">
                   {/* Accordion Header */}
-                  <div className="flex items-center gap-3 py-3 pr-4">
-                    <AccordionButton className="flex items-center gap-3 flex-1 min-w-0 pl-3">
+                  <div className="flex items-center gap-2 py-2.5 pr-3">
+                    <AccordionButton className="flex items-center gap-2 flex-1 min-w-0 pl-3">
                       {({ open }) => (
                         <>
                           <AccordionChevron open={open} className="flex-shrink-0" />

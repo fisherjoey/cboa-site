@@ -346,7 +346,7 @@ export default function CalendarPage() {
       {calendarMode === 'events' && (
         <>
           {/* FullCalendar */}
-          <div className="bg-white dark:bg-portal-surface rounded-xl border border-gray-200 dark:border-portal-border p-1.5 sm:p-4">
+          <div className="bg-white dark:bg-portal-surface rounded-lg border border-gray-200 dark:border-portal-border p-1.5 sm:p-4">
             <FullCalendar
               plugins={[dayGridPlugin, listPlugin, interactionPlugin]}
               initialView="dayGridMonth"
@@ -427,7 +427,7 @@ export default function CalendarPage() {
           </div>
 
           {/* Statistics placeholder */}
-          <div className="bg-white dark:bg-portal-surface rounded-xl border border-gray-200 dark:border-portal-border p-8 text-center text-gray-500 dark:text-gray-400">
+          <div className="bg-white dark:bg-portal-surface rounded-lg border border-gray-200 dark:border-portal-border p-8 text-center text-gray-500 dark:text-gray-400">
             <IconChartBar className="h-16 w-16 mx-auto mb-4 opacity-50" />
             <p className="text-lg font-medium">Statistics Calendar Coming Soon</p>
             <p className="text-sm mt-2">This feature will display game counts and assignment data by date.</p>
@@ -435,7 +435,7 @@ export default function CalendarPage() {
 
           {/* Selected Day Detail */}
           {selectedStatDate && selectedStatDayData && (
-            <div className="mt-4 p-4 bg-white dark:bg-portal-surface rounded-xl border border-gray-200 dark:border-portal-border">
+            <div className="mt-4 p-4 bg-white dark:bg-portal-surface rounded-lg border border-gray-200 dark:border-portal-border">
               <div className="flex items-center justify-between mb-3">
                 <h3 className="font-semibold text-gray-900 dark:text-white">
                   {new Date(selectedStatDate + 'T00:00:00').toLocaleDateString('en-US', {

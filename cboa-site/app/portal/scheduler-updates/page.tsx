@@ -108,19 +108,14 @@ export default function SchedulerUpdatesPage() {
   }
 
   return (
-    <div className="px-4 py-5 sm:p-6 portal-animate">
+    <div className="px-3 py-4 sm:p-5 portal-animate">
       {/* Header */}
-      <div className="mb-6 sm:mb-8 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-bold font-heading tracking-tight text-gray-900 dark:text-white">Scheduler Updates</h1>
-          <p className="mt-1 sm:mt-2 text-sm sm:text-base text-gray-600 dark:text-gray-300">
-            Latest schedule changes, new leagues, and scheduling news
-          </p>
-        </div>
+      <div className="mb-4 sm:mb-5 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
+        <h1 className="text-xl sm:text-2xl font-bold font-heading tracking-tight text-gray-900 dark:text-white">Scheduler Updates</h1>
         {canEdit && !isCreating && (
           <button
             onClick={() => setIsCreating(true)}
-            className="bg-orange-500 text-white px-3 py-2 sm:px-4 rounded-xl shadow-sm shadow-orange-500/20 hover:bg-orange-600 flex items-center gap-2 text-sm sm:text-base"
+            className="bg-orange-500 text-white px-3 py-2 sm:px-4 rounded-lg shadow-sm shadow-orange-500/20 hover:bg-orange-600 flex items-center gap-2 text-sm sm:text-base"
           >
             <IconPlus className="h-5 w-5" />
             New Update
@@ -130,7 +125,7 @@ export default function SchedulerUpdatesPage() {
 
       {/* Create Form */}
       {isCreating && (
-        <div className="mb-6 bg-white dark:bg-portal-surface rounded-xl border border-gray-200 dark:border-portal-border p-6">
+        <div className="mb-6 bg-white dark:bg-portal-surface rounded-lg border border-gray-200 dark:border-portal-border p-6">
           <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-white">New Scheduler Update</h2>
 
           <div className="space-y-4">
@@ -196,10 +191,10 @@ export default function SchedulerUpdatesPage() {
       {/* Updates List */}
       <div className="space-y-4">
         {updates.map(item => (
-          <div key={item.id} className="bg-white dark:bg-portal-surface rounded-xl border border-gray-200 dark:border-portal-border hover:border-orange-200 dark:hover:border-orange-800/40 hover:shadow-sm transition-shadow overflow-hidden">
+          <div key={item.id} className="bg-white dark:bg-portal-surface rounded-lg border border-gray-200 dark:border-portal-border hover:border-orange-200 dark:hover:border-orange-800/40 hover:shadow-sm transition-shadow overflow-hidden">
             {editingId === item.id ? (
               /* Edit Mode */
-              <div className="p-6">
+              <div className="p-4">
                 <div className="space-y-4">
                   <input
                     type="text"
@@ -290,7 +285,7 @@ export default function SchedulerUpdatesPage() {
       </div>
 
       {!isLoading && updates.length === 0 && (
-        <div className="text-center py-12 bg-white dark:bg-portal-surface rounded-xl">
+        <div className="text-center py-12 bg-white dark:bg-portal-surface rounded-lg">
           <svg className="mx-auto h-12 w-12 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
           </svg>
