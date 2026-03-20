@@ -303,77 +303,67 @@ export default function EvaluationsPage() {
   }
 
   return (
-    <div className="px-4 py-5 sm:p-6 portal-animate">
-      {/* Header */}
-      <div className="mb-6 sm:mb-8 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-bold font-heading tracking-tight text-gray-900 dark:text-white">Evaluations</h1>
-          <p className="mt-1 sm:mt-2 text-sm sm:text-base text-gray-600 dark:text-gray-300">
-            {canViewAll ? 'View and manage official evaluations' : 'View your performance evaluations'}
-          </p>
-        </div>
+    <div className="px-3 py-3 sm:p-5 portal-animate">
+      {/* Header — compact */}
+      <div className="mb-3 flex items-center justify-between gap-2">
+        <h1 className="text-xl sm:text-2xl font-bold font-heading tracking-tight text-gray-900 dark:text-white">Evaluations</h1>
         {canCreate && (
           <button
             onClick={() => setShowCreateModal(true)}
-            className="bg-orange-500 text-white px-3 py-2 sm:px-4 rounded-xl hover:bg-orange-600 flex items-center gap-2 text-sm sm:text-base"
+            className="bg-orange-500 text-white px-3 py-1.5 rounded-lg hover:bg-orange-600 flex items-center gap-1.5 text-sm flex-shrink-0"
           >
-            <IconPlus className="h-5 w-5" />
-            Add Evaluation
+            <IconPlus className="h-4 w-4" />
+            <span className="hidden sm:inline">Add Evaluation</span>
+            <span className="sm:hidden">Add</span>
           </button>
         )}
       </div>
 
-      {/* Tabs for evaluators */}
+      {/* Tabs for evaluators — compact */}
       {isEvaluator && (
-        <div className="mb-6">
-          <div className="border-b border-gray-200 dark:border-portal-border">
-            <nav className="-mb-px flex space-x-8">
-              <button
-                onClick={() => setActiveTab('my')}
-                className={`py-4 px-1 border-b-2 font-medium text-sm flex items-center gap-2 ${
-                  activeTab === 'my'
-                    ? 'border-orange-500 text-orange-600 dark:text-orange-400'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
-                }`}
-              >
-                <IconClipboardCheck className="h-5 w-5" />
-                My Evaluations
-                <span className="ml-2 px-2 py-0.5 text-xs rounded-full bg-orange-100 dark:bg-orange-900/40 text-orange-600 dark:text-orange-400">
-                  {myEvaluations.length}
-                </span>
-              </button>
-              <button
-                onClick={() => setActiveTab('all')}
-                className={`py-4 px-1 border-b-2 font-medium text-sm flex items-center gap-2 ${
-                  activeTab === 'all'
-                    ? 'border-orange-500 text-orange-600 dark:text-orange-400'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
-                }`}
-              >
-                <IconUser className="h-5 w-5" />
-                All Member Evaluations
-                <span className="ml-2 px-2 py-0.5 text-xs rounded-full bg-blue-900/40 text-blue-400">
-                  {evaluations.length}
-                </span>
-              </button>
-            </nav>
-          </div>
+        <div className="mb-3 border-b border-gray-200 dark:border-portal-border">
+          <nav className="-mb-px flex gap-4">
+            <button
+              onClick={() => setActiveTab('my')}
+              className={`py-2 border-b-2 text-sm font-medium flex items-center gap-1.5 ${
+                activeTab === 'my'
+                  ? 'border-orange-500 text-orange-600 dark:text-orange-400'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400'
+              }`}
+            >
+              Mine
+              <span className="px-1.5 py-0.5 text-[10px] rounded bg-orange-100 dark:bg-orange-900/40 text-orange-600 dark:text-orange-400">
+                {myEvaluations.length}
+              </span>
+            </button>
+            <button
+              onClick={() => setActiveTab('all')}
+              className={`py-2 border-b-2 text-sm font-medium flex items-center gap-1.5 ${
+                activeTab === 'all'
+                  ? 'border-orange-500 text-orange-600 dark:text-orange-400'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400'
+              }`}
+            >
+              All Members
+              <span className="px-1.5 py-0.5 text-[10px] rounded bg-blue-900/40 text-blue-400">
+                {evaluations.length}
+              </span>
+            </button>
+          </nav>
         </div>
       )}
 
-      {/* Search - only show for all evaluations view or non-evaluators */}
+      {/* Search — compact inline, no card wrapper */}
       {canViewAll && evaluations.length > 0 && (!isEvaluator || activeTab === 'all') && (
-        <div className="mb-6 bg-white dark:bg-portal-surface rounded-xl border border-gray-200 dark:border-portal-border p-4">
-          <div className="relative">
-            <IconSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
-            <input
-              type="text"
-              placeholder="Search by member name, email, or title..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-portal-border bg-white dark:bg-portal-surface text-gray-900 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
-            />
-          </div>
+        <div className="mb-3 relative">
+          <IconSearch className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 h-4 w-4" />
+          <input
+            type="text"
+            placeholder="Search evaluations..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full pl-8 pr-3 py-1.5 text-sm border border-gray-300 dark:border-portal-border bg-white dark:bg-portal-surface text-gray-900 dark:text-white rounded-md focus:outline-none focus:ring-1 focus:ring-orange-500"
+          />
         </div>
       )}
 
@@ -381,7 +371,7 @@ export default function EvaluationsPage() {
       {/* My Evaluations view for evaluators */}
       {isEvaluator && activeTab === 'my' ? (
         myEvaluations.length === 0 ? (
-          <div className="text-center py-12 bg-white dark:bg-portal-surface rounded-xl border border-gray-200 dark:border-portal-border">
+          <div className="text-center py-12 bg-white dark:bg-portal-surface rounded-lg border border-gray-200 dark:border-portal-border">
             <IconClipboardCheck className="mx-auto h-12 w-12 text-gray-400 dark:text-gray-500" />
             <h3 className="mt-2 text-sm font-medium text-gray-900 dark:text-white">No evaluations created yet</h3>
             <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
@@ -389,67 +379,38 @@ export default function EvaluationsPage() {
             </p>
           </div>
         ) : (
-          <div className="space-y-4">
+          <div className="bg-white dark:bg-portal-surface rounded-lg border border-gray-200 dark:border-portal-border divide-y divide-gray-100 dark:divide-portal-border">
             {myEvaluations
               .sort((a, b) => new Date(b.evaluation_date).getTime() - new Date(a.evaluation_date).getTime())
               .map((evaluation) => (
-                <div
-                  key={evaluation.id}
-                  className="bg-white dark:bg-portal-surface rounded-xl border border-gray-200 dark:border-portal-border hover:shadow-md transition-shadow p-4"
-                >
-                  <div className="flex items-start gap-4">
-                    <div className="w-12 h-12 rounded-lg bg-orange-100 dark:bg-orange-900/40 flex items-center justify-center flex-shrink-0">
-                      <IconFile className="h-6 w-6 text-orange-600 dark:text-orange-400" />
+                <div key={evaluation.id} className="flex items-center gap-3 px-3 py-2.5 hover:bg-gray-50 dark:hover:bg-portal-hover/50 transition-colors">
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-medium text-sm text-gray-900 dark:text-white truncate">
+                      {evaluation.title || `Evaluation - ${formatDate(evaluation.evaluation_date)}`}
+                    </h3>
+                    <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                      <span>{formatDate(evaluation.evaluation_date)}</span>
+                      <span>&middot;</span>
+                      <span>{evaluation.member?.name || 'Unknown'}</span>
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-start justify-between gap-2">
-                        <div>
-                          <h3 className="font-semibold text-gray-900 dark:text-white">
-                            {evaluation.title || `Evaluation - ${formatDate(evaluation.evaluation_date)}`}
-                          </h3>
-                          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                            For: {evaluation.member?.name || 'Unknown Member'}
-                          </p>
-                        </div>
-                        <div className="flex items-center gap-1 flex-shrink-0">
-                          <a
-                            href={evaluation.file_url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="p-2 text-blue-400 hover:bg-blue-900/30 rounded"
-                            title="View PDF"
-                          >
-                            <IconExternalLink className="h-5 w-5" />
-                          </a>
-                          <a
-                            href={evaluation.file_url}
-                            download
-                            className="p-2 text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/30 rounded"
-                            title="Download"
-                          >
-                            <IconDownload className="h-5 w-5" />
-                          </a>
-                        </div>
-                      </div>
-                      <div className="flex flex-wrap items-center gap-3 text-sm text-gray-500 dark:text-gray-400 mt-2">
-                        <span className="flex items-center gap-1">
-                          <IconCalendar className="h-4 w-4" />
-                          {formatDate(evaluation.evaluation_date)}
-                        </span>
-                      </div>
-                      {evaluation.notes && (
-                        <p className="mt-2 text-sm text-gray-700 dark:text-gray-300">
-                          {evaluation.notes}
-                        </p>
-                      )}
-                    </div>
+                    {evaluation.notes && (
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 truncate">{evaluation.notes}</p>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-0.5 flex-shrink-0">
+                    <a href={evaluation.file_url} target="_blank" rel="noopener noreferrer" className="p-1.5 text-blue-400 hover:bg-blue-900/30 rounded" title="View">
+                      <IconExternalLink className="h-4 w-4" />
+                    </a>
+                    <a href={evaluation.file_url} download className="p-1.5 text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/30 rounded" title="Download">
+                      <IconDownload className="h-4 w-4" />
+                    </a>
                   </div>
                 </div>
               ))}
           </div>
         )
       ) : filteredEvaluations.length === 0 ? (
-        <div className="text-center py-12 bg-white dark:bg-portal-surface rounded-xl border border-gray-200 dark:border-portal-border">
+        <div className="text-center py-12 bg-white dark:bg-portal-surface rounded-lg border border-gray-200 dark:border-portal-border">
           <IconFileText className="mx-auto h-12 w-12 text-gray-400 dark:text-gray-500" />
           <h3 className="mt-2 text-sm font-medium text-gray-900 dark:text-white">No evaluations found</h3>
           <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
@@ -460,95 +421,65 @@ export default function EvaluationsPage() {
         </div>
       ) : canViewAll && groupedEvaluations ? (
         /* Grouped view for admins/evaluators - sorted by member with accordion */
-        <div className="space-y-3">
+        <div className="space-y-2">
           {sortedMemberIds.map((memberId) => {
             const group = groupedEvaluations[memberId]
             return (
               <Accordion key={memberId} defaultOpen={false}>
-                <div className="bg-white dark:bg-portal-surface rounded-xl border border-gray-200 dark:border-portal-border overflow-hidden">
-                  {/* Member Header - Accordion Button */}
+                <div className="bg-white dark:bg-portal-surface rounded-md border border-gray-200 dark:border-portal-border overflow-hidden">
                   <AccordionButton className="w-full">
                     {({ open }) => (
-                      <div className="w-full bg-gray-50 dark:bg-portal-hover px-4 py-3 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors">
-                        <div className="flex items-center gap-3 w-full">
+                      <div className="w-full px-3 py-2.5 hover:bg-gray-50 dark:hover:bg-portal-hover transition-colors">
+                        <div className="flex items-center gap-2.5 w-full">
                           <IconChevronDown
-                            className={`h-5 w-5 text-gray-400 transition-transform duration-200 flex-shrink-0 ${open ? 'rotate-180' : ''}`}
+                            className={`h-4 w-4 text-gray-400 transition-transform duration-200 flex-shrink-0 ${open ? 'rotate-180' : ''}`}
                           />
-                          <div className="w-10 h-10 rounded-full bg-blue-900/40 flex items-center justify-center flex-shrink-0">
-                            <IconUser className="h-5 w-5 text-blue-400" />
+                          <div className="w-7 h-7 rounded-full bg-blue-900/40 flex items-center justify-center flex-shrink-0">
+                            <IconUser className="h-3.5 w-3.5 text-blue-400" />
                           </div>
                           <div className="flex-1 min-w-0 text-left">
-                            <h3 className="font-semibold text-gray-900 dark:text-white">{group.memberName}</h3>
-                            <p className="text-sm text-gray-500 dark:text-gray-400">{group.memberEmail}</p>
+                            <h3 className="font-medium text-sm text-gray-900 dark:text-white truncate">{group.memberName}</h3>
                           </div>
-                          <span className="px-2 py-1 text-xs font-medium bg-blue-900/40 text-blue-400 rounded-full flex-shrink-0">
-                            {group.evaluations.length} evaluation{group.evaluations.length !== 1 ? 's' : ''}
+                          <span className="px-1.5 py-0.5 text-[10px] font-medium bg-blue-900/40 text-blue-400 rounded flex-shrink-0">
+                            {group.evaluations.length}
                           </span>
                         </div>
                       </div>
                     )}
                   </AccordionButton>
 
-                  {/* Member's Evaluations - Accordion Panel */}
                   <AccordionPanel unmount={false}>
-                    <div className="divide-y divide-gray-100 dark:divide-gray-700">
+                    <div className="divide-y divide-gray-100 dark:divide-gray-700 border-t border-gray-100 dark:border-gray-700">
                       {group.evaluations
                         .sort((a, b) => new Date(b.evaluation_date).getTime() - new Date(a.evaluation_date).getTime())
                         .map((evaluation) => (
-                          <div key={evaluation.id} className="p-4 hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors">
-                            <div className="flex items-start gap-4">
-                              <div className="w-10 h-10 rounded-lg bg-orange-100 dark:bg-orange-900/40 flex items-center justify-center flex-shrink-0">
-                                <IconFile className="h-5 w-5 text-orange-600 dark:text-orange-400" />
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                <div className="flex items-start justify-between gap-2">
-                                  <div>
-                                    <h4 className="font-medium text-gray-900 dark:text-white">
-                                      {evaluation.title || `Evaluation - ${formatDate(evaluation.evaluation_date)}`}
-                                    </h4>
-                                    <div className="flex flex-wrap items-center gap-3 text-sm text-gray-500 dark:text-gray-400 mt-1">
-                                      <span className="flex items-center gap-1">
-                                        <IconCalendar className="h-4 w-4" />
-                                        {formatDate(evaluation.evaluation_date)}
-                                      </span>
-                                      {evaluation.evaluator && (
-                                        <span>by {evaluation.evaluator.name}</span>
-                                      )}
-                                    </div>
-                                  </div>
-                                  <div className="flex items-center gap-1 flex-shrink-0">
-                                    <a
-                                      href={evaluation.file_url}
-                                      target="_blank"
-                                      rel="noopener noreferrer"
-                                      className="p-2 text-blue-400 hover:bg-blue-900/30 rounded"
-                                      title="View PDF"
-                                    >
-                                      <IconExternalLink className="h-5 w-5" />
-                                    </a>
-                                    <a
-                                      href={evaluation.file_url}
-                                      download
-                                      className="p-2 text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/30 rounded"
-                                      title="Download"
-                                    >
-                                      <IconDownload className="h-5 w-5" />
-                                    </a>
-                                    {canDelete && (
-                                      <button
-                                        onClick={() => handleDelete(evaluation)}
-                                        className="p-2 text-red-500 dark:text-red-400/70 hover:bg-red-50 dark:hover:bg-red-900/30 rounded"
-                                        title="Delete"
-                                      >
-                                        <IconTrash className="h-5 w-5" />
-                                      </button>
-                                    )}
-                                  </div>
-                                </div>
-                                {evaluation.notes && (
-                                  <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">{evaluation.notes}</p>
+                          <div key={evaluation.id} className="flex items-center gap-3 px-3 py-2.5 hover:bg-gray-50 dark:hover:bg-portal-hover/50 transition-colors">
+                            <div className="flex-1 min-w-0">
+                              <h4 className="font-medium text-sm text-gray-900 dark:text-white truncate">
+                                {evaluation.title || `Evaluation - ${formatDate(evaluation.evaluation_date)}`}
+                              </h4>
+                              <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                                <span>{formatDate(evaluation.evaluation_date)}</span>
+                                {evaluation.evaluator && (
+                                  <><span>&middot;</span><span>by {evaluation.evaluator.name}</span></>
                                 )}
                               </div>
+                              {evaluation.notes && (
+                                <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 truncate">{evaluation.notes}</p>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-0.5 flex-shrink-0">
+                              <a href={evaluation.file_url} target="_blank" rel="noopener noreferrer" className="p-1.5 text-blue-400 hover:bg-blue-900/30 rounded" title="View">
+                                <IconExternalLink className="h-4 w-4" />
+                              </a>
+                              <a href={evaluation.file_url} download className="p-1.5 text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/30 rounded" title="Download">
+                                <IconDownload className="h-4 w-4" />
+                              </a>
+                              {canDelete && (
+                                <button onClick={() => handleDelete(evaluation)} className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 rounded" title="Delete">
+                                  <IconTrash className="h-3.5 w-3.5" />
+                                </button>
+                              )}
                             </div>
                           </div>
                         ))}
@@ -561,67 +492,30 @@ export default function EvaluationsPage() {
         </div>
       ) : (
         /* Flat list for regular officials viewing their own */
-        <div className="space-y-4">
+        <div className="bg-white dark:bg-portal-surface rounded-lg border border-gray-200 dark:border-portal-border divide-y divide-gray-100 dark:divide-portal-border">
           {filteredEvaluations.map((evaluation) => (
-            <div
-              key={evaluation.id}
-              className="bg-white dark:bg-portal-surface rounded-xl border border-gray-200 dark:border-portal-border hover:shadow-md transition-shadow p-4"
-            >
-              <div className="flex items-start gap-4">
-                {/* Icon */}
-                <div className="w-12 h-12 rounded-lg bg-blue-900/40 flex items-center justify-center flex-shrink-0">
-                  <IconFile className="h-6 w-6 text-blue-400" />
-                </div>
-
-                {/* Content */}
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-start justify-between gap-2">
-                    <div>
-                      <h3 className="font-semibold text-gray-900 dark:text-white">
-                        {evaluation.title || `Evaluation - ${formatDate(evaluation.evaluation_date)}`}
-                      </h3>
-                    </div>
-                    <div className="flex items-center gap-1 flex-shrink-0">
-                      <a
-                        href={evaluation.file_url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="p-2 text-blue-400 hover:bg-blue-900/30 rounded"
-                        title="View PDF"
-                      >
-                        <IconExternalLink className="h-5 w-5" />
-                      </a>
-                      <a
-                        href={evaluation.file_url}
-                        download
-                        className="p-2 text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/30 rounded"
-                        title="Download"
-                      >
-                        <IconDownload className="h-5 w-5" />
-                      </a>
-                    </div>
-                  </div>
-
-                  {/* Meta info */}
-                  <div className="flex flex-wrap items-center gap-3 text-sm text-gray-500 dark:text-gray-400 mt-2">
-                    <span className="flex items-center gap-1">
-                      <IconCalendar className="h-4 w-4" />
-                      {formatDate(evaluation.evaluation_date)}
-                    </span>
-                    {evaluation.evaluator && (
-                      <span>
-                        Evaluated by: {evaluation.evaluator.name}
-                      </span>
-                    )}
-                  </div>
-
-                  {/* Notes */}
-                  {evaluation.notes && (
-                    <p className="mt-2 text-sm text-gray-700 dark:text-gray-300">
-                      {evaluation.notes}
-                    </p>
+            <div key={evaluation.id} className="flex items-center gap-3 px-3 py-2.5 hover:bg-gray-50 dark:hover:bg-portal-hover/50 transition-colors">
+              <div className="flex-1 min-w-0">
+                <h3 className="font-medium text-sm text-gray-900 dark:text-white truncate">
+                  {evaluation.title || `Evaluation - ${formatDate(evaluation.evaluation_date)}`}
+                </h3>
+                <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                  <span>{formatDate(evaluation.evaluation_date)}</span>
+                  {evaluation.evaluator && (
+                    <><span>&middot;</span><span>by {evaluation.evaluator.name}</span></>
                   )}
                 </div>
+                {evaluation.notes && (
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 truncate">{evaluation.notes}</p>
+                )}
+              </div>
+              <div className="flex items-center gap-0.5 flex-shrink-0">
+                <a href={evaluation.file_url} target="_blank" rel="noopener noreferrer" className="p-1.5 text-blue-400 hover:bg-blue-900/30 rounded" title="View">
+                  <IconExternalLink className="h-4 w-4" />
+                </a>
+                <a href={evaluation.file_url} download className="p-1.5 text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/30 rounded" title="Download">
+                  <IconDownload className="h-4 w-4" />
+                </a>
               </div>
             </div>
           ))}
