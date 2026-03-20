@@ -117,7 +117,7 @@ export default function PublicPagesAdmin() {
 
       {/* Header */}
       <div className="mb-6 sm:mb-8">
-        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">Public Page Content</h1>
+        <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">Public Page Content</h1>
         <p className="mt-1 sm:mt-2 text-sm sm:text-base text-gray-600 dark:text-gray-300">
           Edit content for core pages on your public website (Home, About, etc.)
         </p>

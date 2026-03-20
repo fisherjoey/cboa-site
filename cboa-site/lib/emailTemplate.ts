@@ -65,7 +65,7 @@ export function generateCBOAEmailTemplate(options: EmailTemplateOptions): string
     /* Outlook.com dark mode overrides */
     [data-ogsc] h1, [data-ogsc] h2, [data-ogsc] h3,
     [data-ogsb] h1, [data-ogsb] h2, [data-ogsb] h3 {
-      color: #003DA5 !important;
+      color: #1f2937 !important;
     }
     [data-ogsc] p, [data-ogsc] li, [data-ogsc] td,
     [data-ogsb] p, [data-ogsb] li, [data-ogsb] td {
@@ -85,7 +85,7 @@ export function generateCBOAEmailTemplate(options: EmailTemplateOptions): string
     }
     /* Content typography */
     h1 {
-      color: #003DA5;
+      color: #1f2937;
       font-size: 24px;
       margin-top: 0;
       margin-bottom: 16px;
@@ -93,7 +93,7 @@ export function generateCBOAEmailTemplate(options: EmailTemplateOptions): string
       line-height: 1.3;
     }
     h2 {
-      color: #003DA5;
+      color: #1f2937;
       font-size: 20px;
       margin-top: 24px;
       margin-bottom: 12px;
@@ -127,7 +127,7 @@ export function generateCBOAEmailTemplate(options: EmailTemplateOptions): string
       text-decoration: underline;
     }
     strong {
-      color: #003DA5;
+      color: #1f2937;
       font-weight: 600;
     }
     /* Tables in content */

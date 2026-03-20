@@ -709,7 +709,7 @@ export default function OSASubmissionsPage() {
           <button
             onClick={exportToCSV}
             disabled={submissions.length === 0}
-            className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-xl hover:bg-green-700 disabled:opacity-50"
+            className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50"
           >
             <IconDownload className="h-4 w-4" />
             Export CSV
@@ -717,7 +717,7 @@ export default function OSASubmissionsPage() {
           <button
             onClick={() => fetchSubmissions(pagination.page)}
             disabled={loading}
-            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 disabled:opacity-50"
+            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
           >
             <IconRefresh className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
             Refresh
@@ -726,7 +726,7 @@ export default function OSASubmissionsPage() {
       </div>
 
       {/* Filters */}
-      <div className="bg-white dark:bg-portal-surface rounded-xl border border-gray-200 dark:border-portal-border mb-4">
+      <div className="bg-white dark:bg-portal-surface rounded-lg border border-gray-200 dark:border-portal-border mb-4">
         <div className="p-4 flex items-center gap-4">
           {/* Search */}
           <div className="relative flex-1 max-w-md">
@@ -830,7 +830,7 @@ export default function OSASubmissionsPage() {
       )}
 
       {/* Table */}
-      <div className="bg-white dark:bg-portal-surface rounded-xl border border-gray-200 dark:border-portal-border overflow-hidden">
+      <div className="bg-white dark:bg-portal-surface rounded-lg border border-gray-200 dark:border-portal-border overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead className="bg-gray-50 dark:bg-portal-bg border-b border-gray-200 dark:border-portal-border">

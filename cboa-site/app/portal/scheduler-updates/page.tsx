@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { IconPlus, IconEdit, IconTrash, IconDeviceFloppy, IconX } from '@tabler/icons-react'
+import { IconPlus, IconEdit, IconTrash, IconDeviceFloppy, IconX, IconChevronDown, IconAlertCircle } from '@tabler/icons-react'
 import { TinyMCEEditor, HTMLViewer } from '@/components/TinyMCEEditor'
 import { useRole } from '@/contexts/RoleContext'
 import { schedulerUpdatesAPI } from '@/lib/api'
@@ -14,6 +14,61 @@ interface SchedulerUpdate {
   content: string
   author: string
   date: string
+}
+
+function SchedulerUpdateRow({ item, canEdit, onEdit, onDelete }: {
+  item: { id: string; title: string; content: string; author: string; date: string }
+  canEdit: boolean
+  onEdit: () => void
+  onDelete: () => void
+}) {
+  const [expanded, setExpanded] = useState(false)
+  return (
+    <div>
+      <button onClick={() => setExpanded(!expanded)}
+        className="w-full text-left flex items-start gap-2 px-3 py-2.5 hover:bg-gray-50 dark:hover:bg-portal-hover/50 transition-colors">
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-1.5 mb-0.5">
+            <span className="text-[10px] text-gray-400 dark:text-gray-500">
+              {new Date(item.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+            </span>
+          </div>
+          <h3 className={`font-medium text-sm text-gray-900 dark:text-white ${expanded ? '' : 'line-clamp-2'}`}>
+            {item.title}
+          </h3>
+        </div>
+        <div className="flex items-center gap-0.5 flex-shrink-0 mt-1">
+          {canEdit && (
+            <>
+              <span onClick={(e) => { e.stopPropagation(); onEdit() }} className="p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 rounded hidden sm:block">
+                <IconEdit className="h-3.5 w-3.5" />
+              </span>
+              <span onClick={(e) => { e.stopPropagation(); onDelete() }} className="p-1.5 text-gray-400 hover:text-red-500 rounded hidden sm:block">
+                <IconTrash className="h-3.5 w-3.5" />
+              </span>
+            </>
+          )}
+          <IconChevronDown className={`h-4 w-4 text-gray-400 transition-transform duration-200 ${expanded ? 'rotate-180' : ''}`} />
+        </div>
+      </button>
+      {expanded && (
+        <div className="px-3 pb-3">
+          <div className="bg-gray-50 dark:bg-portal-hover/30 rounded-md p-2.5">
+            <HTMLViewer content={item.content} className="tinymce-content-compact" />
+            <div className="mt-2 pt-2 border-t border-gray-200 dark:border-portal-border flex items-center justify-between">
+              <span className="text-[10px] text-gray-400 dark:text-gray-500">Posted by {item.author}</span>
+              {canEdit && (
+                <div className="flex gap-2 sm:hidden">
+                  <button onClick={onEdit} className="text-xs text-gray-500 hover:text-gray-700 dark:hover:text-gray-300">Edit</button>
+                  <button onClick={onDelete} className="text-xs text-red-500 hover:text-red-700">Delete</button>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  )
 }
 
 export default function SchedulerUpdatesPage() {
@@ -123,181 +178,78 @@ export default function SchedulerUpdatesPage() {
         )}
       </div>
 
-      {/* Create Form */}
+      {/* Create Form — compact */}
       {isCreating && (
-        <div className="mb-6 bg-white dark:bg-portal-surface rounded-lg border border-gray-200 dark:border-portal-border p-6">
-          <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-white">New Scheduler Update</h2>
-
-          <div className="space-y-4">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="mb-4 bg-white dark:bg-portal-surface rounded-md border border-gray-200 dark:border-portal-border p-3 sm:p-4">
+          <div className="space-y-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Title</label>
-                <input
-                  type="text"
-                  value={newUpdate.title}
-                  onChange={(e) => setNewUpdate({ ...newUpdate, title: e.target.value })}
-                  className="w-full px-3 py-2 border bg-white dark:bg-portal-hover text-gray-900 dark:text-white border-gray-200 dark:border-portal-border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
-                  placeholder="e.g. New CBE Junior High games added"
-                />
+                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Title</label>
+                <input type="text" value={newUpdate.title} onChange={(e) => setNewUpdate({ ...newUpdate, title: e.target.value })}
+                  className="w-full px-3 py-1.5 text-sm border bg-white dark:bg-portal-hover text-gray-900 dark:text-white border-gray-200 dark:border-portal-border rounded-md focus:outline-none focus:ring-1 focus:ring-orange-500"
+                  placeholder="e.g. New CBE Junior High games added" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Author</label>
-                <select
-                  value={newUpdate.author}
-                  onChange={(e) => setNewUpdate({ ...newUpdate, author: e.target.value })}
-                  className="w-full pl-3 pr-8 py-2 border bg-white dark:bg-portal-hover text-gray-900 dark:text-white border-gray-200 dark:border-portal-border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
-                >
+                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Author</label>
+                <select value={newUpdate.author} onChange={(e) => setNewUpdate({ ...newUpdate, author: e.target.value })}
+                  className="w-full pl-3 pr-8 py-1.5 text-sm border bg-white dark:bg-portal-hover text-gray-900 dark:text-white border-gray-200 dark:border-portal-border rounded-md focus:outline-none focus:ring-1 focus:ring-orange-500">
                   <option value="Scheduler">Scheduler</option>
-                  <option value="Jerome Bohaychuk, Scheduler">Jerome Bohaychuk, Scheduler</option>
-                  <option value="Joe Lam, Scheduler">Joe Lam, Scheduler</option>
-                  <option value="Ryler Kerrison, Assignor">Ryler Kerrison, Assignor</option>
+                  <option value="Jerome Bohaychuk, Scheduler">Jerome Bohaychuk</option>
+                  <option value="Joe Lam, Scheduler">Joe Lam</option>
+                  <option value="Ryler Kerrison, Assignor">Ryler Kerrison</option>
                 </select>
               </div>
             </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Content</label>
-              <TinyMCEEditor
-                value={newUpdate.content || ''}
-                onChange={(val) => setNewUpdate({ ...newUpdate, content: val })}
-                height={300}
-                placeholder="Describe the schedule change or update..."
-              />
-            </div>
-
+            <TinyMCEEditor value={newUpdate.content || ''} onChange={(val) => setNewUpdate({ ...newUpdate, content: val })} height={250} placeholder="Describe the schedule change..." />
             <div className="flex gap-2">
-              <button
-                onClick={handleCreate}
-                className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 flex items-center gap-2"
-              >
-                <IconDeviceFloppy className="h-5 w-5" />
-                Save Update
+              <button onClick={handleCreate} className="bg-green-600 text-white px-3 py-1.5 rounded-md hover:bg-green-700 flex items-center gap-1.5 text-sm">
+                <IconDeviceFloppy className="h-4 w-4" /> Save
               </button>
-              <button
-                onClick={() => {
-                  setIsCreating(false)
-                  setNewUpdate({ title: '', content: '', author: 'Scheduler' })
-                }}
-                className="bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 px-4 py-2 rounded-lg hover:bg-gray-400 flex items-center gap-2"
-              >
-                <IconX className="h-5 w-5" />
-                Cancel
-              </button>
+              <button onClick={() => { setIsCreating(false); setNewUpdate({ title: '', content: '', author: 'Scheduler' }) }}
+                className="text-gray-600 dark:text-gray-400 px-3 py-1.5 rounded-md hover:bg-gray-100 dark:hover:bg-portal-hover text-sm">Cancel</button>
             </div>
           </div>
         </div>
       )}
 
-      {/* Updates List */}
-      <div className="space-y-4">
-        {updates.map(item => (
-          <div key={item.id} className="bg-white dark:bg-portal-surface rounded-lg border border-gray-200 dark:border-portal-border hover:border-orange-200 dark:hover:border-orange-800/40 hover:shadow-sm transition-shadow overflow-hidden">
-            {editingId === item.id ? (
-              /* Edit Mode */
-              <div className="p-4">
-                <div className="space-y-4">
-                  <input
-                    type="text"
-                    value={editingData.title || ''}
-                    onChange={(e) => setEditingData({ ...editingData, title: e.target.value })}
-                    className="w-full text-lg font-semibold px-3 py-2 border bg-white dark:bg-portal-hover text-gray-900 dark:text-white border-gray-200 dark:border-portal-border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
-                  />
-
-                  <select
-                    value={editingData.author || 'Scheduler'}
-                    onChange={(e) => setEditingData({ ...editingData, author: e.target.value })}
-                    className="pl-3 pr-8 py-2 border bg-white dark:bg-portal-hover text-gray-900 dark:text-white border-gray-200 dark:border-portal-border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
-                  >
+      {/* Updates — accordion rows */}
+      {!isLoading && updates.length === 0 ? (
+        <div className="text-center py-8 bg-white dark:bg-portal-surface rounded-md border border-gray-200 dark:border-portal-border">
+          <p className="text-sm text-gray-500 dark:text-gray-400">
+            {canEdit ? 'No updates yet. Click "New" to post one.' : 'Schedule updates will appear here.'}
+          </p>
+        </div>
+      ) : (
+        <div className="bg-white dark:bg-portal-surface rounded-md border border-gray-200 dark:border-portal-border divide-y divide-gray-100 dark:divide-portal-border">
+          {updates.map(item => (
+            editingId === item.id ? (
+              <div key={item.id} className="p-3 sm:p-4 space-y-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  <input type="text" value={editingData.title || ''} onChange={(e) => setEditingData({ ...editingData, title: e.target.value })}
+                    className="w-full font-medium px-3 py-1.5 text-sm border border-gray-200 dark:border-portal-border bg-white dark:bg-portal-surface text-gray-900 dark:text-white rounded-md focus:outline-none focus:ring-1 focus:ring-orange-500" />
+                  <select value={editingData.author || 'Scheduler'} onChange={(e) => setEditingData({ ...editingData, author: e.target.value })}
+                    className="pl-3 pr-8 py-1.5 text-sm border bg-white dark:bg-portal-hover text-gray-900 dark:text-white border-gray-200 dark:border-portal-border rounded-md focus:outline-none focus:ring-1 focus:ring-orange-500">
                     <option value="Scheduler">Scheduler</option>
-                    <option value="Jerome Bohaychuk, Scheduler">Jerome Bohaychuk, Scheduler</option>
-                    <option value="Joe Lam, Scheduler">Joe Lam, Scheduler</option>
-                    <option value="Ryler Kerrison, Assignor">Ryler Kerrison, Assignor</option>
+                    <option value="Jerome Bohaychuk, Scheduler">Jerome Bohaychuk</option>
+                    <option value="Joe Lam, Scheduler">Joe Lam</option>
+                    <option value="Ryler Kerrison, Assignor">Ryler Kerrison</option>
                   </select>
-
-                  <TinyMCEEditor
-                    value={editingData.content || ''}
-                    onChange={(val) => setEditingData({ ...editingData, content: val })}
-                    height={300}
-                  />
-
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => saveEdit(item.id)}
-                      className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 flex items-center gap-2"
-                    >
-                      <IconDeviceFloppy className="h-5 w-5" />
-                      Save Changes
-                    </button>
-                    <button
-                      onClick={() => { setEditingId(null); setEditingData({}) }}
-                      className="bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 px-4 py-2 rounded-lg hover:bg-gray-400"
-                    >
-                      Cancel
-                    </button>
-                  </div>
+                </div>
+                <TinyMCEEditor value={editingData.content || ''} onChange={(val) => setEditingData({ ...editingData, content: val })} height={250} />
+                <div className="flex gap-2">
+                  <button onClick={() => saveEdit(item.id)} className="bg-green-600 text-white px-3 py-1.5 rounded-md hover:bg-green-700 flex items-center gap-1.5 text-sm">
+                    <IconDeviceFloppy className="h-4 w-4" /> Save
+                  </button>
+                  <button onClick={() => { setEditingId(null); setEditingData({}) }}
+                    className="text-gray-600 dark:text-gray-400 px-3 py-1.5 rounded-md hover:bg-gray-100 dark:hover:bg-portal-hover text-sm">Cancel</button>
                 </div>
               </div>
             ) : (
-              /* View Mode */
-              <div className="p-6 overflow-hidden">
-                <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-                  <div className="flex-1 min-w-0 overflow-hidden">
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-                      {item.title}
-                    </h3>
-                    <div className="text-gray-600 dark:text-gray-300 mb-3 overflow-hidden">
-                      <HTMLViewer
-                        content={item.content}
-                        className="break-words"
-                      />
-                    </div>
-                    <div className="flex flex-wrap items-center gap-2 text-sm text-gray-500 dark:text-gray-400 pt-3 mt-3 border-t border-gray-100 dark:border-portal-border/50">
-                      <span>{new Date(item.date).toLocaleDateString('en-US', {
-                        year: 'numeric',
-                        month: 'long',
-                        day: 'numeric'
-                      })}</span>
-                      <span className="hidden sm:inline">&bull;</span>
-                      <span>Posted by {item.author}</span>
-                    </div>
-                  </div>
-                  {canEdit && (
-                    <div className="flex gap-2 sm:ml-4">
-                      <button
-                        onClick={() => startEditing(item)}
-                        className="text-blue-400 hover:text-blue-800"
-                      >
-                        <IconEdit className="h-5 w-5" />
-                      </button>
-                      <button
-                        onClick={() => handleDelete(item.id)}
-                        className="text-red-600 hover:text-red-800"
-                      >
-                        <IconTrash className="h-5 w-5" />
-                      </button>
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
-          </div>
-        ))}
-      </div>
-
-      {!isLoading && updates.length === 0 && (
-        <div className="text-center py-12 bg-white dark:bg-portal-surface rounded-lg">
-          <svg className="mx-auto h-12 w-12 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-          </svg>
-          <h3 className="mt-2 text-sm font-medium text-gray-900 dark:text-white">No scheduler updates yet</h3>
-          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-            {canEdit
-              ? 'Click "New Update" to post the first scheduling update.'
-              : 'Schedule updates will appear here once posted.'}
-          </p>
+              <SchedulerUpdateRow key={item.id} item={item} canEdit={canEdit} onEdit={() => startEditing(item)} onDelete={() => handleDelete(item.id)} />
+            )
+          ))}
         </div>
       )}
-
     </div>
   )
 }
