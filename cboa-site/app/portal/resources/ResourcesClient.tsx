@@ -673,192 +673,56 @@ export default function ResourcesClient() {
       }
     }
 
-    // Grid view card (always on mobile, optional on desktop)
-    // On mobile, always use card layout for better readability
-    if (viewMode === 'grid') {
-      return (
-        <div
-          key={resource.id}
-          id={`resource-${resource.id}`}
-          className="bg-white dark:bg-portal-surface rounded-lg border border-gray-200 dark:border-portal-border hover:border-orange-200 dark:hover:border-orange-800/40 hover:shadow-sm transition-shadow p-4 flex flex-col cursor-pointer"
-          onClick={handleResourceClick}
-        >
-          <div className="flex items-start gap-3 mb-3">
-            {videoThumbnail ? (
-              <div className="w-16 h-12 rounded-lg overflow-hidden flex-shrink-0 relative">
-                <img
-                  src={videoThumbnail}
-                  alt={resource.title}
-                  className="w-full h-full object-cover"
-                />
-                <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-30">
-                  <IconVideo className="h-5 w-5 text-white" />
-                </div>
-              </div>
-            ) : (
-              <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${resourceIcon.bg}`}>
-                <IconComponent className={`h-5 w-5 ${resourceIcon.color}`} />
-              </div>
-            )}
-            <div className="flex-1 min-w-0">
-              <h3 className="font-semibold text-gray-900 dark:text-white text-sm line-clamp-2">{resource.title}</h3>
-              <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                {formatDate(resource.lastUpdated)}
-              </div>
-            </div>
-          </div>
-          <div className="mt-auto flex items-center gap-1 pt-2 border-t border-gray-100 dark:border-portal-border" onClick={(e) => e.stopPropagation()}>
-            {resource.fileUrl && (
-              <a href={resource.fileUrl} download className="p-1.5 text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/30 rounded" title="Download">
-                <IconDownload className="h-4 w-4" />
-              </a>
-            )}
-            {resource.externalLink && (
-              <a href={resource.externalLink} target="_blank" rel="noopener noreferrer" className="p-1.5 text-blue-400 hover:bg-blue-900/30 rounded" title="Open in new tab">
-                <IconExternalLink className="h-4 w-4" />
-              </a>
-            )}
-            {canEdit && (
-              <>
-                <button onClick={() => startEditing(resource)} className="p-1.5 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-portal-hover rounded ml-auto" title="Edit">
-                  <IconEdit className="h-4 w-4" />
-                </button>
-                <button onClick={() => handleDelete(resource.id)} className="p-1.5 text-red-500 dark:text-red-400/70 hover:bg-red-50 dark:hover:bg-red-900/30 rounded" title="Delete">
-                  <IconTrash className="h-4 w-4" />
-                </button>
-              </>
-            )}
-            {isTextResource && (
-              <button onClick={() => toggleTextResourceExpanded(resource.id)} className="p-1.5 text-gray-400 dark:text-gray-500 hover:bg-gray-100 dark:hover:bg-portal-hover rounded ml-auto">
-                {isExpanded ? <IconChevronUp className="h-4 w-4" /> : <IconChevronDown className="h-4 w-4" />}
-              </button>
-            )}
-          </div>
-          {isTextResource && isExpanded && (
-            <div className="mt-3 pt-3 border-t border-gray-100 dark:border-portal-border prose prose-sm max-w-none" onClick={(e) => e.stopPropagation()}>
-              <HTMLViewer content={resource.description} />
-            </div>
-          )}
-        </div>
-      )
-    }
-
-    // List view row - renders as card on mobile, row on desktop
+    // Single flat row — works on both mobile and desktop
     return (
-      <div key={resource.id} id={`resource-${resource.id}`} className="bg-white dark:bg-portal-surface rounded-lg border border-gray-200 dark:border-portal-border hover:border-orange-200 dark:hover:border-orange-800/40 hover:shadow-sm transition-shadow cursor-pointer" onClick={handleResourceClick}>
-        {/* Mobile card layout */}
-        <div className="sm:hidden p-4">
-          <div className="flex items-start gap-3 mb-3">
-            {videoThumbnail ? (
-              <div className="w-12 h-9 rounded-lg overflow-hidden flex-shrink-0 relative">
-                <img src={videoThumbnail} alt={resource.title} className="w-full h-full object-cover" />
-                <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-30">
-                  <IconVideo className="h-4 w-4 text-white" />
-                </div>
-              </div>
-            ) : (
-              <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${resourceIcon.bg}`}>
-                <IconComponent className={`h-5 w-5 ${resourceIcon.color}`} />
-              </div>
-            )}
-            <div className="flex-1 min-w-0">
-              <h3 className="font-semibold text-gray-900 dark:text-white text-sm">{resource.title}</h3>
-              <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">{formatDate(resource.lastUpdated)}</div>
-            </div>
-          </div>
-          <div className="flex items-center gap-1 pt-2 border-t border-gray-100 dark:border-portal-border" onClick={(e) => e.stopPropagation()}>
-            {resource.fileUrl && (
-              <a href={resource.fileUrl} download className="p-1.5 text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/30 rounded" title="Download">
-                <IconDownload className="h-4 w-4" />
-              </a>
-            )}
-            {resource.externalLink && (
-              <a href={resource.externalLink} target="_blank" rel="noopener noreferrer" className="p-1.5 text-blue-400 hover:bg-blue-900/30 rounded" title="Open in new tab">
-                <IconExternalLink className="h-4 w-4" />
-              </a>
-            )}
-            {canEdit && (
-              <>
-                <button onClick={() => startEditing(resource)} className="p-1.5 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-portal-hover rounded ml-auto" title="Edit">
-                  <IconEdit className="h-4 w-4" />
-                </button>
-                <button onClick={() => handleDelete(resource.id)} className="p-1.5 text-red-500 dark:text-red-400/70 hover:bg-red-50 dark:hover:bg-red-900/30 rounded" title="Delete">
-                  <IconTrash className="h-4 w-4" />
-                </button>
-              </>
-            )}
-            {isTextResource && (
-              <button onClick={() => toggleTextResourceExpanded(resource.id)} className="p-1.5 text-gray-400 dark:text-gray-500 hover:bg-gray-100 dark:hover:bg-portal-hover rounded ml-auto">
-                {isExpanded ? <IconChevronUp className="h-4 w-4" /> : <IconChevronDown className="h-4 w-4" />}
-              </button>
-            )}
-          </div>
-          {isTextResource && isExpanded && (
-            <div className="mt-3 pt-3 border-t border-gray-100 dark:border-portal-border prose prose-sm max-w-none" onClick={(e) => e.stopPropagation()}>
-              <HTMLViewer content={resource.description} />
-            </div>
-          )}
+      <div
+        key={resource.id}
+        id={`resource-${resource.id}`}
+        className={`flex items-center gap-3 px-3 py-2.5 cursor-pointer hover:bg-gray-50 dark:hover:bg-portal-hover/50 transition-colors ${
+          resource.featured ? 'bg-orange-50/50 dark:bg-orange-900/10' : ''
+        }`}
+        onClick={handleResourceClick}
+      >
+        <div className={`w-8 h-8 rounded-md flex items-center justify-center flex-shrink-0 ${resourceIcon.bg}`}>
+          <IconComponent className={`h-4 w-4 ${resourceIcon.color}`} />
         </div>
-
-        {/* Desktop row layout */}
-        <div className="hidden sm:block">
-          <div className="p-4 flex items-center gap-4">
-            {videoThumbnail ? (
-              <div className="w-16 h-12 rounded-lg overflow-hidden flex-shrink-0 relative">
-                <img src={videoThumbnail} alt={resource.title} className="w-full h-full object-cover" />
-                <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-30">
-                  <IconVideo className="h-5 w-5 text-white" />
-                </div>
-              </div>
-            ) : (
-              <div className={`w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0 ${resourceIcon.bg}`}>
-                <IconComponent className={`h-6 w-6 ${resourceIcon.color}`} />
-              </div>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-1.5">
+            <h3 className="font-medium text-sm text-gray-900 dark:text-white truncate">{resource.title}</h3>
+            {resource.featured && (
+              <span className="flex-shrink-0 text-[9px] font-semibold uppercase tracking-wide text-orange-600 dark:text-orange-400">Featured</span>
             )}
-            <div className="flex-1 min-w-0">
-              <h3 className="font-semibold text-gray-900 dark:text-white break-words">{resource.title}</h3>
-              <div className="flex flex-wrap items-center gap-2 text-xs text-gray-500 dark:text-gray-400 mt-1">
-                <span>{formatDate(resource.lastUpdated)}</span>
-                {resource.fileSize && <span>{resource.fileSize}</span>}
-                {resource.accessLevel && resource.accessLevel !== 'all' && (
-                  <span className="bg-blue-900/40 text-blue-400 px-2 py-0.5 rounded">{resource.accessLevel}</span>
-                )}
-              </div>
-            </div>
-            <div className="flex items-center gap-1 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
-              {resource.fileUrl && (
-                <a href={resource.fileUrl} download className="p-2 text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/30 rounded" title="Download">
-                  <IconDownload className="h-5 w-5" />
-                </a>
-              )}
-              {resource.externalLink && (
-                <a href={resource.externalLink} target="_blank" rel="noopener noreferrer" className="p-2 text-blue-400 hover:bg-blue-900/30 rounded" title="Open in new tab">
-                  <IconExternalLink className="h-5 w-5" />
-                </a>
-              )}
-              {canEdit && (
-                <>
-                  <button onClick={() => startEditing(resource)} className="p-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-portal-hover rounded" title="Edit">
-                    <IconEdit className="h-5 w-5" />
-                  </button>
-                  <button onClick={() => handleDelete(resource.id)} className="p-2 text-red-500 dark:text-red-400/70 hover:bg-red-50 dark:hover:bg-red-900/30 rounded" title="Delete">
-                    <IconTrash className="h-5 w-5" />
-                  </button>
-                </>
-              )}
-              {isTextResource && (
-                <div className="p-2 cursor-pointer hover:bg-gray-100 dark:hover:bg-portal-hover rounded" onClick={() => toggleTextResourceExpanded(resource.id)}>
-                  {isExpanded ? <IconChevronUp className="h-5 w-5 text-gray-400 dark:text-gray-500" /> : <IconChevronDown className="h-5 w-5 text-gray-400 dark:text-gray-500" />}
-                </div>
-              )}
-            </div>
           </div>
-          {isTextResource && isExpanded && (
-            <div className="px-4 pb-4 border-t border-gray-100 dark:border-portal-border" onClick={(e) => e.stopPropagation()}>
-              <div className="pt-4 prose prose-sm max-w-none">
-                <HTMLViewer content={resource.description} />
-              </div>
-            </div>
+          <div className="flex items-center gap-2 text-[11px] text-gray-500 dark:text-gray-400 mt-0.5">
+            <span>{formatDate(resource.lastUpdated)}</span>
+            {resource.fileSize && <span>{resource.fileSize}</span>}
+          </div>
+        </div>
+        <div className="flex items-center gap-0.5 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
+          {resource.fileUrl && (
+            <a href={resource.fileUrl} download className="p-1.5 text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/30 rounded" title="Download">
+              <IconDownload className="h-4 w-4" />
+            </a>
+          )}
+          {resource.externalLink && (
+            <a href={resource.externalLink} target="_blank" rel="noopener noreferrer" className="p-1.5 text-blue-400 hover:bg-blue-900/30 rounded" title="Open">
+              <IconExternalLink className="h-4 w-4" />
+            </a>
+          )}
+          {canEdit && (
+            <>
+              <button onClick={() => startEditing(resource)} className="p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-portal-hover rounded" title="Edit">
+                <IconEdit className="h-3.5 w-3.5" />
+              </button>
+              <button onClick={() => handleDelete(resource.id)} className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 rounded" title="Delete">
+                <IconTrash className="h-3.5 w-3.5" />
+              </button>
+            </>
+          )}
+          {isTextResource && (
+            <button onClick={() => toggleTextResourceExpanded(resource.id)} className="p-1.5 text-gray-400 hover:bg-gray-100 dark:hover:bg-portal-hover rounded">
+              {isExpanded ? <IconChevronUp className="h-4 w-4" /> : <IconChevronDown className="h-4 w-4" />}
+            </button>
           )}
         </div>
       </div>
@@ -1192,176 +1056,38 @@ export default function ResourcesClient() {
         )}
       </div>
 
-      {/* Featured Resources */}
-      {filteredResources.some(r => r.featured) && (
-        <div className="mb-6">
-          <h2 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white mb-3">Featured Resources</h2>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4">
-            {filteredResources.filter(r => r.featured).map(resource => {
-              const resourceIcon = getResourceIcon(resource.resourceType || 'file')
-              const IconComponent = resourceIcon.icon
-              const isTextResource = resource.resourceType === 'text'
-              const isVideo = resource.resourceType === 'video'
-              const videoThumbnail = isVideo ? getVideoThumbnail(resource.externalLink) : null
-
-              // Handler for text resources - scroll to and expand in main section
-              const handleTextResourceClick = () => {
-                // Expand the text resource
-                setExpandedTextResources(prev => {
-                  const newSet = new Set(prev)
-                  newSet.add(resource.id)
-                  return newSet
-                })
-                // Scroll to the resource after a brief delay
-                setTimeout(() => {
-                  const element = document.getElementById(`resource-${resource.id}`)
-                  if (element) {
-                    element.scrollIntoView({ behavior: 'smooth', block: 'start' })
-                    element.classList.add('ring-2', 'ring-orange-400')
-                    setTimeout(() => element.classList.remove('ring-2', 'ring-orange-400'), 2000)
-                  }
-                }, 100)
-              }
-
-              // Handle clicking on featured resource
-              const handleFeaturedClick = () => {
-                if (isTextResource) {
-                  handleTextResourceClick()
-                } else if (resource.fileUrl || resource.externalLink) {
-                  setViewingResource(resource)
-                }
-              }
-
-              return (
-                <div
-                  key={resource.id}
-                  className="bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg p-3 sm:p-4 cursor-pointer hover:bg-orange-100 dark:hover:bg-orange-900/30 transition-colors"
-                  onClick={handleFeaturedClick}
-                >
-                  <div className="flex items-center gap-3">
-                    {/* Thumbnail/Icon */}
-                    {videoThumbnail ? (
-                      <div className="w-16 h-12 rounded-lg overflow-hidden flex-shrink-0 relative">
-                        <img src={videoThumbnail} alt={resource.title} className="w-full h-full object-cover" />
-                        <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-30">
-                          <IconVideo className="h-5 w-5 text-white" />
-                        </div>
-                      </div>
-                    ) : (
-                      <div className={`w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0 ${resourceIcon.bg}`}>
-                        <IconComponent className={`h-6 w-6 ${resourceIcon.color}`} />
-                      </div>
-                    )}
-
-                    {/* Content */}
-                    <div className="flex-1 min-w-0">
-                      <h3 className="font-semibold text-gray-900 dark:text-white">{resource.title}</h3>
-                      <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                        {formatDate(resource.lastUpdated)}
-                        {resource.fileSize && <span className="ml-2">{resource.fileSize}</span>}
-                      </div>
-                    </div>
-
-                    {/* Actions */}
-                    <div className="flex items-center gap-1 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
-                      {resource.fileUrl && (
-                        <a
-                          href={resource.fileUrl}
-                          download
-                          className="p-2 text-orange-600 dark:text-orange-400 hover:bg-orange-100 dark:hover:bg-orange-900/40 rounded"
-                          title="Download"
-                        >
-                          <IconDownload className="h-5 w-5" />
-                        </a>
-                      )}
-                      {resource.externalLink && (
-                        <a
-                          href={resource.externalLink}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="p-2 text-blue-400 hover:bg-blue-900/30 rounded"
-                          title="Open in new tab"
-                        >
-                          <IconExternalLink className="h-5 w-5" />
-                        </a>
-                      )}
-                      {canEdit && (
-                        <>
-                          <button
-                            onClick={() => startEditing(resource)}
-                            className="p-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-portal-hover rounded"
-                            title="Edit"
-                          >
-                            <IconEdit className="h-5 w-5" />
-                          </button>
-                          <button
-                            onClick={() => handleDelete(resource.id)}
-                            className="p-2 text-red-500 dark:text-red-400/70 hover:bg-red-50 dark:hover:bg-red-900/30 rounded"
-                            title="Delete"
-                          >
-                            <IconTrash className="h-5 w-5" />
-                          </button>
-                        </>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              )
-            })}
-          </div>
+      {/* Resources List — flat rows in single container */}
+      {filteredResources.length === 0 ? (
+        <div className="text-center py-8 bg-white dark:bg-portal-surface rounded-lg border border-gray-200 dark:border-portal-border">
+          <IconFile className="mx-auto h-8 w-8 text-gray-400 dark:text-gray-500" />
+          <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
+            {canEdit ? 'No resources found. Click "Add" to create one.' : 'Resources will appear here.'}
+          </p>
         </div>
-      )}
-
-      {/* Resources List */}
-      <div className="space-y-6">
-        {/* Grouped View */}
-        {groupedResources ? (
-          Object.entries(groupedResources).map(([categoryKey, { label, resources: categoryResources }]) => (
+      ) : groupedResources ? (
+        /* Grouped view — each category is a section with a small header */
+        <div className="space-y-3">
+          {Object.entries(groupedResources).map(([categoryKey, { label, resources: categoryResources }]) => (
             <div key={categoryKey}>
-              <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-3 flex items-center gap-2">
+              <div className="flex items-center gap-2 mb-1 px-1">
                 {(() => {
                   const cat = categories.find(c => c.value === categoryKey)
                   const CatIcon = cat?.icon || IconFile
-                  return <CatIcon className="h-5 w-5 text-gray-500 dark:text-gray-400" />
+                  return <CatIcon className="h-3.5 w-3.5 text-gray-400" />
                 })()}
-                {label}
-                <span className="text-sm font-normal text-gray-500 dark:text-gray-400">({categoryResources.length})</span>
-              </h2>
-              <div className={viewMode === 'grid'
-                ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4'
-                : 'grid grid-cols-1 gap-3 sm:block sm:space-y-3'
-              }>
+                <span className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">{label}</span>
+                <span className="text-[10px] text-gray-400">({categoryResources.length})</span>
+              </div>
+              <div className="bg-white dark:bg-portal-surface rounded-md border border-gray-200 dark:border-portal-border divide-y divide-gray-100 dark:divide-portal-border">
                 {categoryResources.map(resource => renderResource(resource))}
               </div>
             </div>
-          ))
-        ) : (
-          <>
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-              {selectedCategory === 'all' ? 'All Resources' : categories.find(c => c.value === selectedCategory)?.label}
-              <span className="text-sm font-normal text-gray-500 dark:text-gray-400 ml-2">
-                ({filteredResources.length})
-              </span>
-            </h2>
-            <div className={viewMode === 'grid'
-              ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4'
-              : 'grid grid-cols-1 gap-3 sm:block sm:space-y-3'
-            }>
-              {filteredResources.map(resource => renderResource(resource))}
-            </div>
-          </>
-        )}
-      </div>
-
-      {filteredResources.length === 0 && (
-        <div className="text-center py-12 bg-white dark:bg-portal-surface rounded-lg">
-          <IconFile className="mx-auto h-12 w-12 text-gray-400 dark:text-gray-500" />
-          <h3 className="mt-2 text-sm font-medium text-gray-900 dark:text-white">No resources found</h3>
-          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-            {canEdit
-              ? 'Click "Add Resource" to add your first resource.'
-              : 'Resources will appear here once added by administrators.'}
-          </p>
+          ))}
+        </div>
+      ) : (
+        /* Flat list */
+        <div className="bg-white dark:bg-portal-surface rounded-md border border-gray-200 dark:border-portal-border divide-y divide-gray-100 dark:divide-portal-border">
+          {filteredResources.map(resource => renderResource(resource))}
         </div>
       )}
 
