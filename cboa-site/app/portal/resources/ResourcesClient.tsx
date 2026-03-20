@@ -52,7 +52,7 @@ function ResourceCategoryAccordion({ label, count, icon: Icon, children }: {
   const [open, setOpen] = useState(true)
   return (
     <div>
-      <button onClick={() => setOpen(!open)} className="w-full flex items-center gap-2 px-3 py-2 hover:bg-gray-50 dark:hover:bg-portal-hover/50 transition-colors">
+      <button onClick={() => setOpen(!open)} className="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-gray-50 dark:hover:bg-portal-hover/50 transition-colors">
         <IconChevronDown className={`h-3.5 w-3.5 text-gray-400 transition-transform duration-200 ${open ? 'rotate-180' : ''}`} />
         <Icon className="h-3.5 w-3.5 text-gray-400" />
         <span className="text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide">{label}</span>
