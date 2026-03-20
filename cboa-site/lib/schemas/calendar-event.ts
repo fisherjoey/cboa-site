@@ -5,7 +5,7 @@ export const EVENT_TYPES = ['training', 'meeting', 'league', 'tournament', 'soci
 
 // Schema for form inputs (dates as strings from datetime-local)
 export const calendarEventFormSchema = z.object({
-  title: z.string().min(1, 'Event title is required'),
+  title: z.string().min(1, 'Event title is required').max(200, 'Event title must not exceed 200 characters'),
   type: z.enum(EVENT_TYPES, { message: 'Event type is required' }),
   start: z.string().min(1, 'Start date/time is required'),
   end: z.string().min(1, 'End date/time is required'),
@@ -18,7 +18,7 @@ export const calendarEventFormSchema = z.object({
       if (typeof val === 'string') return parseInt(val) || undefined
       return val
     },
-    z.number().optional()
+    z.number().min(1, 'Must be at least 1 participant').max(10000, 'Must not exceed 10,000 participants').optional()
   ),
   registrationLink: z.string().url('Please enter a valid URL').optional().or(z.literal('')),
 }).refine((data) => {

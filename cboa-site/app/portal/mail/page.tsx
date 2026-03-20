@@ -366,69 +366,47 @@ export default function MailPage() {
   }
 
   return (
-    <div className="px-4 py-5 sm:p-6 portal-animate">
-      {/* Header */}
-      <div className="mb-6 sm:mb-8">
-        <h1 className="text-2xl sm:text-3xl font-bold font-heading tracking-tight text-gray-900 dark:text-white">The Bounce</h1>
-        <p className="mt-1 sm:mt-2 text-sm sm:text-base text-gray-600 dark:text-gray-300">
-          Send announcements and updates to members via email
-        </p>
+    <div className="px-3 py-3 sm:p-5 portal-animate">
+      {/* Header — compact */}
+      <div className="mb-3">
+        <h1 className="text-xl sm:text-2xl font-bold font-heading tracking-tight text-gray-900 dark:text-white">Send Email</h1>
       </div>
 
       {/* Email Composer */}
-      <div className="bg-white dark:bg-portal-surface rounded-xl border border-gray-200 dark:border-portal-border p-6 space-y-6">
+      <div className="bg-white dark:bg-portal-surface rounded-lg border border-gray-200 dark:border-portal-border p-3 sm:p-4 space-y-4">
 
         {/* Subject Line */}
         <div>
-          <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-            Subject Line *
-          </label>
+          <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Subject *</label>
           <input
             type="text"
             value={subject}
             onChange={(e) => setSubject(e.target.value)}
             placeholder="Enter email subject..."
-            className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-white dark:bg-portal-hover text-gray-900 dark:text-white placeholder-gray-400"
+            className="w-full px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-md focus:ring-1 focus:ring-orange-500 focus:outline-none bg-white dark:bg-portal-hover text-gray-900 dark:text-white"
           />
         </div>
 
         {/* Recipient Groups */}
         <div>
-          <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">
-            <IconUsers className="inline h-4 w-4 mr-1" />
-            Recipient Groups *
-          </label>
-          <div className="space-y-6">
+          <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">Recipients *</label>
+          <div className="space-y-3">
             {Object.entries(groupedRecipients).map(([category, groups]) => (
               <div key={category}>
-                <h3 className="text-sm font-bold text-gray-800 dark:text-gray-200 mb-2 uppercase tracking-wide">
-                  {category}
-                </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                <p className="text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1.5">{category}</p>
+                <div className="flex flex-wrap gap-1.5">
                   {groups.map(group => (
                     <button
                       key={group.id}
                       type="button"
                       onClick={() => toggleRecipientGroup(group.id)}
-                      className={`p-4 border-2 rounded-lg text-left transition-all ${
+                      className={`px-2.5 py-1.5 border rounded-md text-left transition-all text-xs font-medium ${
                         selectedGroups.includes(group.id)
-                          ? 'border-orange-600 bg-orange-50 dark:bg-orange-900/20'
-                          : 'border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500'
+                          ? 'border-orange-500 bg-orange-50 dark:bg-orange-900/20 text-orange-700 dark:text-orange-300'
+                          : 'border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-400 hover:border-gray-300'
                       }`}
                     >
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <div className="font-semibold text-gray-900 dark:text-white text-sm">
-                            {group.label}
-                          </div>
-                          <div className="text-xs text-gray-600 dark:text-gray-400 mt-1">
-                            {group.description}
-                          </div>
-                        </div>
-                        {selectedGroups.includes(group.id) && (
-                          <IconCheck className="h-5 w-5 text-orange-600 flex-shrink-0 ml-2" />
-                        )}
-                      </div>
+                      {group.label}
                     </button>
                   ))}
                 </div>
@@ -439,34 +417,26 @@ export default function MailPage() {
 
         {/* Filter by Rank */}
         <div>
-          <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-            Filter by Rank (Optional)
-          </label>
+          <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Rank Filter (optional)</label>
           <select
             value={rankFilter}
             onChange={(e) => setRankFilter(e.target.value)}
-            className="w-full pl-4 pr-8 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-white dark:bg-portal-hover text-gray-900 dark:text-white"
+            className="pl-3 pr-8 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-md focus:ring-1 focus:ring-orange-500 focus:outline-none bg-white dark:bg-portal-hover text-gray-900 dark:text-white"
           >
-            <option value="">No rank filter</option>
-            <option value="150+">Rank 150+</option>
-            <option value="175+">Rank 175+</option>
-            <option value="200+">Rank 200+</option>
-            <option value="225+">Rank 225+</option>
-            <option value="250+">Rank 250+</option>
-            <option value="275+">Rank 275+</option>
-            <option value="300+">Rank 300+</option>
+            <option value="">No filter</option>
+            <option value="150+">150+</option>
+            <option value="175+">175+</option>
+            <option value="200+">200+</option>
+            <option value="225+">225+</option>
+            <option value="250+">250+</option>
+            <option value="275+">275+</option>
+            <option value="300+">300+</option>
           </select>
-          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-            Only send to officials with rank at or above this threshold
-          </p>
         </div>
 
         {/* Individual Member Selection */}
         <div>
-          <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-            <IconUsers className="inline h-4 w-4 mr-1" />
-            Individual Recipients
-          </label>
+          <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Individual Recipients</label>
 
           {/* Search and Actions Bar */}
           <div className="flex flex-col sm:flex-row gap-2 mb-3">
@@ -573,10 +543,7 @@ export default function MailPage() {
 
         {/* External Email Addresses */}
         <div>
-          <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-            <IconMail className="inline h-4 w-4 mr-1" />
-            External Email Addresses (Optional)
-          </label>
+          <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">External Emails (optional)</label>
           <div className="flex gap-2">
             <input
               type="email"
@@ -625,15 +592,8 @@ export default function MailPage() {
 
         {/* Email Content Editor with Preview */}
         <div>
-          <div className="flex items-center justify-between mb-3">
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300">
-                Email Content *
-              </label>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                Use Markdown formatting. The CBOA email template will be applied automatically.
-              </p>
-            </div>
+          <div className="flex items-center justify-between mb-2">
+            <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300">Content *</label>
             <button
               type="button"
               onClick={() => setShowPreview(!showPreview)}
@@ -651,7 +611,7 @@ export default function MailPage() {
                 value={content}
                 onChange={setContent}
                 placeholder="Write your email content here using Markdown..."
-                height={500}
+                height={350}
               />
             </div>
 
@@ -668,7 +628,7 @@ export default function MailPage() {
                     srcDoc={templateShell}
                     onLoad={handleIframeLoad}
                     className="w-full border-0"
-                    style={{ height: '800px' }}
+                    style={{ height: '400px' }}
                     title="Email Preview"
                   />
                 </div>

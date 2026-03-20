@@ -4,9 +4,40 @@ import { useState } from 'react'
 import Card from '@/components/ui/Card'
 import Button from '@/components/ui/Button'
 
+const NAME_REGEX = /^[A-Za-z][A-Za-z\s\-']*[A-Za-z]$/
+
+interface FormErrors {
+  email?: string
+  firstName?: string
+  lastName?: string
+}
+
+function validateForm(form: HTMLFormElement): FormErrors {
+  const errors: FormErrors = {}
+  const email = (form.elements.namedItem('email') as HTMLInputElement).value.trim()
+  const firstName = (form.elements.namedItem('firstName') as HTMLInputElement).value.trim()
+  const lastName = (form.elements.namedItem('lastName') as HTMLInputElement).value.trim()
+
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    errors.email = 'Please enter a valid email address'
+  }
+  if (firstName.length < 2) {
+    errors.firstName = 'First name must be at least 2 characters'
+  } else if (!NAME_REGEX.test(firstName)) {
+    errors.firstName = 'Please enter a valid name (letters only)'
+  }
+  if (lastName.length < 2) {
+    errors.lastName = 'Last name must be at least 2 characters'
+  } else if (!NAME_REGEX.test(lastName)) {
+    errors.lastName = 'Please enter a valid name (letters only)'
+  }
+  return errors
+}
+
 export default function RefereeApplicationForm() {
   const [submitted, setSubmitted] = useState(false)
-  
+  const [errors, setErrors] = useState<FormErrors>({})
+
   if (submitted) {
     return (
       <Card>
@@ -37,16 +68,19 @@ export default function RefereeApplicationForm() {
         netlify-honeypot="bot-field"
         action="/become-a-referee?success=true"
         onSubmit={(e) => {
-          // For static export, we need to handle this differently
+          e.preventDefault()
           const form = e.target as HTMLFormElement
+          const validationErrors = validateForm(form)
+          setErrors(validationErrors)
+          if (Object.keys(validationErrors).length > 0) return
+
           fetch('/', {
             method: 'POST',
             headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
             body: new URLSearchParams(new FormData(form) as any).toString()
           })
           .then(() => setSubmitted(true))
-          .catch((error) => alert('Error submitting form. Please try again.'))
-          e.preventDefault()
+          .catch(() => alert('Error submitting form. Please try again.'))
         }}
       >
         <input type="hidden" name="form-name" value="referee-application" />
@@ -63,8 +97,10 @@ export default function RefereeApplicationForm() {
             id="email"
             name="email"
             required
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:border-cboa-orange"
+            maxLength={254}
+            className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:border-cboa-orange ${errors.email ? 'border-red-500' : 'border-gray-300'}`}
           />
+          {errors.email && <p className="mt-1 text-sm text-red-600">{errors.email}</p>}
         </div>
         
         <div className="grid md:grid-cols-2 gap-4 mb-4">
@@ -77,8 +113,11 @@ export default function RefereeApplicationForm() {
               id="lastName"
               name="lastName"
               required
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:border-cboa-orange"
+              minLength={2}
+              maxLength={50}
+              className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:border-cboa-orange ${errors.lastName ? 'border-red-500' : 'border-gray-300'}`}
             />
+            {errors.lastName && <p className="mt-1 text-sm text-red-600">{errors.lastName}</p>}
           </div>
           <div>
             <label htmlFor="firstName" className="block text-sm font-semibold text-gray-700 mb-2">
@@ -89,8 +128,11 @@ export default function RefereeApplicationForm() {
               id="firstName"
               name="firstName"
               required
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:border-cboa-orange"
+              minLength={2}
+              maxLength={50}
+              className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:border-cboa-orange ${errors.firstName ? 'border-red-500' : 'border-gray-300'}`}
             />
+            {errors.firstName && <p className="mt-1 text-sm text-red-600">{errors.firstName}</p>}
           </div>
         </div>
         

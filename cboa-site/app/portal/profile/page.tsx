@@ -6,6 +6,9 @@ import { membersAPI } from '@/lib/api'
 import { useToast } from '@/hooks/useToast'
 import { IconUser, IconMail, IconShield, IconPhone, IconHome, IconUserHeart, IconEdit, IconDeviceFloppy, IconX, IconLoader2 } from '@tabler/icons-react'
 
+const POSTAL_CODE_REGEX = /^[A-Za-z]\d[A-Za-z][ -]?\d[A-Za-z]\d$/
+const NAME_REGEX = /^[A-Za-z][A-Za-z\s\-']*[A-Za-z]$/
+
 interface ProfileForm {
   name: string
   phone: string
@@ -15,6 +18,40 @@ interface ProfileForm {
   postal_code: string
   emergency_contact_name: string
   emergency_contact_phone: string
+}
+
+interface FieldErrors {
+  name?: string
+  phone?: string
+  address?: string
+  city?: string
+  postal_code?: string
+  emergency_contact_phone?: string
+}
+
+function validateProfileForm(form: ProfileForm): FieldErrors {
+  const errors: FieldErrors = {}
+  if (!form.name.trim() || form.name.trim().length < 2) {
+    errors.name = 'Name must be at least 2 characters'
+  } else if (!NAME_REGEX.test(form.name.trim())) {
+    errors.name = 'Please enter a valid name (letters, spaces, hyphens, apostrophes only)'
+  }
+  if (form.phone && form.phone.replace(/\D/g, '').length < 10) {
+    errors.phone = 'Please enter a valid phone number (at least 10 digits)'
+  }
+  if (form.address && form.address.trim().length > 0 && form.address.trim().length < 5) {
+    errors.address = 'Please enter a valid street address'
+  }
+  if (form.city && form.city.trim().length > 0 && form.city.trim().length < 2) {
+    errors.city = 'Please enter a valid city name'
+  }
+  if (form.postal_code && form.postal_code.trim() && !POSTAL_CODE_REGEX.test(form.postal_code.trim())) {
+    errors.postal_code = 'Please enter a valid postal code (e.g., T2P 1A1)'
+  }
+  if (form.emergency_contact_phone && form.emergency_contact_phone.replace(/\D/g, '').length > 0 && form.emergency_contact_phone.replace(/\D/g, '').length < 10) {
+    errors.emergency_contact_phone = 'Please enter a valid phone number (at least 10 digits)'
+  }
+  return errors
 }
 
 const PROVINCES = [
@@ -40,6 +77,7 @@ export default function ProfilePage() {
   const [isLoadingMember, setIsLoadingMember] = useState(true)
   const [isEditing, setIsEditing] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
+  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({})
   const [form, setForm] = useState<ProfileForm>({
     name: '',
     phone: '',
@@ -83,8 +121,10 @@ export default function ProfilePage() {
 
   const handleSave = async () => {
     if (!member?.id) return
-    if (!form.name.trim()) {
-      showError('Name is required')
+    setFieldErrors({})
+    const validationErrors = validateProfileForm(form)
+    if (Object.keys(validationErrors).length > 0) {
+      setFieldErrors(validationErrors)
       return
     }
 
@@ -120,6 +160,7 @@ export default function ProfilePage() {
       })
     }
     setIsEditing(false)
+    setFieldErrors({})
   }
 
   const formatRole = (role: string) => role.charAt(0).toUpperCase() + role.slice(1)
@@ -197,9 +238,11 @@ export default function ProfilePage() {
                     type="text"
                     value={form.name}
                     onChange={(e) => setForm({ ...form, name: e.target.value })}
-                    className={inputClass}
+                    className={`${inputClass} ${fieldErrors.name ? '!border-red-500' : ''}`}
                     placeholder="Your full name"
+                    maxLength={100}
                   />
+                  {fieldErrors.name && <p className="mt-0.5 text-xs text-red-600">{fieldErrors.name}</p>}
                 </div>
                 <div>
                   <label className="block text-xs text-gray-600 dark:text-gray-400 mb-0.5">Phone</label>
@@ -207,9 +250,11 @@ export default function ProfilePage() {
                     type="tel"
                     value={form.phone}
                     onChange={(e) => setForm({ ...form, phone: e.target.value })}
-                    className={inputClass}
+                    className={`${inputClass} ${fieldErrors.phone ? '!border-red-500' : ''}`}
                     placeholder="403-555-1234"
+                    maxLength={20}
                   />
+                  {fieldErrors.phone && <p className="mt-0.5 text-xs text-red-600">{fieldErrors.phone}</p>}
                 </div>
               </div>
             </div>
@@ -220,21 +265,29 @@ export default function ProfilePage() {
                 <IconHome size={12} /> Address
               </p>
               <div className="space-y-2">
-                <input
-                  type="text"
-                  value={form.address}
-                  onChange={(e) => setForm({ ...form, address: e.target.value })}
-                  className={inputClass}
-                  placeholder="Street address"
-                />
-                <div className="grid grid-cols-2 gap-2">
+                <div>
                   <input
                     type="text"
-                    value={form.city}
-                    onChange={(e) => setForm({ ...form, city: e.target.value })}
-                    className={inputClass}
-                    placeholder="City"
+                    value={form.address}
+                    onChange={(e) => setForm({ ...form, address: e.target.value })}
+                    className={`${inputClass} ${fieldErrors.address ? '!border-red-500' : ''}`}
+                    placeholder="Street address"
+                    maxLength={200}
                   />
+                  {fieldErrors.address && <p className="mt-0.5 text-xs text-red-600">{fieldErrors.address}</p>}
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <input
+                      type="text"
+                      value={form.city}
+                      onChange={(e) => setForm({ ...form, city: e.target.value })}
+                      className={`${inputClass} ${fieldErrors.city ? '!border-red-500' : ''}`}
+                      placeholder="City"
+                      maxLength={100}
+                    />
+                    {fieldErrors.city && <p className="mt-0.5 text-xs text-red-600">{fieldErrors.city}</p>}
+                  </div>
                   <select
                     value={form.province}
                     onChange={(e) => setForm({ ...form, province: e.target.value })}
@@ -245,14 +298,17 @@ export default function ProfilePage() {
                     ))}
                   </select>
                 </div>
-                <input
-                  type="text"
-                  value={form.postal_code}
-                  onChange={(e) => setForm({ ...form, postal_code: e.target.value.toUpperCase() })}
-                  className={`${inputClass} max-w-[140px]`}
-                  placeholder="T2P 1A1"
-                  maxLength={7}
-                />
+                <div>
+                  <input
+                    type="text"
+                    value={form.postal_code}
+                    onChange={(e) => setForm({ ...form, postal_code: e.target.value.toUpperCase() })}
+                    className={`${inputClass} max-w-[140px] ${fieldErrors.postal_code ? '!border-red-500' : ''}`}
+                    placeholder="T2P 1A1"
+                    maxLength={7}
+                  />
+                  {fieldErrors.postal_code && <p className="mt-0.5 text-xs text-red-600">{fieldErrors.postal_code}</p>}
+                </div>
               </div>
             </div>
 
@@ -268,14 +324,19 @@ export default function ProfilePage() {
                   onChange={(e) => setForm({ ...form, emergency_contact_name: e.target.value })}
                   className={inputClass}
                   placeholder="Contact name"
+                  maxLength={100}
                 />
-                <input
-                  type="tel"
-                  value={form.emergency_contact_phone}
-                  onChange={(e) => setForm({ ...form, emergency_contact_phone: e.target.value })}
-                  className={inputClass}
-                  placeholder="Contact phone"
-                />
+                <div>
+                  <input
+                    type="tel"
+                    value={form.emergency_contact_phone}
+                    onChange={(e) => setForm({ ...form, emergency_contact_phone: e.target.value })}
+                    className={`${inputClass} ${fieldErrors.emergency_contact_phone ? '!border-red-500' : ''}`}
+                    placeholder="Contact phone"
+                    maxLength={20}
+                  />
+                  {fieldErrors.emergency_contact_phone && <p className="mt-0.5 text-xs text-red-600">{fieldErrors.emergency_contact_phone}</p>}
+                </div>
               </div>
             </div>
 
