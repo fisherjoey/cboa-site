@@ -658,201 +658,173 @@ export default function MembersPage() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto p-6 portal-animate">
-      <div className="mb-6">
-        <div className="flex items-center justify-between mb-4">
-          <h1 className="text-3xl font-bold font-heading tracking-tight text-gray-900 dark:text-white">Members Directory</h1>
-          <div className="flex items-center gap-2">
+    <div className="max-w-7xl mx-auto px-3 py-3 sm:p-5 portal-animate">
+      {/* Header — compact with overflow menu for actions */}
+      <div className="mb-3 flex items-center justify-between gap-2">
+        <div className="flex items-center gap-3">
+          <h1 className="text-xl sm:text-2xl font-bold font-heading tracking-tight text-gray-900 dark:text-white">Members</h1>
+          <span className="text-xs text-gray-500 dark:text-gray-400">{filteredMembers.length}/{members.length}</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <button
+            onClick={() => setShowResendPendingModal(true)}
+            className="p-1.5 text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded-md transition-colors"
+            title="Resend Pending Invites"
+          >
+            <IconMail size={18} />
+          </button>
+          <button
+            onClick={() => setShowBulkAddModal(true)}
+            className="p-1.5 text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 rounded-md transition-colors"
+            title="Bulk Add"
+          >
+            <IconUsersPlus size={18} />
+          </button>
+          <button
+            onClick={handleAddMember}
+            className="bg-blue-600 text-white px-3 py-1.5 rounded-lg hover:bg-blue-700 flex items-center gap-1.5 text-sm"
+          >
+            <IconPlus size={16} />
+            <span className="hidden sm:inline">Add Member</span>
+            <span className="sm:hidden">Add</span>
+          </button>
+        </div>
+      </div>
+
+      {/* Search + Filters — compact inline */}
+      <div className="mb-3 space-y-2">
+        <div className="flex gap-2">
+          <div className="flex-1 relative">
+            <IconSearch className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+            <input
+              type="text"
+              placeholder="Search members..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-8 pr-3 py-1.5 text-sm border border-gray-300 dark:border-portal-border bg-white dark:bg-portal-surface text-gray-900 dark:text-white rounded-md focus:ring-1 focus:ring-blue-500 focus:outline-none"
+            />
+          </div>
+          <div className="flex items-center border border-gray-300 dark:border-gray-600 rounded-md overflow-hidden">
             <button
-              onClick={() => setShowResendPendingModal(true)}
-              className="flex items-center gap-2 px-4 py-2 bg-amber-600 text-white rounded-xl hover:bg-amber-700 transition-colors"
+              onClick={() => setViewMode('grid')}
+              className={`p-1.5 ${viewMode === 'grid' ? 'bg-blue-600 text-white' : 'bg-white dark:bg-portal-surface text-gray-500 hover:bg-gray-100 dark:hover:bg-portal-hover'}`}
+              title="Grid view"
             >
-              <IconMail size={20} />
-              Resend Pending
+              <IconLayoutGrid size={16} />
             </button>
             <button
-              onClick={() => setShowBulkAddModal(true)}
-              className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 transition-colors"
+              onClick={() => setViewMode('table')}
+              className={`p-1.5 ${viewMode === 'table' ? 'bg-blue-600 text-white' : 'bg-white dark:bg-portal-surface text-gray-500 hover:bg-gray-100 dark:hover:bg-portal-hover'}`}
+              title="Table view"
             >
-              <IconUsersPlus size={20} />
-              Bulk Add
-            </button>
-            <button
-              onClick={handleAddMember}
-              className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors"
-            >
-              <IconPlus size={20} />
-              Add Member
+              <IconTable size={16} />
             </button>
           </div>
         </div>
 
-        {/* Filters */}
-        <div className="bg-white dark:bg-portal-surface rounded-xl border border-gray-200 dark:border-portal-border p-4 mb-4">
-          <div className="flex flex-col gap-4">
-            {/* Search and View Toggle Row */}
-            <div className="flex flex-col md:flex-row gap-4">
-              <div className="flex-1">
-                <div className="relative">
-                  <IconSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500" size={20} />
-                  <input
-                    type="text"
-                    placeholder="Search by name, email, phone, or city..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-portal-border bg-white dark:bg-portal-surface text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  />
-                </div>
-              </div>
+        {/* Filter dropdowns — horizontal scroll on mobile */}
+        <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide pb-0.5">
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="flex-shrink-0 pl-2 pr-6 py-1 text-xs border border-gray-300 dark:border-portal-border bg-white dark:bg-portal-surface text-gray-700 dark:text-gray-300 rounded-md focus:ring-1 focus:ring-blue-500 focus:outline-none"
+          >
+            <option value="all">Status</option>
+            <option value="active">Active</option>
+            <option value="inactive">Inactive</option>
+          </select>
 
-              {/* View Toggle */}
-              <div className="flex items-center border border-gray-300 dark:border-gray-600 rounded-lg overflow-hidden">
-                <button
-                  onClick={() => setViewMode('grid')}
-                  className={`p-2 ${viewMode === 'grid' ? 'bg-blue-600 text-white' : 'bg-white dark:bg-portal-surface text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-portal-hover'}`}
-                  title="Grid view"
-                >
-                  <IconLayoutGrid size={20} />
-                </button>
-                <button
-                  onClick={() => setViewMode('table')}
-                  className={`p-2 ${viewMode === 'table' ? 'bg-blue-600 text-white' : 'bg-white dark:bg-portal-surface text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-portal-hover'}`}
-                  title="Table view"
-                >
-                  <IconTable size={20} />
-                </button>
-              </div>
-            </div>
+          <select
+            value={roleFilter}
+            onChange={(e) => setRoleFilter(e.target.value)}
+            className="flex-shrink-0 pl-2 pr-6 py-1 text-xs border border-gray-300 dark:border-portal-border bg-white dark:bg-portal-surface text-gray-700 dark:text-gray-300 rounded-md focus:ring-1 focus:ring-blue-500 focus:outline-none"
+          >
+            <option value="all">Role</option>
+            <option value="official">Official</option>
+            <option value="evaluator">Evaluator</option>
+            <option value="executive">Executive</option>
+            <option value="admin">Admin</option>
+          </select>
 
-            {/* Filter Dropdowns Row */}
-            <div className="flex flex-wrap items-center gap-3">
-              <IconFilter size={20} className="text-gray-600 dark:text-gray-400" />
+          <select
+            value={certificationFilter}
+            onChange={(e) => setCertificationFilter(e.target.value)}
+            className="flex-shrink-0 pl-2 pr-6 py-1 text-xs border border-gray-300 dark:border-portal-border bg-white dark:bg-portal-surface text-gray-700 dark:text-gray-300 rounded-md focus:ring-1 focus:ring-blue-500 focus:outline-none"
+          >
+            <option value="all">NOCP</option>
+            <option value="none">None</option>
+            <option value="Level 1">L1</option>
+            <option value="Level 2">L2</option>
+            <option value="Level 3">L3</option>
+            <option value="Level 4">L4</option>
+            <option value="Level 5">L5</option>
+          </select>
 
-              {/* Status Filter */}
-              <select
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
-                className="pl-3 pr-8 py-2 text-sm border border-gray-300 dark:border-portal-border bg-white dark:bg-portal-surface text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              >
-                <option value="all">All Status</option>
-                <option value="active">Active</option>
-                <option value="inactive">Inactive</option>
-              </select>
+          {uniqueCities.length > 0 && (
+            <select
+              value={cityFilter}
+              onChange={(e) => setCityFilter(e.target.value)}
+              className="flex-shrink-0 pl-2 pr-6 py-1 text-xs border border-gray-300 dark:border-portal-border bg-white dark:bg-portal-surface text-gray-700 dark:text-gray-300 rounded-md focus:ring-1 focus:ring-blue-500 focus:outline-none"
+            >
+              <option value="all">City</option>
+              {uniqueCities.map(city => (
+                <option key={city} value={city}>{city}</option>
+              ))}
+            </select>
+          )}
 
-              {/* Role Filter */}
-              <select
-                value={roleFilter}
-                onChange={(e) => setRoleFilter(e.target.value)}
-                className="pl-3 pr-8 py-2 text-sm border border-gray-300 dark:border-portal-border bg-white dark:bg-portal-surface text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              >
-                <option value="all">All Roles</option>
-                <option value="official">Official</option>
-                <option value="evaluator">Evaluator</option>
-                <option value="executive">Executive</option>
-                <option value="admin">Admin</option>
-              </select>
-
-              {/* NOCP Level Filter */}
-              <select
-                value={certificationFilter}
-                onChange={(e) => setCertificationFilter(e.target.value)}
-                className="pl-3 pr-8 py-2 text-sm border border-gray-300 dark:border-portal-border bg-white dark:bg-portal-surface text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              >
-                <option value="all">All NOCP Levels</option>
-                <option value="none">None</option>
-                <option value="Level 1">Level 1</option>
-                <option value="Level 2">Level 2</option>
-                <option value="Level 3">Level 3</option>
-                <option value="Level 4">Level 4</option>
-                <option value="Level 5">Level 5</option>
-              </select>
-
-              {/* City Filter */}
-              {uniqueCities.length > 0 && (
-                <select
-                  value={cityFilter}
-                  onChange={(e) => setCityFilter(e.target.value)}
-                  className="pl-3 pr-8 py-2 text-sm border border-gray-300 dark:border-portal-border bg-white dark:bg-portal-surface text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                >
-                  <option value="all">All Cities</option>
-                  {uniqueCities.map(city => (
-                    <option key={city} value={city}>{city}</option>
-                  ))}
-                </select>
-              )}
-
-              {/* Clear Filters Button */}
-              {(statusFilter !== 'all' || roleFilter !== 'all' || certificationFilter !== 'all' || cityFilter !== 'all') && (
-                <button
-                  onClick={() => {
-                    setStatusFilter('all')
-                    setRoleFilter('all')
-                    setCertificationFilter('all')
-                    setCityFilter('all')
-                  }}
-                  className="px-3 py-1.5 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white underline"
-                >
-                  Clear filters
-                </button>
-              )}
-            </div>
-          </div>
+          {(statusFilter !== 'all' || roleFilter !== 'all' || certificationFilter !== 'all' || cityFilter !== 'all') && (
+            <button
+              onClick={() => { setStatusFilter('all'); setRoleFilter('all'); setCertificationFilter('all'); setCityFilter('all') }}
+              className="flex-shrink-0 text-xs text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white underline"
+            >
+              Clear
+            </button>
+          )}
         </div>
-
-        {/* Members Count */}
-        <p className="text-gray-600 dark:text-gray-400 mb-4">
-          Showing {filteredMembers.length} of {members.length} members
-        </p>
       </div>
 
       {/* Members Display - Grid or Table */}
       {viewMode === 'grid' ? (
         <>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-3">
             {filteredMembers.map((member) => (
               <div
                 key={member.id}
                 onClick={() => handleViewMember(member)}
-                className="bg-white dark:bg-portal-surface rounded-xl border border-gray-200 dark:border-portal-border p-4 hover:shadow-lg transition-shadow cursor-pointer"
+                className="bg-white dark:bg-portal-surface rounded-md border border-gray-200 dark:border-portal-border px-3 py-2.5 hover:shadow-md transition-shadow cursor-pointer flex items-center gap-3"
               >
-                <div className="flex items-start gap-3">
-                  <div className="bg-blue-900/40 p-3 rounded-full">
-                    <IconUser size={24} className="text-blue-400" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <h3 className="font-semibold text-gray-900 dark:text-white truncate">{member.name}</h3>
-                    <p className="text-sm text-gray-600 dark:text-gray-400 truncate">{member.email}</p>
-                    {member.phone && (
-                      <p className="text-sm text-gray-600 dark:text-gray-400">{member.phone}</p>
-                    )}
-                    <div className="flex flex-wrap items-center gap-2 mt-2">
-                      <span className={`px-2 py-1 text-xs rounded-full ${
-                        member.status === 'active'
-                          ? 'bg-green-100 dark:bg-green-900/40 text-green-800 dark:text-green-300'
-                          : 'bg-gray-100 dark:bg-portal-hover text-gray-800 dark:text-gray-300'
-                      }`}>
-                        {member.status || 'active'}
-                      </span>
-                      {member.certification_level && (
-                        <span className="px-2 py-1 text-xs bg-blue-900/40 text-blue-400 rounded-full">
-                          {member.certification_level}
-                        </span>
-                      )}
-                    </div>
-                  </div>
+                <div className="bg-blue-900/40 p-2 rounded-full flex-shrink-0">
+                  <IconUser size={16} className="text-blue-400" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-medium text-sm text-gray-900 dark:text-white truncate">{member.name}</h3>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{member.email}</p>
+                </div>
+                <div className="flex flex-col items-end gap-1 flex-shrink-0">
+                  <span className={`px-1.5 py-0.5 text-[10px] rounded ${
+                    member.status === 'active'
+                      ? 'bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300'
+                      : 'bg-gray-100 dark:bg-portal-hover text-gray-600 dark:text-gray-300'
+                  }`}>
+                    {member.status || 'active'}
+                  </span>
+                  {member.certification_level && (
+                    <span className="text-[10px] text-blue-400">{member.certification_level}</span>
+                  )}
                 </div>
               </div>
             ))}
           </div>
 
           {filteredMembers.length === 0 && (
-            <div className="text-center py-12 bg-white dark:bg-portal-surface rounded-xl border border-gray-200 dark:border-portal-border">
+            <div className="text-center py-12 bg-white dark:bg-portal-surface rounded-lg border border-gray-200 dark:border-portal-border">
               <p className="text-gray-600 dark:text-gray-400">No members found.</p>
             </div>
           )}
         </>
       ) : (
-        <div className="bg-white dark:bg-portal-surface rounded-xl border border-gray-200 dark:border-portal-border overflow-hidden">
+        <div className="bg-white dark:bg-portal-surface rounded-lg border border-gray-200 dark:border-portal-border overflow-hidden">
           <DataTable
             data={filteredMembers}
             columns={tableColumns}
@@ -868,7 +840,7 @@ export default function MembersPage() {
         isOpen={showMemberModal}
         onClose={() => setShowMemberModal(false)}
         title={isEditing ? (selectedMember ? 'Edit Member' : 'Add Member') : 'Member Details'}
-        size="xl"
+        size="lg"
         showCloseButton={false}
       >
         {/* Action buttons in header area - outside scrollable content */}

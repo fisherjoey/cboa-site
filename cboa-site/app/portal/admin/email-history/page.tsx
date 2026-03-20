@@ -28,12 +28,13 @@ import {
   IconCheck,
   IconAlertCircle,
   IconEye,
+  IconMessageCircle,
 } from '@tabler/icons-react'
 
 interface EmailHistoryRecord {
   id: string
   created_at: string
-  email_type: 'bulk' | 'invite' | 'password_reset' | 'welcome'
+  email_type: 'bulk' | 'invite' | 'password_reset' | 'welcome' | 'contact_form'
   sent_by_email: string
   subject: string
   html_content: string | null
@@ -45,6 +46,7 @@ interface EmailHistoryRecord {
   recipient_name: string | null
   status: 'sent' | 'failed' | 'partial'
   error_message: string | null
+  metadata: Record<string, unknown> | null
 }
 
 interface PaginationInfo {
@@ -64,12 +66,46 @@ const emailTypeConfig: Record<string, { label: string; icon: React.ElementType; 
   invite: { label: 'Invite', icon: IconMailForward, color: 'bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-400' },
   password_reset: { label: 'Password Reset', icon: IconKey, color: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-400' },
   welcome: { label: 'Welcome', icon: IconMail, color: 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-400' },
+  contact_form: { label: 'Contact Form', icon: IconMessageCircle, color: 'bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-400' },
 }
 
 const statusConfig: Record<string, { label: string; icon: React.ElementType; color: string }> = {
   sent: { label: 'Sent', icon: IconCheck, color: 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-400' },
   failed: { label: 'Failed', icon: IconAlertCircle, color: 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400' },
   partial: { label: 'Partial', icon: IconAlertCircle, color: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-400' },
+}
+
+function ContactFormMeta({ email }: { email: EmailHistoryRecord }) {
+  const meta = email.metadata as Record<string, string>
+  return (
+    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div>
+        <span className="text-gray-500 dark:text-gray-400">From:</span>
+        <p className="font-medium text-gray-900 dark:text-white">{meta.sender_name}</p>
+        <p className="text-xs text-gray-500 dark:text-gray-400">{meta.sender_email}</p>
+      </div>
+      <div>
+        <span className="text-gray-500 dark:text-gray-400">Category:</span>
+        <p className="font-medium text-gray-900 dark:text-white">{meta.category_label}</p>
+      </div>
+      <div>
+        <span className="text-gray-500 dark:text-gray-400">Routed To:</span>
+        <p className="font-medium text-gray-900 dark:text-white">{email.recipient_email}</p>
+      </div>
+      <div>
+        <span className="text-gray-500 dark:text-gray-400">Date:</span>
+        <p className="font-medium text-gray-900 dark:text-white">{new Date(email.created_at).toLocaleString()}</p>
+      </div>
+      {meta.message && (
+        <div className="col-span-full mt-2">
+          <span className="text-gray-500 dark:text-gray-400">Original Message:</span>
+          <div className="mt-1 p-3 bg-white dark:bg-portal-surface rounded border border-gray-200 dark:border-portal-border">
+            <p className="text-gray-800 dark:text-gray-200 whitespace-pre-wrap text-sm">{meta.message}</p>
+          </div>
+        </div>
+      )}
+    </div>
+  )
 }
 
 // Email Detail Modal Component
@@ -120,36 +156,41 @@ function EmailDetailModal({
 
         {/* Meta Info */}
         <div className="px-4 py-3 bg-gray-50 dark:bg-portal-bg border-b border-gray-200 dark:border-portal-border text-sm">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div>
-              <span className="text-gray-500 dark:text-gray-400">Sent By:</span>
-              <p className="font-medium text-gray-900 dark:text-white">{email.sent_by_email || 'System'}</p>
+          {email.email_type === 'contact_form' && email.metadata ? (
+            <ContactFormMeta email={email} />
+          ) : (
+            // Standard email metadata display
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div>
+                <span className="text-gray-500 dark:text-gray-400">Sent By:</span>
+                <p className="font-medium text-gray-900 dark:text-white">{email.sent_by_email || 'System'}</p>
+              </div>
+              <div>
+                <span className="text-gray-500 dark:text-gray-400">Recipients:</span>
+                <p className="font-medium text-gray-900 dark:text-white">{email.recipient_count}</p>
+              </div>
+              {email.recipient_groups && email.recipient_groups.length > 0 && (
+                <div>
+                  <span className="text-gray-500 dark:text-gray-400">Groups:</span>
+                  <p className="font-medium text-gray-900 dark:text-white">{email.recipient_groups.join(', ')}</p>
+                </div>
+              )}
+              {email.rank_filter && (
+                <div>
+                  <span className="text-gray-500 dark:text-gray-400">Rank Filter:</span>
+                  <p className="font-medium text-gray-900 dark:text-white">{email.rank_filter}</p>
+                </div>
+              )}
+              {email.recipient_email && (
+                <div>
+                  <span className="text-gray-500 dark:text-gray-400">Recipient:</span>
+                  <p className="font-medium text-gray-900 dark:text-white">
+                    {email.recipient_name ? `${email.recipient_name} (${email.recipient_email})` : email.recipient_email}
+                  </p>
+                </div>
+              )}
             </div>
-            <div>
-              <span className="text-gray-500 dark:text-gray-400">Recipients:</span>
-              <p className="font-medium text-gray-900 dark:text-white">{email.recipient_count}</p>
-            </div>
-            {email.recipient_groups && email.recipient_groups.length > 0 && (
-              <div>
-                <span className="text-gray-500 dark:text-gray-400">Groups:</span>
-                <p className="font-medium text-gray-900 dark:text-white">{email.recipient_groups.join(', ')}</p>
-              </div>
-            )}
-            {email.rank_filter && (
-              <div>
-                <span className="text-gray-500 dark:text-gray-400">Rank Filter:</span>
-                <p className="font-medium text-gray-900 dark:text-white">{email.rank_filter}</p>
-              </div>
-            )}
-            {email.recipient_email && (
-              <div>
-                <span className="text-gray-500 dark:text-gray-400">Recipient:</span>
-                <p className="font-medium text-gray-900 dark:text-white">
-                  {email.recipient_name ? `${email.recipient_name} (${email.recipient_email})` : email.recipient_email}
-                </p>
-              </div>
-            )}
-          </div>
+          )}
           {email.error_message && (
             <div className="mt-3 p-2 bg-red-100 dark:bg-red-900/30 rounded text-red-700 dark:text-red-400 text-xs">
               <strong>Error:</strong> {email.error_message}
@@ -382,6 +423,17 @@ export default function EmailHistoryPage() {
         header: 'Recipients',
         cell: ({ row }) => {
           const record = row.original
+          // Contact form: show sender info (the person who submitted the form)
+          if (record.email_type === 'contact_form' && record.metadata) {
+            const meta = record.metadata as Record<string, string>
+            const senderName = meta.sender_name
+            const senderEmail = meta.sender_email
+            return (
+              <span className="text-xs text-gray-800 dark:text-gray-200" title={senderEmail}>
+                {senderName || senderEmail}
+              </span>
+            )
+          }
           if (record.recipient_email) {
             return (
               <span className="text-xs text-gray-800 dark:text-gray-200" title={record.recipient_email}>
@@ -401,9 +453,12 @@ export default function EmailHistoryPage() {
       {
         accessorKey: 'sent_by_email',
         header: 'Sent By',
-        cell: ({ getValue }) => (
-          <span className="text-xs text-gray-600 dark:text-gray-400">{(getValue() as string) || 'System'}</span>
-        ),
+        cell: ({ row, getValue }) => {
+          if (row.original.email_type === 'contact_form') {
+            return <span className="text-xs text-gray-600 dark:text-gray-400">Website Form</span>
+          }
+          return <span className="text-xs text-gray-600 dark:text-gray-400">{(getValue() as string) || 'System'}</span>
+        },
         size: 150,
       },
       {
@@ -474,7 +529,7 @@ export default function EmailHistoryPage() {
         <button
           onClick={() => fetchEmails(pagination.page)}
           disabled={loading}
-          className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 disabled:opacity-50"
+          className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
         >
           <IconRefresh className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
           Refresh
@@ -482,7 +537,7 @@ export default function EmailHistoryPage() {
       </div>
 
       {/* Filters */}
-      <div className="bg-white dark:bg-portal-surface rounded-xl border border-gray-200 dark:border-portal-border mb-4">
+      <div className="bg-white dark:bg-portal-surface rounded-lg border border-gray-200 dark:border-portal-border mb-4">
         <div className="p-4 flex items-center gap-4">
           {/* Search */}
           <div className="relative flex-1 max-w-md">
@@ -540,6 +595,7 @@ export default function EmailHistoryPage() {
                 <option value="invite">Invite</option>
                 <option value="password_reset">Password Reset</option>
                 <option value="welcome">Welcome</option>
+                <option value="contact_form">Contact Form</option>
               </select>
             </div>
             <div>
@@ -585,7 +641,7 @@ export default function EmailHistoryPage() {
       )}
 
       {/* Table */}
-      <div className="bg-white dark:bg-portal-surface rounded-xl border border-gray-200 dark:border-portal-border overflow-hidden">
+      <div className="bg-white dark:bg-portal-surface rounded-lg border border-gray-200 dark:border-portal-border overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead className="bg-gray-50 dark:bg-portal-bg border-b border-gray-200 dark:border-portal-border">

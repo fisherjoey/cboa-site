@@ -125,7 +125,7 @@ function LoginForm() {
         <div className="text-center">
           <Image
             src="/images/logos/cboa-logo.png"
-            alt="CBOA Logo"
+            alt="Organization Logo"
             width={120}
             height={120}
             className="mx-auto mb-4"

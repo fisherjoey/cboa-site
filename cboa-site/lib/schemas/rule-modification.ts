@@ -10,9 +10,7 @@ export const RULE_CATEGORIES = [
 
 export const ruleModificationSchema = z.object({
   title: z.string().min(1, 'Title is required'),
-  category: z.enum(RULE_CATEGORIES, {
-    errorMap: () => ({ message: 'Category is required' }),
-  }),
+  category: z.enum(RULE_CATEGORIES, { message: 'Category is required' }),
   summary: z.string().min(1, 'Summary is required'),
   content: z.string().min(1, 'Content is required'),
   date: z.string().optional(),

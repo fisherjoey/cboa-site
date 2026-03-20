@@ -11,11 +11,12 @@
 /* Toolbar styling */
 .fc .fc-toolbar {
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 6px;
+  margin-bottom: 0.75em !important;
 }
 
 .fc .fc-toolbar-title {
-  font-size: 1.25rem;
+  font-size: 1.1rem;
   font-weight: 600;
   color: #1f2937;
 }
@@ -26,7 +27,8 @@
   border: 1px solid #e5e7eb;
   color: #374151;
   font-weight: 500;
-  padding: 8px 16px;
+  padding: 6px 12px;
+  font-size: 13px;
   text-transform: capitalize;
 }
 
@@ -82,23 +84,27 @@
 /* Header row */
 .fc .fc-col-header-cell {
   background-color: #f9fafb;
-  padding: 12px 8px;
+  padding: 8px 6px;
   font-weight: 600;
-  color: #374151;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #6b7280;
 }
 
 .fc .fc-col-header-cell-cushion {
-  padding: 8px;
+  padding: 6px;
 }
 
 /* Day cells */
 .fc .fc-daygrid-day {
-  min-height: 100px;
+  min-height: 80px;
 }
 
 .fc .fc-daygrid-day-number {
-  padding: 8px;
+  padding: 6px;
   font-weight: 500;
+  font-size: 13px;
   color: #374151;
 }
 

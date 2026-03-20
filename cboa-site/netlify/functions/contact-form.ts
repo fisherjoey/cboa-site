@@ -1,5 +1,6 @@
 import { Handler, HandlerEvent, HandlerContext } from '@netlify/functions'
-import { createClient } from '@supabase/supabase-js'
+import { getCorsHeaders, supabase } from './_shared/handler'
+import { checkRateLimit, getClientIp } from './_shared/rateLimit'
 import { generateCBOAEmailTemplate } from '../../lib/emailTemplate'
 import { Logger } from '../../lib/logger'
 import { validateEmail } from '../../lib/emailValidation'
@@ -128,15 +129,20 @@ export const handler: Handler = async (
 ) => {
   const logger = Logger.fromEvent('contact-form', event)
 
+  const origin = event.headers.origin || event.headers.Origin
   const headers = {
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Headers': 'Content-Type',
-    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    ...getCorsHeaders(origin, ['POST']),
     'Content-Type': 'application/json',
   }
 
   if (event.httpMethod === 'OPTIONS') {
     return { statusCode: 200, headers, body: '' }
+  }
+
+  // Rate limit: 5 submissions per minute per IP
+  const clientIp = getClientIp(event.headers)
+  if (checkRateLimit(clientIp, { maxRequests: 5, windowMs: 60_000, prefix: 'contact' })) {
+    return { statusCode: 429, headers, body: JSON.stringify({ error: 'Too many requests. Please try again later.' }) }
   }
 
   if (event.httpMethod !== 'POST') {
@@ -495,28 +501,23 @@ export const handler: Handler = async (
 
     // Save to contact_submissions table for admin tracking (fire-and-forget)
     try {
-      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-      const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY
-      if (supabaseUrl && supabaseKey) {
-        const supabase = createClient(supabaseUrl, supabaseKey)
-        supabase
-          .from('contact_submissions')
-          .insert({
-            sender_name: name,
-            sender_email: email,
-            category,
-            category_label: categoryLabel,
-            subject: emailSubject,
-            message,
-            recipient_email: recipientEmail,
-            attachment_urls: body.attachmentUrls && body.attachmentUrls.length > 0 ? body.attachmentUrls : null,
-          })
-          .then(({ error: insertError }) => {
-            if (insertError) {
-              console.error('[ContactForm] Failed to save submission:', insertError.message)
-            }
-          })
-      }
+      supabase
+        .from('contact_submissions')
+        .insert({
+          sender_name: name,
+          sender_email: email,
+          category,
+          category_label: categoryLabel,
+          subject: emailSubject,
+          message,
+          recipient_email: recipientEmail,
+          attachment_urls: body.attachmentUrls && body.attachmentUrls.length > 0 ? body.attachmentUrls : null,
+        })
+        .then(({ error: insertError }) => {
+          if (insertError) {
+            console.error('[ContactForm] Failed to save submission:', insertError.message)
+          }
+        })
     } catch (dbError) {
       console.error('[ContactForm] Failed to save submission:', dbError)
     }

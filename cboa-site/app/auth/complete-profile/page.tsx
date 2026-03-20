@@ -5,6 +5,10 @@ import { useRouter } from 'next/navigation'
 import { createBrowserClient } from '@supabase/ssr'
 import { IconUser, IconLoader2, IconAlertCircle, IconCheck, IconPhone, IconHome, IconUserHeart } from '@tabler/icons-react'
 
+const PHONE_REGEX = /^\(?([0-9]{3})\)?[-. ]?([0-9]{3})[-. ]?([0-9]{4})$/
+const POSTAL_CODE_REGEX = /^[A-Za-z]\d[A-Za-z][ -]?\d[A-Za-z]\d$/
+const NAME_REGEX = /^[A-Za-z][A-Za-z\s\-']*[A-Za-z]$/
+
 interface ProfileForm {
   name: string
   phone: string
@@ -16,10 +20,46 @@ interface ProfileForm {
   emergency_contact_phone: string
 }
 
+interface FieldErrors {
+  name?: string
+  phone?: string
+  address?: string
+  city?: string
+  postal_code?: string
+  emergency_contact_name?: string
+  emergency_contact_phone?: string
+}
+
+function validateProfileForm(form: ProfileForm): FieldErrors {
+  const errors: FieldErrors = {}
+  if (!form.name.trim() || form.name.trim().length < 2) {
+    errors.name = 'Name must be at least 2 characters'
+  } else if (!NAME_REGEX.test(form.name.trim())) {
+    errors.name = 'Please enter a valid name (letters, spaces, hyphens, apostrophes only)'
+  }
+  if (form.phone && form.phone.replace(/\D/g, '').length < 10) {
+    errors.phone = 'Please enter a valid phone number (at least 10 digits)'
+  }
+  if (form.address && form.address.trim().length < 5) {
+    errors.address = 'Please enter a valid street address'
+  }
+  if (form.city && form.city.trim().length < 2) {
+    errors.city = 'Please enter a valid city name'
+  }
+  if (form.postal_code && !POSTAL_CODE_REGEX.test(form.postal_code.trim())) {
+    errors.postal_code = 'Please enter a valid postal code (e.g., T2P 1A1)'
+  }
+  if (form.emergency_contact_phone && form.emergency_contact_phone.replace(/\D/g, '').length < 10) {
+    errors.emergency_contact_phone = 'Please enter a valid phone number (at least 10 digits)'
+  }
+  return errors
+}
+
 function CompleteProfileForm() {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({})
   const [checkingAuth, setCheckingAuth] = useState(true)
   const [userEmail, setUserEmail] = useState<string | null>(null)
   const [memberId, setMemberId] = useState<string | null>(null)
@@ -115,10 +155,11 @@ function CompleteProfileForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError(null)
+    setFieldErrors({})
 
-    // Validation
-    if (!form.name.trim()) {
-      setError('Please enter your name')
+    const validationErrors = validateProfileForm(form)
+    if (Object.keys(validationErrors).length > 0) {
+      setFieldErrors(validationErrors)
       return
     }
 
@@ -214,11 +255,14 @@ function CompleteProfileForm() {
                 <input
                   type="text"
                   required
+                  minLength={2}
+                  maxLength={100}
                   value={form.name}
                   onChange={(e) => setForm({ ...form, name: e.target.value })}
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                  className={`w-full px-4 py-2 border rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-orange-500 focus:border-transparent ${fieldErrors.name ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'}`}
                   placeholder="Enter your full name"
                 />
+                {fieldErrors.name && <p className="mt-1 text-sm text-red-600">{fieldErrors.name}</p>}
               </div>
               <div className="md:col-span-2">
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
@@ -226,11 +270,13 @@ function CompleteProfileForm() {
                 </label>
                 <input
                   type="tel"
+                  maxLength={20}
                   value={form.phone}
                   onChange={(e) => setForm({ ...form, phone: e.target.value })}
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                  className={`w-full px-4 py-2 border rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-orange-500 focus:border-transparent ${fieldErrors.phone ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'}`}
                   placeholder="e.g. 403-555-1234"
                 />
+                {fieldErrors.phone && <p className="mt-1 text-sm text-red-600">{fieldErrors.phone}</p>}
               </div>
             </div>
           </div>
@@ -248,11 +294,13 @@ function CompleteProfileForm() {
                 </label>
                 <input
                   type="text"
+                  maxLength={200}
                   value={form.address}
                   onChange={(e) => setForm({ ...form, address: e.target.value })}
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                  className={`w-full px-4 py-2 border rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-orange-500 focus:border-transparent ${fieldErrors.address ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'}`}
                   placeholder="123 Main Street"
                 />
+                {fieldErrors.address && <p className="mt-1 text-sm text-red-600">{fieldErrors.address}</p>}
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
@@ -260,11 +308,13 @@ function CompleteProfileForm() {
                 </label>
                 <input
                   type="text"
+                  maxLength={100}
                   value={form.city}
                   onChange={(e) => setForm({ ...form, city: e.target.value })}
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                  className={`w-full px-4 py-2 border rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-orange-500 focus:border-transparent ${fieldErrors.city ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'}`}
                   placeholder="Calgary"
                 />
+                {fieldErrors.city && <p className="mt-1 text-sm text-red-600">{fieldErrors.city}</p>}
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
@@ -298,10 +348,11 @@ function CompleteProfileForm() {
                   type="text"
                   value={form.postal_code}
                   onChange={(e) => setForm({ ...form, postal_code: e.target.value.toUpperCase() })}
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                  className={`w-full px-4 py-2 border rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-orange-500 focus:border-transparent ${fieldErrors.postal_code ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'}`}
                   placeholder="T2P 1A1"
                   maxLength={7}
                 />
+                {fieldErrors.postal_code && <p className="mt-1 text-sm text-red-600">{fieldErrors.postal_code}</p>}
               </div>
             </div>
           </div>
@@ -319,6 +370,7 @@ function CompleteProfileForm() {
                 </label>
                 <input
                   type="text"
+                  maxLength={100}
                   value={form.emergency_contact_name}
                   onChange={(e) => setForm({ ...form, emergency_contact_name: e.target.value })}
                   className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-orange-500 focus:border-transparent"
@@ -331,11 +383,13 @@ function CompleteProfileForm() {
                 </label>
                 <input
                   type="tel"
+                  maxLength={20}
                   value={form.emergency_contact_phone}
                   onChange={(e) => setForm({ ...form, emergency_contact_phone: e.target.value })}
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                  className={`w-full px-4 py-2 border rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-orange-500 focus:border-transparent ${fieldErrors.emergency_contact_phone ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'}`}
                   placeholder="e.g. 403-555-1234"
                 />
+                {fieldErrors.emergency_contact_phone && <p className="mt-1 text-sm text-red-600">{fieldErrors.emergency_contact_phone}</p>}
               </div>
             </div>
           </div>

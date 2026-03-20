@@ -23,6 +23,7 @@ export interface Announcement {
   id: string
   title: string
   content: string
+  type?: string
   category: 'general' | 'rules' | 'schedule' | 'training' | 'administrative'
   priority: 'high' | 'normal' | 'low'
   date: string

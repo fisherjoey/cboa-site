@@ -1,28 +1,9 @@
-import { Handler } from '@netlify/functions'
-import { createClient } from '@supabase/supabase-js'
-import { Logger } from '../../lib/logger'
+import { createHandler, supabase } from './_shared/handler'
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
-const supabase = createClient(supabaseUrl, supabaseServiceKey, {
-  auth: { autoRefreshToken: false, persistSession: false }
-})
-
-export const handler: Handler = async (event) => {
-  const logger = Logger.fromEvent('member-activities', event)
-
-  const headers = {
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Headers': 'Content-Type',
-    'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS'
-  }
-
-  // Handle CORS preflight
-  if (event.httpMethod === 'OPTIONS') {
-    return { statusCode: 200, headers, body: '' }
-  }
-
-  try {
+export const handler = createHandler({
+  name: 'member-activities',
+  auth: { GET: 'authenticated', POST: 'admin_or_executive', PUT: 'admin_or_executive', DELETE: 'admin_or_executive' },
+  handler: async ({ event, logger, user }) => {
     switch (event.httpMethod) {
       case 'GET': {
         const { member_id } = event.queryStringParameters || {}
@@ -31,8 +12,8 @@ export const handler: Handler = async (event) => {
           .from('member_activities')
           .select('*')
           .order('activity_date', { ascending: false })
+          .limit(500)
 
-        // Filter by member if specified
         if (member_id) {
           query = query.eq('member_id', member_id)
         }
@@ -41,11 +22,7 @@ export const handler: Handler = async (event) => {
 
         if (error) throw error
 
-        return {
-          statusCode: 200,
-          headers,
-          body: JSON.stringify(data)
-        }
+        return { statusCode: 200, body: JSON.stringify(data) }
       }
 
       case 'POST': {
@@ -63,18 +40,14 @@ export const handler: Handler = async (event) => {
         if (error) throw error
 
         await logger.audit('CREATE', 'member_activity', data.id, {
-          actorId: 'system',
-          actorEmail: 'system',
+          actorId: user!.id,
+          actorEmail: user!.email,
           targetUserId: body.member_id,
           newValues: { activity_type: body.activity_type, activity_date: body.activity_date },
           description: `Created activity for member ${body.member_id}`
         })
 
-        return {
-          statusCode: 201,
-          headers,
-          body: JSON.stringify(data)
-        }
+        return { statusCode: 201, body: JSON.stringify(data) }
       }
 
       case 'PUT': {
@@ -82,11 +55,7 @@ export const handler: Handler = async (event) => {
         const { id, ...updates } = body
 
         if (!id) {
-          return {
-            statusCode: 400,
-            headers,
-            body: JSON.stringify({ error: 'ID is required for updates' })
-          }
+          return { statusCode: 400, body: JSON.stringify({ error: 'ID is required for updates' }) }
         }
 
         logger.info('crud', 'update_member_activity', `Updating member activity ${id}`, {
@@ -103,33 +72,24 @@ export const handler: Handler = async (event) => {
         if (error) throw error
 
         await logger.audit('UPDATE', 'member_activity', id, {
-          actorId: 'system',
-          actorEmail: 'system',
+          actorId: user!.id,
+          actorEmail: user!.email,
           newValues: updates,
           description: `Updated member activity ${id}`
         })
 
-        return {
-          statusCode: 200,
-          headers,
-          body: JSON.stringify(data)
-        }
+        return { statusCode: 200, body: JSON.stringify(data) }
       }
 
       case 'DELETE': {
         const id = event.queryStringParameters?.id
 
         if (!id) {
-          return {
-            statusCode: 400,
-            headers,
-            body: JSON.stringify({ error: 'ID is required for deletion' })
-          }
+          return { statusCode: 400, body: JSON.stringify({ error: 'ID is required for deletion' }) }
         }
 
         logger.info('crud', 'delete_member_activity', `Deleting member activity ${id}`, { metadata: { id } })
 
-        // First check if the activity exists
         const { data: existing, error: findError } = await supabase
           .from('member_activities')
           .select('id')
@@ -138,11 +98,7 @@ export const handler: Handler = async (event) => {
 
         if (findError || !existing) {
           logger.warn('crud', 'delete_member_activity_not_found', `Member activity ${id} not found`, { metadata: { id } })
-          return {
-            statusCode: 404,
-            headers,
-            body: JSON.stringify({ error: 'Activity not found' })
-          }
+          return { statusCode: 404, body: JSON.stringify({ error: 'Activity not found' }) }
         }
 
         const { error } = await supabase
@@ -153,33 +109,16 @@ export const handler: Handler = async (event) => {
         if (error) throw error
 
         await logger.audit('DELETE', 'member_activity', id, {
-          actorId: 'system',
-          actorEmail: 'system',
+          actorId: user!.id,
+          actorEmail: user!.email,
           description: `Deleted member activity ${id}`
         })
 
-        return {
-          statusCode: 204,
-          headers,
-          body: ''
-        }
+        return { statusCode: 204, body: '' }
       }
 
       default:
-        return {
-          statusCode: 405,
-          headers,
-          body: JSON.stringify({ error: 'Method not allowed' })
-        }
-    }
-  } catch (error) {
-    logger.error('crud', 'member_activities_api_error', 'Member activities API error', error instanceof Error ? error : new Error(String(error)))
-    return {
-      statusCode: 500,
-      headers,
-      body: JSON.stringify({
-        error: error instanceof Error ? error.message : 'Internal server error'
-      })
+        return { statusCode: 405, body: JSON.stringify({ error: 'Method not allowed' }) }
     }
   }
-}
+})

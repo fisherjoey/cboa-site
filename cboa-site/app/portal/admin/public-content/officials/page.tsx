@@ -95,7 +95,7 @@ export default function PublicOfficialsAdmin() {
       email: official.email || '',
       phone: official.phone || '',
       photo_url: official.photo_url || '',
-      level: official.level || 1,
+      level: Number(official.level) || 1,
       years_experience: official.years_experience || 0,
       bio: official.bio || '',
       certifications: official.certifications?.join(', ') || '',
@@ -223,7 +223,7 @@ export default function PublicOfficialsAdmin() {
       {/* Header */}
       <div className="mb-6 sm:mb-8 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold font-heading tracking-tight text-gray-900">Officials Profiles</h1>
+          <h1 className="text-xl sm:text-2xl font-bold font-heading tracking-tight text-gray-900">Officials Profiles</h1>
           <p className="mt-1 sm:mt-2 text-sm sm:text-base text-gray-600">
             Manage official profiles displayed on the public website
           </p>
@@ -245,7 +245,7 @@ export default function PublicOfficialsAdmin() {
                 priority: 0
               })
             }}
-            className="bg-orange-500 text-white px-3 py-2 sm:px-4 rounded-xl hover:bg-orange-600 flex items-center gap-2 text-sm sm:text-base"
+            className="bg-orange-500 text-white px-3 py-2 sm:px-4 rounded-lg hover:bg-orange-600 flex items-center gap-2 text-sm sm:text-base"
           >
             <IconPlus className="h-5 w-5" />
             Add Official
@@ -254,7 +254,7 @@ export default function PublicOfficialsAdmin() {
       </div>
 
       {/* Search and Level Filter */}
-      <div className="mb-6 bg-white rounded-xl border border-gray-200 dark:border-portal-border p-3 sm:p-4">
+      <div className="mb-6 bg-white rounded-lg border border-gray-200 dark:border-portal-border p-3 sm:p-4">
         <div className="flex-1 min-w-0">
           <input
             type="text"
@@ -295,7 +295,7 @@ export default function PublicOfficialsAdmin() {
 
       {/* Create New Official Form */}
       {isCreating && (
-        <div className="mb-6 bg-white rounded-xl border border-gray-200 dark:border-portal-border p-4 sm:p-6">
+        <div className="mb-6 bg-white rounded-lg border border-gray-200 dark:border-portal-border p-4 sm:p-6">
           <h2 className="text-lg sm:text-xl font-semibold mb-4">Add New Official</h2>
 
           <div className="space-y-4">
@@ -465,7 +465,7 @@ export default function PublicOfficialsAdmin() {
 
             if (isEditing && editingOfficial) {
               return (
-                <div key={official.id} className="bg-white rounded-xl border border-gray-200 dark:border-portal-border p-4 sm:p-6">
+                <div key={official.id} className="bg-white rounded-lg border border-gray-200 dark:border-portal-border p-4 sm:p-6">
                   <h3 className="text-lg sm:text-xl font-semibold mb-4">Edit Official</h3>
                   <div className="space-y-4">
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -616,7 +616,7 @@ export default function PublicOfficialsAdmin() {
                       <div className="flex items-start justify-between gap-2">
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 flex-wrap mb-1">
-                            <span className={`px-2 py-0.5 rounded text-xs font-medium ${getLevelColor(official.level)}`}>
+                            <span className={`px-2 py-0.5 rounded text-xs font-medium ${getLevelColor(Number(official.level) || 0)}`}>
                               <IconMedal className="inline h-3 w-3 mr-1" />
                               Level {official.level}
                             </span>
@@ -706,7 +706,7 @@ export default function PublicOfficialsAdmin() {
           })}
         </div>
       ) : (
-        <div className="text-center py-12 bg-white rounded-xl border border-gray-200 dark:border-portal-border">
+        <div className="text-center py-12 bg-white rounded-lg border border-gray-200 dark:border-portal-border">
           <IconUserCheck className="mx-auto h-12 w-12 text-gray-400" />
           <h3 className="mt-2 text-sm font-medium text-gray-900">No officials found</h3>
           <p className="mt-1 text-sm text-gray-500">

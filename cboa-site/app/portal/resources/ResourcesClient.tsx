@@ -42,6 +42,27 @@ import {
   IconLayoutGrid
 } from '@tabler/icons-react'
 
+// Simple accordion for resource category groups
+function ResourceCategoryAccordion({ label, count, icon: Icon, children }: {
+  label: string
+  count: number
+  icon: React.ComponentType<{ className?: string }>
+  children: React.ReactNode
+}) {
+  const [open, setOpen] = useState(true)
+  return (
+    <div>
+      <button onClick={() => setOpen(!open)} className="w-full flex items-center justify-start gap-2 px-3 py-2 text-left hover:bg-gray-50 dark:hover:bg-portal-hover/50 transition-colors">
+        <IconChevronDown className={`h-3.5 w-3.5 text-gray-400 transition-transform duration-200 ${open ? 'rotate-180' : ''}`} />
+        <Icon className="h-3.5 w-3.5 text-gray-400" />
+        <span className="text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide">{label}</span>
+        <span className="text-[10px] text-gray-400 dark:text-gray-500">{count}</span>
+      </button>
+      {open && children}
+    </div>
+  )
+}
+
 type ResourceType = 'file' | 'link' | 'video' | 'text'
 
 interface Resource {
@@ -518,7 +539,7 @@ export default function ResourcesClient() {
     // Check if editing this resource
     if (editingId === resource.id && editingData) {
       return (
-        <div key={resource.id} className="bg-white dark:bg-portal-surface rounded-xl border border-gray-200 dark:border-portal-border p-4 col-span-full">
+        <div key={resource.id} className="bg-white dark:bg-portal-surface rounded-lg border border-gray-200 dark:border-portal-border p-4 col-span-full">
           <div className="space-y-3">
             {/* Resource Type Selector */}
             <div>
@@ -673,211 +694,75 @@ export default function ResourcesClient() {
       }
     }
 
-    // Grid view card (always on mobile, optional on desktop)
-    // On mobile, always use card layout for better readability
-    if (viewMode === 'grid') {
-      return (
-        <div
-          key={resource.id}
-          id={`resource-${resource.id}`}
-          className="bg-white dark:bg-portal-surface rounded-xl border border-gray-200 dark:border-portal-border hover:border-orange-200 dark:hover:border-orange-800/40 hover:shadow-sm transition-shadow p-4 flex flex-col cursor-pointer"
-          onClick={handleResourceClick}
-        >
-          <div className="flex items-start gap-3 mb-3">
-            {videoThumbnail ? (
-              <div className="w-16 h-12 rounded-lg overflow-hidden flex-shrink-0 relative">
-                <img
-                  src={videoThumbnail}
-                  alt={resource.title}
-                  className="w-full h-full object-cover"
-                />
-                <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-30">
-                  <IconVideo className="h-5 w-5 text-white" />
-                </div>
-              </div>
-            ) : (
-              <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${resourceIcon.bg}`}>
-                <IconComponent className={`h-5 w-5 ${resourceIcon.color}`} />
-              </div>
-            )}
-            <div className="flex-1 min-w-0">
-              <h3 className="font-semibold text-gray-900 dark:text-white text-sm line-clamp-2">{resource.title}</h3>
-              <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                {formatDate(resource.lastUpdated)}
-              </div>
-            </div>
-          </div>
-          <div className="mt-auto flex items-center gap-1 pt-2 border-t border-gray-100 dark:border-portal-border" onClick={(e) => e.stopPropagation()}>
-            {resource.fileUrl && (
-              <a href={resource.fileUrl} download className="p-1.5 text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/30 rounded" title="Download">
-                <IconDownload className="h-4 w-4" />
-              </a>
-            )}
-            {resource.externalLink && (
-              <a href={resource.externalLink} target="_blank" rel="noopener noreferrer" className="p-1.5 text-blue-400 hover:bg-blue-900/30 rounded" title="Open in new tab">
-                <IconExternalLink className="h-4 w-4" />
-              </a>
-            )}
-            {canEdit && (
-              <>
-                <button onClick={() => startEditing(resource)} className="p-1.5 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-portal-hover rounded ml-auto" title="Edit">
-                  <IconEdit className="h-4 w-4" />
-                </button>
-                <button onClick={() => handleDelete(resource.id)} className="p-1.5 text-red-500 dark:text-red-400/70 hover:bg-red-50 dark:hover:bg-red-900/30 rounded" title="Delete">
-                  <IconTrash className="h-4 w-4" />
-                </button>
-              </>
-            )}
-            {isTextResource && (
-              <button onClick={() => toggleTextResourceExpanded(resource.id)} className="p-1.5 text-gray-400 dark:text-gray-500 hover:bg-gray-100 dark:hover:bg-portal-hover rounded ml-auto">
-                {isExpanded ? <IconChevronUp className="h-4 w-4" /> : <IconChevronDown className="h-4 w-4" />}
-              </button>
-            )}
-          </div>
-          {isTextResource && isExpanded && (
-            <div className="mt-3 pt-3 border-t border-gray-100 dark:border-portal-border prose prose-sm max-w-none" onClick={(e) => e.stopPropagation()}>
-              <HTMLViewer content={resource.description} />
-            </div>
-          )}
-        </div>
-      )
-    }
-
-    // List view row - renders as card on mobile, row on desktop
+    // Flat row — title wraps, primary action prominent, admin actions subtle
     return (
-      <div key={resource.id} id={`resource-${resource.id}`} className="bg-white dark:bg-portal-surface rounded-xl border border-gray-200 dark:border-portal-border hover:border-orange-200 dark:hover:border-orange-800/40 hover:shadow-sm transition-shadow cursor-pointer" onClick={handleResourceClick}>
-        {/* Mobile card layout */}
-        <div className="sm:hidden p-4">
-          <div className="flex items-start gap-3 mb-3">
-            {videoThumbnail ? (
-              <div className="w-12 h-9 rounded-lg overflow-hidden flex-shrink-0 relative">
-                <img src={videoThumbnail} alt={resource.title} className="w-full h-full object-cover" />
-                <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-30">
-                  <IconVideo className="h-4 w-4 text-white" />
-                </div>
-              </div>
-            ) : (
-              <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${resourceIcon.bg}`}>
-                <IconComponent className={`h-5 w-5 ${resourceIcon.color}`} />
-              </div>
-            )}
-            <div className="flex-1 min-w-0">
-              <h3 className="font-semibold text-gray-900 dark:text-white text-sm">{resource.title}</h3>
-              <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">{formatDate(resource.lastUpdated)}</div>
+      <div
+        key={resource.id}
+        id={`resource-${resource.id}`}
+        className={`px-3 py-2.5 cursor-pointer hover:bg-gray-50 dark:hover:bg-portal-hover/50 transition-colors ${
+          resource.featured ? 'bg-orange-50/50 dark:bg-orange-900/10' : ''
+        }`}
+        onClick={handleResourceClick}
+      >
+        <div className="flex items-start gap-2.5">
+          <div className={`w-8 h-8 rounded-md flex items-center justify-center flex-shrink-0 mt-0.5 ${resourceIcon.bg}`}>
+            <IconComponent className={`h-4 w-4 ${resourceIcon.color}`} />
+          </div>
+          <div className="flex-1 min-w-0">
+            <h3 className="font-medium text-sm text-gray-900 dark:text-white leading-snug">
+              {resource.title}
+              {resource.featured && (
+                <span className="ml-1.5 text-[9px] font-semibold uppercase tracking-wide text-orange-600 dark:text-orange-400">Featured</span>
+              )}
+            </h3>
+            <div className="flex items-center gap-2 text-[11px] text-gray-500 dark:text-gray-400 mt-0.5">
+              <span>{formatDate(resource.lastUpdated)}</span>
+              {resource.fileSize && <span>{resource.fileSize}</span>}
             </div>
           </div>
-          <div className="flex items-center gap-1 pt-2 border-t border-gray-100 dark:border-portal-border" onClick={(e) => e.stopPropagation()}>
+          {/* Primary action only — download or open */}
+          <div className="flex items-center gap-0.5 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
             {resource.fileUrl && (
-              <a href={resource.fileUrl} download className="p-1.5 text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/30 rounded" title="Download">
+              <a href={resource.fileUrl} download className="p-2 text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/30 rounded" title="Download">
                 <IconDownload className="h-4 w-4" />
               </a>
             )}
             {resource.externalLink && (
-              <a href={resource.externalLink} target="_blank" rel="noopener noreferrer" className="p-1.5 text-blue-400 hover:bg-blue-900/30 rounded" title="Open in new tab">
+              <a href={resource.externalLink} target="_blank" rel="noopener noreferrer" className="p-2 text-blue-400 hover:bg-blue-900/30 rounded" title="Open">
                 <IconExternalLink className="h-4 w-4" />
               </a>
             )}
             {canEdit && (
               <>
-                <button onClick={() => startEditing(resource)} className="p-1.5 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-portal-hover rounded ml-auto" title="Edit">
-                  <IconEdit className="h-4 w-4" />
+                <button onClick={() => startEditing(resource)} className="p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 rounded hidden sm:block" title="Edit">
+                  <IconEdit className="h-3.5 w-3.5" />
                 </button>
-                <button onClick={() => handleDelete(resource.id)} className="p-1.5 text-red-500 dark:text-red-400/70 hover:bg-red-50 dark:hover:bg-red-900/30 rounded" title="Delete">
-                  <IconTrash className="h-4 w-4" />
+                <button onClick={() => handleDelete(resource.id)} className="p-1.5 text-gray-400 hover:text-red-500 rounded hidden sm:block" title="Delete">
+                  <IconTrash className="h-3.5 w-3.5" />
                 </button>
               </>
             )}
             {isTextResource && (
-              <button onClick={() => toggleTextResourceExpanded(resource.id)} className="p-1.5 text-gray-400 dark:text-gray-500 hover:bg-gray-100 dark:hover:bg-portal-hover rounded ml-auto">
+              <button onClick={() => toggleTextResourceExpanded(resource.id)} className="p-1.5 text-gray-400 hover:bg-gray-100 dark:hover:bg-portal-hover rounded">
                 {isExpanded ? <IconChevronUp className="h-4 w-4" /> : <IconChevronDown className="h-4 w-4" />}
               </button>
             )}
           </div>
-          {isTextResource && isExpanded && (
-            <div className="mt-3 pt-3 border-t border-gray-100 dark:border-portal-border prose prose-sm max-w-none" onClick={(e) => e.stopPropagation()}>
-              <HTMLViewer content={resource.description} />
-            </div>
-          )}
-        </div>
-
-        {/* Desktop row layout */}
-        <div className="hidden sm:block">
-          <div className="p-4 flex items-center gap-4">
-            {videoThumbnail ? (
-              <div className="w-16 h-12 rounded-lg overflow-hidden flex-shrink-0 relative">
-                <img src={videoThumbnail} alt={resource.title} className="w-full h-full object-cover" />
-                <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-30">
-                  <IconVideo className="h-5 w-5 text-white" />
-                </div>
-              </div>
-            ) : (
-              <div className={`w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0 ${resourceIcon.bg}`}>
-                <IconComponent className={`h-6 w-6 ${resourceIcon.color}`} />
-              </div>
-            )}
-            <div className="flex-1 min-w-0">
-              <h3 className="font-semibold text-gray-900 dark:text-white break-words">{resource.title}</h3>
-              <div className="flex flex-wrap items-center gap-2 text-xs text-gray-500 dark:text-gray-400 mt-1">
-                <span>{formatDate(resource.lastUpdated)}</span>
-                {resource.fileSize && <span>{resource.fileSize}</span>}
-                {resource.accessLevel && resource.accessLevel !== 'all' && (
-                  <span className="bg-blue-900/40 text-blue-400 px-2 py-0.5 rounded">{resource.accessLevel}</span>
-                )}
-              </div>
-            </div>
-            <div className="flex items-center gap-1 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
-              {resource.fileUrl && (
-                <a href={resource.fileUrl} download className="p-2 text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/30 rounded" title="Download">
-                  <IconDownload className="h-5 w-5" />
-                </a>
-              )}
-              {resource.externalLink && (
-                <a href={resource.externalLink} target="_blank" rel="noopener noreferrer" className="p-2 text-blue-400 hover:bg-blue-900/30 rounded" title="Open in new tab">
-                  <IconExternalLink className="h-5 w-5" />
-                </a>
-              )}
-              {canEdit && (
-                <>
-                  <button onClick={() => startEditing(resource)} className="p-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-portal-hover rounded" title="Edit">
-                    <IconEdit className="h-5 w-5" />
-                  </button>
-                  <button onClick={() => handleDelete(resource.id)} className="p-2 text-red-500 dark:text-red-400/70 hover:bg-red-50 dark:hover:bg-red-900/30 rounded" title="Delete">
-                    <IconTrash className="h-5 w-5" />
-                  </button>
-                </>
-              )}
-              {isTextResource && (
-                <div className="p-2 cursor-pointer hover:bg-gray-100 dark:hover:bg-portal-hover rounded" onClick={() => toggleTextResourceExpanded(resource.id)}>
-                  {isExpanded ? <IconChevronUp className="h-5 w-5 text-gray-400 dark:text-gray-500" /> : <IconChevronDown className="h-5 w-5 text-gray-400 dark:text-gray-500" />}
-                </div>
-              )}
-            </div>
-          </div>
-          {isTextResource && isExpanded && (
-            <div className="px-4 pb-4 border-t border-gray-100 dark:border-portal-border" onClick={(e) => e.stopPropagation()}>
-              <div className="pt-4 prose prose-sm max-w-none">
-                <HTMLViewer content={resource.description} />
-              </div>
-            </div>
-          )}
         </div>
       </div>
     )
   }
 
   return (
-    <div className="px-4 py-5 sm:p-6 portal-animate">
+    <div className="px-3 py-3 sm:p-5 portal-animate">
 
-      <div className="mb-6 sm:mb-8 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-bold font-heading tracking-tight text-gray-900 dark:text-white">Resources</h1>
-          <p className="mt-1 sm:mt-2 text-sm sm:text-base text-gray-600 dark:text-gray-300">Training materials, forms, and official documents</p>
-        </div>
+      {/* Header — compact */}
+      <div className="mb-3 flex items-center justify-between gap-2">
+        <h1 className="text-xl sm:text-2xl font-bold font-heading tracking-tight text-gray-900 dark:text-white">Resources</h1>
         {canEdit && !isCreating && (
           <button
             onClick={() => {
               setIsCreating(true)
-              // Pre-select the category based on the current tab
               const category = selectedCategory === 'all' ? 'rulebooks' : selectedCategory
               setNewResource({
                 title: '',
@@ -887,17 +772,18 @@ export default function ResourcesClient() {
                 accessLevel: 'all'
               })
             }}
-            className="bg-orange-500 text-white px-3 py-2 sm:px-4 rounded-xl shadow-sm shadow-orange-500/20 hover:bg-orange-600 flex items-center gap-2 text-sm sm:text-base"
+            className="bg-orange-500 text-white px-3 py-1.5 rounded-lg hover:bg-orange-600 flex items-center gap-1.5 text-sm flex-shrink-0"
           >
-            <IconPlus className="h-5 w-5" />
-            Add Resource
+            <IconPlus className="h-4 w-4" />
+            <span className="hidden sm:inline">Add Resource</span>
+            <span className="sm:hidden">Add</span>
           </button>
         )}
       </div>
 
       {/* Create New Resource Form */}
       {isCreating && (
-        <div className="mb-6 bg-white dark:bg-portal-surface rounded-xl border border-gray-200 dark:border-portal-border p-4 sm:p-6">
+        <div className="mb-6 bg-white dark:bg-portal-surface rounded-lg border border-gray-200 dark:border-portal-border p-4 sm:p-6">
           <h2 className="text-lg sm:text-xl font-semibold mb-4 text-gray-900 dark:text-white">Add New Resource</h2>
 
           <div className="space-y-4">
@@ -1127,208 +1013,100 @@ export default function ResourcesClient() {
         </div>
       )}
 
-      {/* Search and Category Filter */}
-      <PortalFilterBar
-        searchValue={searchTerm}
-        onSearchChange={setSearchTerm}
-        searchPlaceholder="Search resources..."
-        categories={categories}
-        selectedCategory={selectedCategory}
-        onCategoryChange={setSelectedCategory}
-        sortOptions={[
-          { value: 'date', label: 'Date' },
-          { value: 'title', label: 'Title' },
-          { value: 'type', label: 'Type' },
-        ]}
-        sortValue={sortBy}
-        onSortChange={(val) => setSortBy(val as 'title' | 'date' | 'type')}
-        sortDirection={sortOrder}
-        onSortDirectionChange={setSortOrder}
-        viewMode={viewMode}
-        onViewModeChange={setViewMode}
-        extraControls={selectedCategory === 'all' ? (
-          <label className="flex items-center gap-1.5 text-sm text-gray-600 dark:text-gray-300">
+      {/* Search + Sort — compact inline */}
+      <div className="mb-2 flex gap-2">
+        <div className="flex-1 relative">
+          <IconFile className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-400" />
+          <input
+            type="text"
+            placeholder="Search resources..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full pl-8 pr-3 py-1.5 text-sm border border-gray-300 dark:border-portal-border rounded-md bg-white dark:bg-portal-surface text-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-orange-500"
+          />
+        </div>
+        <select
+          value={sortBy}
+          onChange={(e) => setSortBy(e.target.value as 'title' | 'date' | 'type')}
+          className="text-xs border border-gray-300 dark:border-portal-border bg-white dark:bg-portal-surface text-gray-700 dark:text-gray-300 rounded-md pl-2 pr-6 py-1.5 focus:outline-none focus:ring-1 focus:ring-orange-500"
+        >
+          <option value="date">Date</option>
+          <option value="title">Title</option>
+          <option value="type">Type</option>
+        </select>
+        <button
+          onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
+          className="p-1.5 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 border border-gray-300 dark:border-portal-border rounded-md bg-white dark:bg-portal-surface"
+        >
+          {sortOrder === 'asc' ? <IconSortAscending className="h-4 w-4" /> : <IconSortDescending className="h-4 w-4" />}
+        </button>
+        <button
+          onClick={() => setViewMode(viewMode === 'list' ? 'grid' : 'list')}
+          className="p-1.5 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 border border-gray-300 dark:border-portal-border rounded-md bg-white dark:bg-portal-surface"
+        >
+          {viewMode === 'list' ? <IconLayoutGrid className="h-4 w-4" /> : <IconLayoutList className="h-4 w-4" />}
+        </button>
+      </div>
+
+      {/* Category pills — horizontal scroll */}
+      <div className="mb-3 flex items-center gap-1.5 overflow-x-auto scrollbar-hide pb-1">
+        {categories.map(cat => {
+          const Icon = cat.icon
+          return (
+            <button
+              key={cat.value}
+              onClick={() => setSelectedCategory(cat.value)}
+              className={`flex-shrink-0 flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-medium transition-all ${
+                selectedCategory === cat.value
+                  ? 'bg-orange-500 text-white'
+                  : 'bg-gray-100 dark:bg-portal-hover text-gray-600 dark:text-gray-400'
+              }`}
+            >
+              <Icon className="h-3 w-3" />
+              {cat.label}
+            </button>
+          )
+        })}
+        {selectedCategory === 'all' && (
+          <label className="flex-shrink-0 flex items-center gap-1.5 ml-2 text-xs text-gray-500 dark:text-gray-400">
             <input
               type="checkbox"
               checked={groupByCategory}
               onChange={(e) => setGroupByCategory(e.target.checked)}
-              className="rounded text-orange-500 focus:ring-orange-500"
+              className="rounded text-orange-500 focus:ring-orange-500 h-3.5 w-3.5"
             />
-            Group by category
+            Group
           </label>
-        ) : undefined}
-      />
-
-      {/* Featured Resources */}
-      {filteredResources.some(r => r.featured) && (
-        <div className="mb-6">
-          <h2 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white mb-3">Featured Resources</h2>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4">
-            {filteredResources.filter(r => r.featured).map(resource => {
-              const resourceIcon = getResourceIcon(resource.resourceType || 'file')
-              const IconComponent = resourceIcon.icon
-              const isTextResource = resource.resourceType === 'text'
-              const isVideo = resource.resourceType === 'video'
-              const videoThumbnail = isVideo ? getVideoThumbnail(resource.externalLink) : null
-
-              // Handler for text resources - scroll to and expand in main section
-              const handleTextResourceClick = () => {
-                // Expand the text resource
-                setExpandedTextResources(prev => {
-                  const newSet = new Set(prev)
-                  newSet.add(resource.id)
-                  return newSet
-                })
-                // Scroll to the resource after a brief delay
-                setTimeout(() => {
-                  const element = document.getElementById(`resource-${resource.id}`)
-                  if (element) {
-                    element.scrollIntoView({ behavior: 'smooth', block: 'start' })
-                    element.classList.add('ring-2', 'ring-orange-400')
-                    setTimeout(() => element.classList.remove('ring-2', 'ring-orange-400'), 2000)
-                  }
-                }, 100)
-              }
-
-              // Handle clicking on featured resource
-              const handleFeaturedClick = () => {
-                if (isTextResource) {
-                  handleTextResourceClick()
-                } else if (resource.fileUrl || resource.externalLink) {
-                  setViewingResource(resource)
-                }
-              }
-
-              return (
-                <div
-                  key={resource.id}
-                  className="bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-xl p-3 sm:p-4 cursor-pointer hover:bg-orange-100 dark:hover:bg-orange-900/30 transition-colors"
-                  onClick={handleFeaturedClick}
-                >
-                  <div className="flex items-center gap-3">
-                    {/* Thumbnail/Icon */}
-                    {videoThumbnail ? (
-                      <div className="w-16 h-12 rounded-lg overflow-hidden flex-shrink-0 relative">
-                        <img src={videoThumbnail} alt={resource.title} className="w-full h-full object-cover" />
-                        <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-30">
-                          <IconVideo className="h-5 w-5 text-white" />
-                        </div>
-                      </div>
-                    ) : (
-                      <div className={`w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0 ${resourceIcon.bg}`}>
-                        <IconComponent className={`h-6 w-6 ${resourceIcon.color}`} />
-                      </div>
-                    )}
-
-                    {/* Content */}
-                    <div className="flex-1 min-w-0">
-                      <h3 className="font-semibold text-gray-900 dark:text-white">{resource.title}</h3>
-                      <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                        {formatDate(resource.lastUpdated)}
-                        {resource.fileSize && <span className="ml-2">{resource.fileSize}</span>}
-                      </div>
-                    </div>
-
-                    {/* Actions */}
-                    <div className="flex items-center gap-1 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
-                      {resource.fileUrl && (
-                        <a
-                          href={resource.fileUrl}
-                          download
-                          className="p-2 text-orange-600 dark:text-orange-400 hover:bg-orange-100 dark:hover:bg-orange-900/40 rounded"
-                          title="Download"
-                        >
-                          <IconDownload className="h-5 w-5" />
-                        </a>
-                      )}
-                      {resource.externalLink && (
-                        <a
-                          href={resource.externalLink}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="p-2 text-blue-400 hover:bg-blue-900/30 rounded"
-                          title="Open in new tab"
-                        >
-                          <IconExternalLink className="h-5 w-5" />
-                        </a>
-                      )}
-                      {canEdit && (
-                        <>
-                          <button
-                            onClick={() => startEditing(resource)}
-                            className="p-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-portal-hover rounded"
-                            title="Edit"
-                          >
-                            <IconEdit className="h-5 w-5" />
-                          </button>
-                          <button
-                            onClick={() => handleDelete(resource.id)}
-                            className="p-2 text-red-500 dark:text-red-400/70 hover:bg-red-50 dark:hover:bg-red-900/30 rounded"
-                            title="Delete"
-                          >
-                            <IconTrash className="h-5 w-5" />
-                          </button>
-                        </>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              )
-            })}
-          </div>
-        </div>
-      )}
-
-      {/* Resources List */}
-      <div className="space-y-6">
-        {/* Grouped View */}
-        {groupedResources ? (
-          Object.entries(groupedResources).map(([categoryKey, { label, resources: categoryResources }]) => (
-            <div key={categoryKey}>
-              <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-3 flex items-center gap-2">
-                {(() => {
-                  const cat = categories.find(c => c.value === categoryKey)
-                  const CatIcon = cat?.icon || IconFile
-                  return <CatIcon className="h-5 w-5 text-gray-500 dark:text-gray-400" />
-                })()}
-                {label}
-                <span className="text-sm font-normal text-gray-500 dark:text-gray-400">({categoryResources.length})</span>
-              </h2>
-              <div className={viewMode === 'grid'
-                ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4'
-                : 'grid grid-cols-1 gap-3 sm:block sm:space-y-3'
-              }>
-                {categoryResources.map(resource => renderResource(resource))}
-              </div>
-            </div>
-          ))
-        ) : (
-          <>
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-              {selectedCategory === 'all' ? 'All Resources' : categories.find(c => c.value === selectedCategory)?.label}
-              <span className="text-sm font-normal text-gray-500 dark:text-gray-400 ml-2">
-                ({filteredResources.length})
-              </span>
-            </h2>
-            <div className={viewMode === 'grid'
-              ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4'
-              : 'grid grid-cols-1 gap-3 sm:block sm:space-y-3'
-            }>
-              {filteredResources.map(resource => renderResource(resource))}
-            </div>
-          </>
         )}
       </div>
 
-      {filteredResources.length === 0 && (
-        <div className="text-center py-12 bg-white dark:bg-portal-surface rounded-lg">
-          <IconFile className="mx-auto h-12 w-12 text-gray-400 dark:text-gray-500" />
-          <h3 className="mt-2 text-sm font-medium text-gray-900 dark:text-white">No resources found</h3>
-          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-            {canEdit
-              ? 'Click "Add Resource" to add your first resource.'
-              : 'Resources will appear here once added by administrators.'}
+      {/* Resources List — flat rows in single container */}
+      {filteredResources.length === 0 ? (
+        <div className="text-center py-8 bg-white dark:bg-portal-surface rounded-lg border border-gray-200 dark:border-portal-border">
+          <IconFile className="mx-auto h-8 w-8 text-gray-400 dark:text-gray-500" />
+          <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
+            {canEdit ? 'No resources found. Click "Add" to create one.' : 'Resources will appear here.'}
           </p>
+        </div>
+      ) : groupedResources ? (
+        /* Grouped view — accordion per category */
+        <div className="bg-white dark:bg-portal-surface rounded-md border border-gray-200 dark:border-portal-border divide-y divide-gray-200 dark:divide-portal-border">
+          {Object.entries(groupedResources).map(([categoryKey, { label, resources: categoryResources }]) => {
+            const cat = categories.find(c => c.value === categoryKey)
+            const CatIcon = cat?.icon || IconFile
+            return (
+              <ResourceCategoryAccordion key={categoryKey} label={label} count={categoryResources.length} icon={CatIcon}>
+                <div className="divide-y divide-gray-100 dark:divide-portal-border/50">
+                  {categoryResources.map(resource => renderResource(resource))}
+                </div>
+              </ResourceCategoryAccordion>
+            )
+          })}
+        </div>
+      ) : (
+        /* Flat list */
+        <div className="bg-white dark:bg-portal-surface rounded-md border border-gray-200 dark:border-portal-border divide-y divide-gray-100 dark:divide-portal-border">
+          {filteredResources.map(resource => renderResource(resource))}
         </div>
       )}
 

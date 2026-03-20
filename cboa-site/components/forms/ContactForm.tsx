@@ -8,7 +8,7 @@ import { z } from 'zod'
 import Link from 'next/link'
 import Button from '@/components/ui/Button'
 import { IconSend, IconCheck, IconAlertCircle, IconBulb, IconX, IconShieldCheck, IconMail, IconQuestionMark, IconLink, IconChevronDown, IconPlus, IconTrash } from '@tabler/icons-react'
-import { flagDevice, isDeviceFlagged } from '@/lib/deviceFlag'
+import { isDeviceFlagged } from '@/lib/deviceFlag'
 
 // Pattern detection for suggesting the right form
 type FormSuggestion = {
@@ -379,10 +379,10 @@ export default function ContactForm() {
       setAttachmentUrls([''])
       setAttachmentsOpen(false)
 
-      // Flag the device so future submissions always require verification
-      if (verificationRequired) {
-        await flagDevice()
-        setDeviceFlagged(true)
+      // Verification succeeded — clear any device flag so future sessions are trusted
+      if (verificationRequired && deviceFlagged) {
+        // Device was previously flagged but user verified successfully — no longer needed
+        setDeviceFlagged(false)
       }
 
       // Reset verification state for next submission
@@ -667,7 +667,7 @@ export default function ContactForm() {
               <p className="font-semibold text-cboa-blue">Email Verification Required</p>
               <p className="text-gray-600 text-sm mt-1">
                 To ensure we can follow up on your message, please verify your email address.
-                We&apos;ll send a 6-digit code to your email.
+                We&apos;ll email you a 6-digit code — enter it below to unlock the submit button.
               </p>
 
               {verificationStatus === 'idle' && (
@@ -677,7 +677,7 @@ export default function ContactForm() {
                   className="mt-3 inline-flex items-center gap-2 px-4 py-2.5 bg-cboa-orange text-white text-sm font-medium rounded-lg hover:bg-orange-600 transition-colors shadow-sm"
                 >
                   <IconMail size={16} />
-                  Send Verification Code
+                  Email Me a Verification Code
                 </button>
               )}
 

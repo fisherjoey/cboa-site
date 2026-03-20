@@ -21,6 +21,7 @@ export type LogCategory =
   | 'system'
   | 'admin'
   | 'osa'
+  | 'invite'
 
 export type AuditAction =
   | 'CREATE'
@@ -53,6 +54,11 @@ export type AuditEntityType =
   | 'email'
   | 'file'
   | 'osa'
+  | 'executive_team'
+  | 'scheduler_update'
+  | 'news'
+  | 'page'
+  | 'training_event'
 
 export interface LogOptions {
   userId?: string

@@ -1,12 +1,19 @@
 import { Handler } from '@netlify/functions'
-import { createClient } from '@supabase/supabase-js'
+import { supabase, getCorsHeaders } from './_shared/handler'
 import { Logger } from '../../lib/logger'
-
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
-const supabase = createClient(supabaseUrl, supabaseServiceKey, {
-  auth: { autoRefreshToken: false, persistSession: false }
-})
+import {
+  EMAIL_ANNOUNCEMENTS,
+  ORG_NAME,
+  ORG_SHORT_NAME,
+  ORG_TAGLINE,
+  ORG_LOCATION,
+  ORG_LOGO_URL,
+  SITE_URL,
+  getContactUrl,
+  getPortalUrl,
+  getCopyrightYear,
+  EMAIL_SUBJECTS,
+} from '../../lib/siteConfig'
 
 // Microsoft Graph API for sending emails
 async function getMicrosoftAccessToken(): Promise<string> {
@@ -38,7 +45,7 @@ async function sendEmailViaMicrosoftGraph(
   subject: string,
   htmlContent: string
 ): Promise<void> {
-  const senderEmail = 'announcements@cboa.ca'
+  const senderEmail = EMAIL_ANNOUNCEMENTS
   const graphEndpoint = `https://graph.microsoft.com/v1.0/users/${senderEmail}/sendMail`
 
   const emailMessage = {
@@ -66,7 +73,6 @@ async function sendEmailViaMicrosoftGraph(
 }
 
 function generateInviteEmailHtml(inviteUrl: string, name?: string): string {
-  const siteUrl = 'https://cboa.ca'
   return `
 <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: #f5f5f5; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;">
   <tr>
@@ -74,41 +80,41 @@ function generateInviteEmailHtml(inviteUrl: string, name?: string): string {
       <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="max-width: 600px; width: 100%; margin: 0 auto; background-color: #ffffff;" align="center">
         <tr>
           <td style="background-color: #1f2937; padding: 24px 20px; border-bottom: 3px solid #F97316; text-align: center;">
-            <img src="https://i.imgur.com/BQe360J.png" alt="CBOA Logo" style="max-width: 70px; height: auto; display: inline-block; margin-bottom: 12px;">
-            <h1 style="color: #ffffff; margin: 0 0 4px 0; font-size: 18px; font-weight: 700;">Calgary Basketball Officials Association</h1>
-            <p style="color: #ffffff; margin: 0; font-size: 14px; opacity: 0.95;">Excellence in Basketball Officiating</p>
+            <img src="${ORG_LOGO_URL}" alt="Logo" style="max-width: 70px; height: auto; display: inline-block; margin-bottom: 12px;">
+            <h1 style="color: #ffffff; margin: 0 0 4px 0; font-size: 18px; font-weight: 700;">${ORG_NAME}</h1>
+            <p style="color: #ffffff; margin: 0; font-size: 14px; opacity: 0.95;">${ORG_TAGLINE}</p>
           </td>
         </tr>
         <tr>
           <td style="padding: 30px 20px; color: #333333; font-size: 16px; line-height: 1.6;">
-            <h1 style="color: #003DA5; font-size: 24px; margin-top: 0; margin-bottom: 16px;">You're Invited to Join CBOA!</h1>
+            <h1 style="color: #003DA5; font-size: 24px; margin-top: 0; margin-bottom: 16px;">${EMAIL_SUBJECTS.invite.replace('!', '')}!</h1>
             <p style="margin: 0 0 16px 0;">${name ? `Hi ${name.split(' ')[0]},` : 'Hello,'}</p>
-            <p style="margin: 0 0 16px 0;">You have been invited to create an account on the <strong style="color: #003DA5;">Calgary Basketball Officials Association</strong> member portal.</p>
+            <p style="margin: 0 0 16px 0;">You have been invited to create an account on the <strong style="color: #003DA5;">${ORG_NAME}</strong> member portal.</p>
             <p style="margin: 0 0 16px 0;">As a member, you'll have access to:</p>
             <ul style="margin: 0 0 16px 0; padding-left: 20px;">
               <li style="margin-bottom: 8px;"><strong style="color: #003DA5;">Resources</strong> - Training materials, rulebooks, and guides</li>
-              <li style="margin-bottom: 8px;"><strong style="color: #003DA5;">The Bounce</strong> - Our official newsletter</li>
+              <li style="margin-bottom: 8px;"><strong style="color: #003DA5;">Newsletter</strong> - Our official newsletter</li>
               <li style="margin-bottom: 8px;"><strong style="color: #003DA5;">Calendar</strong> - Upcoming events and training sessions</li>
               <li style="margin-bottom: 8px;"><strong style="color: #003DA5;">Rule Modifications</strong> - League-specific rule changes</li>
             </ul>
             <p style="text-align: center; margin: 24px 0;">
               <a href="${inviteUrl}" style="display: inline-block; padding: 14px 28px; background-color: #F97316; color: #ffffff !important; text-decoration: none; border-radius: 8px; font-weight: 600;">Accept Invitation</a>
             </p>
-            <p style="margin: 0;">Best regards,<br><strong style="color: #003DA5;">CBOA Executive Board</strong></p>
+            <p style="margin: 0;">Best regards,<br><strong style="color: #003DA5;">${ORG_SHORT_NAME} Executive Board</strong></p>
           </td>
         </tr>
         <tr>
           <td style="background-color: #1F2937; color: #D1D5DB; padding: 30px 20px; text-align: center; font-size: 14px; border-top: 3px solid #F97316;">
-            <p style="margin: 0 0 10px 0; font-weight: 600; color: #ffffff;">Calgary Basketball Officials Association</p>
-            <p style="margin: 0 0 15px 0;">Calgary, Alberta, Canada</p>
+            <p style="margin: 0 0 10px 0; font-weight: 600; color: #ffffff;">${ORG_NAME}</p>
+            <p style="margin: 0 0 15px 0;">${ORG_LOCATION}</p>
             <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin: 20px auto;">
               <tr>
-                <td style="padding: 0 8px;"><a href="${siteUrl}" style="color: #F97316; text-decoration: none;">Website</a></td>
-                <td style="padding: 0 8px;"><a href="${siteUrl}/portal" style="color: #F97316; text-decoration: none;">Member Portal</a></td>
-                <td style="padding: 0 8px;"><a href="${siteUrl}/contact?category=membership" style="color: #F97316; text-decoration: none;">Contact Us</a></td>
+                <td style="padding: 0 8px;"><a href="${SITE_URL}" style="color: #F97316; text-decoration: none;">Website</a></td>
+                <td style="padding: 0 8px;"><a href="${getPortalUrl()}" style="color: #F97316; text-decoration: none;">Member Portal</a></td>
+                <td style="padding: 0 8px;"><a href="${getContactUrl('membership')}" style="color: #F97316; text-decoration: none;">Contact Us</a></td>
               </tr>
             </table>
-            <p style="margin: 20px 0 0 0; font-size: 13px; color: #9ca3af;">&copy; 2025 Calgary Basketball Officials Association. All rights reserved.</p>
+            <p style="margin: 20px 0 0 0; font-size: 13px; color: #9ca3af;">&copy; ${getCopyrightYear()} ${ORG_NAME}. All rights reserved.</p>
           </td>
         </tr>
       </table>
@@ -121,11 +127,8 @@ function generateInviteEmailHtml(inviteUrl: string, name?: string): string {
 export const handler: Handler = async (event) => {
   const logger = Logger.fromEvent('members', event)
 
-  const headers = {
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Headers': 'Content-Type',
-    'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS'
-  }
+  const origin = event.headers.origin || event.headers.Origin
+  const headers = getCorsHeaders(origin, ['GET', 'POST', 'PUT', 'DELETE'])
 
   // Handle CORS preflight
   if (event.httpMethod === 'OPTIONS') {
@@ -213,27 +216,29 @@ export const handler: Handler = async (event) => {
           .from('members')
           .select('*')
           .order('name', { ascending: true })
+          .limit(1000)
 
         if (error) throw error
 
         // Fetch auth users to check who has actually signed in
-        const { data: { users: authUsers } } = await supabase.auth.admin.listUsers()
+        // Paginate to handle any number of users, build a Map for O(1) lookups
+        const signedInUserIds = new Set<string>()
+        let page = 1
+        const perPage = 1000
+        while (true) {
+          const { data: { users } } = await supabase.auth.admin.listUsers({ page, perPage })
+          for (const u of users || []) {
+            if (u.last_sign_in_at) signedInUserIds.add(u.id)
+          }
+          if (!users || users.length < perPage) break
+          page++
+        }
 
         // Add account_setup_complete flag to each member
-        const membersWithStatus = data?.map(member => {
-          let accountSetupComplete = false
-
-          if (member.user_id) {
-            const authUser = authUsers?.find(u => u.id === member.user_id)
-            // Account is complete if user has signed in at least once
-            accountSetupComplete = !!authUser?.last_sign_in_at
-          }
-
-          return {
-            ...member,
-            account_setup_complete: accountSetupComplete
-          }
-        }) || []
+        const membersWithStatus = data?.map(member => ({
+          ...member,
+          account_setup_complete: !!(member.user_id && signedInUserIds.has(member.user_id))
+        })) || []
 
         return {
           statusCode: 200,
@@ -290,7 +295,7 @@ export const handler: Handler = async (event) => {
         } else if (!skipInvite) {
           // Create auth user and send invite
           try {
-            const siteUrl = 'https://cboa.ca'
+            const siteUrl = SITE_URL
             const { data: linkData, error: linkError } = await supabase.auth.admin.generateLink({
               type: 'invite',
               email: email.toLowerCase(),
@@ -309,7 +314,7 @@ export const handler: Handler = async (event) => {
               return {
                 statusCode: 400,
                 headers,
-                body: JSON.stringify({ error: `Failed to create auth user: ${linkError.message}` })
+                body: JSON.stringify({ error: 'Failed to create auth user' })
               }
             }
 
@@ -321,7 +326,7 @@ export const handler: Handler = async (event) => {
               try {
                 const msToken = await getMicrosoftAccessToken()
                 const emailHtml = generateInviteEmailHtml(inviteUrl, name)
-                await sendEmailViaMicrosoftGraph(msToken, email, "You're Invited to Join CBOA!", emailHtml)
+                await sendEmailViaMicrosoftGraph(msToken, email, EMAIL_SUBJECTS.invite, emailHtml)
                 inviteSent = true
                 logger.info('crud', 'create_member_invite_sent', `Invite email sent to ${email}`, {
                   metadata: { email, authUserId }
@@ -534,7 +539,7 @@ export const handler: Handler = async (event) => {
       statusCode: 500,
       headers,
       body: JSON.stringify({
-        error: error instanceof Error ? error.message : 'Internal server error'
+        error: 'Internal server error'
       })
     }
   }

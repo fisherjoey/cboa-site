@@ -21,21 +21,7 @@ import Step5Review from './wizard/Step5Review'
 // Constants
 // ============================================
 
-const PROVINCES = [
-  { value: 'AB', label: 'Alberta' },
-  { value: 'BC', label: 'British Columbia' },
-  { value: 'SK', label: 'Saskatchewan' },
-  { value: 'MB', label: 'Manitoba' },
-  { value: 'ON', label: 'Ontario' },
-  { value: 'QC', label: 'Quebec' },
-  { value: 'NB', label: 'New Brunswick' },
-  { value: 'NS', label: 'Nova Scotia' },
-  { value: 'PE', label: 'Prince Edward Island' },
-  { value: 'NL', label: 'Newfoundland and Labrador' },
-  { value: 'NT', label: 'Northwest Territories' },
-  { value: 'NU', label: 'Nunavut' },
-  { value: 'YT', label: 'Yukon' },
-]
+import { PROVINCES } from '@/lib/constants'
 
 const STORAGE_KEY = 'osa-form-draft'
 
@@ -193,6 +179,8 @@ const osaFormSchema = z.object({
         }
         if (!league.leagueLevelOfPlay || league.leagueLevelOfPlay.length === 0) {
           ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Please select level of play', path: ['leagues', index, 'leagueLevelOfPlay'] })
+        } else if (league.leagueLevelOfPlay.some(v => v === 'Other')) {
+          ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Please specify the "Other" level of play', path: ['leagues', index, 'leagueLevelOfPlay'] })
         }
       })
     }
@@ -234,6 +222,8 @@ const osaFormSchema = z.object({
         }
         if (!tournament.tournamentLevelOfPlay || tournament.tournamentLevelOfPlay.length === 0) {
           ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Please select level of play', path: ['tournaments', index, 'tournamentLevelOfPlay'] })
+        } else if (tournament.tournamentLevelOfPlay.some(v => v === 'Other')) {
+          ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Please specify the "Other" level of play', path: ['tournaments', index, 'tournamentLevelOfPlay'] })
         }
       })
     }
@@ -275,6 +265,8 @@ const osaFormSchema = z.object({
         }
         if (!exhibition.exhibitionLevelOfPlay || exhibition.exhibitionLevelOfPlay.length === 0) {
           ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Please select level of play', path: ['exhibitions', index, 'exhibitionLevelOfPlay'] })
+        } else if (exhibition.exhibitionLevelOfPlay.some(v => v === 'Other')) {
+          ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Please specify the "Other" level of play', path: ['exhibitions', index, 'exhibitionLevelOfPlay'] })
         }
       })
     }
@@ -362,7 +354,7 @@ export default function OSARequestFormWizard() {
     setValue,
     formState: { errors }
   } = useForm<OSAFormData>({
-    resolver: zodResolver(osaFormSchema),
+    resolver: zodResolver(osaFormSchema) as any,
     defaultValues: getDefaultValues(),
     mode: 'onTouched',
   })
@@ -587,7 +579,7 @@ export default function OSARequestFormWizard() {
   return (
     <div ref={formRef}>
     <Card>
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+      <form onSubmit={handleSubmit(onSubmit as any)} className="space-y-6">
         {/* Progress Indicator */}
         <ProgressIndicator
           currentStep={currentStep}

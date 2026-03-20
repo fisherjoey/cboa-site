@@ -1,29 +1,25 @@
 import { Handler } from '@netlify/functions'
-import { createClient } from '@supabase/supabase-js'
+import { supabase as supabaseAdmin, getCorsHeaders } from './_shared/handler'
+import { checkRateLimit, getClientIp } from './_shared/rateLimit'
 import { Logger } from '../../lib/logger'
-
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
-
-const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
-  auth: {
-    autoRefreshToken: false,
-    persistSession: false
-  }
-})
 
 export const handler: Handler = async (event) => {
   const logger = Logger.fromEvent('check-migrated-user', event)
 
+  const origin = event.headers.origin || event.headers.Origin
   const headers = {
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Headers': 'Content-Type',
-    'Access-Control-Allow-Methods': 'GET, OPTIONS',
+    ...getCorsHeaders(origin, ['GET']),
     'Content-Type': 'application/json'
   }
 
   if (event.httpMethod === 'OPTIONS') {
     return { statusCode: 200, headers, body: '' }
+  }
+
+  // Rate limit: 10 checks per minute per IP
+  const clientIp = getClientIp(event.headers)
+  if (checkRateLimit(clientIp, { maxRequests: 10, windowMs: 60_000, prefix: 'check-user' })) {
+    return { statusCode: 429, headers, body: JSON.stringify({ error: 'Too many requests' }) }
   }
 
   if (event.httpMethod !== 'GET') {

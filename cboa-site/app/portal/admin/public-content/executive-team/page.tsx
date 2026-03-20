@@ -170,7 +170,7 @@ export default function ExecutiveTeamAdmin() {
       {/* Header */}
       <div className="mb-6 sm:mb-8 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">Executive Team</h1>
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">Executive Team</h1>
           <p className="mt-1 sm:mt-2 text-sm sm:text-base text-gray-600 dark:text-gray-300">
             Manage executive team members displayed on the About page
           </p>

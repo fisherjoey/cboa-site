@@ -1,10 +1,8 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { IconGavel, IconCalendar, IconFilter, IconSearch, IconPlus, IconEdit, IconTrash, IconDeviceFloppy, IconX, IconSortAscending, IconSortDescending } from '@tabler/icons-react'
-import PortalFilterBar from '@/components/portal/PortalFilterBar'
+import { IconGavel, IconSearch, IconPlus, IconEdit, IconTrash, IconDeviceFloppy, IconX, IconChevronDown } from '@tabler/icons-react'
 import { Accordion, AccordionButton, AccordionPanel, AccordionChevron } from '@/components/ui/Accordion'
-import Card from '@/components/ui/Card'
 import { ContentItem } from '@/lib/content'
 import { useRole } from '@/contexts/RoleContext'
 import { TinyMCEEditor, HTMLViewer } from '@/components/TinyMCEEditor'
@@ -12,6 +10,27 @@ import { ruleModificationsAPI } from '@/lib/api'
 import { useToast } from '@/hooks/useToast'
 import { parseAPIError, sanitize, ValidationError } from '@/lib/errorHandling'
 import { getFieldError } from '@/lib/portalValidation'
+
+// Category group accordion for rule modifications
+function RuleCategoryGroup({ category, count, color, children }: {
+  category: string
+  count: number
+  color: string
+  children: React.ReactNode
+}) {
+  const [open, setOpen] = useState(true)
+  return (
+    <div>
+      <button onClick={() => setOpen(!open)} className="w-full flex items-center justify-start gap-2 px-3 py-2 text-left hover:bg-gray-50 dark:hover:bg-portal-hover/50 transition-colors">
+        <IconGavel className="h-3.5 w-3.5 text-gray-400 flex-shrink-0" />
+        <span className={`px-1.5 py-0.5 rounded text-[10px] font-semibold ${color}`}>{category}</span>
+        <span className="text-[10px] text-gray-400 dark:text-gray-500">{count}</span>
+        <IconChevronDown className={`h-3.5 w-3.5 text-gray-400 ml-auto transition-transform duration-200 ${open ? 'rotate-180' : ''}`} />
+      </button>
+      {open && children}
+    </div>
+  )
+}
 
 interface RuleModificationsClientProps {
   modifications: ContentItem[]
@@ -196,62 +215,42 @@ export default function RuleModificationsClient({ modifications: initialModifica
   }
 
   return (
-    <div className="py-5 sm:py-6 portal-animate">
+    <div className="px-1 py-3 sm:py-4 portal-animate">
 
-      {/* Header */}
-      <div className="mb-6 sm:mb-8 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-bold font-heading tracking-tight text-gray-900 dark:text-white">Rule Modifications</h1>
-          <p className="mt-1 sm:mt-2 text-sm sm:text-base text-gray-600 dark:text-gray-300">
-            Official rule modifications and clarifications for CBOA officials
-          </p>
-        </div>
+      {/* Header — compact */}
+      <div className="mb-3 flex items-center justify-between gap-2 px-2">
+        <h1 className="text-xl sm:text-2xl font-bold font-heading tracking-tight text-gray-900 dark:text-white">Rule Modifications</h1>
         {canEdit && !isCreating && (
           <button
             onClick={() => {
               setIsCreating(true)
-              // Pre-select the category based on the current tab
               const category = selectedCategory === 'all' ? (categories[0] || 'Club Tournament') : selectedCategory
-              setNewModification({
-                title: '',
-                category: category,
-                summary: '',
-                content: ''
-              })
+              setNewModification({ title: '', category, summary: '', content: '' })
             }}
-            className="bg-orange-500 text-white px-3 py-2 sm:px-4 rounded-xl hover:bg-orange-600 flex items-center gap-2 text-sm sm:text-base"
+            className="bg-orange-500 text-white px-3 py-1.5 rounded-lg hover:bg-orange-600 flex items-center gap-1.5 text-sm flex-shrink-0"
           >
-            <IconPlus className="h-5 w-5" />
-            Add Rule Modification
+            <IconPlus className="h-4 w-4" />
+            <span className="hidden sm:inline">Add Rule</span>
+            <span className="sm:hidden">Add</span>
           </button>
         )}
       </div>
 
-      {/* Search and Category Filter */}
-      <PortalFilterBar
-        searchValue={searchTerm}
-        onSearchChange={setSearchTerm}
-        searchPlaceholder="Search rule modifications..."
-        sortOptions={[
-          { value: 'title', label: 'Title' },
-          { value: 'category', label: 'Category' },
-          { value: 'date', label: 'Date Added' },
-        ]}
-        sortValue={sortField}
-        onSortChange={(val) => setSortField(val as 'title' | 'date' | 'category')}
-        sortDirection={sortDirection}
-        onSortDirectionChange={setSortDirection}
-        categories={[
-          { value: 'all', label: 'All Categories', icon: IconGavel },
-          ...categories.map(cat => ({ value: cat, label: cat }))
-        ]}
-        selectedCategory={selectedCategory}
-        onCategoryChange={setSelectedCategory}
-      />
+      {/* Search only */}
+      <div className="mb-3 px-2 relative">
+        <IconSearch className="absolute left-4.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-400" />
+        <input
+          type="text"
+          placeholder="Search rules..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="w-full pl-8 pr-3 py-1.5 text-sm border border-gray-300 dark:border-portal-border rounded-md bg-white dark:bg-portal-surface text-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-orange-500"
+        />
+      </div>
 
       {/* Create New Rule Form */}
       {isCreating && (
-        <div className="mb-6 bg-white dark:bg-portal-surface rounded-xl border border-gray-200 dark:border-portal-border p-4 sm:p-6">
+        <div className="mb-6 bg-white dark:bg-portal-surface rounded-md border border-gray-200 dark:border-portal-border p-3 sm:p-4">
           <h2 className="text-lg sm:text-xl font-semibold mb-4 text-gray-900 dark:text-white">Add New Rule Modification</h2>
 
           <div className="space-y-4">
@@ -332,7 +331,7 @@ export default function RuleModificationsClient({ modifications: initialModifica
                     content: ''
                   })
                 }}
-                className="bg-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-400 flex items-center justify-center gap-2"
+                className="bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 px-4 py-2 rounded-lg hover:bg-gray-400 flex items-center justify-center gap-2"
               >
                 <IconX className="h-5 w-5" />
                 Cancel
@@ -342,186 +341,121 @@ export default function RuleModificationsClient({ modifications: initialModifica
         </div>
       )}
 
-      {/* Rule Modifications List */}
+      {/* Rule Modifications — grouped by category in accordions */}
       {filteredModifications.length > 0 ? (
-        <div className="space-y-3 sm:space-y-4">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-            {selectedCategory === 'all' ? 'All Rule Modifications' : `${selectedCategory} Rules`}
-          </h2>
-
-          {filteredModifications.map((modification) => {
-            const isEditing = editingId === modification.id
-            const effectiveDate = modification.effectiveDate
-              ? new Date(modification.effectiveDate).toLocaleDateString('en-CA', {
-                  year: 'numeric',
-                  month: 'long',
-                  day: 'numeric'
-                })
-              : null
-
-            if (isEditing && editingData) {
-              return (
-                <div key={modification.id} className="bg-white dark:bg-portal-surface rounded-xl border border-gray-200 dark:border-portal-border p-4 sm:p-6">
-                  <h3 className="text-lg sm:text-xl font-semibold mb-4 text-gray-900 dark:text-white">Edit Rule Modification</h3>
-                  <div className="space-y-4">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Title</label>
-                        <input
-                          type="text"
-                          value={editingData.title}
-                          onChange={(e) => setEditingData({ ...editingData, title: e.target.value })}
-                          className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 bg-white dark:bg-portal-surface text-gray-900 dark:text-white ${
-                            getFieldError(validationErrors, 'title')
-                              ? 'border-red-500 focus:ring-red-500'
-                              : 'border-gray-300 dark:border-portal-border focus:ring-orange-500'
-                          }`}
-                        />
-                        {getFieldError(validationErrors, 'title') && (
-                          <p className="mt-1 text-sm text-red-600">{getFieldError(validationErrors, 'title')}</p>
-                        )}
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Category</label>
-                        <select
-                          value={editingData.category}
-                          onChange={(e) => setEditingData({ ...editingData, category: e.target.value })}
-                          className="w-full pl-3 pr-8 py-2 border border-gray-300 dark:border-portal-border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 bg-white dark:bg-portal-surface text-gray-900 dark:text-white"
-                        >
-                          {categories.map(cat => (
-                            <option key={cat} value={cat}>{cat}</option>
-                          ))}
-                        </select>
-                      </div>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Summary</label>
-                      <input
-                        type="text"
-                        value={editingData.summary}
-                        onChange={(e) => setEditingData({ ...editingData, summary: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 dark:border-portal-border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 bg-white dark:bg-portal-surface text-gray-900 dark:text-white"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Content</label>
-                      <TinyMCEEditor
-                        value={editingData.content}
-                        onChange={(value) => setEditingData({ ...editingData, content: value || '' })}
-                      />
-                      {getFieldError(validationErrors, 'content') && (
-                        <p className="mt-1 text-sm text-red-600">{getFieldError(validationErrors, 'content')}</p>
-                      )}
-                    </div>
-                    <div className="flex flex-col sm:flex-row gap-2">
-                      <button
-                        onClick={handleSaveEdit}
-                        className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 flex items-center justify-center gap-2"
-                      >
-                        <IconDeviceFloppy className="h-5 w-5" />
-                        Save Changes
-                      </button>
-                      <button
-                        onClick={cancelEditing}
-                        className="bg-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-400 flex items-center justify-center gap-2"
-                      >
-                        <IconX className="h-5 w-5" />
-                        Cancel
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              )
-            }
+        <div className="px-2">
+          {(() => {
+            // Group by category
+            const grouped: Record<string, typeof filteredModifications> = {}
+            filteredModifications.forEach(mod => {
+              const cat = mod.category || 'Uncategorized'
+              if (!grouped[cat]) grouped[cat] = []
+              grouped[cat].push(mod)
+            })
 
             return (
-              <Accordion key={modification.id}>
-                <div className="bg-white dark:bg-portal-surface border border-gray-200 dark:border-portal-border rounded-lg hover:border-gray-300 dark:hover:border-gray-600 transition-colors">
-                  {/* Accordion Header */}
-                  <div className="flex items-center gap-3 py-3 pr-4">
-                    <AccordionButton className="flex items-center gap-3 flex-1 min-w-0 pl-3">
-                      {({ open }) => (
-                        <>
-                          <AccordionChevron open={open} className="flex-shrink-0" />
-                          <div className="flex-1 min-w-0 text-left">
-                            <div className="flex items-center gap-2 flex-wrap">
-                              <span className={`px-2 py-0.5 rounded text-xs font-medium ${getCategoryColor(modification.category)}`}>
-                                {modification.category}
-                              </span>
-                              <h3 className="font-semibold text-gray-900 dark:text-white text-sm sm:text-base">
-                                {modification.title}
-                              </h3>
-                              {modification.updated_at && (
-                                <span className="text-xs text-gray-400 dark:text-gray-500">
-                                  Updated: {new Date(modification.updated_at).toLocaleDateString('en-CA', { year: 'numeric', month: 'short', day: 'numeric' })}
-                                </span>
-                              )}
+              <div className="bg-white dark:bg-portal-surface rounded-md border border-gray-200 dark:border-portal-border divide-y divide-gray-200 dark:divide-portal-border">
+                {Object.entries(grouped).sort(([a], [b]) => a.localeCompare(b)).map(([category, mods]) => (
+                  <RuleCategoryGroup key={category} category={category} count={mods.length} color={getCategoryColor(category)}>
+                    <div className="divide-y divide-gray-100 dark:divide-portal-border/50">
+                      {mods.sort((a, b) => (a.title || '').localeCompare(b.title || '')).map(modification => {
+                        if (editingId === modification.id && editingData) {
+                          return (
+                            <div key={modification.id} className="p-3 sm:p-4">
+                              <div className="space-y-3">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                  <div>
+                                    <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Title</label>
+                                    <input type="text" value={editingData.title} onChange={(e) => setEditingData({ ...editingData, title: e.target.value })}
+                                      className="w-full px-3 py-1.5 text-sm border border-gray-300 dark:border-portal-border rounded-md focus:outline-none focus:ring-1 focus:ring-orange-500 bg-white dark:bg-portal-surface text-gray-900 dark:text-white" />
+                                  </div>
+                                  <div>
+                                    <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Category</label>
+                                    <select value={editingData.category} onChange={(e) => setEditingData({ ...editingData, category: e.target.value })}
+                                      className="w-full pl-3 pr-8 py-1.5 text-sm border border-gray-300 dark:border-portal-border rounded-md focus:outline-none focus:ring-1 focus:ring-orange-500 bg-white dark:bg-portal-surface text-gray-900 dark:text-white">
+                                      {categories.map(cat => <option key={cat} value={cat}>{cat}</option>)}
+                                    </select>
+                                  </div>
+                                </div>
+                                <div>
+                                  <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Summary</label>
+                                  <input type="text" value={editingData.summary} onChange={(e) => setEditingData({ ...editingData, summary: e.target.value })}
+                                    className="w-full px-3 py-1.5 text-sm border border-gray-300 dark:border-portal-border rounded-md focus:outline-none focus:ring-1 focus:ring-orange-500 bg-white dark:bg-portal-surface text-gray-900 dark:text-white" />
+                                </div>
+                                <div>
+                                  <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Content</label>
+                                  <TinyMCEEditor value={editingData.content} onChange={(value) => setEditingData({ ...editingData, content: value || '' })} />
+                                </div>
+                                <div className="flex gap-2">
+                                  <button onClick={handleSaveEdit} className="bg-green-600 text-white px-3 py-1.5 rounded-md hover:bg-green-700 flex items-center gap-1.5 text-sm">
+                                    <IconDeviceFloppy className="h-4 w-4" /> Save
+                                  </button>
+                                  <button onClick={cancelEditing} className="text-gray-600 dark:text-gray-400 px-3 py-1.5 rounded-md hover:bg-gray-100 dark:hover:bg-portal-hover text-sm">
+                                    Cancel
+                                  </button>
+                                </div>
+                              </div>
                             </div>
-                            {modification.summary && (
-                              <p className="text-sm text-gray-600 dark:text-gray-300 mt-1 line-clamp-1">
-                                {modification.summary}
-                              </p>
-                            )}
-                          </div>
-                        </>
-                      )}
-                    </AccordionButton>
+                          )
+                        }
 
-                    {/* Action buttons */}
-                    {canEdit && (
-                      <div className="flex gap-1 flex-shrink-0">
-                        <button
-                          onClick={() => startEditing(modification)}
-                          className="p-1.5 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-portal-hover rounded transition-colors"
-                          title="Edit"
-                        >
-                          <IconEdit className="h-4 w-4" />
-                        </button>
-                        <button
-                          onClick={() => handleDelete(modification.id)}
-                          className="p-1.5 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors"
-                          title="Delete"
-                        >
-                          <IconTrash className="h-4 w-4" />
-                        </button>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Expanded Content */}
-                  <AccordionPanel className="border-t border-gray-200 dark:border-portal-border bg-gray-50 dark:bg-portal-surface/50">
-                    <div className="py-4 px-5">
-                      <HTMLViewer content={modification.content || modification.body || ''} compact />
-
-                      {modification.references && modification.references.length > 0 && (
-                        <div className="mt-4 pt-4 border-t border-gray-200 dark:border-portal-border">
-                          <h4 className="font-semibold text-gray-900 dark:text-white text-sm mb-2">References:</h4>
-                          <ul className="list-disc list-inside space-y-1">
-                            {modification.references.map((ref: any, index: number) => (
-                              <li key={index} className="text-sm text-gray-600 dark:text-gray-300">
-                                {typeof ref === 'string' ? ref : ref.reference}
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                      )}
+                        return (
+                          <Accordion key={modification.id}>
+                            <div>
+                              <div className="flex items-center gap-2 py-2 pr-3">
+                                <AccordionButton className="flex items-center gap-2 flex-1 min-w-0 pl-3">
+                                  {({ open }) => (
+                                    <>
+                                      <AccordionChevron open={open} className="flex-shrink-0" />
+                                      <div className="flex-1 min-w-0 text-left">
+                                        <h3 className="font-medium text-sm text-gray-900 dark:text-white leading-snug">
+                                          {modification.title}
+                                        </h3>
+                                        {modification.summary && (
+                                          <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 line-clamp-1">{modification.summary}</p>
+                                        )}
+                                      </div>
+                                    </>
+                                  )}
+                                </AccordionButton>
+                                {canEdit && (
+                                  <div className="flex gap-0.5 flex-shrink-0">
+                                    <button onClick={() => startEditing(modification)} className="p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 rounded hidden sm:block" title="Edit">
+                                      <IconEdit className="h-3.5 w-3.5" />
+                                    </button>
+                                    <button onClick={() => handleDelete(modification.id)} className="p-1.5 text-gray-400 hover:text-red-500 rounded hidden sm:block" title="Delete">
+                                      <IconTrash className="h-3.5 w-3.5" />
+                                    </button>
+                                  </div>
+                                )}
+                              </div>
+                              <AccordionPanel className="border-t border-gray-100 dark:border-portal-border/50 bg-gray-50 dark:bg-portal-surface/50">
+                                <div className="py-3 px-4">
+                                  <HTMLViewer content={modification.content || modification.body || ''} compact />
+                                  {canEdit && (
+                                    <div className="flex gap-2 mt-3 pt-2 border-t border-gray-200 dark:border-portal-border sm:hidden">
+                                      <button onClick={() => startEditing(modification)} className="text-xs text-gray-500 hover:text-gray-700 dark:hover:text-gray-300">Edit</button>
+                                      <button onClick={() => handleDelete(modification.id)} className="text-xs text-red-500 hover:text-red-700">Delete</button>
+                                    </div>
+                                  )}
+                                </div>
+                              </AccordionPanel>
+                            </div>
+                          </Accordion>
+                        )
+                      })}
                     </div>
-                  </AccordionPanel>
-                </div>
-              </Accordion>
+                  </RuleCategoryGroup>
+                ))}
+              </div>
             )
-          })}
+          })()}
         </div>
       ) : (
-        <div className="text-center py-12 bg-white dark:bg-portal-surface rounded-xl border border-gray-200 dark:border-portal-border">
-          <IconGavel className="mx-auto h-12 w-12 text-gray-400" />
-          <h3 className="mt-2 text-sm font-medium text-gray-900 dark:text-white">No rule modifications found</h3>
-          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-            {searchTerm
-              ? `No rule modifications match "${searchTerm}"`
-              : selectedCategory === 'all'
-                ? canEdit ? 'Click "Add Rule Modification" to add your first rule.' : 'Rule modifications will appear here once added by administrators.'
-                : `No rule modifications found for "${selectedCategory}".`}
+        <div className="text-center py-8 mx-2 bg-white dark:bg-portal-surface rounded-md border border-gray-200 dark:border-portal-border">
+          <IconGavel className="mx-auto h-8 w-8 text-gray-400" />
+          <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
+            {searchTerm ? `No rules match "${searchTerm}"` : canEdit ? 'Click "Add Rule" to create one.' : 'Rule modifications will appear here.'}
           </p>
         </div>
       )}

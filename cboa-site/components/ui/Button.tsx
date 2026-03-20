@@ -2,7 +2,7 @@ import Link from 'next/link'
 
 interface ButtonProps {
   children: React.ReactNode
-  variant?: 'primary' | 'secondary' | 'utility'
+  variant?: 'primary' | 'secondary' | 'utility' | 'outline'
   size?: 'sm' | 'md' | 'lg'
   href?: string
   onClick?: () => void
@@ -27,6 +27,7 @@ export default function Button({
     primary: 'bg-gradient-to-r from-cboa-orange to-orange-500 text-white hover:shadow-lg hover:shadow-orange-500/20 hover:-translate-y-0.5',
     secondary: 'bg-transparent text-white border-2 border-white hover:bg-white hover:text-cboa-blue',
     utility: 'bg-cboa-orange text-white rounded-full hover:bg-opacity-90',
+    outline: 'bg-transparent text-gray-700 border-2 border-gray-300 hover:bg-gray-50 hover:border-gray-400',
   }
   
   const sizeStyles = {

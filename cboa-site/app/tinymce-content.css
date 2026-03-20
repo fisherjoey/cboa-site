@@ -1,65 +1,99 @@
 /* TinyMCE Content Display Styles */
 
 .tinymce-content {
-  font-size: 1.125rem;
-  line-height: 1.75;
+  font-size: 0.875rem;
+  line-height: 1.65;
   color: #374151;
 }
 
 .tinymce-content p {
-  margin-bottom: 1.5rem;
+  margin-bottom: 0.75rem;
 }
 
 .tinymce-content h1 {
-  color: #60a5fa;
-  font-size: 2.5rem;
+  color: inherit;
+  font-size: 1.375rem;
   font-weight: bold;
-  margin-top: 2rem;
-  margin-bottom: 1.5rem;
+  margin-top: 1.25rem;
+  margin-bottom: 0.75rem;
 }
 
 .tinymce-content h2 {
-  color: #60a5fa;
-  font-size: 1.875rem;
+  color: inherit;
+  font-size: 1.2rem;
   font-weight: bold;
-  margin-top: 3rem;
-  margin-bottom: 1.5rem;
-  padding-top: 0.5rem;
-}
-
-.tinymce-content h3 {
-  color: #60a5fa;
-  font-size: 1.5rem;
-  font-weight: 600;
-  margin-top: 2rem;
-  margin-bottom: 1rem;
-}
-
-.tinymce-content h4 {
-  color: #60a5fa;
-  font-size: 1.25rem;
-  font-weight: 600;
   margin-top: 1.5rem;
   margin-bottom: 0.75rem;
 }
 
+.tinymce-content h3 {
+  color: inherit;
+  font-size: 1.05rem;
+  font-weight: 600;
+  margin-top: 1.25rem;
+  margin-bottom: 0.5rem;
+}
+
+.tinymce-content h4 {
+  color: inherit;
+  font-size: 0.95rem;
+  font-weight: 600;
+  margin-top: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+@media (min-width: 640px) {
+  .tinymce-content {
+    font-size: 1rem;
+    line-height: 1.7;
+  }
+
+  .tinymce-content p {
+    margin-bottom: 1rem;
+  }
+
+  .tinymce-content h1 {
+    font-size: 1.75rem;
+    margin-top: 1.75rem;
+    margin-bottom: 1rem;
+  }
+
+  .tinymce-content h2 {
+    font-size: 1.5rem;
+    margin-top: 2rem;
+    margin-bottom: 1rem;
+  }
+
+  .tinymce-content h3 {
+    font-size: 1.25rem;
+    margin-top: 1.5rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .tinymce-content h4 {
+    font-size: 1.1rem;
+    margin-top: 1.25rem;
+    margin-bottom: 0.5rem;
+  }
+}
+
 .tinymce-content ul {
-  margin-top: 1.5rem;
-  margin-bottom: 1.5rem;
-  padding-left: 1.5rem;
+  margin-top: 0.5rem;
+  margin-bottom: 0.75rem;
+  padding-left: 1.25rem;
   list-style-type: disc;
 }
 
 .tinymce-content ol {
-  margin-top: 1.5rem;
-  margin-bottom: 1.5rem;
-  padding-left: 1.5rem;
+  margin-top: 0.5rem;
+  margin-bottom: 0.75rem;
+  padding-left: 1.25rem;
   list-style-type: decimal;
 }
 
 .tinymce-content li {
-  margin-top: 0.5rem;
-  margin-bottom: 0.5rem;
+  margin-top: 0.25rem;
+  margin-bottom: 0.25rem;
   display: list-item;
 }
 
@@ -76,10 +110,10 @@
 }
 
 .tinymce-content blockquote {
-  border-left: 4px solid #F97316;
+  border-left: 3px solid #F97316;
   background-color: #FFF7ED;
-  padding: 1rem 1.5rem;
-  margin: 2rem 0;
+  padding: 0.75rem 1rem;
+  margin: 1rem 0;
   font-style: italic;
 }
 
@@ -109,11 +143,11 @@
 .tinymce-content hr {
   border: none;
   border-top: 1px solid #D1D5DB;
-  margin: 3rem 0;
+  margin: 1.5rem 0;
 }
 
 .tinymce-content strong {
-  color: #1a3a4a;
+  color: inherit;
   font-weight: 600;
 }
 
@@ -144,7 +178,7 @@
 }
 
 .tinymce-content a:hover {
-  color: #60a5fa;
+  color: inherit;
 }
 
 .tinymce-content img {
@@ -173,7 +207,7 @@
 .tinymce-content-compact h2,
 .tinymce-content-compact h3,
 .tinymce-content-compact h4 {
-  color: #93c5fd;
+  color: inherit;
   font-weight: 600;
   margin-top: 1rem;
   margin-bottom: 0.5rem;
@@ -263,7 +297,7 @@
 }
 
 .tinymce-content-compact strong {
-  color: #1a3a4a;
+  color: inherit;
   font-weight: 600;
 }
 
@@ -298,20 +332,20 @@
 .dark .tinymce-content h2,
 .dark .tinymce-content h3,
 .dark .tinymce-content h4 {
-  color: #60a5fa;
+  color: inherit;
 }
 
 .dark .tinymce-content-compact h1,
 .dark .tinymce-content-compact h2,
 .dark .tinymce-content-compact h3,
 .dark .tinymce-content-compact h4 {
-  color: #93c5fd;
+  color: inherit;
 }
 
 /* Strong text */
 .dark .tinymce-content strong,
 .dark .tinymce-content-compact strong {
-  color: #f9fafb;
+  color: inherit;
 }
 
 /* Links */
@@ -320,15 +354,15 @@
 }
 
 .dark .tinymce-content a:hover {
-  color: #60a5fa;
+  color: inherit;
 }
 
 .dark .tinymce-content-compact a {
-  color: #60a5fa;
+  color: inherit;
 }
 
 .dark .tinymce-content-compact a:hover {
-  color: #93c5fd;
+  color: inherit;
 }
 
 /* Blockquotes */

@@ -58,7 +58,7 @@ export default function PublicPagesAdmin() {
     setEditingPage({
       title: page.title || '',
       meta_description: page.meta_description || '',
-      content: page.content || ''
+      content: (typeof page.content === 'string' ? page.content : JSON.stringify(page.content)) || ''
     })
   }
 
@@ -117,7 +117,7 @@ export default function PublicPagesAdmin() {
 
       {/* Header */}
       <div className="mb-6 sm:mb-8">
-        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">Public Page Content</h1>
+        <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">Public Page Content</h1>
         <p className="mt-1 sm:mt-2 text-sm sm:text-base text-gray-600 dark:text-gray-300">
           Edit content for core pages on your public website (Home, About, etc.)
         </p>
@@ -269,7 +269,7 @@ export default function PublicPagesAdmin() {
                             <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
                               <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-2">Content Preview:</h4>
                               <div className="prose prose-sm dark:prose-invert max-w-none bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
-                                <HTMLViewer content={page.content} />
+                                <HTMLViewer content={typeof page.content === 'string' ? page.content : JSON.stringify(page.content)} />
                               </div>
                             </div>
                           )}

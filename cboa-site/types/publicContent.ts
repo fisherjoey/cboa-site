@@ -25,13 +25,17 @@ export interface PublicTrainingEvent {
   title: string
   slug: string
   event_date: string
+  event_time?: string
   start_time: string
   end_time: string
   location: string
   event_type: 'workshop' | 'certification' | 'refresher' | 'meeting'
   description: string  // Rich HTML content
+  details?: string
   registration_link?: string
+  registration_url?: string
   max_participants?: number
+  capacity?: number
   current_registrations: number
   instructor?: string
   requirements?: string  // Rich HTML content
@@ -45,9 +49,11 @@ export interface PublicResource {
   id: string
   title: string
   slug: string
-  category: 'Rulebooks' | 'Forms' | 'Training Materials' | 'Policies' | 'Guides'
+  category: string
   description: string  // Rich HTML content
   file_url?: string
+  file_type?: string
+  file_size?: string
   external_link?: string
   last_updated: string
   access_level: 'public' | 'members' | 'officials'
@@ -62,7 +68,7 @@ export interface PublicPage {
   id: string
   page_name: string  // 'home', 'about', etc.
   title: string
-  content: HomePageContent | AboutPageContent | Record<string, any>  // JSONB - structure varies
+  content: string | HomePageContent | AboutPageContent | Record<string, any>  // JSONB - structure varies
   meta_description?: string
   last_edited_by?: string
   active: boolean
@@ -89,10 +95,11 @@ export interface AboutPageContent {
 export interface Official {
   id: string
   name: string
-  level?: number  // 1-5
+  level?: string | number  // 1-5
   photo_url?: string
   bio?: string  // Rich HTML content
-  years_experience?: string
+  years_experience?: number
+  phone?: string
   email?: string
   availability?: string
   certifications?: string[]

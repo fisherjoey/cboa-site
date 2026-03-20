@@ -179,8 +179,8 @@ export function MarkdownViewer({ content, className = '' }: MarkdownViewerProps)
           blockquote: ({children}) => (
             <blockquote className="border-l-4 border-blue-600 bg-blue-50 pl-4 py-3 pr-3 italic my-3 text-black font-medium">{children}</blockquote>
           ),
-          code: ({inline, children}) => 
-            inline ? (
+          code: ({children, ...props}: any) =>
+            props.inline ? (
               <code className="bg-red-100 text-red-700 px-2 py-1 rounded text-sm font-mono font-bold">{children}</code>
             ) : (
               <pre className="bg-gray-900 text-white p-4 rounded-lg overflow-x-auto mb-3 border-2 border-gray-700">

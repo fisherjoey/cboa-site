@@ -4,8 +4,56 @@ import { useState } from 'react'
 import Card from '@/components/ui/Card'
 import Button from '@/components/ui/Button'
 
+interface FormErrors {
+  billingEmail?: string
+  organizationName?: string
+  billingContactName?: string
+  billingAddress?: string
+  eventDates?: string
+  numberOfGames?: string
+  numberOfCourts?: string
+}
+
+function validateOfficialForm(form: HTMLFormElement): FormErrors {
+  const errors: FormErrors = {}
+  const get = (name: string) => (form.elements.namedItem(name) as HTMLInputElement)?.value?.trim() ?? ''
+
+  const email = get('billingEmail')
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    errors.billingEmail = 'Please enter a valid email address'
+  }
+
+  if (get('organizationName').length < 2) {
+    errors.organizationName = 'Organization name must be at least 2 characters'
+  }
+  if (get('billingContactName').length < 2) {
+    errors.billingContactName = 'Billing contact name must be at least 2 characters'
+  }
+  if (get('billingAddress').length < 5) {
+    errors.billingAddress = 'Please enter a valid billing address'
+  }
+
+  const startDate = get('eventStartDate')
+  const endDate = get('eventEndDate')
+  if (startDate && endDate && new Date(endDate) < new Date(startDate)) {
+    errors.eventDates = 'End date must be on or after start date'
+  }
+
+  const games = parseInt(get('numberOfGames'))
+  if (isNaN(games) || games < 1 || games > 500) {
+    errors.numberOfGames = 'Number of games must be between 1 and 500'
+  }
+  const courts = parseInt(get('numberOfCourts'))
+  if (isNaN(courts) || courts < 1 || courts > 50) {
+    errors.numberOfCourts = 'Number of courts must be between 1 and 50'
+  }
+
+  return errors
+}
+
 export default function OfficialsRequestForm() {
   const [submitted, setSubmitted] = useState(false)
+  const [errors, setErrors] = useState<FormErrors>({})
   
   if (submitted) {
     return (
@@ -37,15 +85,19 @@ export default function OfficialsRequestForm() {
         netlify-honeypot="bot-field"
         action="/get-officials?success=true"
         onSubmit={(e) => {
+          e.preventDefault()
           const form = e.target as HTMLFormElement
+          const validationErrors = validateOfficialForm(form)
+          setErrors(validationErrors)
+          if (Object.keys(validationErrors).length > 0) return
+
           fetch('/', {
             method: 'POST',
             headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
             body: new URLSearchParams(new FormData(form) as any).toString()
           })
           .then(() => setSubmitted(true))
-          .catch((error) => alert('Error submitting form. Please try again.'))
-          e.preventDefault()
+          .catch(() => alert('Error submitting form. Please try again.'))
         }}
       >
         <input type="hidden" name="form-name" value="officials-request" />
@@ -63,8 +115,11 @@ export default function OfficialsRequestForm() {
               id="organizationName"
               name="organizationName"
               required
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:border-cboa-orange"
+              minLength={2}
+              maxLength={100}
+              className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:border-cboa-orange ${errors.organizationName ? 'border-red-500' : 'border-gray-300'}`}
             />
+            {errors.organizationName && <p className="mt-1 text-sm text-red-600">{errors.organizationName}</p>}
           </div>
         </div>
         
@@ -87,8 +142,11 @@ export default function OfficialsRequestForm() {
                 id="billingContactName"
                 name="billingContactName"
                 required
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:border-cboa-orange"
+                minLength={2}
+                maxLength={100}
+                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:border-cboa-orange ${errors.billingContactName ? 'border-red-500' : 'border-gray-300'}`}
               />
+              {errors.billingContactName && <p className="mt-1 text-sm text-red-600">{errors.billingContactName}</p>}
             </div>
             <div>
               <label htmlFor="billingEmail" className="block text-sm font-semibold text-gray-700 mb-2">
@@ -99,8 +157,10 @@ export default function OfficialsRequestForm() {
                 id="billingEmail"
                 name="billingEmail"
                 required
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:border-cboa-orange"
+                maxLength={254}
+                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:border-cboa-orange ${errors.billingEmail ? 'border-red-500' : 'border-gray-300'}`}
               />
+              {errors.billingEmail && <p className="mt-1 text-sm text-red-600">{errors.billingEmail}</p>}
             </div>
           </div>
           
@@ -113,8 +173,11 @@ export default function OfficialsRequestForm() {
               name="billingAddress"
               rows={3}
               required
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:border-cboa-orange"
+              minLength={5}
+              maxLength={500}
+              className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:border-cboa-orange ${errors.billingAddress ? 'border-red-500' : 'border-gray-300'}`}
             />
+            {errors.billingAddress && <p className="mt-1 text-sm text-red-600">{errors.billingAddress}</p>}
           </div>
         </div>
         
@@ -163,10 +226,11 @@ export default function OfficialsRequestForm() {
                 id="eventEndDate"
                 name="eventEndDate"
                 required
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:border-cboa-orange"
+                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:border-cboa-orange ${errors.eventDates ? 'border-red-500' : 'border-gray-300'}`}
               />
             </div>
           </div>
+          {errors.eventDates && <p className="-mt-2 mb-4 text-sm text-red-600">{errors.eventDates}</p>}
           
           <div className="mb-4">
             <label htmlFor="venueName" className="block text-sm font-semibold text-gray-700 mb-2">
@@ -177,6 +241,8 @@ export default function OfficialsRequestForm() {
               id="venueName"
               name="venueName"
               required
+              minLength={2}
+              maxLength={200}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:border-cboa-orange"
             />
           </div>
@@ -190,6 +256,8 @@ export default function OfficialsRequestForm() {
               id="venueAddress"
               name="venueAddress"
               required
+              minLength={5}
+              maxLength={200}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:border-cboa-orange"
             />
           </div>
@@ -204,9 +272,11 @@ export default function OfficialsRequestForm() {
                 id="numberOfGames"
                 name="numberOfGames"
                 min="1"
+                max="500"
                 required
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:border-cboa-orange"
+                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:border-cboa-orange ${errors.numberOfGames ? 'border-red-500' : 'border-gray-300'}`}
               />
+              {errors.numberOfGames && <p className="mt-1 text-sm text-red-600">{errors.numberOfGames}</p>}
             </div>
             <div>
               <label htmlFor="numberOfCourts" className="block text-sm font-semibold text-gray-700 mb-2">
@@ -217,9 +287,11 @@ export default function OfficialsRequestForm() {
                 id="numberOfCourts"
                 name="numberOfCourts"
                 min="1"
+                max="50"
                 required
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:border-cboa-orange"
+                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:border-cboa-orange ${errors.numberOfCourts ? 'border-red-500' : 'border-gray-300'}`}
               />
+              {errors.numberOfCourts && <p className="mt-1 text-sm text-red-600">{errors.numberOfCourts}</p>}
             </div>
           </div>
           
@@ -233,6 +305,7 @@ export default function OfficialsRequestForm() {
               name="ageGroups"
               placeholder="e.g., U12, U14, U16, High School"
               required
+              maxLength={200}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:border-cboa-orange"
             />
           </div>
@@ -245,6 +318,7 @@ export default function OfficialsRequestForm() {
               id="additionalInfo"
               name="additionalInfo"
               rows={4}
+              maxLength={2000}
               placeholder="Please provide any additional details about your event or specific requirements"
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:border-cboa-orange"
             />

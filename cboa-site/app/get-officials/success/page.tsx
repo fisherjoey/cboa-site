@@ -104,7 +104,7 @@ export default function OSASuccessPage() {
               <Button href="/" variant="secondary">
                 Return Home
               </Button>
-              <Button href="/documents/CBOA-Fee-Schedule-2025-2028.pdf" variant="primary">
+              <Button href="/documents/Fee-Schedule.pdf" variant="primary">
                 View Fee Schedule
               </Button>
             </div>

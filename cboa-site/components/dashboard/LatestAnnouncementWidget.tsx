@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { IconBell, IconChevronRight, IconAlertCircle } from '@tabler/icons-react'
+import { IconBell, IconChevronRight, IconAlertCircle, IconChevronDown } from '@tabler/icons-react'
 import { announcementsAPI } from '@/lib/api'
 import { HTMLViewer } from '@/components/TinyMCEEditor'
 
@@ -16,11 +16,12 @@ interface Announcement {
   author: string
 }
 
-const MAX_ANNOUNCEMENTS = 3
+const MAX_ANNOUNCEMENTS = 10
 
 export default function LatestAnnouncementWidget() {
   const [announcements, setAnnouncements] = useState<Announcement[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [expandedId, setExpandedId] = useState<string | null>('__pending__')
 
   useEffect(() => {
     loadAnnouncements()
@@ -33,7 +34,9 @@ export default function LatestAnnouncementWidget() {
         const sorted = data.sort((a: Announcement, b: Announcement) =>
           new Date(b.date).getTime() - new Date(a.date).getTime()
         )
-        setAnnouncements(sorted.slice(0, MAX_ANNOUNCEMENTS))
+        const sliced = sorted.slice(0, MAX_ANNOUNCEMENTS)
+        setAnnouncements(sliced)
+        if (sliced.length > 0) setExpandedId(sliced[0].id)
       }
     } catch (error) {
       console.error('Failed to load announcements:', error)
@@ -55,15 +58,15 @@ export default function LatestAnnouncementWidget() {
 
   if (isLoading) {
     return (
-      <div className="bg-white dark:bg-portal-surface rounded-xl border border-gray-200 dark:border-portal-border p-6">
-        <h2 className="font-heading text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-          <IconBell className="h-5 w-5 text-orange-500" />
+      <div className="bg-white dark:bg-portal-surface rounded-lg border border-gray-200 dark:border-portal-border p-3 sm:p-4">
+        <h2 className="font-heading text-sm font-semibold text-gray-900 dark:text-white mb-3 flex items-center gap-2">
+          <IconBell className="h-4 w-4 text-orange-500" />
           Announcements
         </h2>
-        <div className="animate-pulse space-y-3">
-          <div className="h-4 bg-gray-200 dark:bg-portal-hover rounded w-3/4 mb-2"></div>
-          <div className="h-16 bg-gray-200 dark:bg-portal-hover rounded"></div>
-          <div className="h-16 bg-gray-200 dark:bg-portal-hover rounded"></div>
+        <div className="animate-pulse space-y-2">
+          <div className="h-8 bg-gray-200 dark:bg-portal-hover rounded"></div>
+          <div className="h-8 bg-gray-200 dark:bg-portal-hover rounded"></div>
+          <div className="h-8 bg-gray-200 dark:bg-portal-hover rounded"></div>
         </div>
       </div>
     )
@@ -71,74 +74,78 @@ export default function LatestAnnouncementWidget() {
 
   if (announcements.length === 0) {
     return (
-      <div className="bg-white dark:bg-portal-surface rounded-xl border border-gray-200 dark:border-portal-border p-4 sm:p-6">
-        <h2 className="font-heading text-base sm:text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-          <IconBell className="h-5 w-5 text-orange-500" />
+      <div className="bg-white dark:bg-portal-surface rounded-lg border border-gray-200 dark:border-portal-border p-3 sm:p-4">
+        <h2 className="font-heading text-sm font-semibold text-gray-900 dark:text-white mb-3 flex items-center gap-2">
+          <IconBell className="h-4 w-4 text-orange-500" />
           Announcements
         </h2>
-        <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-          <IconBell className="h-12 w-12 mx-auto mb-2 text-gray-300 dark:text-gray-600" />
-          <p className="text-sm">No announcements yet</p>
+        <div className="text-center py-6 text-gray-500 dark:text-gray-400">
+          <p className="text-xs">No announcements yet</p>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="bg-white dark:bg-portal-surface rounded-xl border border-gray-200 dark:border-portal-border p-4 sm:p-6">
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="font-heading text-base sm:text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-          <IconBell className="h-5 w-5 text-orange-500" />
+    <div className="bg-white dark:bg-portal-surface rounded-lg border border-gray-200 dark:border-portal-border p-3 sm:p-4">
+      <div className="flex items-center justify-between mb-2">
+        <h2 className="font-heading text-sm font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+          <IconBell className="h-4 w-4 text-orange-500" />
           Announcements
         </h2>
         <Link
           href="/portal/news"
-          className="text-sm text-orange-600 dark:text-portal-accent hover:text-orange-700 dark:hover:text-portal-accent font-semibold flex items-center gap-1"
+          className="text-xs text-orange-600 dark:text-portal-accent hover:text-orange-700 font-medium flex items-center gap-0.5"
         >
-          View All
-          <IconChevronRight className="h-4 w-4" />
+          All
+          <IconChevronRight className="h-3 w-3" />
         </Link>
       </div>
 
-      <div className="space-y-3">
-        {announcements.map((announcement, index) => (
-          <Link key={announcement.id} href="/portal/news" className="block group">
-            <div className={`border-l-4 pl-4 ${
-              announcement.priority === 'high'
-                ? 'border-red-500 bg-red-50 dark:bg-red-900/20'
-                : 'border-orange-500 bg-slate-50 dark:bg-portal-hover/50'
-            } p-3 rounded-lg group-hover:shadow-md transition-shadow`}>
-              <div className="flex flex-wrap items-center gap-2 mb-1">
-                <span className={`text-xs px-2 py-0.5 rounded-lg font-semibold ${getCategoryColor(announcement.category)}`}>
-                  {announcement.category}
-                </span>
-                {announcement.priority === 'high' && (
-                  <span className="text-xs text-red-600 dark:text-red-400 font-medium flex items-center gap-1">
-                    <IconAlertCircle className="h-3 w-3" />
-                    High Priority
-                  </span>
-                )}
-                <span className="text-xs text-gray-500 dark:text-gray-400">
-                  {new Date(announcement.date).toLocaleDateString('en-US', {
-                    month: 'short',
-                    day: 'numeric',
-                    year: 'numeric'
-                  })}
-                </span>
-              </div>
+      <div className="divide-y divide-gray-100 dark:divide-portal-border -mx-3 sm:-mx-4">
+        {announcements.map((announcement) => {
+          const isExpanded = expandedId === announcement.id
+          return (
+            <div key={announcement.id}>
+              <button
+                onClick={() => setExpandedId(isExpanded ? null : announcement.id)}
+                className={`w-full text-left flex items-start gap-2 px-3 sm:px-4 py-2 hover:bg-gray-50 dark:hover:bg-portal-hover/50 transition-colors ${
+                  announcement.priority === 'high' ? 'border-l-2 border-l-red-500' : ''
+                }`}
+              >
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-1.5 mb-0.5">
+                    <span className={`text-[10px] px-1.5 py-0.5 rounded font-semibold leading-none ${getCategoryColor(announcement.category)}`}>
+                      {announcement.category}
+                    </span>
+                    <span className="text-[10px] text-gray-400 dark:text-gray-500">
+                      {new Date(announcement.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                    </span>
+                    {announcement.priority === 'high' && (
+                      <IconAlertCircle className="h-3 w-3 text-red-500" />
+                    )}
+                  </div>
+                  <h3 className={`font-medium text-sm text-gray-900 dark:text-white ${isExpanded ? '' : 'truncate'}`}>
+                    {announcement.title}
+                  </h3>
+                </div>
+                <IconChevronDown className={`h-4 w-4 text-gray-400 flex-shrink-0 mt-1 transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`} />
+              </button>
 
-              <h3 className="font-semibold text-gray-900 dark:text-white group-hover:text-orange-600 dark:group-hover:text-orange-400 transition-colors text-sm sm:text-base">
-                {announcement.title}
-              </h3>
-
-              {index === 0 && (
-                <div className="text-sm text-gray-600 dark:text-gray-300 line-clamp-2 mt-1">
-                  <HTMLViewer content={announcement.content} className="prose-sm dark:prose-invert" />
+              {/* Expanded content */}
+              {isExpanded && (
+                <div className="px-3 sm:px-4 pb-3 pt-0">
+                  <div className="pl-0 text-sm text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-portal-hover/30 rounded-md p-2.5">
+                    <HTMLViewer content={announcement.content} className="tinymce-content-compact" />
+                    <div className="mt-2 pt-2 border-t border-gray-200 dark:border-portal-border text-[10px] text-gray-400 dark:text-gray-500">
+                      Posted by {announcement.author}
+                    </div>
+                  </div>
                 </div>
               )}
             </div>
-          </Link>
-        ))}
+          )
+        })}
       </div>
     </div>
   )

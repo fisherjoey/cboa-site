@@ -9,22 +9,15 @@ import { useToast } from '@/hooks/useToast'
 import { validateNewsletterForm, getFieldError, hasErrors, formatValidationErrors } from '@/lib/portalValidation'
 import { parseAPIError, sanitize, ValidationError } from '@/lib/errorHandling'
 import FileUpload from '@/components/FileUpload'
-import PortalFilterBar from '@/components/portal/PortalFilterBar'
 import {
   IconPlus,
   IconEdit,
   IconTrash,
   IconDownload,
   IconEye,
-  IconFile,
   IconNotebook,
   IconDeviceFloppy,
   IconX,
-  IconSortAscending,
-  IconSortDescending,
-  IconLayoutList,
-  IconLayoutGrid,
-  IconCalendar
 } from '@tabler/icons-react'
 
 // Dynamically import PDFViewer to avoid SSR issues
@@ -64,9 +57,8 @@ export default function TheBounceClient({ newsletters: initialNewsletters }: The
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [validationErrors, setValidationErrors] = useState<ValidationError[]>([])
   const [isUploading, setIsUploading] = useState(false)
-  const [sortBy, setSortBy] = useState<'title' | 'date'>('date')
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc')
-  const [viewMode, setViewMode] = useState<'list' | 'grid'>('list')
+  const [sortBy] = useState<'title' | 'date'>('date')
+  const [sortOrder] = useState<'asc' | 'desc'>('desc')
 
   const canEdit = user.role === 'admin' || user.role === 'executive'
 
@@ -274,306 +266,67 @@ export default function TheBounceClient({ newsletters: initialNewsletters }: The
     }
   }
 
-  // Render a single newsletter (list or grid view)
-  const renderNewsletter = (newsletter: Newsletter) => {
-    // Check if editing this newsletter
-    if (editingId === newsletter.id && editingData) {
-      return (
-        <div key={newsletter.id} className="bg-white dark:bg-portal-surface rounded-xl border border-gray-200 dark:border-portal-border p-4 col-span-full">
-          <div className="space-y-3">
-            <input
-              type="text"
-              value={editingData.title || ''}
-              onChange={(e) => setEditingData({ ...editingData, title: e.target.value })}
-              className="w-full font-semibold px-3 py-2 border border-gray-200 dark:border-portal-border bg-white dark:bg-portal-surface text-gray-900 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
-              placeholder="Newsletter title..."
-            />
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Date</label>
-              <input
-                type="date"
-                value={editingData.date || ''}
-                onChange={(e) => setEditingData({ ...editingData, date: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-200 dark:border-portal-border bg-white dark:bg-portal-surface text-gray-900 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Description</label>
-              <textarea
-                value={editingData.description || ''}
-                onChange={(e) => setEditingData({ ...editingData, description: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-200 dark:border-portal-border bg-white dark:bg-portal-surface text-gray-900 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
-                rows={2}
-                placeholder="Newsletter description..."
-              />
-            </div>
-
-            <div className="flex gap-2">
-              <button
-                onClick={handleSaveEdit}
-                className="bg-green-600 text-white px-3 py-1 rounded text-sm hover:bg-green-700 flex items-center gap-1"
-              >
-                <IconDeviceFloppy className="h-4 w-4" />
-                Save Changes
-              </button>
-              <button
-                onClick={cancelEditing}
-                className="bg-gray-300 dark:bg-gray-600 text-gray-700 dark:text-gray-200 px-3 py-1 rounded text-sm hover:bg-gray-400 dark:hover:bg-gray-500 flex items-center gap-1"
-              >
-                <IconX className="h-4 w-4" />
-                Cancel
-              </button>
-            </div>
-          </div>
-        </div>
-      )
-    }
-
-    // Grid view card
-    if (viewMode === 'grid') {
-      return (
-        <div
-          key={newsletter.id}
-          className="bg-white dark:bg-portal-surface rounded-xl border border-gray-200 dark:border-portal-border hover:shadow-md transition-shadow p-4 flex flex-col cursor-pointer"
-          onClick={() => handleView(newsletter)}
-        >
-          <div className="flex items-start gap-3 mb-3">
-            <div className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 bg-orange-100 dark:bg-orange-900/30">
-              <IconNotebook className="h-5 w-5 text-orange-600 dark:text-orange-400" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <h3 className="font-semibold text-gray-900 dark:text-white text-sm line-clamp-2">{newsletter.title}</h3>
-              <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                {formatDate(newsletter.date)}
-              </div>
-            </div>
-          </div>
-          <div className="mt-auto flex items-center gap-1 pt-2 border-t border-gray-100 dark:border-portal-border" onClick={(e) => e.stopPropagation()}>
-            <button
-              onClick={() => handleView(newsletter)}
-              className="p-1.5 text-orange-500 hover:bg-orange-50 dark:hover:bg-orange-900/20 rounded transition-colors"
-              title="View"
-            >
-              <IconEye className="h-4 w-4" />
-            </button>
-            <a
-              href={newsletter.pdfFile}
-              download
-              className="p-1.5 text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/30 rounded transition-colors"
-              title="Download"
-            >
-              <IconDownload className="h-4 w-4" />
-            </a>
-            {canEdit && (
-              <>
-                <button
-                  onClick={() => startEditing(newsletter)}
-                  className="p-1.5 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-portal-hover rounded ml-auto transition-colors"
-                  title="Edit"
-                >
-                  <IconEdit className="h-4 w-4" />
-                </button>
-                <button
-                  onClick={() => handleDelete(newsletter.id)}
-                  className="p-1.5 text-red-500 dark:text-red-400/70 hover:bg-red-50 dark:hover:bg-red-900/30 rounded transition-colors"
-                  title="Delete"
-                >
-                  <IconTrash className="h-4 w-4" />
-                </button>
-              </>
-            )}
-          </div>
-        </div>
-      )
-    }
-
-    // List view row
-    return (
-      <div key={newsletter.id} className="bg-white dark:bg-portal-surface rounded-xl border border-gray-200 dark:border-portal-border hover:shadow-md transition-shadow cursor-pointer" onClick={() => handleView(newsletter)}>
-        {/* Mobile card layout */}
-        <div className="sm:hidden p-4">
-          <div className="flex items-start gap-3 mb-3">
-            <div className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 bg-orange-100 dark:bg-orange-900/30">
-              <IconNotebook className="h-5 w-5 text-orange-600 dark:text-orange-400" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <h3 className="font-semibold text-gray-900 dark:text-white text-sm">{newsletter.title}</h3>
-              <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">{formatDate(newsletter.date)}</div>
-            </div>
-          </div>
-          <div className="flex items-center gap-1 pt-2 border-t border-gray-100 dark:border-portal-border" onClick={(e) => e.stopPropagation()}>
-            <button
-              onClick={() => handleView(newsletter)}
-              className="p-1.5 text-orange-500 hover:bg-orange-50 dark:hover:bg-orange-900/20 rounded transition-colors"
-              title="View"
-            >
-              <IconEye className="h-4 w-4" />
-            </button>
-            <a
-              href={newsletter.pdfFile}
-              download
-              className="p-1.5 text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/30 rounded transition-colors"
-              title="Download"
-            >
-              <IconDownload className="h-4 w-4" />
-            </a>
-            {canEdit && (
-              <>
-                <button
-                  onClick={() => startEditing(newsletter)}
-                  className="p-1.5 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-portal-hover rounded ml-auto transition-colors"
-                  title="Edit"
-                >
-                  <IconEdit className="h-4 w-4" />
-                </button>
-                <button
-                  onClick={() => handleDelete(newsletter.id)}
-                  className="p-1.5 text-red-500 dark:text-red-400/70 hover:bg-red-50 dark:hover:bg-red-900/30 rounded transition-colors"
-                  title="Delete"
-                >
-                  <IconTrash className="h-4 w-4" />
-                </button>
-              </>
-            )}
-          </div>
-        </div>
-
-        {/* Desktop row layout */}
-        <div className="hidden sm:block">
-          <div className="p-4 flex items-center gap-4">
-            <div className="w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0 bg-orange-100 dark:bg-orange-900/30">
-              <IconNotebook className="h-6 w-6 text-orange-600 dark:text-orange-400" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <h3 className="font-semibold text-gray-900 dark:text-white break-words">{newsletter.title}</h3>
-              <div className="flex flex-wrap items-center gap-2 text-xs text-gray-500 dark:text-gray-400 mt-1">
-                <span>{formatDate(newsletter.date)}</span>
-                {newsletter.description && (
-                  <span className="text-gray-400 dark:text-gray-500">•</span>
-                )}
-                {newsletter.description && (
-                  <span className="line-clamp-1">{newsletter.description}</span>
-                )}
-              </div>
-            </div>
-            <div className="flex items-center gap-1 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
-              <button
-                onClick={() => handleView(newsletter)}
-                className="p-2 text-orange-500 hover:bg-orange-50 dark:hover:bg-orange-900/20 rounded transition-colors"
-                title="View"
-              >
-                <IconEye className="h-5 w-5" />
-              </button>
-              <a
-                href={newsletter.pdfFile}
-                download
-                className="p-2 text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/30 rounded transition-colors"
-                title="Download"
-              >
-                <IconDownload className="h-5 w-5" />
-              </a>
-              {canEdit && (
-                <>
-                  <button
-                    onClick={() => startEditing(newsletter)}
-                    className="p-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-portal-hover rounded transition-colors"
-                    title="Edit"
-                  >
-                    <IconEdit className="h-5 w-5" />
-                  </button>
-                  <button
-                    onClick={() => handleDelete(newsletter.id)}
-                    className="p-2 text-red-500 dark:text-red-400/70 hover:bg-red-50 dark:hover:bg-red-900/30 rounded transition-colors"
-                    title="Delete"
-                  >
-                    <IconTrash className="h-5 w-5" />
-                  </button>
-                </>
-              )}
-            </div>
-          </div>
-        </div>
-      </div>
-    )
-  }
-
   return (
-    <div className="px-4 py-5 sm:p-6 portal-animate">
-      {/* Header */}
-      <div className="mb-6 sm:mb-8 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-bold font-heading tracking-tight text-gray-900 dark:text-white">The Bounce Newsletter</h1>
-          <p className="mt-1 sm:mt-2 text-sm sm:text-base text-gray-600 dark:text-gray-300">
-            Your monthly source for CBOA news and updates
-          </p>
-        </div>
+    <div className="px-3 py-3 sm:p-5 portal-animate">
+      {/* Header — compact */}
+      <div className="mb-3 flex items-center justify-between gap-2">
+        <h1 className="text-xl sm:text-2xl font-bold font-heading tracking-tight text-gray-900 dark:text-white">The Bounce</h1>
         {canEdit && !isCreating && (
           <button
             onClick={() => setIsCreating(true)}
-            className="bg-orange-500 text-white px-3 py-2 sm:px-4 rounded-xl hover:bg-orange-600 flex items-center gap-2 text-sm sm:text-base"
+            className="bg-orange-500 text-white px-3 py-1.5 rounded-lg hover:bg-orange-600 flex items-center gap-1.5 text-sm flex-shrink-0"
           >
-            <IconPlus className="h-5 w-5" />
-            Upload Newsletter
+            <IconPlus className="h-4 w-4" />
+            Upload
           </button>
         )}
       </div>
 
       {/* Create New Newsletter Form */}
       {isCreating && (
-        <div className="mb-6 bg-white dark:bg-portal-surface rounded-xl border border-gray-200 dark:border-portal-border p-4 sm:p-6">
-          <h2 className="text-lg sm:text-xl font-semibold mb-4 text-gray-900 dark:text-white">Upload New Newsletter</h2>
+        <div className="mb-4 bg-white dark:bg-portal-surface rounded-lg border border-gray-200 dark:border-portal-border p-3 sm:p-4">
+          <h2 className="text-base font-semibold mb-3 text-gray-900 dark:text-white">Upload Newsletter</h2>
 
-          <div className="space-y-4">
+          <div className="space-y-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Title</label>
+                <input
+                  type="text"
+                  value={newNewsletter.title}
+                  onChange={(e) => setNewNewsletter({ ...newNewsletter, title: e.target.value })}
+                  placeholder="e.g., The Bounce - January 2025"
+                  className={`w-full px-3 py-1.5 text-sm border rounded-md focus:outline-none focus:ring-1 bg-white dark:bg-portal-hover text-gray-900 dark:text-white ${
+                    getFieldError(validationErrors, 'title')
+                      ? 'border-red-500 focus:ring-red-500'
+                      : 'border-gray-300 dark:border-portal-border focus:ring-orange-500'
+                  }`}
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Date</label>
+                <input
+                  type="date"
+                  value={newNewsletter.date}
+                  onChange={(e) => setNewNewsletter({ ...newNewsletter, date: e.target.value })}
+                  className="w-full px-3 py-1.5 text-sm border border-gray-300 dark:border-portal-border rounded-md focus:outline-none focus:ring-1 focus:ring-orange-500 bg-white dark:bg-portal-hover text-gray-900 dark:text-white"
+                />
+              </div>
+            </div>
+
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Title</label>
+              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Description (optional)</label>
               <input
                 type="text"
-                value={newNewsletter.title}
-                onChange={(e) => setNewNewsletter({ ...newNewsletter, title: e.target.value })}
-                placeholder="e.g., The Bounce - January 2025"
-                className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 bg-white dark:bg-portal-hover text-gray-900 dark:text-white ${
-                  getFieldError(validationErrors, 'title')
-                    ? 'border-red-500 focus:ring-red-500'
-                    : 'border-gray-300 dark:border-portal-border focus:ring-orange-500'
-                }`}
-              />
-              {getFieldError(validationErrors, 'title') && (
-                <p className="mt-1 text-sm text-red-600">{getFieldError(validationErrors, 'title')}</p>
-              )}
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Date</label>
-              <input
-                type="date"
-                value={newNewsletter.date}
-                onChange={(e) => setNewNewsletter({ ...newNewsletter, date: e.target.value })}
-                className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 bg-white dark:bg-portal-hover text-gray-900 dark:text-white ${
-                  getFieldError(validationErrors, 'date')
-                    ? 'border-red-500 focus:ring-red-500'
-                    : 'border-gray-300 dark:border-portal-border focus:ring-orange-500'
-                }`}
-              />
-              {getFieldError(validationErrors, 'date') && (
-                <p className="mt-1 text-sm text-red-600">{getFieldError(validationErrors, 'date')}</p>
-              )}
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Description (optional)</label>
-              <textarea
                 value={newNewsletter.description}
                 onChange={(e) => setNewNewsletter({ ...newNewsletter, description: e.target.value })}
-                placeholder="Brief description of this issue's content"
-                rows={2}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-portal-border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 bg-white dark:bg-portal-hover text-gray-900 dark:text-white"
+                placeholder="Brief description..."
+                className="w-full px-3 py-1.5 text-sm border border-gray-300 dark:border-portal-border rounded-md focus:outline-none focus:ring-1 focus:ring-orange-500 bg-white dark:bg-portal-hover text-gray-900 dark:text-white"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">PDF File *</label>
+              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">PDF File *</label>
               <FileUpload
                 onFileSelect={setSelectedFile}
                 selectedFile={selectedFile}
@@ -583,21 +336,21 @@ export default function TheBounceClient({ newsletters: initialNewsletters }: The
               />
             </div>
 
-            <div className="flex flex-col sm:flex-row gap-2">
+            <div className="flex gap-2">
               <button
                 onClick={handleCreate}
                 disabled={!selectedFile || isUploading}
-                className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="bg-green-600 text-white px-3 py-1.5 rounded-md hover:bg-green-700 flex items-center gap-1.5 text-sm disabled:opacity-50"
               >
                 {isUploading ? (
                   <>
-                    <div className="animate-spin h-5 w-5 border-2 border-white border-t-transparent rounded-full" />
+                    <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full" />
                     Uploading...
                   </>
                 ) : (
                   <>
-                    <IconDeviceFloppy className="h-5 w-5" />
-                    Save Newsletter
+                    <IconDeviceFloppy className="h-4 w-4" />
+                    Save
                   </>
                 )}
               </button>
@@ -606,15 +359,10 @@ export default function TheBounceClient({ newsletters: initialNewsletters }: The
                   setIsCreating(false)
                   setSelectedFile(null)
                   setValidationErrors([])
-                  setNewNewsletter({
-                    title: '',
-                    date: new Date().toISOString().split('T')[0],
-                    description: ''
-                  })
+                  setNewNewsletter({ title: '', date: new Date().toISOString().split('T')[0], description: '' })
                 }}
-                className="bg-gray-300 dark:bg-gray-600 text-gray-700 dark:text-gray-200 px-4 py-2 rounded-lg hover:bg-gray-400 dark:hover:bg-gray-500 flex items-center justify-center gap-2"
+                className="bg-gray-300 dark:bg-gray-600 text-gray-700 dark:text-gray-200 px-3 py-1.5 rounded-md hover:bg-gray-400 text-sm"
               >
-                <IconX className="h-5 w-5" />
                 Cancel
               </button>
             </div>
@@ -622,111 +370,95 @@ export default function TheBounceClient({ newsletters: initialNewsletters }: The
         </div>
       )}
 
-      {/* Search and Filter */}
-      <PortalFilterBar
-        searchValue={searchTerm}
-        onSearchChange={setSearchTerm}
-        searchPlaceholder="Search newsletters..."
-        sortOptions={[
-          { value: 'date', label: 'Date' },
-          { value: 'title', label: 'Title' },
-        ]}
-        sortValue={sortBy}
-        onSortChange={(val) => setSortBy(val as 'title' | 'date')}
-        sortDirection={sortOrder}
-        onSortDirectionChange={setSortOrder}
-        viewMode={viewMode}
-        onViewModeChange={setViewMode}
-      />
+      {/* Flat newsletter list — no cards, divider-separated rows */}
+      <div className="bg-white dark:bg-portal-surface rounded-lg border border-gray-200 dark:border-portal-border divide-y divide-gray-100 dark:divide-portal-border">
+        {filteredNewsletters.length === 0 ? (
+          <div className="text-center py-8 px-4">
+            <IconNotebook className="mx-auto h-8 w-8 text-gray-400 dark:text-gray-500" />
+            <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
+              {canEdit ? 'No newsletters yet. Click "Upload" to add one.' : 'Newsletters will appear here.'}
+            </p>
+          </div>
+        ) : (
+          filteredNewsletters.map((newsletter, index) => {
+            const isLatest = latestNewsletter && newsletter.id === latestNewsletter.id
 
-      {/* Latest Newsletter */}
-      {latestNewsletter && (
-        <div className="mb-6">
-          <h2 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white mb-3">Latest Newsletter</h2>
-          <div
-            className="bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg p-3 sm:p-4 cursor-pointer hover:bg-orange-100 dark:hover:bg-orange-900/30 transition-colors"
-            onClick={() => handleView(latestNewsletter)}
-          >
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0 bg-orange-100 dark:bg-orange-900/40">
-                <IconNotebook className="h-6 w-6 text-orange-600 dark:text-orange-400" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <h3 className="font-semibold text-gray-900 dark:text-white">{latestNewsletter.title}</h3>
-                <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                  {formatDate(latestNewsletter.date)}
-                  {latestNewsletter.description && (
-                    <span className="hidden sm:inline"> • {latestNewsletter.description}</span>
+            // Inline edit mode
+            if (editingId === newsletter.id && editingData) {
+              return (
+                <div key={newsletter.id} className="p-3 space-y-2">
+                  <input
+                    type="text"
+                    value={editingData.title || ''}
+                    onChange={(e) => setEditingData({ ...editingData, title: e.target.value })}
+                    className="w-full font-medium px-2 py-1.5 text-sm border border-gray-200 dark:border-portal-border bg-white dark:bg-portal-surface text-gray-900 dark:text-white rounded-md focus:outline-none focus:ring-1 focus:ring-orange-500"
+                  />
+                  <div className="grid grid-cols-2 gap-2">
+                    <input
+                      type="date"
+                      value={editingData.date || ''}
+                      onChange={(e) => setEditingData({ ...editingData, date: e.target.value })}
+                      className="px-2 py-1.5 text-sm border border-gray-200 dark:border-portal-border bg-white dark:bg-portal-surface text-gray-900 dark:text-white rounded-md focus:outline-none focus:ring-1 focus:ring-orange-500"
+                    />
+                    <input
+                      type="text"
+                      value={editingData.description || ''}
+                      onChange={(e) => setEditingData({ ...editingData, description: e.target.value })}
+                      placeholder="Description..."
+                      className="px-2 py-1.5 text-sm border border-gray-200 dark:border-portal-border bg-white dark:bg-portal-surface text-gray-900 dark:text-white rounded-md focus:outline-none focus:ring-1 focus:ring-orange-500"
+                    />
+                  </div>
+                  <div className="flex gap-2">
+                    <button onClick={handleSaveEdit} className="bg-green-600 text-white px-2.5 py-1 rounded text-xs hover:bg-green-700 flex items-center gap-1">
+                      <IconDeviceFloppy className="h-3.5 w-3.5" /> Save
+                    </button>
+                    <button onClick={cancelEditing} className="text-gray-500 px-2.5 py-1 rounded text-xs hover:bg-gray-100 dark:hover:bg-portal-hover">
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              )
+            }
+
+            // Normal row — title + date on left, actions on right
+            return (
+              <div
+                key={newsletter.id}
+                className={`flex items-center gap-3 px-3 py-2.5 cursor-pointer hover:bg-gray-50 dark:hover:bg-portal-hover/50 transition-colors ${isLatest ? 'bg-orange-50/50 dark:bg-orange-900/10' : ''}`}
+                onClick={() => handleView(newsletter)}
+              >
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <h3 className="font-medium text-gray-900 dark:text-white text-sm truncate">{newsletter.title}</h3>
+                    {isLatest && (
+                      <span className="flex-shrink-0 text-[10px] font-semibold uppercase tracking-wide text-orange-600 dark:text-orange-400">Latest</span>
+                    )}
+                  </div>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{formatDate(newsletter.date)}</p>
+                </div>
+                <div className="flex items-center gap-0.5 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
+                  <button onClick={() => handleView(newsletter)} className="p-1.5 text-orange-500 hover:bg-orange-50 dark:hover:bg-orange-900/20 rounded" title="View">
+                    <IconEye className="h-4 w-4" />
+                  </button>
+                  <a href={newsletter.pdfFile} download className="p-1.5 text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/30 rounded" title="Download">
+                    <IconDownload className="h-4 w-4" />
+                  </a>
+                  {canEdit && (
+                    <>
+                      <button onClick={() => startEditing(newsletter)} className="p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-portal-hover rounded" title="Edit">
+                        <IconEdit className="h-3.5 w-3.5" />
+                      </button>
+                      <button onClick={() => handleDelete(newsletter.id)} className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 rounded" title="Delete">
+                        <IconTrash className="h-3.5 w-3.5" />
+                      </button>
+                    </>
                   )}
                 </div>
               </div>
-              <div className="flex items-center gap-1 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
-                <button
-                  onClick={() => handleView(latestNewsletter)}
-                  className="p-2 text-orange-600 dark:text-orange-400 hover:bg-orange-100 dark:hover:bg-orange-900/40 rounded transition-colors"
-                  title="View"
-                >
-                  <IconEye className="h-5 w-5" />
-                </button>
-                <a
-                  href={latestNewsletter.pdfFile}
-                  download
-                  className="p-2 text-orange-600 dark:text-orange-400 hover:bg-orange-100 dark:hover:bg-orange-900/40 rounded transition-colors"
-                  title="Download"
-                >
-                  <IconDownload className="h-5 w-5" />
-                </a>
-                {canEdit && (
-                  <>
-                    <button
-                      onClick={() => startEditing(latestNewsletter)}
-                      className="p-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-portal-hover rounded transition-colors"
-                      title="Edit"
-                    >
-                      <IconEdit className="h-5 w-5" />
-                    </button>
-                    <button
-                      onClick={() => handleDelete(latestNewsletter.id)}
-                      className="p-2 text-red-500 dark:text-red-400/70 hover:bg-red-50 dark:hover:bg-red-900/30 rounded transition-colors"
-                      title="Delete"
-                    >
-                      <IconTrash className="h-5 w-5" />
-                    </button>
-                  </>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Newsletter List */}
-      <div className="space-y-6">
-        <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-          All Newsletters
-          <span className="text-sm font-normal text-gray-500 dark:text-gray-400 ml-2">
-            ({filteredNewsletters.length})
-          </span>
-        </h2>
-        <div className={viewMode === 'grid'
-          ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4'
-          : 'grid grid-cols-1 gap-3 sm:block sm:space-y-3'
-        }>
-          {filteredNewsletters.map(newsletter => renderNewsletter(newsletter))}
-        </div>
+            )
+          })
+        )}
       </div>
-
-      {filteredNewsletters.length === 0 && (
-        <div className="text-center py-12 bg-white dark:bg-portal-surface rounded-lg">
-          <IconNotebook className="mx-auto h-12 w-12 text-gray-400 dark:text-gray-500" />
-          <h3 className="mt-2 text-sm font-medium text-gray-900 dark:text-white">No newsletters found</h3>
-          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-            {canEdit
-              ? 'Click "Upload Newsletter" to add your first newsletter.'
-              : 'Newsletters will appear here once uploaded by administrators.'}
-          </p>
-        </div>
-      )}
 
       {/* PDF Viewer Modal */}
       {selectedNewsletter && (

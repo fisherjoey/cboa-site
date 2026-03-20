@@ -231,7 +231,7 @@ export default function PublicTrainingAdmin() {
       {/* Header */}
       <div className="mb-6 sm:mb-8 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Public Training Events</h1>
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Public Training Events</h1>
           <p className="mt-1 sm:mt-2 text-sm sm:text-base text-gray-600">
             Manage training events displayed on the public website
           </p>
@@ -653,7 +653,7 @@ export default function PublicTrainingAdmin() {
                       </h3>
                       <div className="mt-2 space-y-1">
                         <p className="text-sm text-gray-600 flex items-center gap-1">
-                          <IconCalendar className="h-4 w-4" />
+                          <IconCalendarEvent className="h-4 w-4" />
                           {eventDate} {event.event_time && `at ${event.event_time}`}
                         </p>
                         {event.location && (

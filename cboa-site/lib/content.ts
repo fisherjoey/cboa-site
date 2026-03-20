@@ -10,7 +10,7 @@ const matterWithYaml = (content: string) => {
   return matter(content, {
     engines: {
       yaml: {
-        parse: yaml.load.bind(yaml),
+        parse: yaml.load.bind(yaml) as (input: string) => object,
         stringify: yaml.dump.bind(yaml)
       }
     }

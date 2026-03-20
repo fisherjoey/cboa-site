@@ -69,32 +69,31 @@ export function TinyMCEEditor({
   const lightContentStyle = `
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-      font-size: 16px;
+      font-size: 15px;
       line-height: 1.6;
-      color: #374151;
+      color: #1f2937;
       background-color: #ffffff;
     }
-    h1 { color: #60a5fa; font-size: 2.5rem; font-weight: bold; margin-top: 1.5rem; margin-bottom: 1rem; }
-    h2 { color: #60a5fa; font-size: 1.875rem; font-weight: bold; margin-top: 1.25rem; margin-bottom: 0.875rem; }
-    h3 { color: #60a5fa; font-size: 1.5rem; font-weight: 600; margin-top: 1rem; margin-bottom: 0.75rem; }
-    h4 { color: #60a5fa; font-size: 1.25rem; font-weight: 600; margin-top: 0.875rem; margin-bottom: 0.625rem; }
-    p { margin-bottom: 1rem; }
+    h1 { font-size: 1.5rem; font-weight: bold; margin-top: 1.25rem; margin-bottom: 0.75rem; }
+    h2 { font-size: 1.25rem; font-weight: bold; margin-top: 1rem; margin-bottom: 0.625rem; }
+    h3 { font-size: 1.1rem; font-weight: 600; margin-top: 0.875rem; margin-bottom: 0.5rem; }
+    h4 { font-size: 1rem; font-weight: 600; margin-top: 0.75rem; margin-bottom: 0.5rem; }
+    p { margin-bottom: 0.75rem; }
     a { color: #F97316; text-decoration: underline; }
-    a:hover { color: #60a5fa; }
-    strong { color: #60a5fa; font-weight: 600; }
-    table { border-collapse: collapse; width: 100%; margin: 1.5rem 0; }
-    th { background-color: #003DA5; color: white; font-weight: 600; padding: 0.75rem; text-align: left; }
-    td { border: 1px solid #E5E7EB; padding: 0.75rem; }
-    blockquote { border-left: 4px solid #F97316; background-color: #FFF7ED; padding: 1rem 1.5rem; margin: 1.5rem 0; font-style: italic; }
-    ul, ol { margin: 1rem 0; padding-left: 2rem; }
-    li { margin: 0.5rem 0; }
+    strong { font-weight: 600; }
+    table { border-collapse: collapse; width: 100%; margin: 1rem 0; }
+    th { background-color: #003DA5; color: white; font-weight: 600; padding: 0.5rem 0.75rem; text-align: left; }
+    td { border: 1px solid #E5E7EB; padding: 0.5rem 0.75rem; }
+    blockquote { border-left: 3px solid #F97316; background-color: #FFF7ED; padding: 0.75rem 1rem; margin: 1rem 0; font-style: italic; }
+    ul, ol { margin: 0.75rem 0; padding-left: 1.5rem; }
+    li { margin: 0.25rem 0; }
     img { max-width: 100%; height: auto; }
   `
 
   const darkContentStyle = `
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-      font-size: 16px;
+      font-size: 15px;
       line-height: 1.6;
       color: #e5e7eb;
       background-color: #1f2937;
@@ -102,20 +101,19 @@ export function TinyMCEEditor({
     .mce-content-body[data-mce-placeholder]:not(.mce-visualblocks)::before {
       color: #9ca3af;
     }
-    h1 { color: #60a5fa; font-size: 2.5rem; font-weight: bold; margin-top: 1.5rem; margin-bottom: 1rem; }
-    h2 { color: #60a5fa; font-size: 1.875rem; font-weight: bold; margin-top: 1.25rem; margin-bottom: 0.875rem; }
-    h3 { color: #60a5fa; font-size: 1.5rem; font-weight: 600; margin-top: 1rem; margin-bottom: 0.75rem; }
-    h4 { color: #60a5fa; font-size: 1.25rem; font-weight: 600; margin-top: 0.875rem; margin-bottom: 0.625rem; }
-    p { margin-bottom: 1rem; }
+    h1 { font-size: 1.5rem; font-weight: bold; margin-top: 1.25rem; margin-bottom: 0.75rem; }
+    h2 { font-size: 1.25rem; font-weight: bold; margin-top: 1rem; margin-bottom: 0.625rem; }
+    h3 { font-size: 1.1rem; font-weight: 600; margin-top: 0.875rem; margin-bottom: 0.5rem; }
+    h4 { font-size: 1rem; font-weight: 600; margin-top: 0.75rem; margin-bottom: 0.5rem; }
+    p { margin-bottom: 0.75rem; }
     a { color: #fb923c; text-decoration: underline; }
-    a:hover { color: #60a5fa; }
-    strong { color: #60a5fa; font-weight: 600; }
-    table { border-collapse: collapse; width: 100%; margin: 1.5rem 0; }
-    th { background-color: #1e40af; color: white; font-weight: 600; padding: 0.75rem; text-align: left; }
-    td { border: 1px solid #4b5563; padding: 0.75rem; }
-    blockquote { border-left: 4px solid #fb923c; background-color: #7c2d1233; padding: 1rem 1.5rem; margin: 1.5rem 0; font-style: italic; color: #d1d5db; }
-    ul, ol { margin: 1rem 0; padding-left: 2rem; }
-    li { margin: 0.5rem 0; }
+    strong { font-weight: 600; }
+    table { border-collapse: collapse; width: 100%; margin: 1rem 0; }
+    th { background-color: #1e40af; color: white; font-weight: 600; padding: 0.5rem 0.75rem; text-align: left; }
+    td { border: 1px solid #4b5563; padding: 0.5rem 0.75rem; }
+    blockquote { border-left: 3px solid #fb923c; background-color: #7c2d1233; padding: 0.75rem 1rem; margin: 1rem 0; font-style: italic; color: #d1d5db; }
+    ul, ol { margin: 0.75rem 0; padding-left: 1.5rem; }
+    li { margin: 0.25rem 0; }
     img { max-width: 100%; height: auto; }
   `
 

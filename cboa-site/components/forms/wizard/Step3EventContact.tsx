@@ -2,15 +2,7 @@
 
 import React from 'react'
 import { Controller } from 'react-hook-form'
-
-// Format phone number as user types: (403) 555-1234
-const formatPhoneNumber = (value: string): string => {
-  const digits = value.replace(/\D/g, '')
-  if (digits.length === 0) return ''
-  if (digits.length <= 3) return `(${digits}`
-  if (digits.length <= 6) return `(${digits.slice(0, 3)}) ${digits.slice(3)}`
-  return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6, 10)}`
-}
+import { formatPhoneNumber } from '@/lib/constants'
 
 // Reusable styles
 const inputStyles = "w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-cboa-orange focus:border-transparent transition-colors"

@@ -12,7 +12,11 @@ interface TextInputProps {
   required?: boolean
   className?: string
   name?: string
+  // Allow additional HTML input attributes (e.g., from react-hook-form's register)
+  [key: string]: any
 }
+
+export type { TextInputProps }
 
 const TextInput = forwardRef<HTMLInputElement, TextInputProps>(function TextInput({
   label,
@@ -31,15 +35,10 @@ const TextInput = forwardRef<HTMLInputElement, TextInputProps>(function TextInpu
   const inputId = useId()
   const errorId = useId()
 
-  // Handle change events - support both controlled and react-hook-form patterns
+  // Handle change events - pass the event to onChange
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!disabled && onChange) {
-      // If onChange expects a string (old controlled pattern), extract value
-      // If it expects an event (react-hook-form pattern), pass the event
-      if (onChange.length === 1 && typeof onChange === 'function') {
-        // Check if it's a react-hook-form handler by trying to call with event
-        onChange(e)
-      }
+      onChange(e)
     }
   }
 
