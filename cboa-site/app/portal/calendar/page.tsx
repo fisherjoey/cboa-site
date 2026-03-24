@@ -533,7 +533,7 @@ function EventModal({
   const [tournamentLevels, setTournamentLevels] = useState<string[]>(event.tournamentDetails?.levels || [])
   const [tournamentGenders, setTournamentGenders] = useState<string[]>(event.tournamentDetails?.genders || [])
   const [multiLocation, setMultiLocation] = useState(event.tournamentDetails?.multiLocation || false)
-  const [gamesInArbiter, setGamesInArbiter] = useState(event.tournamentDetails?.gamesInArbiter || false)
+  const [gamesInArbiter, setGamesInArbiter] = useState(event.tournamentDetails?.gamesInArbiter || (event as any).gamesInArbiter || false)
 
   const toggleArrayItem = (arr: string[], setArr: React.Dispatch<React.SetStateAction<string[]>>, item: string) => {
     setArr(prev => prev.includes(item) ? prev.filter(i => i !== item) : [...prev, item])
@@ -549,7 +549,9 @@ function EventModal({
       multiLocation,
       gamesInArbiter,
     } : undefined
-    onSave({ ...eventData, id: event.id, tournamentDetails })
+    // For league events, store gamesInArbiter in tournament_details as a minimal object
+    const leagueDetails = data.type === 'league' && gamesInArbiter ? { gamesInArbiter: true } as any : undefined
+    onSave({ ...eventData, id: event.id, tournamentDetails: tournamentDetails || leagueDetails })
   }
 
   const inputClassName = (hasError: boolean) =>
@@ -558,6 +560,7 @@ function EventModal({
   const td = event.tournamentDetails
   const hasTournamentTags = event.type === 'tournament' && td &&
     (td.divisions.length > 0 || td.levels.length > 0 || td.genders.length > 0)
+  const showArbiterBadge = td?.gamesInArbiter && (event.type === 'tournament' || event.type === 'league')
 
   if (!isEditing) {
     // View mode
@@ -613,18 +616,6 @@ function EventModal({
                 </div>
               )}
 
-              {td.gamesInArbiter && (
-                <div className="flex items-center gap-2">
-                  <span className="flex items-center gap-2 px-2.5 py-1 rounded-lg bg-green-100 dark:bg-green-900/30 border border-green-300 dark:border-green-700">
-                    <span className="relative flex h-2.5 w-2.5">
-                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                      <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-green-500"></span>
-                    </span>
-                    <span className="text-green-700 dark:text-green-300 text-sm font-medium">Games in Arbiter</span>
-                  </span>
-                </div>
-              )}
-
               {hasTournamentTags && (
                 <div className="pt-2 border-t border-gray-100 dark:border-portal-border/50">
                   <div className="flex items-center gap-1.5 mb-2">
@@ -651,6 +642,19 @@ function EventModal({
                 </div>
               )}
             </>
+          )}
+
+          {/* Games in Arbiter — shown for tournament and league events */}
+          {showArbiterBadge && (
+            <div className="flex items-center gap-2">
+              <span className="flex items-center gap-2 px-2.5 py-1 rounded-lg bg-green-100 dark:bg-green-900/30 border border-green-300 dark:border-green-700">
+                <span className="relative flex h-2.5 w-2.5">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-green-500"></span>
+                </span>
+                <span className="text-green-700 dark:text-green-300 text-sm font-medium">Games in Arbiter</span>
+              </span>
+            </div>
           )}
 
           {event.instructor && (
@@ -947,23 +951,27 @@ function EventModal({
               </div>
             </label>
 
-            <label className={`flex items-center gap-3 px-3 py-2.5 rounded-lg border cursor-pointer transition-colors ${
-              gamesInArbiter
-                ? 'bg-green-50 border-green-300 dark:bg-green-900/30 dark:border-green-700'
-                : 'bg-white dark:bg-portal-surface border-gray-200 dark:border-portal-border hover:border-gray-300'
-            }`}>
-              <input
-                type="checkbox"
-                checked={gamesInArbiter}
-                onChange={(e) => setGamesInArbiter(e.target.checked)}
-                className="h-4 w-4 text-green-600 border-gray-300 rounded focus:ring-green-500"
-              />
-              <div>
-                <span className="text-sm font-medium text-gray-900 dark:text-white">Games in Arbiter</span>
-                <p className="text-xs text-gray-500 dark:text-gray-400">Tournament games have been added to Arbiter</p>
-              </div>
-            </label>
           </div>
+        )}
+
+        {/* Games in Arbiter — available for tournament and league events */}
+        {(eventType === 'tournament' || eventType === 'league') && (
+          <label className={`flex items-center gap-3 px-3 py-2.5 rounded-lg border cursor-pointer transition-colors ${
+            gamesInArbiter
+              ? 'bg-green-50 border-green-300 dark:bg-green-900/30 dark:border-green-700'
+              : 'bg-white dark:bg-portal-surface border-gray-200 dark:border-portal-border hover:border-gray-300'
+          }`}>
+            <input
+              type="checkbox"
+              checked={gamesInArbiter}
+              onChange={(e) => setGamesInArbiter(e.target.checked)}
+              className="h-4 w-4 text-green-600 border-gray-300 rounded focus:ring-green-500"
+            />
+            <div>
+              <span className="text-sm font-medium text-gray-900 dark:text-white">Games in Arbiter</span>
+              <p className="text-xs text-gray-500 dark:text-gray-400">Games have been added to Arbiter</p>
+            </div>
+          </label>
         )}
 
         <div className="flex gap-2 pt-4">
