@@ -33,6 +33,50 @@ export const supabase: SupabaseClient = createClient(supabaseUrl, supabaseServic
 })
 
 // ---------------------------------------------------------------------------
+// Auth user helpers — Supabase's listUsers() defaults to 50/page; without
+// pagination, lookups silently miss anyone past the first page.
+// ---------------------------------------------------------------------------
+
+const AUTH_USERS_PER_PAGE = 1000
+
+export async function listAllAuthUsers(client: SupabaseClient = supabase): Promise<any[]> {
+  const all: any[] = []
+  let page = 1
+  while (true) {
+    const { data: { users }, error } = await client.auth.admin.listUsers({
+      page,
+      perPage: AUTH_USERS_PER_PAGE
+    })
+    if (error) throw error
+    if (!users || users.length === 0) break
+    all.push(...users)
+    if (users.length < AUTH_USERS_PER_PAGE) break
+    page++
+  }
+  return all
+}
+
+export async function findAuthUserByEmail(
+  email: string,
+  client: SupabaseClient = supabase
+): Promise<any | null> {
+  const target = email.toLowerCase()
+  let page = 1
+  while (true) {
+    const { data: { users }, error } = await client.auth.admin.listUsers({
+      page,
+      perPage: AUTH_USERS_PER_PAGE
+    })
+    if (error) throw error
+    if (!users || users.length === 0) return null
+    const found = users.find(u => u.email?.toLowerCase() === target)
+    if (found) return found
+    if (users.length < AUTH_USERS_PER_PAGE) return null
+    page++
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
 

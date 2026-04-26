@@ -1,5 +1,5 @@
 import { Handler } from '@netlify/functions'
-import { supabase, getCorsHeaders } from './_shared/handler'
+import { supabase, getCorsHeaders, findAuthUserByEmail } from './_shared/handler'
 import { Logger } from '../../lib/logger'
 import {
   EMAIL_ANNOUNCEMENTS,
@@ -282,9 +282,7 @@ export const handler: Handler = async (event) => {
         }
 
         // Check if auth user already exists
-        const { data: authData } = await supabase.auth.admin.listUsers()
-        const existingUsers = authData?.users || []
-        const existingAuthUser = existingUsers.find((u: any) => u.email?.toLowerCase() === email.toLowerCase())
+        const existingAuthUser = await findAuthUserByEmail(email, supabase)
 
         let authUserId: string | null = null
         let inviteSent = false
@@ -492,8 +490,7 @@ export const handler: Handler = async (event) => {
         // If user_id was null or deletion failed, try to find auth user by email
         if (!authUserDeleted && member?.email) {
           try {
-            const { data: authData } = await supabase.auth.admin.listUsers()
-            const authUser = authData?.users?.find((u: any) => u.email?.toLowerCase() === member.email.toLowerCase())
+            const authUser = await findAuthUserByEmail(member.email, supabase)
 
             if (authUser) {
               await supabase.auth.admin.deleteUser(authUser.id)

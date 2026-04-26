@@ -1,5 +1,5 @@
 import { Handler } from '@netlify/functions'
-import { supabase as supabaseAdmin, getCorsHeaders } from './_shared/handler'
+import { supabase as supabaseAdmin, getCorsHeaders, listAllAuthUsers, findAuthUserByEmail } from './_shared/handler'
 import { randomBytes } from 'crypto'
 import { Logger } from '../../lib/logger'
 import { recordInviteEmail, recordPasswordResetEmail } from '../../lib/emailHistory'
@@ -329,8 +329,7 @@ export const handler: Handler = async (event) => {
 
         // Check if user has already signed in
         if (member.user_id) {
-          const { data: { users } } = await supabaseAdmin.auth.admin.listUsers()
-          const authUser = users.find(u => u.id === member.user_id)
+          const { data: { user: authUser } } = await supabaseAdmin.auth.admin.getUserById(member.user_id)
 
           if (authUser?.last_sign_in_at) {
             logger.info('auth', 'request_invite_already_active', `Invite request for already active user: ${normalizedEmail}`)
@@ -460,9 +459,7 @@ export const handler: Handler = async (event) => {
 
         // List all users
         if (action === 'list') {
-          const { data: { users }, error } = await supabaseAdmin.auth.admin.listUsers()
-
-          if (error) throw error
+          const users = await listAllAuthUsers(supabaseAdmin)
 
           const mappedUsers: AuthUser[] = users.map(user => ({
             id: user.id,
@@ -485,11 +482,7 @@ export const handler: Handler = async (event) => {
 
         // Get status for a specific email
         if (email) {
-          const { data: { users }, error } = await supabaseAdmin.auth.admin.listUsers()
-
-          if (error) throw error
-
-          const user = users.find(u => u.email?.toLowerCase() === email.toLowerCase())
+          const user = await findAuthUserByEmail(email, supabaseAdmin)
 
           if (!user) {
             return {
@@ -560,7 +553,7 @@ export const handler: Handler = async (event) => {
           }
 
           // Get all auth users to check who hasn't signed in
-          const { data: { users: authUsers } } = await supabaseAdmin.auth.admin.listUsers()
+          const authUsers = await listAllAuthUsers(supabaseAdmin)
 
           // Filter to members whose auth user has never signed in
           const pendingInvites = pendingMembers?.filter(member => {
@@ -676,8 +669,7 @@ export const handler: Handler = async (event) => {
           })
 
           // Find and delete existing user
-          const { data: { users } } = await supabaseAdmin.auth.admin.listUsers()
-          const existingUser = users.find(u => u.email?.toLowerCase() === email.toLowerCase())
+          const existingUser = await findAuthUserByEmail(email, supabaseAdmin)
 
           if (existingUser) {
             await supabaseAdmin.auth.admin.deleteUser(existingUser.id)
@@ -751,8 +743,7 @@ export const handler: Handler = async (event) => {
         })
 
         // First check if user already exists in auth
-        const { data: { users: existingUsers } } = await supabaseAdmin.auth.admin.listUsers()
-        const existingUser = existingUsers.find(u => u.email?.toLowerCase() === email.toLowerCase())
+        const existingUser = await findAuthUserByEmail(email, supabaseAdmin)
 
         if (existingUser) {
           logger.warn('auth', 'invite_user_exists', `User already exists: ${email}`, {
@@ -999,8 +990,7 @@ export const handler: Handler = async (event) => {
         })
 
         // Find user by email
-        const { data: { users } } = await supabaseAdmin.auth.admin.listUsers()
-        const user = users.find(u => u.email?.toLowerCase() === email.toLowerCase())
+        const user = await findAuthUserByEmail(email, supabaseAdmin)
 
         if (!user) {
           logger.warn('auth', 'delete_user_not_found', `User not found: ${email}`, {
