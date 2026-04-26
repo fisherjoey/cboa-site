@@ -43,10 +43,7 @@ export default function MemberRegistration({ onComplete }: MemberRegistrationPro
 
     try {
       const fullName = `${data.first_name.trim()} ${data.last_name.trim()}`
-
-      await membersAPI.create({
-        user_id: user?.id,  // Supabase Auth user ID
-        email: user?.email,
+      const profile = {
         name: fullName,
         phone: data.phone.trim(),
         address: data.address.trim(),
@@ -55,9 +52,35 @@ export default function MemberRegistration({ onComplete }: MemberRegistrationPro
         postal_code: data.postal_code.trim().toUpperCase(),
         emergency_contact_name: data.emergency_contact_name.trim(),
         emergency_contact_phone: data.emergency_contact_phone.trim(),
-        status: 'active',
-        role: 'official'
-      })
+      }
+
+      // Look up by user_id first, then email. If a member row already
+      // exists for this user (e.g. from the invite flow or an admin
+      // bulk-add), update it instead of POSTing a fresh row —
+      // otherwise the same auth user ends up with two member records.
+      let existing: any = user?.id ? await membersAPI.getByUserId(user.id) : null
+      if (!existing && user?.email) {
+        existing = await membersAPI.getByEmail(user.email)
+      }
+
+      if (existing && existing.id) {
+        await membersAPI.update({
+          id: existing.id,
+          user_id: user?.id ?? existing.user_id,
+          email: existing.email || user?.email,
+          ...profile,
+          status: existing.status || 'active',
+          role: existing.role || 'official',
+        })
+      } else {
+        await membersAPI.create({
+          user_id: user?.id,
+          email: user?.email,
+          ...profile,
+          status: 'active',
+          role: 'official',
+        })
+      }
 
       onComplete()
     } catch (err: any) {
