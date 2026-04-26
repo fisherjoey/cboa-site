@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { createBrowserClient } from '@supabase/ssr'
+import { getSupabaseBrowserClient } from '@/lib/api/client'
 import { IconLock, IconLoader2, IconAlertCircle, IconCheck, IconX } from '@tabler/icons-react'
 
 interface PasswordChangeModalProps {
@@ -17,10 +17,7 @@ export default function PasswordChangeModal({ isOpen, onClose, onSuccess, userEm
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const supabase = createBrowserClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  )
+  const supabase = getSupabaseBrowserClient()
 
   if (!isOpen) return null
 

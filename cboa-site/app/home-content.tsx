@@ -26,12 +26,12 @@ export default function HomeContent() {
         if (newsError) throw newsError
 
         const news = (allNews || [])
-          .sort((a, b) => {
+          .sort((a: any, b: any) => {
             if (a.priority !== b.priority) return b.priority - a.priority
             return new Date(b.published_date).getTime() - new Date(a.published_date).getTime()
           })
           .slice(0, 3)
-          .map(news => ({
+          .map((news: any) => ({
             title: news.title,
             date: news.published_date,
             excerpt: news.excerpt,
@@ -52,7 +52,7 @@ export default function HomeContent() {
         if (trainingError) throw trainingError
 
         const training = (events || [])
-          .map(training => ({
+          .map((training: any) => ({
             title: training.title,
             date: training.event_date,
             time: training.event_time ? `${training.event_time} - ${

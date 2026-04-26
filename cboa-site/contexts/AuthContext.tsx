@@ -1,7 +1,7 @@
 'use client'
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react'
-import { createBrowserClient } from '@supabase/ssr'
+import { getSupabaseBrowserClient } from '@/lib/api/client'
 import { membersAPI } from '@/lib/api'
 import { clientLogger } from '@/lib/clientLogger'
 import type { User as SupabaseUser, Session } from '@supabase/supabase-js'
@@ -32,10 +32,7 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
 // Create Supabase browser client
-const supabase = createBrowserClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-)
+const supabase = getSupabaseBrowserClient()
 
 // Map Supabase user metadata to our app roles
 function getUserRole(supabaseUser: SupabaseUser | null): UserRole {
@@ -190,7 +187,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     // Set up auth state change listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
+      async (event: string, session: any) => {
         console.log('Auth state changed:', event)
 
         if (event === 'SIGNED_IN' && session?.user) {

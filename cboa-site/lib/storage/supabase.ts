@@ -1,11 +1,7 @@
-import { createClient } from '@supabase/supabase-js'
+import { getSupabaseBrowserClient } from '../api/client'
 import { StorageAdapter, FileUploadResult, StorageFile } from './interface'
 
-// Initialize Supabase client
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-
-const supabase = createClient(supabaseUrl, supabaseAnonKey)
+const supabase = getSupabaseBrowserClient()
 
 export class SupabaseStorageAdapter implements StorageAdapter {
   private bucket: string
@@ -106,7 +102,7 @@ export class SupabaseStorageAdapter implements StorageAdapter {
         .order('created_at', { ascending: false })
 
       if (!dbError && dbFiles && dbFiles.length > 0) {
-        return dbFiles.map(file => ({
+        return dbFiles.map((file: any) => ({
           id: file.id,
           fileName: file.file_name,
           originalName: file.original_name || file.file_name,
@@ -135,7 +131,7 @@ export class SupabaseStorageAdapter implements StorageAdapter {
       if (!data) return []
 
       // Map storage files to our format
-      return data.map(file => {
+      return data.map((file: any) => {
         const { data: { publicUrl } } = supabase.storage
           .from(this.bucket)
           .getPublicUrl(`${path}/${file.name}`)
@@ -169,7 +165,7 @@ export class SupabaseStorageAdapter implements StorageAdapter {
     try {
       const { data: buckets } = await supabase.storage.listBuckets()
       
-      if (!buckets?.find(b => b.name === this.bucket)) {
+      if (!buckets?.find((b: any) => b.name === this.bucket)) {
         const { error } = await supabase.storage.createBucket(this.bucket, {
           public: true,
           allowedMimeTypes: [

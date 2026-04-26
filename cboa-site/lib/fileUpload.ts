@@ -1,12 +1,8 @@
 import { validators, AppError } from './errorHandling'
-import { createClient } from '@supabase/supabase-js'
+import { getSupabaseBrowserClient } from './api/client'
 
 const MAX_FILE_SIZE_MB = 25
 const ALLOWED_FILE_TYPES = ['pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'mp4', 'avi', 'mov', 'jpg', 'jpeg', 'png']
-
-// Initialize Supabase client for direct uploads
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 
 function getContentType(filename: string): string {
   const ext = filename.split('.').pop()?.toLowerCase()
@@ -65,7 +61,7 @@ export async function uploadFile(file: File, path?: string): Promise<{ url: stri
 
   try {
     // Use direct Supabase upload (bypasses Netlify function size limits)
-    const supabase = createClient(supabaseUrl, supabaseAnonKey)
+    const supabase = getSupabaseBrowserClient()
 
     const { data, error } = await supabase.storage
       .from(bucket)
