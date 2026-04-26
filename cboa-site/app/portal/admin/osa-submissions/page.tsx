@@ -9,7 +9,7 @@ import {
   ColumnDef,
   SortingState,
 } from '@tanstack/react-table'
-import { createBrowserClient } from '@supabase/ssr'
+import { getSupabaseBrowserClient } from '@/lib/api/client'
 import { useAdminGuard } from '@/hooks/useAdminGuard'
 import {
   IconArrowUp,
@@ -81,10 +81,7 @@ interface PaginationInfo {
   totalPages: number
 }
 
-const supabase = createBrowserClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-)
+const supabase = getSupabaseBrowserClient()
 
 const eventTypeConfig: Record<string, { label: string; icon: React.ElementType; color: string }> = {
   'Exhibition Game(s)': { label: 'Exhibition', icon: IconBallBasketball, color: 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-400' },

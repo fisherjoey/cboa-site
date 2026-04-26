@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { createBrowserClient } from '@supabase/ssr'
+import { getSupabaseBrowserClient } from '@/lib/api/client'
 import { IconAlertCircle, IconX, IconLoader2 } from '@tabler/icons-react'
 
 export default function AuthErrorHandler() {
@@ -44,10 +44,7 @@ export default function AuthErrorHandler() {
         setIsProcessing(true)
 
         try {
-          const supabase = createBrowserClient(
-            process.env.NEXT_PUBLIC_SUPABASE_URL!,
-            process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-          )
+          const supabase = getSupabaseBrowserClient()
 
           const { error: sessionError } = await supabase.auth.setSession({
             access_token: accessToken,

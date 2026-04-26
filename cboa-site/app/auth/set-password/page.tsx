@@ -2,7 +2,7 @@
 
 import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { createBrowserClient } from '@supabase/ssr'
+import { getSupabaseBrowserClient } from '@/lib/api/client'
 import { IconLock, IconLoader2, IconAlertCircle, IconCheck } from '@tabler/icons-react'
 
 function SetPasswordForm() {
@@ -17,10 +17,7 @@ function SetPasswordForm() {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [checkingAuth, setCheckingAuth] = useState(true)
 
-  const supabase = createBrowserClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  )
+  const supabase = getSupabaseBrowserClient()
 
   // Check if user is authenticated
   useEffect(() => {

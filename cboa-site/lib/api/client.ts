@@ -14,10 +14,16 @@ export const USE_MOCK_DATA = process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true' ||
 
 export const isBrowser = () => typeof window !== 'undefined'
 
-// Lazily-created browser client that shares session with AuthContext
+/**
+ * Singleton browser-side Supabase client. Every client component
+ * that needs Supabase should import this — instantiating multiple
+ * createBrowserClient() calls causes "Multiple GoTrueClient
+ * instances detected" warnings and real auth-state desync (one
+ * client updates a password while a second client's listener never
+ * fires because it owns a different in-memory session).
+ */
 let _browserClient: ReturnType<typeof createBrowserClient> | null = null
-function getBrowserClient() {
-  if (!isBrowser()) return null
+export function getSupabaseBrowserClient(): ReturnType<typeof createBrowserClient> {
   if (!_browserClient) {
     _browserClient = createBrowserClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -29,8 +35,8 @@ function getBrowserClient() {
 
 // Get Supabase auth token for authenticated API calls
 async function getAuthHeaders(): Promise<Record<string, string>> {
-  const client = getBrowserClient()
-  if (!client) return {}
+  if (!isBrowser()) return {}
+  const client = getSupabaseBrowserClient()
   try {
     const { data: { session } } = await client.auth.getSession()
     if (session?.access_token) {
@@ -82,8 +88,8 @@ export { retryAsync }
 
 /** Get the current user's JWT token from Supabase session */
 export async function getAuthToken(): Promise<string | null> {
-  const client = getBrowserClient()
-  if (!client) return null
+  if (!isBrowser()) return null
+  const client = getSupabaseBrowserClient()
   try {
     const { data: { session } } = await client.auth.getSession()
     return session?.access_token || null

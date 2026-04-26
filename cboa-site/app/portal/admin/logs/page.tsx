@@ -11,7 +11,7 @@ import {
   ColumnDef,
   SortingState,
 } from '@tanstack/react-table'
-import { createBrowserClient } from '@supabase/ssr'
+import { getSupabaseBrowserClient } from '@/lib/api/client'
 import { useAdminGuard } from '@/hooks/useAdminGuard'
 import {
   IconArrowUp,
@@ -70,10 +70,7 @@ interface PaginationInfo {
   totalPages: number
 }
 
-const supabase = createBrowserClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-)
+const supabase = getSupabaseBrowserClient()
 
 export default function AdminLogsPage() {
   useAdminGuard()

@@ -1,21 +1,21 @@
 import { createClient } from '@supabase/supabase-js'
+import { getSupabaseBrowserClient } from './api/client'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || ''
 
-// Client-side Supabase client (safe for browser use)
-export const supabase = createClient(supabaseUrl, supabaseAnonKey)
-
-// Server-side Supabase client (for Netlify Functions only)
-// Only initialize if service key is available (server-side only)
+// Server-side Supabase client (for Netlify Functions only). Only
+// initialize if the service key is available — this module is
+// imported by client code too, where the service key is undefined.
 export const supabaseAdmin = supabaseServiceKey
   ? createClient(supabaseUrl, supabaseServiceKey)
   : null
 
-// Type-safe table accessors for direct Supabase access
-export const publicNewsTable = () => supabase.from('public_news')
-export const publicTrainingTable = () => supabase.from('public_training_events')
-export const publicResourcesTable = () => supabase.from('public_resources')
-export const publicPagesTable = () => supabase.from('public_pages')
-export const officialsTable = () => supabase.from('officials')
+// Type-safe table accessors. These run client-side and use the
+// shared singleton browser client so we don't fan out into multiple
+// GoTrueClient instances.
+export const publicNewsTable = () => getSupabaseBrowserClient().from('public_news')
+export const publicTrainingTable = () => getSupabaseBrowserClient().from('public_training_events')
+export const publicResourcesTable = () => getSupabaseBrowserClient().from('public_resources')
+export const publicPagesTable = () => getSupabaseBrowserClient().from('public_pages')
+export const officialsTable = () => getSupabaseBrowserClient().from('officials')

@@ -1,11 +1,7 @@
-import { createClient } from '@supabase/supabase-js'
+import { getSupabaseBrowserClient } from '../api/client'
 import { StorageAdapter, FileUploadResult, StorageFile } from './interface'
 
-// Initialize Supabase client
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-
-const supabase = createClient(supabaseUrl, supabaseAnonKey)
+const supabase = getSupabaseBrowserClient()
 
 export class SupabaseStorageAdapter implements StorageAdapter {
   private bucket: string
