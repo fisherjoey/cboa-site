@@ -10,6 +10,7 @@ import {
   SortingState,
 } from '@tanstack/react-table'
 import { createBrowserClient } from '@supabase/ssr'
+import { useAdminGuard } from '@/hooks/useAdminGuard'
 import {
   IconArrowUp,
   IconArrowDown,
@@ -293,6 +294,7 @@ function EmailDetailModal({
 }
 
 export default function EmailHistoryPage() {
+  useAdminGuard()
   const [emails, setEmails] = useState<EmailHistoryRecord[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)

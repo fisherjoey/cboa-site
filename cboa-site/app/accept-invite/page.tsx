@@ -117,7 +117,7 @@ function AcceptInviteContent() {
                 <div className="space-y-3">
                   {errorType === 'active' || errorType === 'used' ? (
                     <Link
-                      href="/portal/login"
+                      href="/login"
                       className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium transition-colors"
                     >
                       Go to Login

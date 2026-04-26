@@ -12,6 +12,7 @@ import {
   SortingState,
 } from '@tanstack/react-table'
 import { createBrowserClient } from '@supabase/ssr'
+import { useAdminGuard } from '@/hooks/useAdminGuard'
 import {
   IconArrowUp,
   IconArrowDown,
@@ -75,6 +76,7 @@ const supabase = createBrowserClient(
 )
 
 export default function AdminLogsPage() {
+  useAdminGuard()
   const [activeTab, setActiveTab] = useState<'app' | 'audit'>('app')
   const [appLogs, setAppLogs] = useState<AppLog[]>([])
   const [auditLogs, setAuditLogs] = useState<AuditLog[]>([])

@@ -2,6 +2,8 @@
 
 import React, { useEffect } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
+import { useRole } from '@/contexts/RoleContext'
 import {
   IconWorld,
   IconArticle,
@@ -17,15 +19,14 @@ import {
 } from '@tabler/icons-react'
 
 export default function PortalAdmin() {
-  useEffect(() => {
-    // Check if user has admin/executive role
-    // In production, this would be a proper auth check
-    const userRole: string = 'executive' // Mock role
+  const router = useRouter()
+  const { user } = useRole()
 
-    if (userRole !== 'admin' && userRole !== 'executive') {
-      window.location.href = '/portal'
+  useEffect(() => {
+    if (user.role !== 'admin' && user.role !== 'executive') {
+      router.push('/portal')
     }
-  }, [])
+  }, [user.role, router])
 
   const adminSections: {
     title: string
