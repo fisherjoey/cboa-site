@@ -97,23 +97,30 @@ function CompleteProfileForm() {
           ? '/.netlify/functions'
           : 'http://localhost:9000/.netlify/functions'
 
+        const authHeaders = {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
+        }
+
         // First try to fetch member by user_id
         let member = null
-        const userIdResponse = await fetch(`${API_BASE}/members?user_id=${session.user.id}`)
+        const userIdResponse = await fetch(`${API_BASE}/members?user_id=${session.user.id}`, { headers: authHeaders })
         if (userIdResponse.ok) {
-          member = await userIdResponse.json()
+          const data = await userIdResponse.json()
+          if (data && data.id) member = data
         }
 
         // If not found by user_id, try by email (handles cases where user_id wasn't linked properly)
         if (!member && session.user.email) {
-          const emailResponse = await fetch(`${API_BASE}/members?email=${encodeURIComponent(session.user.email)}`)
+          const emailResponse = await fetch(`${API_BASE}/members?email=${encodeURIComponent(session.user.email)}`, { headers: authHeaders })
           if (emailResponse.ok) {
-            member = await emailResponse.json()
-            // If found by email, update the user_id link for future lookups
-            if (member) {
+            const data = await emailResponse.json()
+            if (data && data.id) {
+              member = data
+              // If found by email, update the user_id link for future lookups
               await fetch(`${API_BASE}/members`, {
                 method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
+                headers: authHeaders,
                 body: JSON.stringify({
                   id: member.id,
                   user_id: session.user.id
@@ -175,10 +182,18 @@ function CompleteProfileForm() {
         ? '/.netlify/functions'
         : 'http://localhost:9000/.netlify/functions'
 
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) {
+        throw new Error('Your session expired. Please sign in again.')
+      }
+
       // Update member record
       const response = await fetch(`${API_BASE}/members`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
+        },
         body: JSON.stringify({
           id: memberId,
           ...form

@@ -77,7 +77,10 @@ export default function MailPage() {
           ? '/.netlify/functions'
           : 'http://localhost:9000/.netlify/functions'
 
-        const response = await fetch(`${API_BASE}/members`)
+        const token = await getAccessToken()
+        const response = await fetch(`${API_BASE}/members`, {
+          headers: token ? { 'Authorization': `Bearer ${token}` } : undefined
+        })
         if (response.ok) {
           const data = await response.json()
           setAllMembers(data.map((m: any) => ({
@@ -91,7 +94,7 @@ export default function MailPage() {
       }
     }
     fetchMembers()
-  }, [])
+  }, [getAccessToken])
 
   const recipientGroups = [
     { id: 'all', label: 'All Members', description: 'Everyone in the portal', category: 'General' },

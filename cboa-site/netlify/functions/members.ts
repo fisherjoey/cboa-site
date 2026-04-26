@@ -1,6 +1,4 @@
-import { Handler } from '@netlify/functions'
-import { supabase, getCorsHeaders, findAuthUserByEmail } from './_shared/handler'
-import { Logger } from '../../lib/logger'
+import { createHandler, findAuthUserByEmail } from './_shared/handler'
 import {
   EMAIL_ANNOUNCEMENTS,
   ORG_NAME,
@@ -124,59 +122,63 @@ function generateInviteEmailHtml(inviteUrl: string, name?: string): string {
   `.trim()
 }
 
-export const handler: Handler = async (event) => {
-  const logger = Logger.fromEvent('members', event)
+const FORBIDDEN = (msg = 'Forbidden') => ({
+  statusCode: 403,
+  body: JSON.stringify({ error: msg })
+})
 
-  const origin = event.headers.origin || event.headers.Origin
-  const headers = getCorsHeaders(origin, ['GET', 'POST', 'PUT', 'DELETE'])
+export const handler = createHandler({
+  name: 'members',
+  auth: {
+    GET: 'authenticated',
+    POST: 'authenticated',
+    PUT: 'authenticated',
+    DELETE: 'admin',
+  },
+  handler: async ({ event, supabase, logger, user }) => {
+    const isAdmin = user!.role === 'admin' || user!.role === 'executive'
+    const callerEmail = user!.email.toLowerCase()
+    const callerId = user!.id
 
-  // Handle CORS preflight
-  if (event.httpMethod === 'OPTIONS') {
-    return { statusCode: 200, headers, body: '' }
-  }
-
-  try {
     switch (event.httpMethod) {
       case 'GET': {
         const { netlify_user_id, user_id, id, email } = event.queryStringParameters || {}
 
-        // Get member by email
+        // Get member by email — self lookup unless admin/executive
         if (email) {
+          if (!isAdmin && email.toLowerCase() !== callerEmail) {
+            return FORBIDDEN()
+          }
+
           const { data, error } = await supabase
             .from('members')
             .select('*')
-            .eq('email', email)
+            .eq('email', email.toLowerCase())
             .single()
 
-          // PGRST116 = no rows found - return null, not an error
           if (error && error.code !== 'PGRST116') throw error
-
-          return {
-            statusCode: 200,
-            headers,
-            body: JSON.stringify(data || null)
-          }
+          return { statusCode: 200, body: JSON.stringify(data || null) }
         }
 
-        // Get member by Supabase Auth user ID
+        // Get member by Supabase Auth user ID — self lookup unless admin/executive
         if (user_id) {
+          if (!isAdmin && user_id !== callerId) {
+            return FORBIDDEN()
+          }
+
           const { data, error } = await supabase
             .from('members')
             .select('*')
             .eq('user_id', user_id)
             .single()
 
-          // PGRST116 = no rows found - return null, not an error
           if (error && error.code !== 'PGRST116') throw error
-
-          return {
-            statusCode: 200,
-            headers,
-            body: JSON.stringify(data || null)
-          }
+          return { statusCode: 200, body: JSON.stringify(data || null) }
         }
 
-        // Get member by Netlify user ID (legacy support)
+        // Lookup by member id or netlify_user_id, and full list, are admin/executive only
+        if (!isAdmin) return FORBIDDEN()
+
         if (netlify_user_id) {
           const { data, error } = await supabase
             .from('members')
@@ -184,17 +186,10 @@ export const handler: Handler = async (event) => {
             .eq('netlify_user_id', netlify_user_id)
             .single()
 
-          // PGRST116 = no rows found - return null, not an error
           if (error && error.code !== 'PGRST116') throw error
-
-          return {
-            statusCode: 200,
-            headers,
-            body: JSON.stringify(data || null)
-          }
+          return { statusCode: 200, body: JSON.stringify(data || null) }
         }
 
-        // Get member by ID
         if (id) {
           const { data, error } = await supabase
             .from('members')
@@ -203,15 +198,10 @@ export const handler: Handler = async (event) => {
             .single()
 
           if (error) throw error
-
-          return {
-            statusCode: 200,
-            headers,
-            body: JSON.stringify(data)
-          }
+          return { statusCode: 200, body: JSON.stringify(data) }
         }
 
-        // Get all members
+        // Full list (admin/executive only by the FORBIDDEN gate above)
         const { data, error } = await supabase
           .from('members')
           .select('*')
@@ -220,8 +210,6 @@ export const handler: Handler = async (event) => {
 
         if (error) throw error
 
-        // Fetch auth users to check who has actually signed in
-        // Paginate to handle any number of users, build a Map for O(1) lookups
         const signedInUserIds = new Set<string>()
         let page = 1
         const perPage = 1000
@@ -234,34 +222,38 @@ export const handler: Handler = async (event) => {
           page++
         }
 
-        // Add account_setup_complete flag to each member
         const membersWithStatus = data?.map(member => ({
           ...member,
           account_setup_complete: !!(member.user_id && signedInUserIds.has(member.user_id))
         })) || []
 
-        return {
-          statusCode: 200,
-          headers,
-          body: JSON.stringify(membersWithStatus)
-        }
+        return { statusCode: 200, body: JSON.stringify(membersWithStatus) }
       }
 
       case 'POST': {
         const body = JSON.parse(event.body || '{}')
         const { email, name, role, skipInvite, ...memberData } = body
 
+        if (!email) {
+          return { statusCode: 400, body: JSON.stringify({ error: 'Email is required' }) }
+        }
+
+        // Non-admins can only create their own member row, and may not assign a role
+        if (!isAdmin) {
+          if (email.toLowerCase() !== callerEmail) {
+            return FORBIDDEN('Cannot create a member record for another user')
+          }
+          if (role && role !== 'official') {
+            return FORBIDDEN('Cannot assign a role')
+          }
+          if (memberData.user_id && memberData.user_id !== callerId) {
+            return FORBIDDEN('user_id must match the authenticated user')
+          }
+        }
+
         logger.info('crud', 'create_member_start', `Creating member: ${email || name || 'unknown'}`, {
           metadata: { email, name, skipInvite }
         })
-
-        if (!email) {
-          return {
-            statusCode: 400,
-            headers,
-            body: JSON.stringify({ error: 'Email is required' })
-          }
-        }
 
         // Check if member with this email already exists
         const { data: existingMember } = await supabase
@@ -276,7 +268,6 @@ export const handler: Handler = async (event) => {
           })
           return {
             statusCode: 409,
-            headers,
             body: JSON.stringify({ error: 'Member with this email already exists' })
           }
         }
@@ -290,8 +281,9 @@ export const handler: Handler = async (event) => {
         if (existingAuthUser) {
           // Auth user exists - link to them
           authUserId = existingAuthUser.id
-        } else if (!skipInvite) {
-          // Create auth user and send invite
+        } else if (!skipInvite && isAdmin) {
+          // Only admins/executives trigger invite emails on member creation.
+          // Self-creating users go through the standard /accept-invite flow.
           try {
             const siteUrl = SITE_URL
             const { data: linkData, error: linkError } = await supabase.auth.admin.generateLink({
@@ -311,7 +303,6 @@ export const handler: Handler = async (event) => {
               logger.error('crud', 'create_member_invite_failed', `Failed to create auth user: ${linkError.message}`, new Error(linkError.message))
               return {
                 statusCode: 400,
-                headers,
                 body: JSON.stringify({ error: 'Failed to create auth user' })
               }
             }
@@ -319,7 +310,6 @@ export const handler: Handler = async (event) => {
             authUserId = linkData.user?.id || null
             const inviteUrl = linkData.properties?.action_link
 
-            // Send invite email via Microsoft Graph
             if (inviteUrl) {
               try {
                 const msToken = await getMicrosoftAccessToken()
@@ -331,34 +321,33 @@ export const handler: Handler = async (event) => {
                 })
               } catch (emailErr) {
                 logger.error('crud', 'create_member_email_failed', `Failed to send invite email to ${email}`, emailErr instanceof Error ? emailErr : new Error(String(emailErr)))
-                // Continue - auth user is created, email just didn't send
               }
             }
           } catch (authErr) {
             logger.error('crud', 'create_member_auth_failed', 'Auth user creation failed', authErr instanceof Error ? authErr : new Error(String(authErr)))
-            // Continue without auth user
           }
         }
 
         // Create member record with user_id link
+        const insertRow: Record<string, any> = {
+          ...memberData,
+          email: email.toLowerCase(),
+          name,
+          role: role || 'official',
+          user_id: authUserId || (isAdmin ? null : callerId),
+        }
+
         const { data, error } = await supabase
           .from('members')
-          .insert([{
-            ...memberData,
-            email: email.toLowerCase(),
-            name,
-            role: role || 'official',
-            user_id: authUserId
-          }])
+          .insert([insertRow])
           .select()
           .single()
 
         if (error) throw error
 
-        // Audit log
         await logger.audit('CREATE', 'member', data.id, {
-          actorId: authUserId || 'system',
-          actorEmail: email,
+          actorId: authUserId || callerId,
+          actorEmail: callerEmail,
           newValues: { email, name, role: role || 'official' },
           description: `Created member ${email}`
         })
@@ -367,11 +356,7 @@ export const handler: Handler = async (event) => {
           metadata: { memberId: data.id, email, inviteSent }
         })
 
-        return {
-          statusCode: 201,
-          headers,
-          body: JSON.stringify({ ...data, inviteSent })
-        }
+        return { statusCode: 201, body: JSON.stringify({ ...data, inviteSent }) }
       }
 
       case 'PUT': {
@@ -379,23 +364,40 @@ export const handler: Handler = async (event) => {
         const { id, ...updates } = body
 
         if (!id) {
-          return {
-            statusCode: 400,
-            headers,
-            body: JSON.stringify({ error: 'ID is required for updates' })
+          return { statusCode: 400, body: JSON.stringify({ error: 'ID is required for updates' }) }
+        }
+
+        const { data: existing } = await supabase
+          .from('members')
+          .select('*')
+          .eq('id', id)
+          .single()
+
+        if (!existing) {
+          return { statusCode: 404, body: JSON.stringify({ error: 'Member not found' }) }
+        }
+
+        // Non-admins must own the row, either by user_id link or (for the
+        // initial linking flow) by matching email on a row whose user_id
+        // is still null. Privileged fields are stripped regardless.
+        if (!isAdmin) {
+          const ownsByUserId = existing.user_id === callerId
+          const ownsByEmail = !existing.user_id
+            && (existing.email || '').toLowerCase() === callerEmail
+          if (!ownsByUserId && !ownsByEmail) {
+            return FORBIDDEN()
+          }
+          delete updates.role
+          delete updates.email
+          delete updates.netlify_user_id
+          if ('user_id' in updates && updates.user_id !== callerId) {
+            delete updates.user_id
           }
         }
 
         logger.info('crud', 'update_member_start', `Updating member ${id}`, {
           metadata: { memberId: id, updates: Object.keys(updates) }
         })
-
-        // Get old values for audit
-        const { data: oldData } = await supabase
-          .from('members')
-          .select('*')
-          .eq('id', id)
-          .single()
 
         const { data, error } = await supabase
           .from('members')
@@ -416,16 +418,14 @@ export const handler: Handler = async (event) => {
               metadata: { userId: data.user_id, newRole: updates.role }
             })
           } catch (authError) {
-            // Log but don't fail the request - members table was already updated
             logger.error('crud', 'role_sync_failed', `Failed to sync role to auth for user ${data.user_id}`, authError instanceof Error ? authError : new Error(String(authError)))
           }
         }
 
-        // Audit log
         await logger.audit('UPDATE', 'member', id, {
-          actorId: data.user_id || 'system',
-          actorEmail: data.email || 'system',
-          oldValues: oldData || undefined,
+          actorId: callerId,
+          actorEmail: callerEmail,
+          oldValues: existing || undefined,
           newValues: updates,
           description: `Updated member ${data.email || data.name || id}`
         })
@@ -434,36 +434,26 @@ export const handler: Handler = async (event) => {
           metadata: { memberId: id, email: data.email }
         })
 
-        return {
-          statusCode: 200,
-          headers,
-          body: JSON.stringify(data)
-        }
+        return { statusCode: 200, body: JSON.stringify(data) }
       }
 
       case 'DELETE': {
         const id = event.queryStringParameters?.id
 
         if (!id) {
-          return {
-            statusCode: 400,
-            headers,
-            body: JSON.stringify({ error: 'ID is required for deletion' })
-          }
+          return { statusCode: 400, body: JSON.stringify({ error: 'ID is required for deletion' }) }
         }
 
         logger.info('crud', 'delete_member_start', `Deleting member ${id}`, {
           metadata: { memberId: id }
         })
 
-        // Get member info for audit and auth cleanup before deletion
         const { data: member } = await supabase
           .from('members')
           .select('*')
           .eq('id', id)
           .single()
 
-        // Delete the member record
         const { error } = await supabase
           .from('members')
           .delete()
@@ -471,8 +461,7 @@ export const handler: Handler = async (event) => {
 
         if (error) throw error
 
-        // Also delete the auth user if they have one
-        // First try by user_id, then fallback to email lookup
+        // Also delete the auth user if linked
         let authUserDeleted = false
 
         if (member?.user_id) {
@@ -487,11 +476,9 @@ export const handler: Handler = async (event) => {
           }
         }
 
-        // If user_id was null or deletion failed, try to find auth user by email
         if (!authUserDeleted && member?.email) {
           try {
             const authUser = await findAuthUserByEmail(member.email, supabase)
-
             if (authUser) {
               await supabase.auth.admin.deleteUser(authUser.id)
               logger.info('crud', 'delete_member_auth_deleted_by_email', `Auth user deleted by email lookup for member ${id}`, {
@@ -500,14 +487,12 @@ export const handler: Handler = async (event) => {
             }
           } catch (authErr) {
             logger.error('crud', 'delete_member_auth_email_lookup_failed', 'Failed to delete auth user by email', authErr instanceof Error ? authErr : new Error(String(authErr)))
-            // Continue - member is deleted, auth cleanup failed
           }
         }
 
-        // Audit log
         await logger.audit('DELETE', 'member', id, {
-          actorId: 'system',
-          actorEmail: 'system',
+          actorId: callerId,
+          actorEmail: callerEmail,
           oldValues: member || undefined,
           description: `Deleted member ${member?.email || member?.name || id}`
         })
@@ -516,28 +501,10 @@ export const handler: Handler = async (event) => {
           metadata: { memberId: id, email: member?.email }
         })
 
-        return {
-          statusCode: 204,
-          headers,
-          body: ''
-        }
+        return { statusCode: 204, body: '' }
       }
+    }
 
-      default:
-        return {
-          statusCode: 405,
-          headers,
-          body: JSON.stringify({ error: 'Method not allowed' })
-        }
-    }
-  } catch (error) {
-    logger.error('crud', 'members_api_error', 'Members API error', error instanceof Error ? error : new Error(String(error)))
-    return {
-      statusCode: 500,
-      headers,
-      body: JSON.stringify({
-        error: 'Internal server error'
-      })
-    }
+    return { statusCode: 405, body: JSON.stringify({ error: 'Method not allowed' }) }
   }
-}
+})
