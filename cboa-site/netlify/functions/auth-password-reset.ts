@@ -218,10 +218,13 @@ export const handler: Handler = async (event) => {
 
     if (linkError) {
       logger.error('auth', 'password_reset_link_failed', `Failed to generate reset link for ${email}`, new Error(linkError.message))
+      // The user has been confirmed to exist by this point, so the
+      // user-existence enumeration concern is already handled above.
+      // Surface the failure loudly so the UI can show a real error.
       return {
-        statusCode: 200,
+        statusCode: 500,
         headers,
-        body: JSON.stringify({ success: true, message: 'If an account exists, a reset email will be sent.' })
+        body: JSON.stringify({ error: 'Failed to send reset email. Please try again.' })
       }
     }
 
