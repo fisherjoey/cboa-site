@@ -87,6 +87,13 @@ export const EMAIL_SUBJECTS = {
 export const getPortalUrl = (): string => `${SITE_URL}${PORTAL_PATH}`
 export const getContactUrl = (category?: string): string =>
   category ? `${SITE_URL}${CONTACT_PATH}?category=${category}` : `${SITE_URL}${CONTACT_PATH}`
+/**
+ * SECURITY: never thread user-supplied input (e.g. ?redirect= query
+ * params) into this URL or into Supabase generateLink({ redirectTo }).
+ * Doing so turns the auth flow into an open redirect through Supabase's
+ * allow-listed domain. Keep the callback URL hardcoded here; deep-link
+ * targets should be carried in app-level state, not in redirectTo.
+ */
 export const getAuthCallbackUrl = (): string => `${SITE_URL}/auth/callback`
 
 // Configuration object for easy import

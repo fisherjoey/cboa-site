@@ -114,14 +114,23 @@ async function getRecipientEmails(
     return Array.from(emails)
   }
 
-  // Use the shared Supabase client instead of raw REST
-  const { data: members, error } = await supabase
-    .from('members')
-    .select('email, role, certification_level, rank')
-
-  if (error || !members) {
-    console.error('Failed to fetch members:', error?.message)
-    return Array.from(emails)
+  // Paginate — PostgREST defaults to 1000 rows. Once the membership
+  // grows past 1000, an unpaginated fetch would silently miss everyone
+  // beyond row 1000 and the bulk send would stop including them.
+  const PAGE = 1000
+  const members: Array<{ email: string | null, role: string | null, certification_level: string | null, rank: number | null }> = []
+  for (let start = 0; ; start += PAGE) {
+    const { data, error } = await supabase
+      .from('members')
+      .select('email, role, certification_level, rank')
+      .range(start, start + PAGE - 1)
+    if (error) {
+      console.error('Failed to fetch members:', error.message)
+      return Array.from(emails)
+    }
+    if (!data || data.length === 0) break
+    members.push(...data)
+    if (data.length < PAGE) break
   }
 
   for (const member of members) {

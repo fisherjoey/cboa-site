@@ -38,7 +38,15 @@ function AcceptInviteContent() {
         if (data.success && data.redirectUrl) {
           setStatus('redirecting')
           setMessage('Redirecting to complete your account setup...')
-          // Redirect to Supabase magic link
+          // Recover from a stuck redirect — if the navigation hasn't
+          // moved the page in 10 seconds (Supabase magic-link slow or
+          // unreachable), surface an error instead of an indefinite
+          // spinner.
+          setTimeout(() => {
+            setStatus('error')
+            setErrorType('general')
+            setMessage('The invite redirect is taking too long. Please try again or request a new invite.')
+          }, 10_000)
           window.location.href = data.redirectUrl
         } else if (data.alreadyUsed) {
           setStatus('error')

@@ -15,6 +15,7 @@ import {
   getContactUrl,
   getPortalUrl,
   getCopyrightYear,
+  getAuthCallbackUrl,
   EMAIL_SUBJECTS,
   PORTAL_FEATURES,
 } from '../../lib/siteConfig'
@@ -851,7 +852,7 @@ export const handler: Handler = async (event) => {
             type: 'recovery',
             email,
             options: {
-              redirectTo: `${siteUrl}/auth/callback`
+              redirectTo: getAuthCallbackUrl()
             }
           })
 

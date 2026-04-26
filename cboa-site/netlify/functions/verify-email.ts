@@ -9,8 +9,14 @@ import { EMAIL_NO_REPLY, EMAIL_ANNOUNCEMENTS, ORG_NAME } from '../../lib/siteCon
 const VERIFICATION_TTL_MS = 10 * 60 * 1000 // 10 minutes
 
 function getHmacSecret(): string {
-  // Use a dedicated secret or fall back to the MS client secret
-  return process.env.EMAIL_VERIFY_SECRET || process.env.MICROSOFT_CLIENT_SECRET || ''
+  // Prefer the dedicated secret; fall back to the MS client secret.
+  // Refuse to run with an empty key — otherwise any attacker can
+  // mint a valid token by computing hmac('', payload).
+  const secret = process.env.EMAIL_VERIFY_SECRET || process.env.MICROSOFT_CLIENT_SECRET
+  if (!secret) {
+    throw new Error('EMAIL_VERIFY_SECRET (or MICROSOFT_CLIENT_SECRET fallback) must be set')
+  }
+  return secret
 }
 
 /**
