@@ -10,6 +10,7 @@ import {
   SortingState,
 } from '@tanstack/react-table'
 import { createBrowserClient } from '@supabase/ssr'
+import { useAdminGuard } from '@/hooks/useAdminGuard'
 import {
   IconArrowUp,
   IconArrowDown,
@@ -410,6 +411,7 @@ function OSADetailModal({
 }
 
 export default function OSASubmissionsPage() {
+  useAdminGuard()
   const [submissions, setSubmissions] = useState<OSASubmission[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)

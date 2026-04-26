@@ -66,10 +66,13 @@ export default function AuthGuard({
         return
       }
 
-      // Store intended destination for after login
-      sessionStorage.setItem('redirectAfterLogin', pathname)
-      // Redirect to login page
-      router.push(`/login?redirect=${encodeURIComponent(pathname)}`)
+      // Store intended destination for after login. Preserve the
+      // query string so deep-linked content (news?id=…, calendar?evt=…
+      // etc.) doesn't drop back to the index page after login.
+      const search = typeof window !== 'undefined' ? window.location.search : ''
+      const target = pathname + search
+      sessionStorage.setItem('redirectAfterLogin', target)
+      router.push(`/login?redirect=${encodeURIComponent(target)}`)
     }
   }, [isAuthenticated, isLoading, requireAuth, pathname, shouldBypassAuth, hasRedirected, router, hasToken])
 

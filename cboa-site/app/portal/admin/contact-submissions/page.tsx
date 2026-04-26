@@ -10,6 +10,7 @@ import {
   SortingState,
 } from '@tanstack/react-table'
 import { createBrowserClient } from '@supabase/ssr'
+import { useAdminGuard } from '@/hooks/useAdminGuard'
 import {
   IconArrowUp,
   IconArrowDown,
@@ -242,6 +243,7 @@ function ContactDetailModal({
 }
 
 export default function ContactSubmissionsPage() {
+  useAdminGuard()
   const [submissions, setSubmissions] = useState<ContactSubmission[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)

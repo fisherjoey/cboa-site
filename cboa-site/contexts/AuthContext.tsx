@@ -310,6 +310,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return { error: data.error || 'Failed to send reset email' }
       }
 
+      // Belt-and-suspenders: even if the server returned 2xx, treat
+      // an explicit `success: false` as an error so we don't show the
+      // "check your email" UI when nothing was sent.
+      if (data && data.success === false) {
+        clientLogger.warn('auth', 'reset_password_failed', `Password reset reported failure: ${data.error}`, { email })
+        return { error: data.error || 'Failed to send reset email' }
+      }
+
       clientLogger.info('auth', 'reset_password_requested', `Password reset requested for: ${email}`)
       return {}
     } catch (error: any) {

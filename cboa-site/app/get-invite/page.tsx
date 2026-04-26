@@ -116,7 +116,7 @@ export default function GetInvitePage() {
                       {result.message}
                     </p>
                     <Link
-                      href="/portal/login"
+                      href="/login"
                       className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium transition-colors"
                     >
                       Go to Login
@@ -165,7 +165,7 @@ export default function GetInvitePage() {
           <div className="px-6 py-4 bg-gray-50 dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700 text-center">
             <p className="text-sm text-gray-500 dark:text-gray-400">
               Already have an account?{' '}
-              <Link href="/portal/login" className="text-orange-500 hover:text-orange-600 font-medium">
+              <Link href="/login" className="text-orange-500 hover:text-orange-600 font-medium">
                 Sign in here
               </Link>
             </p>
