@@ -179,8 +179,21 @@ export const handler: Handler = async (event) => {
     }
 
     // Check if user exists
-    const { data: { users } } = await supabaseAdmin.auth.admin.listUsers()
-    const user = users.find(u => u.email?.toLowerCase() === email.toLowerCase())
+    // Need to paginate through all users since listUsers has a default limit
+    let allUsers: any[] = []
+    let page = 1
+    const perPage = 1000
+    while (true) {
+      const { data: { users }, error } = await supabaseAdmin.auth.admin.listUsers({
+        page,
+        perPage
+      })
+      if (error || !users || users.length === 0) break
+      allUsers = allUsers.concat(users)
+      if (users.length < perPage) break
+      page++
+    }
+    const user = allUsers.find(u => u.email?.toLowerCase() === email.toLowerCase())
 
     if (!user) {
       // Don't reveal if user exists or not - return success anyway
