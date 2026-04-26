@@ -9,10 +9,9 @@ interface PasswordChangeModalProps {
   onClose: () => void
   onSuccess: () => void
   userEmail: string
-  isLoggedIn?: boolean // false for migrated users who haven't logged in yet
 }
 
-export default function PasswordChangeModal({ isOpen, onClose, onSuccess, userEmail, isLoggedIn = true }: PasswordChangeModalProps) {
+export default function PasswordChangeModal({ isOpen, onClose, onSuccess, userEmail }: PasswordChangeModalProps) {
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [isLoading, setIsLoading] = useState(false)
@@ -42,39 +41,22 @@ export default function PasswordChangeModal({ isOpen, onClose, onSuccess, userEm
     setIsLoading(true)
 
     try {
-      if (isLoggedIn) {
-        // User is logged in - use Supabase client to update password
-        const { error: updateError } = await supabase.auth.updateUser({
-          password: password
-        })
+      const { error: updateError } = await supabase.auth.updateUser({
+        password: password
+      })
 
-        if (updateError) {
-          setError(updateError.message)
-          return
-        }
+      if (updateError) {
+        setError(updateError.message)
+        return
+      }
 
-        // Clear the needs_password_change flag
-        const { error: metaError } = await supabase.auth.updateUser({
-          data: { needs_password_change: false }
-        })
+      // Clear the needs_password_change flag
+      const { error: metaError } = await supabase.auth.updateUser({
+        data: { needs_password_change: false }
+      })
 
-        if (metaError) {
-          console.error('Failed to clear password change flag:', metaError)
-        }
-      } else {
-        // User is NOT logged in - use server function to set password
-        const response = await fetch('/.netlify/functions/set-migrated-user-password', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email: userEmail, password })
-        })
-
-        const data = await response.json()
-
-        if (!response.ok) {
-          setError(data.error || 'Failed to set password')
-          return
-        }
+      if (metaError) {
+        console.error('Failed to clear password change flag:', metaError)
       }
 
       onSuccess()
