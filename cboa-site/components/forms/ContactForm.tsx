@@ -697,11 +697,34 @@ export default function ContactForm() {
                     <input
                       type="text"
                       value={verificationCode}
-                      onChange={(e) => {
+                      onChange={async (e) => {
                         const val = e.target.value.replace(/\D/g, '').slice(0, 6)
                         setVerificationCode(val)
                         if (val.length === 6) {
-                          setVerificationStatus('verified')
+                          // Verify with the server before flipping to
+                          // 'verified'. Without this, the UI happily
+                          // claims any six digits are valid even though
+                          // the backend would later reject the submit.
+                          try {
+                            const res = await fetch('/.netlify/functions/verify-email', {
+                              method: 'POST',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({
+                                email: watchedEmail,
+                                token: verificationToken,
+                                code: val,
+                              }),
+                            })
+                            const result = await res.json()
+                            if (res.ok && result.valid) {
+                              setVerificationError('')
+                              setVerificationStatus('verified')
+                            } else {
+                              setVerificationError(result.error || 'Incorrect code. Please check the email and try again.')
+                            }
+                          } catch {
+                            setVerificationError('Could not verify the code. Please try again.')
+                          }
                         }
                       }}
                       maxLength={6}
