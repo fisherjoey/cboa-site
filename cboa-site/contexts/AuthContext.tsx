@@ -202,12 +202,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           // Sync user to members table on login
           syncUserToMembers(session.user)
 
-          // Only redirect if there's a stored redirect path (indicating a fresh login)
-          const redirectPath = sessionStorage.getItem('redirectAfterLogin')
-          if (redirectPath) {
-            sessionStorage.removeItem('redirectAfterLogin')
-            window.location.href = redirectPath
-          }
+          // Redirect intentionally NOT done here. The login page owns
+          // post-sign-in navigation via its own useEffect — having both
+          // fire on the same auth event caused intermittent flicker
+          // and duplicate history entries (audit #21).
         } else if (event === 'SIGNED_OUT') {
           clientLogger.info('auth', 'signed_out', 'User signed out')
           clientLogger.clearUser()
