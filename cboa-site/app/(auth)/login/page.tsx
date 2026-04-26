@@ -18,7 +18,6 @@ function LoginForm() {
   const [error, setError] = useState<string | null>(null)
   const [message, setMessage] = useState<string | null>(null)
   const [showPasswordChangeModal, setShowPasswordChangeModal] = useState(false)
-  const [isMigratedUserFlow, setIsMigratedUserFlow] = useState(false) // true when showing modal for non-logged-in migrated user
 
   // Get redirect URL from query params
   const redirectTo = searchParams.get('redirect') || '/portal'
@@ -52,17 +51,6 @@ function LoginForm() {
       const result = await login(email, password)
 
       if (result.error) {
-        // Check if this is a migrated user who needs to set their password
-        if (result.error.includes('Invalid login credentials')) {
-          const isMigrated = await checkIfMigratedUser(email)
-          if (isMigrated) {
-            // Show password setup modal for migrated users
-            setIsMigratedUserFlow(true)
-            setShowPasswordChangeModal(true)
-            setIsLoading(false)
-            return
-          }
-        }
         setError(result.error)
       }
       // Password change check and redirect handled by useEffect above
@@ -73,32 +61,10 @@ function LoginForm() {
     }
   }
 
-  // Check if email belongs to a migrated user without password
-  const checkIfMigratedUser = async (email: string): Promise<boolean> => {
-    try {
-      const response = await fetch(`/.netlify/functions/check-migrated-user?email=${encodeURIComponent(email)}`)
-      if (response.ok) {
-        const data = await response.json()
-        return data.isMigrated === true
-      }
-      return false
-    } catch {
-      return false
-    }
-  }
-
   const handlePasswordChangeSuccess = async () => {
     setShowPasswordChangeModal(false)
-
-    if (isMigratedUserFlow) {
-      // For migrated users, prompt them to log in with new password
-      setMessage('Password set successfully! Please log in with your new password.')
-      setPassword('') // Clear password field so they enter the new one
-      setIsMigratedUserFlow(false)
-    } else {
-      setMessage('Password updated successfully!')
-      router.push(redirectTo)
-    }
+    setMessage('Password updated successfully!')
+    router.push(redirectTo)
   }
 
   const handlePasswordChangeClose = () => {
@@ -241,7 +207,6 @@ function LoginForm() {
         onClose={handlePasswordChangeClose}
         onSuccess={handlePasswordChangeSuccess}
         userEmail={supabaseUser?.email || email}
-        isLoggedIn={!isMigratedUserFlow}
       />
     </div>
   )
