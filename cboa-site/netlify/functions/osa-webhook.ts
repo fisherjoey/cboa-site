@@ -3,9 +3,10 @@ import { generateCBOAEmailTemplate } from '../../lib/emailTemplate'
 import { Logger } from '../../lib/logger'
 import { osaExcelSync, OSASubmissionData } from '../../lib/excel-sync'
 import { supabase } from './_shared/handler'
+import { checkRateLimit, getClientIp } from './_shared/rateLimit'
 import * as fs from 'fs'
 import * as path from 'path'
-import { v4 as uuidv4 } from 'uuid'
+import { createHash } from 'crypto'
 import {
   ORG_NAME,
   ORG_SHORT_NAME,
@@ -744,16 +745,32 @@ export const handler: Handler = async (event: HandlerEvent) => {
     }
   }
 
-  // Optional: Verify webhook secret for security
+  // Rate limit per IP. Each call sends up to 4 Microsoft Graph emails
+  // and writes DB rows; 10/min is generous for legit users + retries.
+  const clientIp = getClientIp(event.headers)
+  if (checkRateLimit(clientIp, { maxRequests: 10, windowMs: 60_000, prefix: 'osa-webhook' })) {
+    return {
+      statusCode: 429,
+      body: JSON.stringify({ error: 'Too many requests. Please try again later.' })
+    }
+  }
+
+  // Webhook secret is mandatory. The previous `if (webhookSecret)` form
+  // accepted unauthenticated POSTs whenever the env var was unset.
   const webhookSecret = process.env.OSA_WEBHOOK_SECRET
-  if (webhookSecret) {
-    const providedSecret = event.headers['x-webhook-secret'] || event.headers['X-Webhook-Secret']
-    if (providedSecret !== webhookSecret) {
-      logger.warn('osa', 'webhook_auth_failed', 'Invalid webhook secret')
-      return {
-        statusCode: 401,
-        body: JSON.stringify({ error: 'Unauthorized' })
-      }
+  if (!webhookSecret) {
+    logger.error('osa', 'webhook_secret_missing', 'OSA_WEBHOOK_SECRET is not configured')
+    return {
+      statusCode: 500,
+      body: JSON.stringify({ error: 'Webhook authentication is not configured' })
+    }
+  }
+  const providedSecret = event.headers['x-webhook-secret'] || event.headers['X-Webhook-Secret']
+  if (providedSecret !== webhookSecret) {
+    logger.warn('osa', 'webhook_auth_failed', 'Invalid webhook secret')
+    return {
+      statusCode: 401,
+      body: JSON.stringify({ error: 'Unauthorized' })
     }
   }
 
@@ -795,6 +812,57 @@ export const handler: Handler = async (event: HandlerEvent) => {
             eventContactEmail: !!formData.eventContactEmail,
             eventsCount: formData.events?.length || 0
           }
+        })
+      }
+    }
+
+    // Compute a deterministic submission_group_id from the form data so
+    // that retries (e.g. after a transient 5xx) don't fan out a fresh
+    // batch of 4 emails per call. The hash includes the client-supplied
+    // submissionTime, which is set once on form submit and stable
+    // across retries, so two distinct submissions of the same form
+    // still produce different keys.
+    const idempotencyKey = createHash('sha256').update(JSON.stringify({
+      org: formData.organizationName,
+      contact: formData.eventContactEmail,
+      billing: formData.billingEmail,
+      submission_time: formData.submissionTime || '',
+      events: formData.events.map(e => ({
+        type: e.eventType,
+        index: e.eventIndex,
+        league: e.leagueName,
+        location: e.exhibitionGameLocation,
+        tournament: e.tournamentName,
+        start: e.leagueStartDate || e.exhibitionGames?.[0]?.date || e.tournamentStartDate,
+      }))
+    })).digest('hex')
+    // UUID-formatted (8-4-4-4-12) so it fits the submission_group_id
+    // column whether that column is UUID or TEXT.
+    const submissionGroupId = [
+      idempotencyKey.slice(0, 8),
+      idempotencyKey.slice(8, 12),
+      idempotencyKey.slice(12, 16),
+      idempotencyKey.slice(16, 20),
+      idempotencyKey.slice(20, 32),
+    ].join('-')
+
+    const { data: existingGroup } = await supabase
+      .from('osa_submissions')
+      .select('id')
+      .eq('submission_group_id', submissionGroupId)
+      .limit(1)
+
+    if (existingGroup && existingGroup.length > 0) {
+      logger.info('osa', 'idempotent_replay', `Duplicate OSA submission ignored (group ${submissionGroupId})`, {
+        metadata: { organization: formData.organizationName, eventCount }
+      })
+      return {
+        statusCode: 200,
+        body: JSON.stringify({
+          success: true,
+          duplicate: true,
+          submissionGroupId,
+          message: 'This submission has already been received.'
         })
       }
     }
@@ -1013,7 +1081,7 @@ export const handler: Handler = async (event: HandlerEvent) => {
     }
 
     // 5. Save each event to database with shared submission_group_id
-    const submissionGroupId = uuidv4()
+    // (computed deterministically above for idempotency)
     const submissionIds: string[] = []
 
     for (const event of formData.events) {
