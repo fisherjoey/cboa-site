@@ -8,7 +8,12 @@ const nextConfig = {
   },
   trailingSlash: true,
   eslint: {
-    ignoreDuringBuilds: true,
+    // Lint errors fail the build. Previously this was `true`, which
+    // let regressions ship — including hook-deps mistakes and
+    // floating-promise bugs that should have been caught before merge.
+    // If a specific rule is too noisy for CI, address it via
+    // .eslintrc overrides rather than re-enabling this escape hatch.
+    ignoreDuringBuilds: false,
   },
   typescript: {
     ignoreBuildErrors: false,
