@@ -118,7 +118,7 @@ async function getRecipientEmails(
   // grows past 1000, an unpaginated fetch would silently miss everyone
   // beyond row 1000 and the bulk send would stop including them.
   const PAGE = 1000
-  const members: Array<{ email: string | null, role: string | null, certification_level: string | null, rank: string | null }> = []
+  const members: Array<{ email: string | null, role: string | null, certification_level: string | null, rank: number | null }> = []
   for (let start = 0; ; start += PAGE) {
     const { data, error } = await supabase
       .from('members')
