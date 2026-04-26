@@ -112,7 +112,7 @@ export const handler: Handler = async (event) => {
   }
 
   try {
-    const { email, code, token } = JSON.parse(event.body || '{}')
+    const { email, code: providedCode, token: providedToken } = JSON.parse(event.body || '{}')
 
     if (!email) {
       return { statusCode: 400, headers, body: JSON.stringify({ error: 'Email is required' }) }
@@ -121,8 +121,8 @@ export const handler: Handler = async (event) => {
     // Verification mode: caller has a token and a 6-digit code, wants
     // to know if they match. Used by the ContactForm to confirm the
     // code server-side before showing a "verified" UI state.
-    if (code && token) {
-      const result = verifyEmailToken(token, email, code)
+    if (providedCode && providedToken) {
+      const result = verifyEmailToken(providedToken, email, providedCode)
       if (result.valid) {
         return { statusCode: 200, headers, body: JSON.stringify({ success: true, valid: true }) }
       }
