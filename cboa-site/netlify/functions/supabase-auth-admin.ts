@@ -1,5 +1,6 @@
 import { Handler } from '@netlify/functions'
 import { supabase as supabaseAdmin, getCorsHeaders, listAllAuthUsers, findAuthUserByEmail } from './_shared/handler'
+import { checkRateLimit, getClientIp } from './_shared/rateLimit'
 import { randomBytes } from 'crypto'
 import { Logger } from '../../lib/logger'
 import { recordInviteEmail, recordPasswordResetEmail } from '../../lib/emailHistory'
@@ -290,6 +291,18 @@ export const handler: Handler = async (event) => {
             statusCode: 400,
             headers,
             body: JSON.stringify({ error: 'Email is required' })
+          }
+        }
+
+        // Rate limit: 3 requests per minute per IP. Without this the
+        // endpoint can be used to email-bomb members and burn through
+        // Microsoft Graph quota.
+        const clientIp = getClientIp(event.headers)
+        if (checkRateLimit(clientIp, { maxRequests: 3, windowMs: 60_000, prefix: 'request-invite' })) {
+          return {
+            statusCode: 429,
+            headers,
+            body: JSON.stringify({ error: 'Too many requests. Please try again in a minute.' })
           }
         }
 

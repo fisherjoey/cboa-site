@@ -63,8 +63,19 @@ export const handler: Handler = async (event) => {
       }
     }
 
-    // Check if already used
-    if (inviteToken.used_at) {
+    // Atomically claim the token. If used_at was already set, no row is
+    // returned and a concurrent request has already claimed it. Without
+    // this, two parallel POSTs both passed the JS-side check and both
+    // ran the delete-then-recreate-then-link sequence below.
+    const { data: claimedToken, error: claimError } = await supabaseAdmin
+      .from('invite_tokens')
+      .update({ used_at: new Date().toISOString() })
+      .eq('id', inviteToken.id)
+      .is('used_at', null)
+      .select()
+      .single()
+
+    if (claimError || !claimedToken) {
       logger.info('invite', 'token_already_used', `Token already used for ${inviteToken.email}`)
       return {
         statusCode: 400,
@@ -191,11 +202,7 @@ export const handler: Handler = async (event) => {
         .eq('id', member.id)
     }
 
-    // Mark token as used
-    await supabaseAdmin
-      .from('invite_tokens')
-      .update({ used_at: new Date().toISOString() })
-      .eq('id', inviteToken.id)
+    // Token was already marked used during the atomic claim above.
 
     const redirectUrl = linkData.properties?.action_link || ''
 

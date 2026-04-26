@@ -1,5 +1,5 @@
 import { Handler } from '@netlify/functions'
-import { supabase as supabaseAdmin, getCorsHeaders } from './_shared/handler'
+import { supabase as supabaseAdmin, getCorsHeaders, listAllAuthUsers } from './_shared/handler'
 import {
   EMAIL_NO_REPLY,
   ORG_NAME,
@@ -171,8 +171,7 @@ export const handler: Handler = async (event) => {
   // Handle backup action - export current Supabase users
   if (action === 'backup') {
     try {
-      const { data: { users }, error } = await supabaseAdmin.auth.admin.listUsers()
-      if (error) throw error
+      const users = await listAllAuthUsers(supabaseAdmin)
 
       return {
         statusCode: 200,
@@ -210,9 +209,8 @@ export const handler: Handler = async (event) => {
   }
 
   try {
-    // Fetch all Supabase users
-    const { data: { users: supabaseUsers }, error: listError } = await supabaseAdmin.auth.admin.listUsers()
-    if (listError) throw listError
+    // Fetch all Supabase users (paginated)
+    const supabaseUsers = await listAllAuthUsers(supabaseAdmin)
 
     const supabaseEmails = new Set(supabaseUsers.map(u => u.email?.toLowerCase()))
 

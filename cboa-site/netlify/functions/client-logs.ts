@@ -1,8 +1,11 @@
 import { Handler } from '@netlify/functions'
-import { getCorsHeaders } from './_shared/handler'
+import { getCorsHeaders, supabase } from './_shared/handler'
+import { checkRateLimit, getClientIp } from './_shared/rateLimit'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
+
+const MAX_FIELD_LEN = 4000
 
 interface ClientLogEntry {
   level: 'ERROR' | 'WARN' | 'INFO'
@@ -11,10 +14,13 @@ interface ClientLogEntry {
   message: string
   metadata?: Record<string, unknown>
   errorStack?: string
-  userId?: string
-  userEmail?: string
   url?: string
   timestamp?: string
+}
+
+function clip(s: string | undefined | null, max = MAX_FIELD_LEN): string | null {
+  if (!s) return null
+  return s.length > max ? s.slice(0, max) : s
 }
 
 export const handler: Handler = async (event) => {
@@ -35,6 +41,35 @@ export const handler: Handler = async (event) => {
       statusCode: 405,
       headers,
       body: JSON.stringify({ error: 'Method not allowed' }),
+    }
+  }
+
+  // Rate limit per IP. Without this, the public endpoint can be used to
+  // flood app_logs (cost + storage) and inject fake admin identities.
+  const clientIp = getClientIp(event.headers)
+  if (checkRateLimit(clientIp, { maxRequests: 30, windowMs: 60_000, prefix: 'client-logs' })) {
+    return {
+      statusCode: 429,
+      headers,
+      body: JSON.stringify({ error: 'Too many requests' }),
+    }
+  }
+
+  // Resolve identity from a verified bearer token if present. user_id /
+  // user_email in the request body are ignored — they were attacker-
+  // controlled and could impersonate admins in the triage dashboard.
+  let verifiedUserId: string | null = null
+  let verifiedUserEmail: string | null = null
+  const authHeader = event.headers.authorization || event.headers.Authorization
+  if (authHeader?.startsWith('Bearer ')) {
+    try {
+      const { data: { user } } = await supabase.auth.getUser(authHeader.replace('Bearer ', ''))
+      if (user) {
+        verifiedUserId = user.id
+        verifiedUserEmail = user.email || null
+      }
+    } catch {
+      // Unverified — drop the identity, keep the log.
     }
   }
 
@@ -69,22 +104,22 @@ export const handler: Handler = async (event) => {
     const rows = logs.map((log) => ({
       level: log.level,
       source: 'client',
-      category: log.category,
+      category: clip(log.category, 100),
       function_name: null,
-      action: log.action,
-      message: log.message,
-      user_id: log.userId || null,
-      user_email: log.userEmail || null,
+      action: clip(log.action, 100),
+      message: clip(log.message),
+      user_id: verifiedUserId,
+      user_email: verifiedUserEmail,
       metadata: {
         ...(log.metadata || {}),
-        url: log.url,
+        url: clip(log.url, 500),
         client_timestamp: log.timestamp,
       },
       error_name: log.errorStack ? 'ClientError' : null,
-      error_message: log.level === 'ERROR' ? log.message : null,
-      error_stack: log.errorStack || null,
+      error_message: log.level === 'ERROR' ? clip(log.message) : null,
+      error_stack: clip(log.errorStack),
       ip_address: ipAddress || null,
-      user_agent: userAgent || null,
+      user_agent: clip(userAgent, 500),
     }))
 
     // Insert logs into Supabase

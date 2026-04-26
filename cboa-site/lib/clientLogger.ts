@@ -50,6 +50,20 @@ let userContext: { id?: string; email?: string } = {}
 let isInitialized = false
 
 /**
+ * Best-effort access-token lookup. Imported lazily to avoid pulling
+ * the Supabase client into modules that only need logging.
+ */
+async function getAuthHeaders(): Promise<Record<string, string>> {
+  try {
+    const { getAuthToken } = await import('./api/client')
+    const token = await getAuthToken()
+    return token ? { Authorization: `Bearer ${token}` } : {}
+  } catch {
+    return {}
+  }
+}
+
+/**
  * Flush logs to the server
  */
 async function flushLogs(): Promise<void> {
@@ -59,9 +73,10 @@ async function flushLogs(): Promise<void> {
   logQueue = []
 
   try {
+    const authHeaders = await getAuthHeaders()
     await fetch('/.netlify/functions/client-logs', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...authHeaders },
       body: JSON.stringify({ logs }),
     })
   } catch (err) {
