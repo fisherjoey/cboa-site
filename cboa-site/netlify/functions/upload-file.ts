@@ -47,6 +47,7 @@ export const handler: Handler = async (event): Promise<{ statusCode: number; hea
 
   const userRole = getUserRole(authUser)
   const userEmail = authUser.email || 'unknown'
+  const isPrivileged = userRole === 'admin' || userRole === 'executive'
 
   return new Promise((resolve) => {
     const bb = busboy({
@@ -58,6 +59,10 @@ export const handler: Handler = async (event): Promise<{ statusCode: number; hea
     let fileBuffer: Buffer[] = []
     let fileSize = 0
     let originalFileName = ''
+    // When the size limit is hit, busboy still emits 'finish' — without
+    // this guard the partial buffer was uploaded anyway, leaving an
+    // ~10MB orphan file in storage even though the client got a 413.
+    let rejected = false
 
     bb.on('file', (name, file, info) => {
       const { filename, mimeType } = info
@@ -71,10 +76,12 @@ export const handler: Handler = async (event): Promise<{ statusCode: number; hea
       fileName = `${timestamp}-${safeFilename}`
 
       file.on('data', (data) => {
+        if (rejected) return
         fileBuffer.push(data)
         fileSize += data.length
 
         if (fileSize > 10 * 1024 * 1024) {
+          rejected = true
           file.destroy()
           logger.warn('file', 'file_too_large', `File too large: ${originalFileName}`, {
             metadata: { filename: originalFileName, size: fileSize }
@@ -95,6 +102,7 @@ export const handler: Handler = async (event): Promise<{ statusCode: number; hea
     })
 
     bb.on('finish', async () => {
+      if (rejected) return
       if (!fileBuffer.length) {
         resolve({ statusCode: 400, headers, body: JSON.stringify({ error: 'No file received' }) })
         return
@@ -110,6 +118,16 @@ export const handler: Handler = async (event): Promise<{ statusCode: number; hea
           : filePath && filePath.includes('training')
           ? 'training-materials'
           : 'portal-resources'
+
+        // Privileged buckets are admin/executive only. portal-resources
+        // is the catch-all for any authenticated user.
+        if (bucket !== 'portal-resources' && !isPrivileged) {
+          logger.warn('file', 'upload_forbidden', `Non-privileged user tried to upload to ${bucket}`, {
+            metadata: { userEmail, role: userRole, bucket, filename: originalFileName }
+          })
+          resolve({ statusCode: 403, headers, body: JSON.stringify({ error: 'Forbidden: insufficient role for this bucket' }) })
+          return
+        }
 
         const getContentType = (filename: string) => {
           const ext = filename.split('.').pop()?.toLowerCase()
