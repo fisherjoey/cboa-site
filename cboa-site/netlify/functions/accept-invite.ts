@@ -14,7 +14,21 @@ import { ORG_SHORT_NAME, getAuthCallbackUrl } from '../../lib/siteConfig'
  * 2. Page calls this function to validate and get redirect URL
  * 3. Function generates fresh Supabase invite link
  * 4. User is redirected to complete signup
+ *
+ * Design notes:
+ * - Tokens are intentionally never-expiring. The original docstring
+ *   mentioned a 30d default, but the table has no `expires_at` column
+ *   and the handler does not enforce a TTL. Adding one requires a
+ *   schema migration plus a cron sweep, so it is deliberately deferred.
+ * - "Token not found" and "token valid but member row missing" return
+ *   an identical 404 body to avoid leaking which case occurred. A
+ *   caller holding a list of candidate tokens must not be able to
+ *   distinguish "token exists" from "token does not exist".
  */
+const INVALID_INVITE_RESPONSE_BODY = {
+  error: 'Invalid or already-used invite token',
+  message: 'This invite link is not valid. Please request a new invite from our website.',
+}
 export const handler: Handler = async (event) => {
   const logger = Logger.fromEvent('accept-invite', event)
 
@@ -51,13 +65,25 @@ export const handler: Handler = async (event) => {
 
     if (tokenError || !inviteToken) {
       logger.warn('invite', 'invalid_token', `Invalid invite token: ${token.substring(0, 8)}...`)
+      // Return the same generic 404 body that the "member missing" branch
+      // returns below. Differentiating these would let a caller probe
+      // which tokens exist in the table.
       return {
         statusCode: 404,
         headers,
-        body: JSON.stringify({
-          error: 'Invalid invite token',
-          message: 'This invite link is not valid. Please request a new invite from our website.'
-        })
+        body: JSON.stringify(INVALID_INVITE_RESPONSE_BODY)
+      }
+    }
+
+    // TTL check — invite_tokens.expires_at lands via the new migration.
+    // Treat expired tokens identically to invalid ones, same generic body
+    // and 404, to keep the existence-oracle protection above.
+    if (inviteToken.expires_at && new Date(inviteToken.expires_at).getTime() < Date.now()) {
+      logger.info('invite', 'token_expired', `Token expired for ${inviteToken.email}`)
+      return {
+        statusCode: 404,
+        headers,
+        body: JSON.stringify(INVALID_INVITE_RESPONSE_BODY)
       }
     }
 
@@ -95,13 +121,14 @@ export const handler: Handler = async (event) => {
 
     if (memberError || !member) {
       logger.warn('invite', 'member_not_found', `Member not found for token: ${inviteToken.email}`)
+      // Return the same generic 404 body as the "token not found" branch
+      // above. See the design note at the top of this file: leaking that
+      // a token exists (but its member row is gone) lets a caller probe
+      // the invite_tokens table.
       return {
         statusCode: 404,
         headers,
-        body: JSON.stringify({
-          error: 'Member not found',
-          message: `Your membership could not be found. Please contact ${ORG_SHORT_NAME} for assistance.`
-        })
+        body: JSON.stringify(INVALID_INVITE_RESPONSE_BODY)
       }
     }
 

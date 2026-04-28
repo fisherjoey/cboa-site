@@ -1,5 +1,33 @@
 import { createHandler, supabase } from './_shared/handler'
 
+/**
+ * Wire shape POSTed to /.netlify/functions/officials.
+ *
+ * The frontend (`lib/api/public-content.ts` officialsAPI) sends a
+ * `Partial<Official>` straight through with no transformation; integration
+ * tests import this type so any shape drift fails at compile time.
+ *
+ * NOTE: schema enforces `level BETWEEN 1 AND 5` (see
+ * `supabase/migrations/create-public-content-tables.sql`); a 23514 check
+ * violation from Postgres is mapped to 400 by `mapPgError` in `_shared/handler`.
+ */
+export interface OfficialCreatePayload {
+  name: string
+  level?: number
+  photo_url?: string
+  bio?: string
+  years_experience?: string
+  email?: string
+  availability?: string
+  certifications?: string[]
+  active?: boolean
+  priority?: number
+}
+
+export interface OfficialUpdatePayload extends Partial<OfficialCreatePayload> {
+  id: string
+}
+
 export const handler = createHandler({
   name: 'officials',
   auth: { GET: 'public', POST: 'admin_or_executive', PUT: 'admin_or_executive', DELETE: 'admin_or_executive' },

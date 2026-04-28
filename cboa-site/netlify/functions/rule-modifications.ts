@@ -1,4 +1,8 @@
 import { createHandler, supabase } from './_shared/handler'
+import { RULE_CATEGORIES } from '../../lib/schemas/rule-modification'
+
+// Single source of truth: same enum the frontend dropdown uses.
+const VALID_CATEGORIES = new Set<string>(RULE_CATEGORIES)
 
 export const handler = createHandler({
   name: 'rule-modifications',
@@ -6,12 +10,24 @@ export const handler = createHandler({
   handler: async ({ event, logger, user }) => {
     switch (event.httpMethod) {
       case 'GET': {
-        const { data, error } = await supabase
+        // ?active=true (default) — only active rows
+        // ?active=false        — only deactivated rows
+        // ?active=all          — both
+        const activeParam = event.queryStringParameters?.active ?? 'true'
+
+        let query = supabase
           .from('rule_modifications')
           .select('*')
-          .eq('active', true)
           .order('priority', { ascending: false })
           .limit(200)
+
+        if (activeParam === 'false') {
+          query = query.eq('active', false)
+        } else if (activeParam !== 'all') {
+          query = query.eq('active', true)
+        }
+
+        const { data, error } = await query
 
         if (error) throw error
 
@@ -23,6 +39,15 @@ export const handler = createHandler({
         logger.info('crud', 'create_rule_modification', `Creating rule modification: ${body.title || 'untitled'}`, {
           metadata: { title: body.title, league: body.league }
         })
+
+        if (body.category !== undefined && !VALID_CATEGORIES.has(body.category)) {
+          return {
+            statusCode: 400,
+            body: JSON.stringify({
+              error: `Invalid category. Expected one of: ${Array.from(VALID_CATEGORIES).join(', ')}`,
+            }),
+          }
+        }
 
         const { data, error } = await supabase
           .from('rule_modifications')

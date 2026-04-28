@@ -50,9 +50,25 @@ export const handler: Handler = async (event): Promise<{ statusCode: number; hea
   const isPrivileged = userRole === 'admin' || userRole === 'executive'
 
   return new Promise((resolve) => {
-    const bb = busboy({
-      headers: { 'content-type': event.headers['content-type'] || '' }
-    })
+    let bb: ReturnType<typeof busboy>
+    try {
+      bb = busboy({
+        headers: { 'content-type': event.headers['content-type'] || '' }
+      })
+    } catch (err) {
+      logger.warn('file', 'busboy_ctor_error', 'Unsupported content type', {
+        metadata: {
+          contentType: event.headers['content-type'] || '',
+          error: err instanceof Error ? err.message : String(err),
+        },
+      })
+      resolve({
+        statusCode: 400,
+        headers,
+        body: JSON.stringify({ error: 'Unsupported Content-Type; expected multipart/form-data' }),
+      })
+      return
+    }
 
     let fileName = ''
     let filePath = ''
@@ -71,8 +87,50 @@ export const handler: Handler = async (event): Promise<{ statusCode: number; hea
         metadata: { filename, mimeType }
       })
 
+      // Validate that the declared MIME type is consistent with the
+      // filename's extension for the common types we care about.
+      // Header-vs-extension matching only — strong magic-byte sniffing is
+      // overkill here; this catches the easy mislabels.
+      const ext = filename.split('.').pop()?.toLowerCase() || ''
+      const EXT_MIME: Record<string, string[]> = {
+        pdf: ['application/pdf'],
+        png: ['image/png'],
+        jpg: ['image/jpeg'],
+        jpeg: ['image/jpeg'],
+        gif: ['image/gif'],
+        txt: ['text/plain'],
+        xlsx: ['application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'],
+        xls: ['application/vnd.ms-excel'],
+        docx: ['application/vnd.openxmlformats-officedocument.wordprocessingml.document'],
+        doc: ['application/msword'],
+        pptx: ['application/vnd.openxmlformats-officedocument.presentationml.presentation'],
+        ppt: ['application/vnd.ms-powerpoint'],
+      }
+      const allowedMimes = EXT_MIME[ext]
+      if (allowedMimes && mimeType && !allowedMimes.includes(mimeType)) {
+        rejected = true
+        file.resume()
+        logger.warn('file', 'file_mime_mismatch', `Extension/MIME mismatch: ${filename} (${mimeType})`, {
+          metadata: { filename, mimeType, ext, allowedMimes },
+        })
+        resolve({
+          statusCode: 400,
+          headers,
+          body: JSON.stringify({
+            error: `Declared content type "${mimeType}" does not match file extension ".${ext}"`,
+          }),
+        })
+        return
+      }
+
       const timestamp = Date.now()
-      const safeFilename = filename.replace(/[^a-zA-Z0-9.-]/g, '_')
+      // Strip non-allowed chars, then collapse runs of '.' to a single dot
+      // and trim leading dots. Defense-in-depth: even if this filename is
+      // ever joined into a path elsewhere, a '..' sequence cannot appear.
+      const safeFilename = filename
+        .replace(/[^a-zA-Z0-9.-]/g, '_')
+        .replace(/\.{2,}/g, '.')
+        .replace(/^\.+/, '')
       fileName = `${timestamp}-${safeFilename}`
 
       file.on('data', (data) => {
@@ -110,6 +168,27 @@ export const handler: Handler = async (event): Promise<{ statusCode: number; hea
 
       try {
         const fullBuffer = Buffer.concat(fileBuffer)
+
+        // Light magic-byte check for PDF: a real PDF starts with "%PDF-".
+        // This catches the obvious .pdf-extension/EXE-bytes mislabel even
+        // when both the extension and declared MIME claim PDF. We don't
+        // sniff every type — full magic-byte detection is overkill — but
+        // PDFs are the most common upload here so the cheap check pays.
+        const fileExt = originalFileName.split('.').pop()?.toLowerCase() || ''
+        if (fileExt === 'pdf') {
+          const head = fullBuffer.slice(0, 5).toString('binary')
+          if (head !== '%PDF-') {
+            logger.warn('file', 'file_magic_mismatch', `PDF magic-byte mismatch: ${originalFileName}`, {
+              metadata: { filename: originalFileName, head },
+            })
+            resolve({
+              statusCode: 400,
+              headers,
+              body: JSON.stringify({ error: 'File contents do not match declared PDF type' }),
+            })
+            return
+          }
+        }
 
         const bucket = filePath && filePath.includes('email-images')
           ? 'email-images'

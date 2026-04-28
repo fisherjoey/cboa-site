@@ -1,5 +1,23 @@
 import { createHandler, supabase } from './_shared/handler'
 
+/**
+ * Wire shape POSTed to /.netlify/functions/executive-team. Integration
+ * tests bind to this so any shape drift fails at compile time.
+ */
+export interface ExecutiveTeamCreatePayload {
+  name: string
+  position: string
+  email: string
+  image_url?: string | null
+  bio?: string | null
+  active?: boolean
+  priority?: number
+}
+
+export interface ExecutiveTeamUpdatePayload extends Partial<ExecutiveTeamCreatePayload> {
+  id: string
+}
+
 export const handler = createHandler({
   name: 'executive-team',
   auth: { GET: 'public', POST: 'admin', PUT: 'admin', DELETE: 'admin' },

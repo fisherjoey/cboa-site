@@ -27,6 +27,18 @@ export const handler = createHandler({
           metadata: { title: body.title }
         })
 
+        // Postgres returns 22007 for malformed timestamps, which mapPgError
+        // doesn't recognize. Validate up front so callers get a clean 400.
+        if (body.date !== undefined && body.date !== null && body.date !== '') {
+          const ts = new Date(body.date)
+          if (Number.isNaN(ts.getTime())) {
+            return {
+              statusCode: 400,
+              body: JSON.stringify({ error: 'Invalid date format' })
+            }
+          }
+        }
+
         const { data, error } = await supabase
           .from('scheduler_updates')
           .insert([{
@@ -72,6 +84,13 @@ export const handler = createHandler({
           .select()
 
         if (error) throw error
+
+        if (!data || data.length === 0) {
+          return {
+            statusCode: 404,
+            body: JSON.stringify({ error: 'Not found' })
+          }
+        }
 
         await logger.audit('UPDATE', 'scheduler_update', id, {
           actorId: user!.id,

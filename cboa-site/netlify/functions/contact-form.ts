@@ -13,7 +13,7 @@ import {
   ORG_NAME,
 } from '../../lib/siteConfig'
 
-interface ContactFormData {
+export interface ContactFormData {
   name: string
   email: string
   category: string

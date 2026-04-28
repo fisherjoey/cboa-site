@@ -212,6 +212,112 @@ function getAuthLevel(
 }
 
 // ---------------------------------------------------------------------------
+// Postgres / PostgREST error → HTTP status mapping
+// ---------------------------------------------------------------------------
+
+/**
+ * Loose shape of a Supabase PostgrestError. We don't import the type to keep
+ * this helper agnostic — anything that looks like it has a `code` and a
+ * `message` is treated as a candidate.
+ */
+interface PgErrorShape {
+  code?: string
+  message?: string
+  details?: string | null
+  hint?: string | null
+  column?: string
+  constraint?: string
+}
+
+/**
+ * Returns true when `err` looks like a Postgres / PostgREST error we know how
+ * to map. Used by the four standalone handlers to decide whether to call
+ * `pgErrorResponse(err, headers)` from their outer `catch (error)` block.
+ *
+ * "Looks like" = is a non-null object with a string `code` field. That's
+ * enough to match both `PostgrestError` (always sets `code`) and the raw
+ * Postgres errors that surface for things like NOT NULL violations.
+ */
+export function isPgError(err: unknown): err is PgErrorShape {
+  if (!err || typeof err !== 'object') return false
+  const code = (err as { code?: unknown }).code
+  return typeof code === 'string' && code.length > 0
+}
+
+/**
+ * Map a thrown error (from a `catch (err)` block, hence `unknown`) to the
+ * HTTP status + body the API should return.
+ *
+ * Recognized codes:
+ *   23502 (not_null_violation)         → 400  "Missing required field"
+ *   23505 (unique_violation)           → 409  "Conflict: duplicate value"
+ *   23514 (check_violation)            → 400  "Invalid value"
+ *   22P02 (invalid_text_representation)→ 400  "Invalid value format"
+ *   PGRST116 (0/>1 rows from .single)  → 404  "Not found"
+ *
+ * Anything else falls through to `{ statusCode: 500, body: { error:
+ * 'Internal server error' } }`. Callers that care about distinguishing
+ * "we mapped it" vs "we didn't" can inspect `result.statusCode === 500`.
+ */
+export function mapPgError(err: unknown): { statusCode: number; body: Record<string, unknown> } {
+  if (!isPgError(err)) {
+    return { statusCode: 500, body: { error: 'Internal server error' } }
+  }
+
+  const code = err.code
+
+  if (code === '23502') {
+    // NOT NULL violation. `column` is on the raw PG error but PostgrestError
+    // sometimes only puts it in `details` like `Failing row contains (...)`.
+    if (err.column) {
+      return { statusCode: 400, body: { error: 'Missing required field', column: err.column } }
+    }
+    return { statusCode: 400, body: { error: 'Missing required field(s)' } }
+  }
+
+  if (code === '23505') {
+    if (err.constraint) {
+      return { statusCode: 409, body: { error: 'Conflict: duplicate value', constraint: err.constraint } }
+    }
+    return { statusCode: 409, body: { error: 'Conflict: duplicate value' } }
+  }
+
+  if (code === '23514') {
+    if (err.constraint) {
+      return { statusCode: 400, body: { error: 'Invalid value', constraint: err.constraint } }
+    }
+    return { statusCode: 400, body: { error: 'Invalid value' } }
+  }
+
+  if (code === '22P02') {
+    return { statusCode: 400, body: { error: 'Invalid value format' } }
+  }
+
+  if (code === 'PGRST116') {
+    return { statusCode: 404, body: { error: 'Not found' } }
+  }
+
+  return { statusCode: 500, body: { error: 'Internal server error' } }
+}
+
+/**
+ * Convenience wrapper: stringifies the body and merges in the caller's
+ * headers, so a handler can do `return pgErrorResponse(err, corsHeaders)`
+ * and get back exactly the shape Netlify expects.
+ */
+export function pgErrorResponse(
+  err: unknown,
+  headers: Record<string, string> = {}
+): { statusCode: number; headers: Record<string, string>; body: string } {
+  const { statusCode, body } = mapPgError(err)
+  return {
+    statusCode,
+    headers,
+    body: JSON.stringify(body),
+  }
+}
+
+// ---------------------------------------------------------------------------
 // createHandler
 // ---------------------------------------------------------------------------
 
@@ -289,6 +395,26 @@ export function createHandler(options: CreateHandlerOptions): Handler {
         headers: { ...corsHeaders, ...result.headers },
       }
     } catch (error) {
+      // Map known Postgres / PostgREST errors to the right HTTP status.
+      // If mapPgError doesn't recognize the code it returns 500, in which
+      // case we fall through to the existing "unexpected error" path.
+      const mapped = mapPgError(error)
+      if (mapped.statusCode !== 500) {
+        // Recognized DB error — log at info level so it shows up in app_logs
+        // but doesn't get treated as a server-side bug.
+        logger.info(
+          'api',
+          `${name}_pg_error`,
+          `${name} mapped DB error to ${mapped.statusCode}`,
+          { metadata: { statusCode: mapped.statusCode, body: mapped.body } }
+        )
+        return {
+          statusCode: mapped.statusCode,
+          headers: corsHeaders,
+          body: JSON.stringify(mapped.body),
+        }
+      }
+
       logger.error(
         'api',
         `${name}_error`,

@@ -13,7 +13,7 @@ function normalizeUrlsInHtml(html: string): string {
   )
 }
 
-interface EmailRequest {
+export interface EmailRequest {
   subject: string
   recipientGroups: string[]
   customEmails: string[]
@@ -117,12 +117,20 @@ async function getRecipientEmails(
   // Paginate — PostgREST defaults to 1000 rows. Once the membership
   // grows past 1000, an unpaginated fetch would silently miss everyone
   // beyond row 1000 and the bulk send would stop including them.
+  //
+  // Note on `rank`: a bare `rank` identifier collides with the SQL
+  // `rank()` ordered-set aggregate and PostgREST returns
+  // "WITHIN GROUP is required for ordered-set aggregate rank". The
+  // alias form `member_rank:rank` sidesteps the collision — column
+  // selected as `member_rank` in the response, sourced from the `rank`
+  // column on the table. Whole bulk-email feature was silently broken
+  // before this aliasing was added.
   const PAGE = 1000
-  const members: Array<{ email: string | null, role: string | null, certification_level: string | null, rank: number | null }> = []
+  const members: Array<{ email: string | null, role: string | null, certification_level: string | null, member_rank: number | null }> = []
   for (let start = 0; ; start += PAGE) {
     const { data, error } = await supabase
       .from('members')
-      .select('email, role, certification_level, rank')
+      .select('email, role, certification_level, member_rank:rank')
       .range(start, start + PAGE - 1)
     if (error) {
       console.error('Failed to fetch members:', error.message)
@@ -152,11 +160,15 @@ async function getRecipientEmails(
     }
 
     if (shouldInclude && rankFilter) {
-      if (member.rank === undefined || member.rank === null) {
+      // Members with no rank set are excluded when a rankFilter is in
+      // play — the caller is asking for "rank ≥ N" specifically.
+      if (member.member_rank === null || member.member_rank === undefined) {
         shouldInclude = false
       } else {
-        const threshold = parseInt(rankFilter.replace('+', ''))
-        if (member.rank < threshold) shouldInclude = false
+        const threshold = parseInt(String(rankFilter).replace('+', ''), 10)
+        if (Number.isNaN(threshold) || member.member_rank < threshold) {
+          shouldInclude = false
+        }
       }
     }
 
@@ -189,6 +201,12 @@ export const handler = createHandler({
     }
     if ((!recipientGroups || recipientGroups.length === 0) && (!customEmails || customEmails.length === 0)) {
       return { statusCode: 400, body: JSON.stringify({ error: 'At least one recipient is required' }) }
+    }
+    if (rankFilter !== undefined && rankFilter !== '') {
+      const cleaned = String(rankFilter).replace('+', '')
+      if (cleaned === '' || Number.isNaN(parseInt(cleaned, 10))) {
+        return { statusCode: 400, body: JSON.stringify({ error: 'rankFilter must be a number (optionally with a trailing +)' }) }
+      }
     }
 
     if (!process.env.MICROSOFT_TENANT_ID || !process.env.MICROSOFT_CLIENT_ID || !process.env.MICROSOFT_CLIENT_SECRET) {

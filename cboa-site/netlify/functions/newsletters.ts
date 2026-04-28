@@ -23,6 +23,16 @@ export const handler = createHandler({
           metadata: { title: body.title }
         })
 
+        // is_featured is a BOOLEAN column. Postgres rejects non-booleans
+        // with 22P02 → 400 via mapPgError, but reject explicitly so callers
+        // get a stable error shape regardless of how the driver coerces.
+        if (body.is_featured !== undefined && typeof body.is_featured !== 'boolean') {
+          return {
+            statusCode: 400,
+            body: JSON.stringify({ error: 'is_featured must be a boolean' })
+          }
+        }
+
         const { data, error } = await supabase
           .from('newsletters')
           .insert([body])

@@ -33,9 +33,16 @@ export const handler = createHandler({
             .from('evaluations')
             .select(EVAL_SELECT)
             .eq('id', id)
-            .single()
+            .maybeSingle()
 
           if (error) throw error
+
+          // Existence-oracle fix: a non-existent id and an id belonging to
+          // another member must look identical to an unprivileged caller.
+          // Both return 404 "Not found".
+          if (!data) {
+            return { statusCode: 404, body: JSON.stringify({ error: 'Not found' }) }
+          }
 
           if (!canViewAllEvaluations(userRole)) {
             const { data: memberData } = await supabase
@@ -45,7 +52,7 @@ export const handler = createHandler({
               .single()
 
             if (!memberData || data.member_id !== memberData.id) {
-              return { statusCode: 403, body: JSON.stringify({ error: 'Forbidden - You can only view your own evaluations' }) }
+              return { statusCode: 404, body: JSON.stringify({ error: 'Not found' }) }
             }
           }
 
@@ -58,9 +65,15 @@ export const handler = createHandler({
               .from('members')
               .select('id')
               .eq('user_id', user!.id)
-              .single()
+              .maybeSingle()
 
-            if (!memberData || member_id !== memberData.id) {
+            // No members row for this user_id → they have no evaluations.
+            // Return an empty list so the UX matches "official with row but
+            // no evaluations" (avoids the misleading 403 message).
+            if (!memberData) {
+              return { statusCode: 200, body: JSON.stringify([]) }
+            }
+            if (member_id !== memberData.id) {
               return { statusCode: 403, body: JSON.stringify({ error: 'Forbidden - You can only view your own evaluations' }) }
             }
           }
@@ -146,15 +159,41 @@ export const handler = createHandler({
       }
 
       case 'PUT': {
-        if (!canModifyEvaluations(userRole)) {
-          return { statusCode: 403, body: JSON.stringify({ error: 'Forbidden - Only administrators and executives can edit evaluations' }) }
-        }
-
         const body = JSON.parse(event.body || '{}')
         const { id, ...updateData } = body
 
         if (!id) {
           return { statusCode: 400, body: JSON.stringify({ error: 'ID is required for update' }) }
+        }
+
+        // Carve-out: an evaluator may modify an evaluation whose
+        // evaluator_id matches their own member.id (FK to members.id, not
+        // user_id). Admin/executive bypass this check entirely.
+        if (!canModifyEvaluations(userRole)) {
+          if (userRole !== 'evaluator') {
+            return { statusCode: 403, body: JSON.stringify({ error: 'Forbidden - Only administrators and executives can edit evaluations' }) }
+          }
+
+          const { data: existing, error: existingError } = await supabase
+            .from('evaluations')
+            .select('evaluator_id')
+            .eq('id', id)
+            .maybeSingle()
+
+          if (existingError) throw existingError
+          if (!existing) {
+            return { statusCode: 404, body: JSON.stringify({ error: 'Not found' }) }
+          }
+
+          const { data: memberData } = await supabase
+            .from('members')
+            .select('id')
+            .eq('user_id', user!.id)
+            .maybeSingle()
+
+          if (!memberData || existing.evaluator_id !== memberData.id) {
+            return { statusCode: 403, body: JSON.stringify({ error: 'Forbidden - Evaluators can only edit evaluations they authored' }) }
+          }
         }
 
         logger.info('crud', 'update_evaluation', `Updating evaluation ${id} by ${userEmail} (${userRole})`, {

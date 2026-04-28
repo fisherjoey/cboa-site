@@ -48,6 +48,16 @@ export const handler = createHandler({
           }
         }
 
+        // Postgres surfaces malformed timestamps as 22007, which mapPgError
+        // doesn't recognize — pre-validate so the caller gets a clean 400
+        // instead of bubbling into the 500 catch-all.
+        if (Number.isNaN(Date.parse(body.published_date))) {
+          return {
+            statusCode: 400,
+            body: JSON.stringify({ error: 'Invalid value format', column: 'published_date' })
+          }
+        }
+
         const { data, error } = await supabase
           .from('public_news')
           .insert([body])

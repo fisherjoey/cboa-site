@@ -69,6 +69,13 @@ export const handler = createHandler({
 
         if (error) throw error
 
+        if (!data || data.length === 0) {
+          return {
+            statusCode: 404,
+            body: JSON.stringify({ error: 'Not found' })
+          }
+        }
+
         await logger.audit('UPDATE', 'calendar_event', id, {
           actorId: user!.id,
           actorEmail: user!.email,

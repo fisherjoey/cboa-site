@@ -1,5 +1,8 @@
 [build]
-  command = "npm install && npm run build"
+  # Integration tests run against real Supabase; they create + clean up
+  # tagged rows and a couple of throwaway auth users every deploy. Tests
+  # gate the build — failures fail the deploy.
+  command = "npm install && npm run test:integration && npm run build"
   publish = ".next"
 
 [dev]

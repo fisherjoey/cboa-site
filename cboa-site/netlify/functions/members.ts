@@ -13,6 +13,35 @@ import {
   EMAIL_SUBJECTS,
 } from '../../lib/siteConfig'
 
+/**
+ * Wire shape the PUT branch accepts. Caller MUST send `id`; everything
+ * else is optional and patched onto the row. Privileged fields
+ * (role/email/netlify_user_id/user_id/status/rank) are stripped from
+ * non-admin callers — see the strip list in the PUT handler.
+ */
+export interface MemberUpdatePayload {
+  id: string
+  name?: string
+  email?: string
+  phone?: string
+  certification_level?: string
+  rank?: number
+  status?: string
+  role?: string
+  address?: string
+  city?: string
+  province?: string
+  postal_code?: string
+  emergency_contact_name?: string
+  emergency_contact_phone?: string
+  custom_fields?: Record<string, unknown>
+  notes?: string
+  // Allowed in the wire shape so tests can probe the strip-list — the
+  // handler refuses to accept these from non-admin callers.
+  netlify_user_id?: string
+  user_id?: string
+}
+
 // Microsoft Graph API for sending emails
 async function getMicrosoftAccessToken(): Promise<string> {
   const tokenEndpoint = `https://login.microsoftonline.com/${process.env.MICROSOFT_TENANT_ID}/oauth2/v2.0/token`
@@ -390,6 +419,10 @@ export const handler = createHandler({
           delete updates.role
           delete updates.email
           delete updates.netlify_user_id
+          // status and rank are admin-only fields. A non-admin must not
+          // be able to undo a suspension or self-promote rank by self-PUT.
+          delete updates.status
+          delete updates.rank
           if ('user_id' in updates && updates.user_id !== callerId) {
             delete updates.user_id
           }
@@ -398,6 +431,14 @@ export const handler = createHandler({
         logger.info('crud', 'update_member_start', `Updating member ${id}`, {
           metadata: { memberId: id, updates: Object.keys(updates) }
         })
+
+        // If the strip emptied out the update body (e.g. the caller only
+        // sent privileged fields), return the existing row unchanged
+        // rather than firing an empty UPDATE — Supabase rejects those
+        // and the resulting error would 500/404 a benign no-op.
+        if (Object.keys(updates).length === 0) {
+          return { statusCode: 200, body: JSON.stringify(existing) }
+        }
 
         const { data, error } = await supabase
           .from('members')
