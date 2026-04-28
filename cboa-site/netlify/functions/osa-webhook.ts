@@ -755,25 +755,6 @@ export const handler: Handler = async (event: HandlerEvent) => {
     }
   }
 
-  // Webhook secret is mandatory. The previous `if (webhookSecret)` form
-  // accepted unauthenticated POSTs whenever the env var was unset.
-  const webhookSecret = process.env.OSA_WEBHOOK_SECRET
-  if (!webhookSecret) {
-    logger.error('osa', 'webhook_secret_missing', 'OSA_WEBHOOK_SECRET is not configured')
-    return {
-      statusCode: 500,
-      body: JSON.stringify({ error: 'Webhook authentication is not configured' })
-    }
-  }
-  const providedSecret = event.headers['x-webhook-secret'] || event.headers['X-Webhook-Secret']
-  if (providedSecret !== webhookSecret) {
-    logger.warn('osa', 'webhook_auth_failed', 'Invalid webhook secret')
-    return {
-      statusCode: 401,
-      body: JSON.stringify({ error: 'Unauthorized' })
-    }
-  }
-
   try {
     // Parse form data
     const rawData = JSON.parse(event.body || '{}')
