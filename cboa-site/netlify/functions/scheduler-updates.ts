@@ -1,4 +1,4 @@
-import { createHandler, supabase } from './_shared/handler'
+import { createHandler, supabase, errorResponse } from './_shared/handler'
 
 export const handler = createHandler({
   name: 'scheduler-updates',
@@ -26,6 +26,18 @@ export const handler = createHandler({
         logger.info('crud', 'create_scheduler_update', `Creating scheduler update: ${body.title || 'untitled'}`, {
           metadata: { title: body.title }
         })
+
+        // Postgres returns 22007 for malformed timestamps, which mapPgError
+        // doesn't recognize. Validate up front so callers get a clean 400.
+        if (body.date !== undefined && body.date !== null && body.date !== '') {
+          const ts = new Date(body.date)
+          if (Number.isNaN(ts.getTime())) {
+            return {
+              statusCode: 400,
+              body: JSON.stringify({ error: 'Invalid date format' })
+            }
+          }
+        }
 
         const { data, error } = await supabase
           .from('scheduler_updates')
@@ -55,10 +67,10 @@ export const handler = createHandler({
         const { id, ...updateData } = body
 
         if (!id) {
-          return {
-            statusCode: 400,
-            body: JSON.stringify({ error: 'ID is required for update' })
-          }
+          return errorResponse({
+            code: 'invalid_input',
+            message: 'A record must be selected for update.',
+          })
         }
 
         logger.info('crud', 'update_scheduler_update', `Updating scheduler update ${id}`, {
@@ -72,6 +84,13 @@ export const handler = createHandler({
           .select()
 
         if (error) throw error
+
+        if (!data || data.length === 0) {
+          return {
+            statusCode: 404,
+            body: JSON.stringify({ error: 'Not found' })
+          }
+        }
 
         await logger.audit('UPDATE', 'scheduler_update', id, {
           actorId: user!.id,
@@ -90,10 +109,10 @@ export const handler = createHandler({
         const { id } = event.queryStringParameters || {}
 
         if (!id) {
-          return {
-            statusCode: 400,
-            body: JSON.stringify({ error: 'ID is required for deletion' })
-          }
+          return errorResponse({
+            code: 'invalid_input',
+            message: 'A record must be selected for deletion.',
+          })
         }
 
         logger.info('crud', 'delete_scheduler_update', `Deleting scheduler update ${id}`, {
@@ -120,10 +139,7 @@ export const handler = createHandler({
       }
 
       default:
-        return {
-          statusCode: 405,
-          body: JSON.stringify({ error: 'Method not allowed' })
-        }
+        return errorResponse({ code: 'method_not_allowed' })
     }
   }
 })

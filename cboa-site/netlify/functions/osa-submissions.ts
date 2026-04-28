@@ -1,4 +1,4 @@
-import { createHandler, supabase } from './_shared/handler'
+import { createHandler, supabase, errorResponse } from './_shared/handler'
 import { osaExcelSync } from '../../lib/excel-sync'
 
 export const handler = createHandler({
@@ -61,7 +61,7 @@ export const handler = createHandler({
     const { id, status, notes } = body
 
     if (!id) {
-      return { statusCode: 400, body: JSON.stringify({ error: 'Submission ID required' }) }
+      return errorResponse({ code: 'invalid_input', message: 'A submission must be selected.' })
     }
 
     const updateData: Record<string, any> = {}
@@ -69,7 +69,7 @@ export const handler = createHandler({
     if (notes !== undefined) updateData.notes = notes
 
     if (Object.keys(updateData).length === 0) {
-      return { statusCode: 400, body: JSON.stringify({ error: 'No update data provided' }) }
+      return errorResponse({ code: 'invalid_input', message: 'No update data was provided.' })
     }
 
     const { data, error } = await supabase

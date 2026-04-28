@@ -1,4 +1,8 @@
-import { createHandler, supabase } from './_shared/handler'
+import { createHandler, supabase, errorResponse } from './_shared/handler'
+import { RULE_CATEGORIES } from '../../lib/schemas/rule-modification'
+
+// Single source of truth: same enum the frontend dropdown uses.
+const VALID_CATEGORIES = new Set<string>(RULE_CATEGORIES)
 
 export const handler = createHandler({
   name: 'rule-modifications',
@@ -6,12 +10,24 @@ export const handler = createHandler({
   handler: async ({ event, logger, user }) => {
     switch (event.httpMethod) {
       case 'GET': {
-        const { data, error } = await supabase
+        // ?active=true (default) — only active rows
+        // ?active=false        — only deactivated rows
+        // ?active=all          — both
+        const activeParam = event.queryStringParameters?.active ?? 'true'
+
+        let query = supabase
           .from('rule_modifications')
           .select('*')
-          .eq('active', true)
           .order('priority', { ascending: false })
           .limit(200)
+
+        if (activeParam === 'false') {
+          query = query.eq('active', false)
+        } else if (activeParam !== 'all') {
+          query = query.eq('active', true)
+        }
+
+        const { data, error } = await query
 
         if (error) throw error
 
@@ -23,6 +39,14 @@ export const handler = createHandler({
         logger.info('crud', 'create_rule_modification', `Creating rule modification: ${body.title || 'untitled'}`, {
           metadata: { title: body.title, league: body.league }
         })
+
+        if (body.category !== undefined && !VALID_CATEGORIES.has(body.category)) {
+          return errorResponse({
+            code: 'invalid_input',
+            message: `Invalid category. Expected one of: ${Array.from(VALID_CATEGORIES).join(', ')}`,
+            fields: { category: 'Choose a category from the list' },
+          })
+        }
 
         const { data, error } = await supabase
           .from('rule_modifications')
@@ -47,7 +71,10 @@ export const handler = createHandler({
         const { id, ...updates } = body
 
         if (!id) {
-          return { statusCode: 400, body: JSON.stringify({ error: 'ID is required for updates' }) }
+          return errorResponse({
+            code: 'invalid_input',
+            message: 'A record must be selected for update.',
+          })
         }
 
         logger.info('crud', 'update_rule_modification', `Updating rule modification ${id}`, {
@@ -77,7 +104,10 @@ export const handler = createHandler({
         const id = event.queryStringParameters?.id
 
         if (!id) {
-          return { statusCode: 400, body: JSON.stringify({ error: 'ID is required for deletion' }) }
+          return errorResponse({
+            code: 'invalid_input',
+            message: 'A record must be selected for deletion.',
+          })
         }
 
         logger.info('crud', 'delete_rule_modification', `Deleting rule modification ${id}`, { metadata: { id } })
@@ -99,7 +129,7 @@ export const handler = createHandler({
       }
 
       default:
-        return { statusCode: 405, body: JSON.stringify({ error: 'Method not allowed' }) }
+        return errorResponse({ code: 'method_not_allowed' })
     }
   }
 })

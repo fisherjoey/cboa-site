@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { getSupabaseBrowserClient } from '@/lib/api/client'
+import { friendlyErrorFromThrown } from '@/lib/userFacingError'
 import { IconLock, IconLoader2, IconAlertCircle, IconCheck, IconX } from '@tabler/icons-react'
 
 interface PasswordChangeModalProps {
@@ -57,8 +58,8 @@ export default function PasswordChangeModal({ isOpen, onClose, onSuccess, userEm
       }
 
       onSuccess()
-    } catch (err: any) {
-      setError(err.message || 'Failed to update password')
+    } catch (err) {
+      setError(friendlyErrorFromThrown(err).message)
     } finally {
       setIsLoading(false)
     }

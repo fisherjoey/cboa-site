@@ -1,4 +1,41 @@
-import { createHandler, supabase } from './_shared/handler'
+import { createHandler, supabase, errorResponse } from './_shared/handler'
+
+/**
+ * Wire shape POSTed to /.netlify/functions/member-activities.
+ *
+ * The frontend (`lib/api/members.ts` memberActivitiesAPI) takes `any` and
+ * forwards it straight through. Integration tests use this typed interface
+ * so the wire shape stays grep-able.
+ *
+ * NOTE: the schema declares `activity_type` as TEXT NOT NULL with a comment
+ * documenting the expected enum {meeting,training,game,certification,other}
+ * (see `supabase/members-schema.sql`); the handler enforces this at the
+ * boundary since the column has no DB-level CHECK.
+ */
+export interface MemberActivityCreatePayload {
+  member_id: string
+  /** Documented enum: 'meeting' | 'training' | 'game' | 'certification' | 'other' */
+  activity_type: string
+  /** ISO date (YYYY-MM-DD) — Postgres `DATE` column. */
+  activity_date: string
+  activity_data?: Record<string, unknown>
+  notes?: string
+}
+
+export interface MemberActivityUpdatePayload extends Partial<MemberActivityCreatePayload> {
+  id: string
+}
+
+/** Documented enum from the schema comment on `member_activities.activity_type`.
+ * Schema column is plain TEXT NOT NULL — no DB-level CHECK — so we enforce
+ * the contract at the handler boundary. */
+const ALLOWED_ACTIVITY_TYPES = [
+  'meeting',
+  'training',
+  'game',
+  'certification',
+  'other',
+] as const
 
 export const handler = createHandler({
   name: 'member-activities',
@@ -31,6 +68,18 @@ export const handler = createHandler({
           metadata: { member_id: body.member_id, activity_type: body.activity_type }
         })
 
+        if (
+          body.activity_type !== undefined &&
+          !ALLOWED_ACTIVITY_TYPES.includes(body.activity_type)
+        ) {
+          return {
+            statusCode: 400,
+            body: JSON.stringify({
+              error: `Invalid activity_type: must be one of ${ALLOWED_ACTIVITY_TYPES.join(', ')}`,
+            }),
+          }
+        }
+
         const { data, error } = await supabase
           .from('member_activities')
           .insert([body])
@@ -55,7 +104,22 @@ export const handler = createHandler({
         const { id, ...updates } = body
 
         if (!id) {
-          return { statusCode: 400, body: JSON.stringify({ error: 'ID is required for updates' }) }
+          return errorResponse({
+            code: 'invalid_input',
+            message: 'A record must be selected for update.',
+          })
+        }
+
+        if (
+          updates.activity_type !== undefined &&
+          !ALLOWED_ACTIVITY_TYPES.includes(updates.activity_type)
+        ) {
+          return {
+            statusCode: 400,
+            body: JSON.stringify({
+              error: `Invalid activity_type: must be one of ${ALLOWED_ACTIVITY_TYPES.join(', ')}`,
+            }),
+          }
         }
 
         logger.info('crud', 'update_member_activity', `Updating member activity ${id}`, {
@@ -85,7 +149,10 @@ export const handler = createHandler({
         const id = event.queryStringParameters?.id
 
         if (!id) {
-          return { statusCode: 400, body: JSON.stringify({ error: 'ID is required for deletion' }) }
+          return errorResponse({
+            code: 'invalid_input',
+            message: 'A record must be selected for deletion.',
+          })
         }
 
         logger.info('crud', 'delete_member_activity', `Deleting member activity ${id}`, { metadata: { id } })
@@ -98,7 +165,10 @@ export const handler = createHandler({
 
         if (findError || !existing) {
           logger.warn('crud', 'delete_member_activity_not_found', `Member activity ${id} not found`, { metadata: { id } })
-          return { statusCode: 404, body: JSON.stringify({ error: 'Activity not found' }) }
+          return errorResponse({
+            code: 'not_found',
+            message: 'Activity not found.'.replace('..', '.'),
+          })
         }
 
         const { error } = await supabase
@@ -118,7 +188,7 @@ export const handler = createHandler({
       }
 
       default:
-        return { statusCode: 405, body: JSON.stringify({ error: 'Method not allowed' }) }
+        return errorResponse({ code: 'method_not_allowed' })
     }
   }
 })

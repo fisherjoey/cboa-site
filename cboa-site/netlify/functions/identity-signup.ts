@@ -9,10 +9,11 @@
  */
 
 import { Handler } from '@netlify/functions'
+import { errorResponse } from './_shared/handler'
 
 export const handler: Handler = async (event) => {
   if (event.httpMethod !== 'POST') {
-    return { statusCode: 405, body: 'Method Not Allowed' }
+    return errorResponse({ code: 'method_not_allowed' })
   }
 
   try {
@@ -20,7 +21,10 @@ export const handler: Handler = async (event) => {
     const { user } = data
 
     if (!user?.email) {
-      return { statusCode: 400, body: JSON.stringify({ error: 'Invalid user data' }) }
+      return errorResponse({
+        code: 'invalid_input',
+        message: 'Signup request was missing user details.',
+      })
     }
 
     // Assign "official" role to all new signups

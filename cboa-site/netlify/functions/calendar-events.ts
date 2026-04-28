@@ -1,4 +1,4 @@
-import { createHandler, supabase } from './_shared/handler'
+import { createHandler, supabase, errorResponse } from './_shared/handler'
 
 export const handler = createHandler({
   name: 'calendar-events',
@@ -51,10 +51,10 @@ export const handler = createHandler({
         const { id, ...updateData } = body
 
         if (!id) {
-          return {
-            statusCode: 400,
-            body: JSON.stringify({ error: 'ID is required for update' })
-          }
+          return errorResponse({
+            code: 'invalid_input',
+            message: 'A calendar event must be selected for update.',
+          })
         }
 
         logger.info('crud', 'update_calendar_event', `Updating event ${id}`, {
@@ -68,6 +68,13 @@ export const handler = createHandler({
           .select()
 
         if (error) throw error
+
+        if (!data || data.length === 0) {
+          return {
+            statusCode: 404,
+            body: JSON.stringify({ error: 'Not found' })
+          }
+        }
 
         await logger.audit('UPDATE', 'calendar_event', id, {
           actorId: user!.id,
@@ -86,10 +93,10 @@ export const handler = createHandler({
         const { id } = event.queryStringParameters || {}
 
         if (!id) {
-          return {
-            statusCode: 400,
-            body: JSON.stringify({ error: 'ID is required for deletion' })
-          }
+          return errorResponse({
+            code: 'invalid_input',
+            message: 'A calendar event must be selected for deletion.',
+          })
         }
 
         logger.info('crud', 'delete_calendar_event', `Deleting event ${id}`, { metadata: { id } })
@@ -114,7 +121,7 @@ export const handler = createHandler({
       }
 
       default:
-        return { statusCode: 405, body: JSON.stringify({ error: 'Method not allowed' }) }
+        return errorResponse({ code: 'method_not_allowed' })
     }
   }
 })

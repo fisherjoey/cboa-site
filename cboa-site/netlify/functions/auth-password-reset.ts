@@ -1,5 +1,5 @@
 import { Handler } from '@netlify/functions'
-import { supabase as supabaseAdmin, getCorsHeaders } from './_shared/handler'
+import { supabase as supabaseAdmin, getCorsHeaders, errorResponse } from './_shared/handler'
 import { checkRateLimit, getClientIp } from './_shared/rateLimit'
 import { Logger } from '../../lib/logger'
 import { recordPasswordResetEmail } from '../../lib/emailHistory'
@@ -145,15 +145,11 @@ export const handler: Handler = async (event) => {
   // Rate limit: 3 reset requests per minute per IP
   const clientIp = getClientIp(event.headers)
   if (checkRateLimit(clientIp, { maxRequests: 3, windowMs: 60_000, prefix: 'pwd-reset' })) {
-    return { statusCode: 429, headers, body: JSON.stringify({ error: 'Too many requests. Please try again later.' }) }
+    return errorResponse({ code: 'rate_limited', headers })
   }
 
   if (event.httpMethod !== 'POST') {
-    return {
-      statusCode: 405,
-      headers,
-      body: JSON.stringify({ error: 'Method not allowed' })
-    }
+    return errorResponse({ code: 'method_not_allowed', headers })
   }
 
   try {
@@ -163,20 +159,18 @@ export const handler: Handler = async (event) => {
     })
 
     if (!email) {
-      return {
-        statusCode: 400,
+      return errorResponse({
+        code: 'invalid_input',
         headers,
-        body: JSON.stringify({ error: 'Email is required' })
-      }
+        message: 'Please enter your email address.',
+        fields: { email: 'Email is required' },
+      })
     }
 
     // Check if Microsoft Graph is configured
     if (!process.env.MICROSOFT_TENANT_ID || !process.env.MICROSOFT_CLIENT_ID || !process.env.MICROSOFT_CLIENT_SECRET) {
-      return {
-        statusCode: 500,
-        headers,
-        body: JSON.stringify({ error: 'Email service not configured' })
-      }
+      logger.error('auth', 'password_reset_config_error', 'Microsoft Graph credentials not configured')
+      return errorResponse({ code: 'service_unavailable', headers })
     }
 
     // Check if user exists
@@ -222,11 +216,11 @@ export const handler: Handler = async (event) => {
       // The user has been confirmed to exist by this point, so the
       // user-existence enumeration concern is already handled above.
       // Surface the failure loudly so the UI can show a real error.
-      return {
-        statusCode: 500,
+      return errorResponse({
+        code: 'service_unavailable',
         headers,
-        body: JSON.stringify({ error: 'Failed to send reset email. Please try again.' })
-      }
+        message: 'We couldn’t send a reset email right now. Please try again in a few minutes.',
+      })
     }
 
     // Send email via Microsoft Graph
@@ -269,10 +263,6 @@ export const handler: Handler = async (event) => {
 
   } catch (error) {
     logger.error('auth', 'password_reset_error', 'Password reset error', error instanceof Error ? error : new Error(String(error)))
-    return {
-      statusCode: 500,
-      headers,
-      body: JSON.stringify({ error: 'Failed to process request' })
-    }
+    return errorResponse({ code: 'server_error', headers })
   }
 }

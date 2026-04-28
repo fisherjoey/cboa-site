@@ -1,5 +1,5 @@
 import { Handler } from '@netlify/functions'
-import { supabase as supabaseAdmin, getCorsHeaders, listAllAuthUsers } from './_shared/handler'
+import { supabase as supabaseAdmin, getCorsHeaders, listAllAuthUsers, errorResponse } from './_shared/handler'
 import {
   EMAIL_NO_REPLY,
   ORG_NAME,
@@ -130,7 +130,7 @@ export const handler: Handler = async (event) => {
   }
 
   if (event.httpMethod !== 'POST') {
-    return { statusCode: 405, headers, body: JSON.stringify({ error: 'Method not allowed' }) }
+    return errorResponse({ code: 'method_not_allowed', headers })
   }
 
   // Verify authorization - accept either migration secret or Supabase admin token
@@ -148,16 +148,16 @@ export const handler: Handler = async (event) => {
       const { data: { user: callerUser }, error: authError } = await supabaseAdmin.auth.getUser(token)
 
       if (authError || !callerUser) {
-        return { statusCode: 401, headers, body: JSON.stringify({ error: 'Invalid token' }) }
+        return errorResponse({ code: 'unauthorized', headers })
       }
 
       const callerRole = callerUser.app_metadata?.role || callerUser.user_metadata?.role
       if (callerRole?.toLowerCase() !== 'admin') {
-        return { statusCode: 403, headers, body: JSON.stringify({ error: 'Admin access required' }) }
+        return errorResponse({ code: 'forbidden', headers })
       }
     }
   } else {
-    return { statusCode: 401, headers, body: JSON.stringify({ error: 'Unauthorized' }) }
+    return errorResponse({ code: 'unauthorized', headers })
   }
 
   const body = JSON.parse(event.body || '{}')
@@ -192,8 +192,9 @@ export const handler: Handler = async (event) => {
           }))
         })
       }
-    } catch (err: any) {
-      return { statusCode: 500, headers, body: JSON.stringify({ error: err.message }) }
+    } catch (err) {
+      console.error('[MigrateNetlifyUsers] Backup error:', err)
+      return errorResponse({ code: 'server_error', headers })
     }
   }
 
@@ -201,11 +202,11 @@ export const handler: Handler = async (event) => {
   const membersToMigrate: MemberToMigrate[] = members.length > 0 ? members : await getMemberList()
 
   if (membersToMigrate.length === 0) {
-    return {
-      statusCode: 400,
+    return errorResponse({
+      code: 'invalid_input',
       headers,
-      body: JSON.stringify({ error: 'No members to migrate. Provide members array in request body.' })
-    }
+      message: 'No members to migrate. Provide a members array in the request body.',
+    })
   }
 
   try {
@@ -317,13 +318,9 @@ export const handler: Handler = async (event) => {
         results
       })
     }
-  } catch (error: any) {
+  } catch (error) {
     console.error('Migration error:', error)
-    return {
-      statusCode: 500,
-      headers,
-      body: JSON.stringify({ error: error.message })
-    }
+    return errorResponse({ code: 'server_error', headers })
   }
 }
 

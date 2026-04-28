@@ -1,4 +1,32 @@
-import { createHandler, supabase } from './_shared/handler'
+import { createHandler, supabase, errorResponse } from './_shared/handler'
+
+/**
+ * Wire shape POSTed to /.netlify/functions/officials.
+ *
+ * The frontend (`lib/api/public-content.ts` officialsAPI) sends a
+ * `Partial<Official>` straight through with no transformation; integration
+ * tests import this type so any shape drift fails at compile time.
+ *
+ * NOTE: schema enforces `level BETWEEN 1 AND 5` (see
+ * `supabase/migrations/create-public-content-tables.sql`); a 23514 check
+ * violation from Postgres is mapped to 400 by `mapPgError` in `_shared/handler`.
+ */
+export interface OfficialCreatePayload {
+  name: string
+  level?: number
+  photo_url?: string
+  bio?: string
+  years_experience?: string
+  email?: string
+  availability?: string
+  certifications?: string[]
+  active?: boolean
+  priority?: number
+}
+
+export interface OfficialUpdatePayload extends Partial<OfficialCreatePayload> {
+  id: string
+}
 
 export const handler = createHandler({
   name: 'officials',
@@ -31,7 +59,11 @@ export const handler = createHandler({
         })
 
         if (!body.name) {
-          return { statusCode: 400, body: JSON.stringify({ error: 'Missing required field: name' }) }
+          return errorResponse({
+            code: 'invalid_input',
+            message: 'Name is required.',
+            fields: { name: 'Name is required' },
+          })
         }
 
         const { data, error } = await supabase
@@ -57,7 +89,10 @@ export const handler = createHandler({
         const { id, ...updates } = body
 
         if (!id) {
-          return { statusCode: 400, body: JSON.stringify({ error: 'ID is required for updates' }) }
+          return errorResponse({
+            code: 'invalid_input',
+            message: 'A record must be selected for update.',
+          })
         }
 
         logger.info('crud', 'update_official', `Updating official ${id}`, {
@@ -87,7 +122,10 @@ export const handler = createHandler({
         const id = event.queryStringParameters?.id
 
         if (!id) {
-          return { statusCode: 400, body: JSON.stringify({ error: 'ID is required for deletion' }) }
+          return errorResponse({
+            code: 'invalid_input',
+            message: 'A record must be selected for deletion.',
+          })
         }
 
         logger.info('crud', 'delete_official', `Deleting official ${id}`, { metadata: { id } })
@@ -109,7 +147,7 @@ export const handler = createHandler({
       }
 
       default:
-        return { statusCode: 405, body: JSON.stringify({ error: 'Method not allowed' }) }
+        return errorResponse({ code: 'method_not_allowed' })
     }
   }
 })

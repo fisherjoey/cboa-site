@@ -1,5 +1,5 @@
 import { Handler } from '@netlify/functions'
-import { supabase as supabaseAdmin, getCorsHeaders, listAllAuthUsers, findAuthUserByEmail } from './_shared/handler'
+import { supabase as supabaseAdmin, getCorsHeaders, listAllAuthUsers, findAuthUserByEmail, errorResponse } from './_shared/handler'
 import { checkRateLimit, getClientIp } from './_shared/rateLimit'
 import { randomBytes } from 'crypto'
 import { Logger } from '../../lib/logger'
@@ -288,11 +288,12 @@ export const handler: Handler = async (event) => {
         const { email } = body
 
         if (!email) {
-          return {
-            statusCode: 400,
+          return errorResponse({
+            code: 'invalid_input',
             headers,
-            body: JSON.stringify({ error: 'Email is required' })
-          }
+            message: 'Please enter your email address.',
+            fields: { email: 'Email is required' },
+          })
         }
 
         // Rate limit: 3 requests per minute per IP. Without this the
@@ -300,11 +301,7 @@ export const handler: Handler = async (event) => {
         // Microsoft Graph quota.
         const clientIp = getClientIp(event.headers)
         if (checkRateLimit(clientIp, { maxRequests: 3, windowMs: 60_000, prefix: 'request-invite' })) {
-          return {
-            statusCode: 429,
-            headers,
-            body: JSON.stringify({ error: 'Too many requests. Please try again in a minute.' })
-          }
+          return errorResponse({ code: 'rate_limited', headers })
         }
 
         const normalizedEmail = email.toLowerCase().trim()
@@ -366,11 +363,7 @@ export const handler: Handler = async (event) => {
         // Check Microsoft Graph credentials
         if (!process.env.MICROSOFT_TENANT_ID || !process.env.MICROSOFT_CLIENT_ID || !process.env.MICROSOFT_CLIENT_SECRET) {
           logger.error('auth', 'request_invite_config_error', 'Microsoft Graph credentials not configured')
-          return {
-            statusCode: 500,
-            headers,
-            body: JSON.stringify({ error: 'Email service not configured' })
-          }
+          return errorResponse({ code: 'service_unavailable', headers })
         }
 
         // Create a proxy invite token (never expires)
@@ -412,11 +405,7 @@ export const handler: Handler = async (event) => {
         // Continue to normal auth flow
       } else {
         logger.error('auth', 'request_invite_error', 'Error processing invite request', err)
-        return {
-          statusCode: 500,
-          headers,
-          body: JSON.stringify({ error: 'An error occurred' })
-        }
+        return errorResponse({ code: 'server_error', headers })
       }
     }
   }
@@ -425,11 +414,7 @@ export const handler: Handler = async (event) => {
   const authHeader = event.headers.authorization || event.headers.Authorization
   if (!authHeader?.startsWith('Bearer ')) {
     logger.warn('auth', 'unauthorized_request', 'Request without token')
-    return {
-      statusCode: 401,
-      headers,
-      body: JSON.stringify({ error: 'Unauthorized - No token provided' })
-    }
+    return errorResponse({ code: 'unauthorized', headers })
   }
 
   const token = authHeader.split(' ')[1]
@@ -440,11 +425,7 @@ export const handler: Handler = async (event) => {
 
     if (authError || !callerUser) {
       logger.warn('auth', 'invalid_token', 'Invalid or expired token')
-      return {
-        statusCode: 401,
-        headers,
-        body: JSON.stringify({ error: 'Unauthorized - Invalid token' })
-      }
+      return errorResponse({ code: 'unauthorized', headers })
     }
 
     // Check if caller has admin role
@@ -454,11 +435,7 @@ export const handler: Handler = async (event) => {
         userEmail: callerUser.email,
         metadata: { role: callerRole }
       })
-      return {
-        statusCode: 403,
-        headers,
-        body: JSON.stringify({ error: 'Forbidden - Admin access required' })
-      }
+      return errorResponse({ code: 'forbidden', headers })
     }
 
     // Set caller context for subsequent logs
@@ -524,11 +501,11 @@ export const handler: Handler = async (event) => {
           }
         }
 
-        return {
-          statusCode: 400,
+        return errorResponse({
+          code: 'invalid_input',
           headers,
-          body: JSON.stringify({ error: 'Missing action or email parameter' })
-        }
+          message: 'Missing action or email parameter.',
+        })
       }
 
       case 'POST': {
@@ -543,11 +520,8 @@ export const handler: Handler = async (event) => {
 
           // Check Microsoft Graph credentials
           if (!process.env.MICROSOFT_TENANT_ID || !process.env.MICROSOFT_CLIENT_ID || !process.env.MICROSOFT_CLIENT_SECRET) {
-            return {
-              statusCode: 500,
-              headers,
-              body: JSON.stringify({ error: 'Microsoft Graph credentials not configured' })
-            }
+            logger.error('auth', 'resend_pending_config_error', 'Microsoft Graph credentials not configured')
+            return errorResponse({ code: 'service_unavailable', headers })
           }
 
           // Get all members who haven't signed in yet
@@ -559,11 +533,7 @@ export const handler: Handler = async (event) => {
 
           if (queryError) {
             logger.error('auth', 'resend_pending_query_failed', 'Failed to query pending members', new Error(queryError.message))
-            return {
-              statusCode: 500,
-              headers,
-              body: JSON.stringify({ error: 'Failed to query members' })
-            }
+            return errorResponse({ code: 'server_error', headers })
           }
 
           // Get all auth users to check who hasn't signed in
@@ -659,20 +629,18 @@ export const handler: Handler = async (event) => {
         }
 
         if (!email) {
-          return {
-            statusCode: 400,
+          return errorResponse({
+            code: 'invalid_input',
             headers,
-            body: JSON.stringify({ error: 'Email is required' })
-          }
+            message: 'Email is required.',
+            fields: { email: 'Email is required' },
+          })
         }
 
         // Check Microsoft Graph credentials
         if (!process.env.MICROSOFT_TENANT_ID || !process.env.MICROSOFT_CLIENT_ID || !process.env.MICROSOFT_CLIENT_SECRET) {
-          return {
-            statusCode: 500,
-            headers,
-            body: JSON.stringify({ error: 'Microsoft Graph credentials not configured' })
-          }
+          logger.error('auth', 'invite_config_error', 'Microsoft Graph credentials not configured')
+          return errorResponse({ code: 'service_unavailable', headers })
         }
 
         // Resend invite - delete existing user and re-invite with proxy token
@@ -764,11 +732,12 @@ export const handler: Handler = async (event) => {
             userEmail: callerUser.email,
             metadata: { targetEmail: email }
           })
-          return {
-            statusCode: 400,
+          return errorResponse({
+            code: 'invalid_input',
             headers,
-            body: JSON.stringify({ success: false, error: 'User already exists' })
-          }
+            message: 'A user with that email already exists.',
+            extra: { success: false },
+          })
         }
 
         // Create a proxy invite token (never expires)
@@ -840,11 +809,7 @@ export const handler: Handler = async (event) => {
           // Check Microsoft Graph credentials
           if (!process.env.MICROSOFT_TENANT_ID || !process.env.MICROSOFT_CLIENT_ID || !process.env.MICROSOFT_CLIENT_SECRET) {
             logger.error('auth', 'password_reset_config_error', 'Microsoft Graph credentials not configured')
-            return {
-              statusCode: 500,
-              headers,
-              body: JSON.stringify({ error: 'Microsoft Graph credentials not configured' })
-            }
+            return errorResponse({ code: 'service_unavailable', headers })
           }
 
           // Generate password reset link
@@ -858,11 +823,12 @@ export const handler: Handler = async (event) => {
 
           if (linkError) {
             logger.error('auth', 'password_reset_failed', `Failed to generate reset link for ${email}`, new Error(linkError.message))
-            return {
-              statusCode: 400,
+            return errorResponse({
+              code: 'service_unavailable',
               headers,
-              body: JSON.stringify({ success: false, error: 'Failed to generate password reset link' })
-            }
+              message: 'We couldn’t send a password reset email right now. Please try again in a few minutes.',
+              extra: { success: false },
+            })
           }
 
           // Send email via Microsoft Graph
@@ -912,11 +878,11 @@ export const handler: Handler = async (event) => {
 
         // Update user metadata
         if (!userId) {
-          return {
-            statusCode: 400,
+          return errorResponse({
+            code: 'invalid_input',
             headers,
-            body: JSON.stringify({ error: 'userId is required' })
-          }
+            message: 'A user must be selected.',
+          })
         }
 
         logger.info('auth', 'update_user_start', `Updating user ${userId}`, {
@@ -938,11 +904,12 @@ export const handler: Handler = async (event) => {
 
         if (error) {
           logger.error('auth', 'update_user_failed', `Failed to update user ${userId}`, new Error(error.message))
-          return {
-            statusCode: 400,
+          return errorResponse({
+            code: 'server_error',
             headers,
-            body: JSON.stringify({ success: false, error: error.message })
-          }
+            message: 'We couldn’t update that user. Please try again.',
+            extra: { success: false },
+          })
         }
 
         // Audit log for role change
@@ -991,11 +958,11 @@ export const handler: Handler = async (event) => {
         const { email } = event.queryStringParameters || {}
 
         if (!email) {
-          return {
-            statusCode: 400,
+          return errorResponse({
+            code: 'invalid_input',
             headers,
-            body: JSON.stringify({ error: 'Email is required' })
-          }
+            message: 'Email is required.',
+          })
         }
 
         logger.info('auth', 'delete_user_start', `Deleting user ${email}`, {
@@ -1011,22 +978,24 @@ export const handler: Handler = async (event) => {
             userEmail: callerUser.email,
             metadata: { targetEmail: email }
           })
-          return {
-            statusCode: 404,
+          return errorResponse({
+            code: 'not_found',
             headers,
-            body: JSON.stringify({ success: false, error: 'User not found' })
-          }
+            message: 'No user found with that email.',
+            extra: { success: false },
+          })
         }
 
         const { error } = await supabaseAdmin.auth.admin.deleteUser(user.id)
 
         if (error) {
           logger.error('auth', 'delete_user_failed', `Failed to delete user ${email}`, new Error(error.message))
-          return {
-            statusCode: 400,
+          return errorResponse({
+            code: 'server_error',
             headers,
-            body: JSON.stringify({ success: false, error: error.message })
-          }
+            message: 'We couldn’t delete that user. Please try again.',
+            extra: { success: false },
+          })
         }
 
         // Audit log
@@ -1056,20 +1025,10 @@ export const handler: Handler = async (event) => {
       }
 
       default:
-        return {
-          statusCode: 405,
-          headers,
-          body: JSON.stringify({ error: 'Method not allowed' })
-        }
+        return errorResponse({ code: 'method_not_allowed', headers })
     }
   } catch (error) {
     logger.error('auth', 'api_error', 'Supabase Auth Admin API error', error instanceof Error ? error : new Error(String(error)))
-    return {
-      statusCode: 500,
-      headers,
-      body: JSON.stringify({
-        error: 'Internal server error'
-      })
-    }
+    return errorResponse({ code: 'server_error', headers })
   }
 }

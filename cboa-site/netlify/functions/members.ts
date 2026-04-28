@@ -1,4 +1,4 @@
-import { createHandler, findAuthUserByEmail } from './_shared/handler'
+import { createHandler, findAuthUserByEmail, errorResponse } from './_shared/handler'
 import {
   EMAIL_ANNOUNCEMENTS,
   ORG_NAME,
@@ -12,6 +12,35 @@ import {
   getCopyrightYear,
   EMAIL_SUBJECTS,
 } from '../../lib/siteConfig'
+
+/**
+ * Wire shape the PUT branch accepts. Caller MUST send `id`; everything
+ * else is optional and patched onto the row. Privileged fields
+ * (role/email/netlify_user_id/user_id/status/rank) are stripped from
+ * non-admin callers — see the strip list in the PUT handler.
+ */
+export interface MemberUpdatePayload {
+  id: string
+  name?: string
+  email?: string
+  phone?: string
+  certification_level?: string
+  rank?: number
+  status?: string
+  role?: string
+  address?: string
+  city?: string
+  province?: string
+  postal_code?: string
+  emergency_contact_name?: string
+  emergency_contact_phone?: string
+  custom_fields?: Record<string, unknown>
+  notes?: string
+  // Allowed in the wire shape so tests can probe the strip-list — the
+  // handler refuses to accept these from non-admin callers.
+  netlify_user_id?: string
+  user_id?: string
+}
 
 // Microsoft Graph API for sending emails
 async function getMicrosoftAccessToken(): Promise<string> {
@@ -122,9 +151,9 @@ function generateInviteEmailHtml(inviteUrl: string, name?: string): string {
   `.trim()
 }
 
-const FORBIDDEN = (msg = 'Forbidden') => ({
-  statusCode: 403,
-  body: JSON.stringify({ error: msg })
+const FORBIDDEN = (msg?: string) => errorResponse({
+  code: 'forbidden',
+  message: msg,
 })
 
 export const handler = createHandler({
@@ -235,7 +264,11 @@ export const handler = createHandler({
         const { email, name, role, skipInvite, ...memberData } = body
 
         if (!email) {
-          return { statusCode: 400, body: JSON.stringify({ error: 'Email is required' }) }
+          return errorResponse({
+            code: 'invalid_input',
+            message: 'Email is required.',
+            fields: { email: 'Email is required' },
+          })
         }
 
         // Non-admins can only create their own member row, and may not assign a role
@@ -266,10 +299,12 @@ export const handler = createHandler({
           logger.warn('crud', 'create_member_exists', `Member already exists with email: ${email}`, {
             metadata: { email }
           })
-          return {
+          return errorResponse({
+            code: 'invalid_input',
             statusCode: 409,
-            body: JSON.stringify({ error: 'Member with this email already exists' })
-          }
+            message: 'A member with that email address already exists.',
+            fields: { email: 'Already in use' },
+          })
         }
 
         // Check if auth user already exists
@@ -301,10 +336,10 @@ export const handler = createHandler({
 
             if (linkError) {
               logger.error('crud', 'create_member_invite_failed', `Failed to create auth user: ${linkError.message}`, new Error(linkError.message))
-              return {
-                statusCode: 400,
-                body: JSON.stringify({ error: 'Failed to create auth user' })
-              }
+              return errorResponse({
+                code: 'server_error',
+                message: 'We couldn’t set up an account for that member. Please try again.',
+              })
             }
 
             authUserId = linkData.user?.id || null
@@ -364,7 +399,10 @@ export const handler = createHandler({
         const { id, ...updates } = body
 
         if (!id) {
-          return { statusCode: 400, body: JSON.stringify({ error: 'ID is required for updates' }) }
+          return errorResponse({
+            code: 'invalid_input',
+            message: 'A member must be selected.',
+          })
         }
 
         const { data: existing } = await supabase
@@ -374,7 +412,7 @@ export const handler = createHandler({
           .single()
 
         if (!existing) {
-          return { statusCode: 404, body: JSON.stringify({ error: 'Member not found' }) }
+          return errorResponse({ code: 'not_found', message: 'That member couldn’t be found.' })
         }
 
         // Non-admins must own the row, either by user_id link or (for the
@@ -390,6 +428,10 @@ export const handler = createHandler({
           delete updates.role
           delete updates.email
           delete updates.netlify_user_id
+          // status and rank are admin-only fields. A non-admin must not
+          // be able to undo a suspension or self-promote rank by self-PUT.
+          delete updates.status
+          delete updates.rank
           if ('user_id' in updates && updates.user_id !== callerId) {
             delete updates.user_id
           }
@@ -398,6 +440,14 @@ export const handler = createHandler({
         logger.info('crud', 'update_member_start', `Updating member ${id}`, {
           metadata: { memberId: id, updates: Object.keys(updates) }
         })
+
+        // If the strip emptied out the update body (e.g. the caller only
+        // sent privileged fields), return the existing row unchanged
+        // rather than firing an empty UPDATE — Supabase rejects those
+        // and the resulting error would 500/404 a benign no-op.
+        if (Object.keys(updates).length === 0) {
+          return { statusCode: 200, body: JSON.stringify(existing) }
+        }
 
         const { data, error } = await supabase
           .from('members')
@@ -441,7 +491,10 @@ export const handler = createHandler({
         const id = event.queryStringParameters?.id
 
         if (!id) {
-          return { statusCode: 400, body: JSON.stringify({ error: 'ID is required for deletion' }) }
+          return errorResponse({
+            code: 'invalid_input',
+            message: 'A member must be selected for deletion.',
+          })
         }
 
         logger.info('crud', 'delete_member_start', `Deleting member ${id}`, {
@@ -505,6 +558,6 @@ export const handler = createHandler({
       }
     }
 
-    return { statusCode: 405, body: JSON.stringify({ error: 'Method not allowed' }) }
+    return errorResponse({ code: 'method_not_allowed' })
   }
 })

@@ -8,6 +8,8 @@ import { useRouter } from 'next/navigation'
 import Card from '@/components/ui/Card'
 import Button from '@/components/ui/Button'
 import { IconCheck, IconAlertCircle, IconLoader2, IconArrowLeft, IconArrowRight } from '@tabler/icons-react'
+import { buildOSAPayload, type OSAFormState } from '@/lib/forms/osaPayload'
+import { readFriendlyError, friendlyErrorFromThrown } from '@/lib/userFacingError'
 
 // Import wizard components
 import ProgressIndicator from './wizard/ProgressIndicator'
@@ -484,59 +486,7 @@ export default function OSARequestFormWizard() {
     setSubmitError(null)
 
     try {
-      // Transform the new structure into events array for the webhook
-      let events: any[] = []
-
-      if (data.eventType === 'League' && data.leagues) {
-        events = data.leagues.map((league, idx) => ({
-          eventIndex: idx + 1,
-          eventType: 'League',
-          leagueName: league.leagueName,
-          leagueStartDate: league.leagueStartDate,
-          leagueEndDate: league.leagueEndDate,
-          leagueDaysOfWeek: league.leagueDaysOfWeek?.join(', '),
-          leaguePlayerGender: league.leaguePlayerGender?.join(', '),
-          leagueLevelOfPlay: league.leagueLevelOfPlay?.join(', '),
-        }))
-      } else if (data.eventType === 'Tournament' && data.tournaments) {
-        events = data.tournaments.map((tournament, idx) => ({
-          eventIndex: idx + 1,
-          eventType: 'Tournament',
-          tournamentName: tournament.tournamentName,
-          tournamentStartDate: tournament.tournamentStartDate,
-          tournamentEndDate: tournament.tournamentEndDate,
-          tournamentNumberOfGames: tournament.tournamentNumberOfGames,
-          tournamentPlayerGender: tournament.tournamentPlayerGender?.join(', '),
-          tournamentLevelOfPlay: tournament.tournamentLevelOfPlay?.join(', '),
-        }))
-      } else if (data.eventType === 'Exhibition Game(s)' && data.exhibitions) {
-        events = data.exhibitions.map((exhibition, idx) => ({
-          eventIndex: idx + 1,
-          eventType: 'Exhibition Game(s)',
-          exhibitionGameLocation: exhibition.exhibitionGameLocation,
-          exhibitionGames: exhibition.exhibitionGames,
-          exhibitionPlayerGender: exhibition.exhibitionPlayerGender?.join(', '),
-          exhibitionLevelOfPlay: exhibition.exhibitionLevelOfPlay?.join(', '),
-        }))
-      }
-
-      const payload = {
-        organizationName: data.organizationName,
-        billingContactName: data.billingContactName,
-        billingEmail: data.billingEmail,
-        billingPhone: data.billingPhone,
-        billingAddress: data.billingAddress,
-        billingCity: data.billingCity,
-        billingProvince: data.billingProvince,
-        billingPostalCode: data.billingPostalCode,
-        eventContactName: data.eventContactName,
-        eventContactEmail: data.eventContactEmail,
-        eventContactPhone: data.eventContactPhone,
-        disciplinePolicy: data.disciplinePolicy,
-        agreement: data.agreement,
-        submissionTime: new Date().toISOString(),
-        events,
-      }
+      const payload = buildOSAPayload(data as OSAFormState)
 
       const response = await fetch('/.netlify/functions/osa-webhook', {
         method: 'POST',
@@ -547,15 +497,20 @@ export default function OSARequestFormWizard() {
       })
 
       if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.error || 'Failed to submit form')
+        const friendly = await readFriendlyError(response)
+        setSubmitError(friendly.message)
+        setIsSubmitting(false)
+        // Jump to review step so the user sees the banner
+        if (currentStep !== 5) setCurrentStep(5)
+        return
       }
 
       clearStorage()
       router.push('/get-officials/success')
     } catch (error) {
       console.error('Form submission error:', error)
-      setSubmitError(error instanceof Error ? error.message : 'An unexpected error occurred. Please try again.')
+      setSubmitError(friendlyErrorFromThrown(error).message)
+      if (currentStep !== 5) setCurrentStep(5)
     } finally {
       setIsSubmitting(false)
     }

@@ -1,5 +1,5 @@
 import { Handler } from '@netlify/functions'
-import { getCorsHeaders } from './_shared/handler'
+import { getCorsHeaders, errorResponse } from './_shared/handler'
 import { checkRateLimit, getClientIp } from './_shared/rateLimit'
 import { createHmac } from 'crypto'
 import { generateCBOAEmailTemplate } from '../../lib/emailTemplate'
@@ -110,18 +110,23 @@ export const handler: Handler = async (event) => {
   // Rate limit: 5 verification requests per minute per IP
   const clientIp = getClientIp(event.headers)
   if (checkRateLimit(clientIp, { maxRequests: 5, windowMs: 60_000, prefix: 'verify-email' })) {
-    return { statusCode: 429, headers, body: JSON.stringify({ error: 'Too many requests. Please try again later.' }) }
+    return errorResponse({ code: 'rate_limited', headers })
   }
 
   if (event.httpMethod !== 'POST') {
-    return { statusCode: 405, headers, body: JSON.stringify({ error: 'Method not allowed' }) }
+    return errorResponse({ code: 'method_not_allowed', headers })
   }
 
   try {
     const { email, code: providedCode, token: providedToken } = JSON.parse(event.body || '{}')
 
     if (!email) {
-      return { statusCode: 400, headers, body: JSON.stringify({ error: 'Email is required' }) }
+      return errorResponse({
+        code: 'invalid_input',
+        headers,
+        message: 'Please enter your email address.',
+        fields: { email: 'Email is required' },
+      })
     }
 
     // Verification mode: caller has a token and a 6-digit code, wants
@@ -132,17 +137,26 @@ export const handler: Handler = async (event) => {
       if (result.valid) {
         return { statusCode: 200, headers, body: JSON.stringify({ success: true, valid: true }) }
       }
-      return { statusCode: 400, headers, body: JSON.stringify({ success: false, valid: false, error: result.reason || 'Invalid code' }) }
+      return errorResponse({
+        code: 'verification_failed',
+        headers,
+        message: result.reason || 'That code didn’t match. Please check the email and try again.',
+        extra: { success: false, valid: false },
+      })
     }
 
     // Validate the email first (MX check, disposable blocking)
     const emailValidation = await validateEmail(email)
     if (!emailValidation.valid) {
-      return {
-        statusCode: 400,
+      return errorResponse({
+        code: 'email_unavailable',
         headers,
-        body: JSON.stringify({ error: emailValidation.reason, suggestion: emailValidation.suggestion }),
-      }
+        message: emailValidation.suggestion
+          ? `That email address looks invalid. Did you mean ${emailValidation.suggestion}?`
+          : 'That email address looks invalid. Please double-check and try again.',
+        fields: { email: emailValidation.reason || 'Invalid email address' },
+        extra: emailValidation.suggestion ? { suggestion: emailValidation.suggestion } : undefined,
+      })
     }
 
     // Generate 6-digit code
@@ -204,10 +218,10 @@ export const handler: Handler = async (event) => {
     }
   } catch (error) {
     console.error('[VerifyEmail] Error:', error)
-    return {
-      statusCode: 500,
+    return errorResponse({
+      code: 'service_unavailable',
       headers,
-      body: JSON.stringify({ error: 'Failed to send verification email. Please try again.' }),
-    }
+      message: 'We couldn’t send a verification email right now. Please try again in a few minutes.',
+    })
   }
 }

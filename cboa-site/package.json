@@ -14,6 +14,7 @@
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
+    "test:integration": "jest --config jest.config.integration.js --runInBand",
     "test:supabase": "ts-node scripts/test-supabase.ts",
     "test:buckets": "ts-node scripts/test-storage-buckets.ts"
   },

@@ -1,5 +1,5 @@
 import { Handler } from '@netlify/functions'
-import { supabase as supabaseAdmin, getCorsHeaders } from './_shared/handler'
+import { supabase as supabaseAdmin, getCorsHeaders, errorResponse } from './_shared/handler'
 import { Logger } from '../../lib/logger'
 import {
   EMAIL_ANNOUNCEMENTS,
@@ -163,14 +163,14 @@ const handler: Handler = async (event) => {
   }
 
   if (event.httpMethod !== 'POST') {
-    return { statusCode: 405, headers, body: JSON.stringify({ error: 'Method not allowed' }) }
+    return errorResponse({ code: 'method_not_allowed', headers })
   }
 
   // Verify migration secret
   const authHeader = event.headers.authorization
   if (!authHeader || authHeader !== `Bearer ${migrationSecret}`) {
     logger.warn('auth', 'unauthorized_request', 'Unauthorized welcome email request')
-    return { statusCode: 401, headers, body: JSON.stringify({ error: 'Unauthorized' }) }
+    return errorResponse({ code: 'unauthorized', headers })
   }
 
   try {
@@ -182,7 +182,11 @@ const handler: Handler = async (event) => {
     })
 
     if (!users || !Array.isArray(users)) {
-      return { statusCode: 400, headers, body: JSON.stringify({ error: 'users array is required' }) }
+      return errorResponse({
+        code: 'invalid_input',
+        headers,
+        message: 'A users array is required.',
+      })
     }
 
     // Fetch all Supabase users to verify they exist
@@ -193,7 +197,8 @@ const handler: Handler = async (event) => {
     while (true) {
       const { data: { users: pageUsers }, error } = await supabaseAdmin.auth.admin.listUsers({ page, perPage })
       if (error) {
-        return { statusCode: 500, headers, body: JSON.stringify({ error: `Failed to fetch users: ${error.message}` }) }
+        logger.error('email', 'welcome_emails_list_failed', 'Failed to list auth users', new Error(error.message))
+        return errorResponse({ code: 'server_error', headers })
       }
       if (!pageUsers || pageUsers.length === 0) break
       allSupabaseUsers = allSupabaseUsers.concat(pageUsers)
@@ -210,8 +215,9 @@ const handler: Handler = async (event) => {
     if (!dryRun) {
       try {
         accessToken = await getAccessToken()
-      } catch (err: any) {
-        return { statusCode: 500, headers, body: JSON.stringify({ error: `Graph API auth failed: ${err.message}` }) }
+      } catch (err) {
+        logger.error('email', 'welcome_emails_graph_auth_failed', 'Graph API auth failed', err instanceof Error ? err : new Error(String(err)))
+        return errorResponse({ code: 'service_unavailable', headers })
       }
     }
 
@@ -291,9 +297,9 @@ const handler: Handler = async (event) => {
       })
     }
 
-  } catch (error: any) {
+  } catch (error) {
     logger.error('email', 'welcome_emails_error', 'Error sending welcome emails', error instanceof Error ? error : new Error(String(error)))
-    return { statusCode: 500, headers, body: JSON.stringify({ error: error.message }) }
+    return errorResponse({ code: 'server_error', headers })
   }
 }
 

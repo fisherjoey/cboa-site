@@ -4,7 +4,7 @@
  * Requires admin auth token.
  * DELETE THIS FUNCTION after use.
  */
-import { createHandler, supabase } from './_shared/handler'
+import { createHandler, supabase, errorResponse } from './_shared/handler'
 import { osaExcelSync, type OSASubmissionData } from '../../lib/excel-sync'
 
 export const handler = createHandler({
@@ -13,7 +13,10 @@ export const handler = createHandler({
   auth: 'admin',
   handler: async ({ logger }) => {
     if (!osaExcelSync.isConfigured()) {
-      return { statusCode: 400, body: JSON.stringify({ error: 'Excel sync not configured' }) }
+      return errorResponse({
+        code: 'service_unavailable',
+        message: 'Excel sync is not currently available. Please contact a site administrator.',
+      })
     }
 
     // Fetch all submissions

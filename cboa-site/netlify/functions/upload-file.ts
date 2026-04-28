@@ -1,6 +1,6 @@
 import { Handler } from '@netlify/functions'
 import busboy from 'busboy'
-import { supabase, getUserRole } from './_shared/handler'
+import { supabase, getUserRole, errorResponse } from './_shared/handler'
 import { Logger } from '../../lib/logger'
 import { SITE_URL } from '../../lib/siteConfig'
 
@@ -29,20 +29,20 @@ export const handler: Handler = async (event): Promise<{ statusCode: number; hea
   }
 
   if (event.httpMethod !== 'POST') {
-    return { statusCode: 405, headers, body: JSON.stringify({ error: 'Method not allowed' }) }
+    return errorResponse({ code: 'method_not_allowed', headers })
   }
 
   // Verify authentication — any logged-in user can upload
   const authHeader = event.headers.authorization || event.headers.Authorization
   if (!authHeader?.startsWith('Bearer ')) {
-    return { statusCode: 401, headers, body: JSON.stringify({ error: 'Unauthorized' }) }
+    return errorResponse({ code: 'unauthorized', headers })
   }
 
   const token = authHeader.replace('Bearer ', '')
   const { data: { user: authUser }, error: authError } = await supabase.auth.getUser(token)
 
   if (authError || !authUser) {
-    return { statusCode: 401, headers, body: JSON.stringify({ error: 'Unauthorized' }) }
+    return errorResponse({ code: 'unauthorized', headers })
   }
 
   const userRole = getUserRole(authUser)
@@ -50,9 +50,25 @@ export const handler: Handler = async (event): Promise<{ statusCode: number; hea
   const isPrivileged = userRole === 'admin' || userRole === 'executive'
 
   return new Promise((resolve) => {
-    const bb = busboy({
-      headers: { 'content-type': event.headers['content-type'] || '' }
-    })
+    let bb: ReturnType<typeof busboy>
+    try {
+      bb = busboy({
+        headers: { 'content-type': event.headers['content-type'] || '' }
+      })
+    } catch (err) {
+      logger.warn('file', 'busboy_ctor_error', 'Unsupported content type', {
+        metadata: {
+          contentType: event.headers['content-type'] || '',
+          error: err instanceof Error ? err.message : String(err),
+        },
+      })
+      resolve({
+        statusCode: 400,
+        headers,
+        body: JSON.stringify({ error: 'Unsupported Content-Type; expected multipart/form-data' }),
+      })
+      return
+    }
 
     let fileName = ''
     let filePath = ''
@@ -71,8 +87,50 @@ export const handler: Handler = async (event): Promise<{ statusCode: number; hea
         metadata: { filename, mimeType }
       })
 
+      // Validate that the declared MIME type is consistent with the
+      // filename's extension for the common types we care about.
+      // Header-vs-extension matching only — strong magic-byte sniffing is
+      // overkill here; this catches the easy mislabels.
+      const ext = filename.split('.').pop()?.toLowerCase() || ''
+      const EXT_MIME: Record<string, string[]> = {
+        pdf: ['application/pdf'],
+        png: ['image/png'],
+        jpg: ['image/jpeg'],
+        jpeg: ['image/jpeg'],
+        gif: ['image/gif'],
+        txt: ['text/plain'],
+        xlsx: ['application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'],
+        xls: ['application/vnd.ms-excel'],
+        docx: ['application/vnd.openxmlformats-officedocument.wordprocessingml.document'],
+        doc: ['application/msword'],
+        pptx: ['application/vnd.openxmlformats-officedocument.presentationml.presentation'],
+        ppt: ['application/vnd.ms-powerpoint'],
+      }
+      const allowedMimes = EXT_MIME[ext]
+      if (allowedMimes && mimeType && !allowedMimes.includes(mimeType)) {
+        rejected = true
+        file.resume()
+        logger.warn('file', 'file_mime_mismatch', `Extension/MIME mismatch: ${filename} (${mimeType})`, {
+          metadata: { filename, mimeType, ext, allowedMimes },
+        })
+        resolve({
+          statusCode: 400,
+          headers,
+          body: JSON.stringify({
+            error: `Declared content type "${mimeType}" does not match file extension ".${ext}"`,
+          }),
+        })
+        return
+      }
+
       const timestamp = Date.now()
-      const safeFilename = filename.replace(/[^a-zA-Z0-9.-]/g, '_')
+      // Strip non-allowed chars, then collapse runs of '.' to a single dot
+      // and trim leading dots. Defense-in-depth: even if this filename is
+      // ever joined into a path elsewhere, a '..' sequence cannot appear.
+      const safeFilename = filename
+        .replace(/[^a-zA-Z0-9.-]/g, '_')
+        .replace(/\.{2,}/g, '.')
+        .replace(/^\.+/, '')
       fileName = `${timestamp}-${safeFilename}`
 
       file.on('data', (data) => {
@@ -86,7 +144,12 @@ export const handler: Handler = async (event): Promise<{ statusCode: number; hea
           logger.warn('file', 'file_too_large', `File too large: ${originalFileName}`, {
             metadata: { filename: originalFileName, size: fileSize }
           })
-          resolve({ statusCode: 413, headers, body: JSON.stringify({ error: 'File too large (max 10MB)' }) })
+          resolve(errorResponse({
+            code: 'invalid_input',
+            statusCode: 413,
+            headers,
+            message: 'That file is too large — please upload a file under 10 MB.',
+          }))
         }
       })
 
@@ -104,12 +167,37 @@ export const handler: Handler = async (event): Promise<{ statusCode: number; hea
     bb.on('finish', async () => {
       if (rejected) return
       if (!fileBuffer.length) {
-        resolve({ statusCode: 400, headers, body: JSON.stringify({ error: 'No file received' }) })
+        resolve(errorResponse({
+          code: 'invalid_input',
+          headers,
+          message: 'No file was received. Please pick a file and try again.',
+        }))
         return
       }
 
       try {
         const fullBuffer = Buffer.concat(fileBuffer)
+
+        // Light magic-byte check for PDF: a real PDF starts with "%PDF-".
+        // This catches the obvious .pdf-extension/EXE-bytes mislabel even
+        // when both the extension and declared MIME claim PDF. We don't
+        // sniff every type — full magic-byte detection is overkill — but
+        // PDFs are the most common upload here so the cheap check pays.
+        const fileExt = originalFileName.split('.').pop()?.toLowerCase() || ''
+        if (fileExt === 'pdf') {
+          const head = fullBuffer.slice(0, 5).toString('binary')
+          if (head !== '%PDF-') {
+            logger.warn('file', 'file_magic_mismatch', `PDF magic-byte mismatch: ${originalFileName}`, {
+              metadata: { filename: originalFileName, head },
+            })
+            resolve({
+              statusCode: 400,
+              headers,
+              body: JSON.stringify({ error: 'File contents do not match declared PDF type' }),
+            })
+            return
+          }
+        }
 
         const bucket = filePath && filePath.includes('email-images')
           ? 'email-images'
@@ -125,7 +213,11 @@ export const handler: Handler = async (event): Promise<{ statusCode: number; hea
           logger.warn('file', 'upload_forbidden', `Non-privileged user tried to upload to ${bucket}`, {
             metadata: { userEmail, role: userRole, bucket, filename: originalFileName }
           })
-          resolve({ statusCode: 403, headers, body: JSON.stringify({ error: 'Forbidden: insufficient role for this bucket' }) })
+          resolve(errorResponse({
+            code: 'forbidden',
+            headers,
+            message: 'You don’t have permission to upload to this location.',
+          }))
           return
         }
 
@@ -159,7 +251,11 @@ export const handler: Handler = async (event): Promise<{ statusCode: number; hea
           logger.error('file', 'upload_failed', `Upload failed: ${originalFileName}`, new Error(error.message), {
             metadata: { filename: originalFileName, bucket }
           })
-          resolve({ statusCode: 500, headers, body: JSON.stringify({ error: 'Upload failed' }) })
+          resolve(errorResponse({
+            code: 'server_error',
+            headers,
+            message: 'We couldn’t save that file. Please try again in a moment.',
+          }))
           return
         }
 
@@ -195,13 +291,21 @@ export const handler: Handler = async (event): Promise<{ statusCode: number; hea
         logger.error('file', 'upload_error', 'Error uploading file', error instanceof Error ? error : new Error(String(error)), {
           metadata: { filename: originalFileName }
         })
-        resolve({ statusCode: 500, headers, body: JSON.stringify({ error: 'Failed to upload file' }) })
+        resolve(errorResponse({
+          code: 'server_error',
+          headers,
+          message: 'We couldn’t save that file. Please try again in a moment.',
+        }))
       }
     })
 
     bb.on('error', (error) => {
       logger.error('file', 'busboy_error', 'File parsing error', error instanceof Error ? error : new Error(String(error)))
-      resolve({ statusCode: 500, headers, body: JSON.stringify({ error: 'File upload failed' }) })
+      resolve(errorResponse({
+        code: 'server_error',
+        headers,
+        message: 'We couldn’t save that file. Please try again in a moment.',
+      }))
     })
 
     if (event.body) {
@@ -210,7 +314,11 @@ export const handler: Handler = async (event): Promise<{ statusCode: number; hea
         : Buffer.from(event.body)
       bb.end(buffer)
     } else {
-      resolve({ statusCode: 400, headers, body: JSON.stringify({ error: 'No body received' }) })
+      resolve(errorResponse({
+        code: 'invalid_input',
+        headers,
+        message: 'No file was received. Please pick a file and try again.',
+      }))
     }
   })
 }

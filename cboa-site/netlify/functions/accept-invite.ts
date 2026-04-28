@@ -1,5 +1,5 @@
 import { Handler } from '@netlify/functions'
-import { supabase as supabaseAdmin, getCorsHeaders } from './_shared/handler'
+import { supabase as supabaseAdmin, getCorsHeaders, errorResponse } from './_shared/handler'
 import { Logger } from '../../lib/logger'
 import { ORG_SHORT_NAME, getAuthCallbackUrl } from '../../lib/siteConfig'
 
@@ -14,7 +14,21 @@ import { ORG_SHORT_NAME, getAuthCallbackUrl } from '../../lib/siteConfig'
  * 2. Page calls this function to validate and get redirect URL
  * 3. Function generates fresh Supabase invite link
  * 4. User is redirected to complete signup
+ *
+ * Design notes:
+ * - Tokens are intentionally never-expiring. The original docstring
+ *   mentioned a 30d default, but the table has no `expires_at` column
+ *   and the handler does not enforce a TTL. Adding one requires a
+ *   schema migration plus a cron sweep, so it is deliberately deferred.
+ * - "Token not found" and "token valid but member row missing" return
+ *   an identical 404 body to avoid leaking which case occurred. A
+ *   caller holding a list of candidate tokens must not be able to
+ *   distinguish "token exists" from "token does not exist".
  */
+const INVALID_INVITE_RESPONSE_BODY = {
+  error: 'Invalid or already-used invite token',
+  message: 'This invite link is not valid. Please request a new invite from our website.',
+}
 export const handler: Handler = async (event) => {
   const logger = Logger.fromEvent('accept-invite', event)
 
@@ -31,14 +45,11 @@ export const handler: Handler = async (event) => {
 
   if (!token) {
     logger.warn('invite', 'missing_token', 'Accept invite called without token')
-    return {
-      statusCode: 400,
+    return errorResponse({
+      code: 'invalid_input',
       headers,
-      body: JSON.stringify({
-        error: 'Missing invite token',
-        message: 'No invite token provided. Please use the link from your email.'
-      })
-    }
+      message: 'No invite token provided. Please use the link from your email.',
+    })
   }
 
   try {
@@ -51,14 +62,25 @@ export const handler: Handler = async (event) => {
 
     if (tokenError || !inviteToken) {
       logger.warn('invite', 'invalid_token', `Invalid invite token: ${token.substring(0, 8)}...`)
-      return {
-        statusCode: 404,
+      // Same generic body as the "member missing" branch below to avoid
+      // leaking which case occurred (existence oracle).
+      return errorResponse({
+        code: 'not_found',
         headers,
-        body: JSON.stringify({
-          error: 'Invalid invite token',
-          message: 'This invite link is not valid. Please request a new invite from our website.'
-        })
-      }
+        message: INVALID_INVITE_RESPONSE_BODY.message,
+      })
+    }
+
+    // TTL check — invite_tokens.expires_at lands via the new migration.
+    // Treat expired tokens identically to invalid ones, same generic body
+    // and 404, to keep the existence-oracle protection above.
+    if (inviteToken.expires_at && new Date(inviteToken.expires_at).getTime() < Date.now()) {
+      logger.info('invite', 'token_expired', `Token expired for ${inviteToken.email}`)
+      return errorResponse({
+        code: 'not_found',
+        headers,
+        message: INVALID_INVITE_RESPONSE_BODY.message,
+      })
     }
 
     // Atomically claim the token. If used_at was already set, no row is
@@ -75,15 +97,12 @@ export const handler: Handler = async (event) => {
 
     if (claimError || !claimedToken) {
       logger.info('invite', 'token_already_used', `Token already used for ${inviteToken.email}`)
-      return {
-        statusCode: 400,
+      return errorResponse({
+        code: 'invalid_input',
         headers,
-        body: JSON.stringify({
-          error: 'Invite already used',
-          message: 'This invite has already been used. If you need to reset your password, use the login page.',
-          alreadyUsed: true
-        })
-      }
+        message: 'This invite has already been used. If you need to reset your password, use the login page.',
+        extra: { alreadyUsed: true },
+      })
     }
 
     // Verify the member still exists and is active
@@ -95,26 +114,23 @@ export const handler: Handler = async (event) => {
 
     if (memberError || !member) {
       logger.warn('invite', 'member_not_found', `Member not found for token: ${inviteToken.email}`)
-      return {
-        statusCode: 404,
+      // Same generic body as the "token not found" branch above. Leaking
+      // that a token exists (but its member row is gone) would let a
+      // caller probe the invite_tokens table.
+      return errorResponse({
+        code: 'not_found',
         headers,
-        body: JSON.stringify({
-          error: 'Member not found',
-          message: `Your membership could not be found. Please contact ${ORG_SHORT_NAME} for assistance.`
-        })
-      }
+        message: INVALID_INVITE_RESPONSE_BODY.message,
+      })
     }
 
     if (member.status !== 'active') {
       logger.warn('invite', 'member_inactive', `Inactive member tried to accept invite: ${inviteToken.email}`)
-      return {
-        statusCode: 403,
+      return errorResponse({
+        code: 'forbidden',
         headers,
-        body: JSON.stringify({
-          error: 'Membership inactive',
-          message: `Your membership is not currently active. Please contact ${ORG_SHORT_NAME} for assistance.`
-        })
-      }
+        message: `Your membership is not currently active. Please contact ${ORG_SHORT_NAME} for assistance.`,
+      })
     }
 
     // Check if user already exists in auth (by email, not just member.user_id)
@@ -144,15 +160,12 @@ export const handler: Handler = async (event) => {
 
     if (authUser?.last_sign_in_at) {
       logger.info('invite', 'already_active_account', `User already has active account: ${inviteToken.email}`)
-      return {
-        statusCode: 400,
+      return errorResponse({
+        code: 'invalid_input',
         headers,
-        body: JSON.stringify({
-          error: 'Account already active',
-          message: 'Your account is already set up. Please use "Forgot Password" on the login page if you need to reset your password.',
-          alreadyActive: true
-        })
-      }
+        message: 'Your account is already set up. Please use "Forgot Password" on the login page if you need to reset your password.',
+        extra: { alreadyActive: true },
+      })
     }
 
     // User exists but never signed in - delete to recreate with fresh invite
@@ -182,14 +195,11 @@ export const handler: Handler = async (event) => {
 
     if (linkError) {
       logger.error('invite', 'link_generation_failed', `Failed to generate link for ${inviteToken.email}`, new Error(linkError.message))
-      return {
-        statusCode: 500,
+      return errorResponse({
+        code: 'service_unavailable',
         headers,
-        body: JSON.stringify({
-          error: 'Failed to generate invite',
-          message: 'Unable to process your invite. Please try again or request a new invite.'
-        })
-      }
+        message: 'We couldn’t process your invite. Please try again or request a new invite.',
+      })
     }
 
     // Update member's user_id
@@ -219,13 +229,10 @@ export const handler: Handler = async (event) => {
 
   } catch (error) {
     logger.error('invite', 'accept_invite_error', 'Error processing invite', error instanceof Error ? error : new Error(String(error)))
-    return {
-      statusCode: 500,
+    return errorResponse({
+      code: 'server_error',
       headers,
-      body: JSON.stringify({
-        error: 'Internal error',
-        message: 'An error occurred processing your invite. Please try again.'
-      })
-    }
+      message: 'Something went wrong processing your invite. Please try again, or contact us if the problem persists.',
+    })
   }
 }

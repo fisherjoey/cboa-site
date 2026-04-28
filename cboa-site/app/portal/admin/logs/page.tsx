@@ -12,6 +12,7 @@ import {
   SortingState,
 } from '@tanstack/react-table'
 import { getSupabaseBrowserClient } from '@/lib/api/client'
+import { readFriendlyError, friendlyErrorFromThrown } from '@/lib/userFacingError'
 import { useAdminGuard } from '@/hooks/useAdminGuard'
 import {
   IconArrowUp,
@@ -134,8 +135,8 @@ export default function AdminLogsPage() {
       })
 
       if (!response.ok) {
-        const data = await response.json()
-        throw new Error(data.error || 'Failed to fetch logs')
+        const friendly = await readFriendlyError(response)
+        throw new Error(friendly.message)
       }
 
       const data = await response.json()
@@ -147,7 +148,7 @@ export default function AdminLogsPage() {
       }
       setPagination(data.pagination)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to fetch logs')
+      setError(friendlyErrorFromThrown(err).message)
     } finally {
       setLoading(false)
     }
