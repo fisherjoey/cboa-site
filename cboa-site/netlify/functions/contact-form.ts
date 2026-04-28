@@ -1,5 +1,5 @@
 import { Handler, HandlerEvent, HandlerContext } from '@netlify/functions'
-import { getCorsHeaders, supabase } from './_shared/handler'
+import { getCorsHeaders, supabase, errorResponse } from './_shared/handler'
 import { checkRateLimit, getClientIp } from './_shared/rateLimit'
 import { generateCBOAEmailTemplate } from '../../lib/emailTemplate'
 import { Logger } from '../../lib/logger'
@@ -142,15 +142,11 @@ export const handler: Handler = async (
   // Rate limit: 5 submissions per minute per IP
   const clientIp = getClientIp(event.headers)
   if (checkRateLimit(clientIp, { maxRequests: 5, windowMs: 60_000, prefix: 'contact' })) {
-    return { statusCode: 429, headers, body: JSON.stringify({ error: 'Too many requests. Please try again later.' }) }
+    return errorResponse({ code: 'rate_limited', headers })
   }
 
   if (event.httpMethod !== 'POST') {
-    return {
-      statusCode: 405,
-      headers,
-      body: JSON.stringify({ error: 'Method not allowed' })
-    }
+    return errorResponse({ code: 'method_not_allowed', headers })
   }
 
   try {
@@ -159,19 +155,21 @@ export const handler: Handler = async (
 
     // Validation
     if (!name || name.trim().length < 2) {
-      return {
-        statusCode: 400,
+      return errorResponse({
+        code: 'invalid_input',
         headers,
-        body: JSON.stringify({ error: 'Name is required' })
-      }
+        message: 'Please enter your name.',
+        fields: { name: 'Name is required' },
+      })
     }
 
     if (!email || !email.includes('@')) {
-      return {
-        statusCode: 400,
+      return errorResponse({
+        code: 'invalid_input',
         headers,
-        body: JSON.stringify({ error: 'Valid email is required' })
-      }
+        message: 'Please enter a valid email address.',
+        fields: { email: 'Valid email is required' },
+      })
     }
 
     // Enhanced email validation: MX record lookup + disposable domain blocking
@@ -180,48 +178,47 @@ export const handler: Handler = async (
       logger.info('email', 'contact_form_email_rejected', `Email rejected: ${emailValidation.reason}`, {
         metadata: { email, reason: emailValidation.reason, suggestion: emailValidation.suggestion }
       })
-      return {
-        statusCode: 400,
+      return errorResponse({
+        code: 'email_unavailable',
         headers,
-        body: JSON.stringify({
-          error: emailValidation.reason,
-          suggestion: emailValidation.suggestion,
-        })
-      }
+        message: emailValidation.suggestion
+          ? `That email address looks invalid. Did you mean ${emailValidation.suggestion}?`
+          : 'That email address looks invalid. Please double-check and try again.',
+        fields: { email: emailValidation.reason || 'Invalid email address' },
+        extra: emailValidation.suggestion ? { suggestion: emailValidation.suggestion } : undefined,
+      })
     }
 
     if (!category || !categoryEmailMap[category]) {
-      return {
-        statusCode: 400,
+      return errorResponse({
+        code: 'invalid_input',
         headers,
-        body: JSON.stringify({ error: 'Valid category is required' })
-      }
+        message: 'Please choose a category for your message.',
+        fields: { category: 'Please select a category' },
+      })
     }
 
     if (!subject || subject.trim().length < 5) {
-      return {
-        statusCode: 400,
+      return errorResponse({
+        code: 'invalid_input',
         headers,
-        body: JSON.stringify({ error: 'Subject is required' })
-      }
+        message: 'Please add a short subject (at least 5 characters).',
+        fields: { subject: 'Subject must be at least 5 characters' },
+      })
     }
 
     // If the client flagged this as a complaint, require email verification
     if (body.complaintDetected) {
       if (!body.verificationToken || !body.verificationCode) {
-        return {
-          statusCode: 400,
-          headers,
-          body: JSON.stringify({ error: 'Email verification is required for this type of message.' })
-        }
+        return errorResponse({ code: 'verification_required', headers })
       }
       const verification = verifyEmailToken(body.verificationToken, email, body.verificationCode)
       if (!verification.valid) {
-        return {
-          statusCode: 400,
+        return errorResponse({
+          code: 'verification_failed',
           headers,
-          body: JSON.stringify({ error: verification.reason })
-        }
+          message: verification.reason || 'That verification code didn’t match. Please check the email and try again.',
+        })
       }
       logger.info('email', 'contact_form_verified', 'Complaint submission with verified email', {
         metadata: { email }
@@ -229,22 +226,23 @@ export const handler: Handler = async (
     }
 
     if (!message || message.trim().length < 20) {
-      return {
-        statusCode: 400,
+      return errorResponse({
+        code: 'invalid_input',
         headers,
-        body: JSON.stringify({ error: 'Message must be at least 20 characters' })
-      }
+        message: 'Please add a bit more detail (at least 20 characters).',
+        fields: { message: 'Message must be at least 20 characters' },
+      })
     }
 
     // Validate attachment URLs
     if (body.attachmentUrls && body.attachmentUrls.length > 0) {
       const MAX_ATTACHMENTS = 5
       if (body.attachmentUrls.length > MAX_ATTACHMENTS) {
-        return {
-          statusCode: 400,
+        return errorResponse({
+          code: 'invalid_input',
           headers,
-          body: JSON.stringify({ error: `Maximum ${MAX_ATTACHMENTS} attachment links allowed` })
-        }
+          message: `Please limit attachments to ${MAX_ATTACHMENTS} links.`,
+        })
       }
 
       const allowedHosts = [
@@ -261,28 +259,28 @@ export const handler: Handler = async (
         try {
           parsed = new URL(url)
         } catch {
-          return {
-            statusCode: 400,
+          return errorResponse({
+            code: 'invalid_input',
             headers,
-            body: JSON.stringify({ error: `Invalid attachment URL: ${url}` })
-          }
+            message: 'One of your attachment links isn’t a valid URL. Please check and try again.',
+          })
         }
 
         if (parsed.protocol !== 'https:') {
-          return {
-            statusCode: 400,
+          return errorResponse({
+            code: 'invalid_input',
             headers,
-            body: JSON.stringify({ error: 'Attachment links must use HTTPS' })
-          }
+            message: 'Attachment links must start with https://.',
+          })
         }
 
         const host = parsed.hostname.toLowerCase()
         if (!allowedHosts.some(allowed => host === allowed || host.endsWith('.' + allowed))) {
-          return {
-            statusCode: 400,
+          return errorResponse({
+            code: 'invalid_input',
             headers,
-            body: JSON.stringify({ error: `Attachment links must be from a supported service (YouTube, Vimeo, Google Drive, Dropbox, Imgur, or OneDrive)` })
-          }
+            message: 'Attachments must be hosted on YouTube, Vimeo, Google Drive, Dropbox, Imgur, or OneDrive.',
+          })
         }
       }
 
@@ -313,11 +311,11 @@ export const handler: Handler = async (
               logger.info('email', 'contact_form_unsafe_url', 'Attachment URL flagged by Safe Browsing', {
                 metadata: { matches: sbData.matches.map((m: { threat?: { url?: string }; threatType?: string }) => ({ url: m.threat?.url, type: m.threatType })) }
               })
-              return {
-                statusCode: 400,
+              return errorResponse({
+                code: 'invalid_input',
                 headers,
-                body: JSON.stringify({ error: 'One or more attachment links were flagged as unsafe. Please check your links and try again.' })
-              }
+                message: 'One or more of your links was flagged as unsafe. Please check your attachments and try again.',
+              })
             }
           }
         } catch (sbError) {
@@ -332,11 +330,7 @@ export const handler: Handler = async (
         !process.env.MICROSOFT_CLIENT_ID ||
         !process.env.MICROSOFT_CLIENT_SECRET) {
       logger.error('email', 'contact_form_config_error', 'Microsoft Graph credentials not configured')
-      return {
-        statusCode: 500,
-        headers,
-        body: JSON.stringify({ error: 'Email service not configured' })
-      }
+      return errorResponse({ code: 'service_unavailable', headers })
     }
 
     const recipientEmail = categoryEmailMap[category]
@@ -532,15 +526,12 @@ export const handler: Handler = async (
     }
 
   } catch (error: unknown) {
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error'
     logger.error('email', 'contact_form_error', 'Error processing contact form', error instanceof Error ? error : new Error(String(error)))
 
-    return {
-      statusCode: 500,
+    return errorResponse({
+      code: 'server_error',
       headers,
-      body: JSON.stringify({
-        error: 'Failed to send message. Please try again later.'
-      })
-    }
+      message: 'We couldn’t send your message right now. Please try again in a few minutes — if it keeps failing, email us at secretary@cboa.ca.',
+    })
   }
 }

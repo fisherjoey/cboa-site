@@ -9,7 +9,7 @@
  */
 
 import { Handler } from '@netlify/functions'
-import { getCorsHeaders } from './_shared/handler'
+import { getCorsHeaders, errorResponse } from './_shared/handler'
 
 interface UserRecord {
   id: string
@@ -36,7 +36,7 @@ export const handler: Handler = async (event) => {
   }
 
   if (event.httpMethod !== 'POST') {
-    return { statusCode: 405, headers, body: JSON.stringify({ error: 'Method Not Allowed' }) }
+    return errorResponse({ code: 'method_not_allowed', headers })
   }
 
   const SITE_URL = process.env.URL || process.env.SITE_URL || 'https://cboa.ca'
@@ -60,7 +60,7 @@ export const handler: Handler = async (event) => {
     }
 
     if (!token) {
-      return { statusCode: 401, headers, body: JSON.stringify({ error: 'Unauthorized - JWT token required' }) }
+      return errorResponse({ code: 'unauthorized', headers })
     }
 
     // Fetch all users
@@ -130,6 +130,7 @@ export const handler: Handler = async (event) => {
       })
     }
   } catch (error: any) {
-    return { statusCode: 500, headers, body: JSON.stringify({ error: 'Internal server error' }) }
+    console.error('[BulkSetRoles] Error:', error)
+    return errorResponse({ code: 'server_error', headers })
   }
 }

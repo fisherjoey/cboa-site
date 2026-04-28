@@ -1,4 +1,4 @@
-import { createHandler, supabase } from './_shared/handler'
+import { createHandler, supabase, errorResponse } from './_shared/handler'
 
 export const handler = createHandler({
   name: 'newsletters',
@@ -46,7 +46,10 @@ export const handler = createHandler({
         const { id, ...updates } = body
 
         if (!id) {
-          return { statusCode: 400, body: JSON.stringify({ error: 'ID is required for updates' }) }
+          return errorResponse({
+            code: 'invalid_input',
+            message: 'A record must be selected for update.',
+          })
         }
 
         logger.info('crud', 'update_newsletter', `Updating newsletter ${id}`, {
@@ -76,7 +79,10 @@ export const handler = createHandler({
         const id = event.queryStringParameters?.id
 
         if (!id) {
-          return { statusCode: 400, body: JSON.stringify({ error: 'ID is required for deletion' }) }
+          return errorResponse({
+            code: 'invalid_input',
+            message: 'A record must be selected for deletion.',
+          })
         }
 
         logger.info('crud', 'delete_newsletter', `Deleting newsletter ${id}`, { metadata: { id } })
@@ -98,7 +104,7 @@ export const handler = createHandler({
       }
 
       default:
-        return { statusCode: 405, body: JSON.stringify({ error: 'Method not allowed' }) }
+        return errorResponse({ code: 'method_not_allowed' })
     }
   }
 })

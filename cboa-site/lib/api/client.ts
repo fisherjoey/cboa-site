@@ -2,6 +2,7 @@
  * Shared API client utilities — auth headers, fetch wrapper, config.
  */
 import { retryAsync, parseAPIError, AppError } from '../errorHandling'
+import { toFriendlyMessage, type ServerErrorBody } from '../userFacingError'
 import { createBrowserClient } from '@supabase/ssr'
 
 export { AppError }
@@ -62,21 +63,26 @@ export async function apiFetch(url: string, options?: RequestInit): Promise<Resp
     })
 
     if (!response.ok) {
-      let errorMessage = `Request failed with status ${response.status}`
+      let body: ServerErrorBody | null = null
       try {
-        const errorData = await response.json()
-        errorMessage = errorData.error || errorData.message || errorMessage
+        body = await response.json()
       } catch {
-        // If JSON parsing fails, use default message
+        // Non-JSON body — fall through to status-based default.
       }
-
-      throw new AppError(errorMessage, 'API_ERROR', response.status)
+      const friendly = toFriendlyMessage(response, body)
+      throw new AppError(friendly.message, body?.error || 'API_ERROR', response.status, {
+        fields: friendly.fields,
+        code: body?.error,
+      })
     }
 
     return response
   } catch (error: any) {
     if (error.name === 'TypeError' && error.message === 'Failed to fetch') {
-      throw new AppError('Network error. Please check your internet connection.', 'NETWORK_ERROR')
+      throw new AppError(
+        'We couldn’t reach the server. Please check your internet connection and try again.',
+        'NETWORK_ERROR',
+      )
     }
     if (error instanceof AppError) throw error
     throw new AppError(parseAPIError(error), 'UNKNOWN_ERROR')

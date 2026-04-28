@@ -2,7 +2,7 @@ import { Handler, HandlerEvent } from '@netlify/functions'
 import { generateCBOAEmailTemplate } from '../../lib/emailTemplate'
 import { Logger } from '../../lib/logger'
 import { osaExcelSync, OSASubmissionData } from '../../lib/excel-sync'
-import { supabase } from './_shared/handler'
+import { supabase, errorResponse } from './_shared/handler'
 import { checkRateLimit, getClientIp } from './_shared/rateLimit'
 import * as fs from 'fs'
 import * as path from 'path'
@@ -739,20 +739,14 @@ export const handler: Handler = async (event: HandlerEvent) => {
 
   // Only allow POST
   if (event.httpMethod !== 'POST') {
-    return {
-      statusCode: 405,
-      body: JSON.stringify({ error: 'Method not allowed' })
-    }
+    return errorResponse({ code: 'method_not_allowed' })
   }
 
   // Rate limit per IP. Each call sends up to 4 Microsoft Graph emails
   // and writes DB rows; 10/min is generous for legit users + retries.
   const clientIp = getClientIp(event.headers)
   if (checkRateLimit(clientIp, { maxRequests: 10, windowMs: 60_000, prefix: 'osa-webhook' })) {
-    return {
-      statusCode: 429,
-      body: JSON.stringify({ error: 'Too many requests. Please try again later.' })
-    }
+    return errorResponse({ code: 'rate_limited' })
   }
 
   try {
@@ -767,13 +761,10 @@ export const handler: Handler = async (event: HandlerEvent) => {
       // Legacy single-event format - convert to multi-event
       formData = convertLegacyToMultiEvent(rawData as LegacyFormData)
     } else {
-      return {
-        statusCode: 400,
-        body: JSON.stringify({
-          error: 'Invalid form data format',
-          message: 'Expected either events array or eventType field'
-        })
-      }
+      return errorResponse({
+        code: 'invalid_input',
+        message: 'Your submission was missing event details. Please refresh the page and try again.',
+      })
     }
 
     const eventCount = formData.events.length
@@ -783,18 +774,15 @@ export const handler: Handler = async (event: HandlerEvent) => {
 
     // Validate required fields
     if (!formData.organizationName || !formData.eventContactEmail || !formData.events.length) {
-      return {
-        statusCode: 400,
-        body: JSON.stringify({
-          error: 'Missing required fields',
-          required: ['organizationName', 'eventContactEmail', 'events'],
-          received: {
-            organizationName: !!formData.organizationName,
-            eventContactEmail: !!formData.eventContactEmail,
-            eventsCount: formData.events?.length || 0
-          }
-        })
-      }
+      const fields: Record<string, string> = {}
+      if (!formData.organizationName) fields.organizationName = 'Organization name is required'
+      if (!formData.eventContactEmail) fields.eventContactEmail = 'Event contact email is required'
+      if (!formData.events.length) fields.events = 'At least one event is required'
+      return errorResponse({
+        code: 'invalid_input',
+        message: 'Some required information is missing. Please review the form and try again.',
+        fields,
+      })
     }
 
     // Compute a deterministic submission_group_id from the form data so
@@ -853,10 +841,7 @@ export const handler: Handler = async (event: HandlerEvent) => {
         !process.env.MICROSOFT_CLIENT_ID ||
         !process.env.MICROSOFT_CLIENT_SECRET) {
       logger.error('osa', 'config_error', 'Microsoft Graph credentials not configured')
-      return {
-        statusCode: 500,
-        body: JSON.stringify({ error: 'Email service not configured' })
-      }
+      return errorResponse({ code: 'service_unavailable' })
     }
 
     // Get access token
@@ -1156,11 +1141,9 @@ export const handler: Handler = async (event: HandlerEvent) => {
 
   } catch (error: any) {
     logger.error('osa', 'webhook_error', 'Error processing OSA webhook', error)
-    return {
-      statusCode: 500,
-      body: JSON.stringify({
-        error: error.message || 'Failed to process form submission'
-      })
-    }
+    return errorResponse({
+      code: 'server_error',
+      message: 'We couldn’t finish processing your request. Please try again, or contact us at scheduler@cboa.ca if it keeps failing.',
+    })
   }
 }

@@ -1,4 +1,4 @@
-import { createHandler, supabase } from './_shared/handler'
+import { createHandler, supabase, errorResponse } from './_shared/handler'
 
 export const handler = createHandler({
   name: 'contact-submissions',
@@ -62,7 +62,7 @@ export const handler = createHandler({
     const { id, status, notes } = body
 
     if (!id) {
-      return { statusCode: 400, body: JSON.stringify({ error: 'Submission ID is required' }) }
+      return errorResponse({ code: 'invalid_input', message: 'A submission must be selected.' })
     }
 
     const updates: Record<string, string> = {}

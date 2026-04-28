@@ -1,4 +1,4 @@
-import { createHandler, supabase } from './_shared/handler'
+import { createHandler, supabase, errorResponse } from './_shared/handler'
 
 export const handler = createHandler({
   name: 'member-activities',
@@ -55,7 +55,10 @@ export const handler = createHandler({
         const { id, ...updates } = body
 
         if (!id) {
-          return { statusCode: 400, body: JSON.stringify({ error: 'ID is required for updates' }) }
+          return errorResponse({
+            code: 'invalid_input',
+            message: 'A record must be selected for update.',
+          })
         }
 
         logger.info('crud', 'update_member_activity', `Updating member activity ${id}`, {
@@ -85,7 +88,10 @@ export const handler = createHandler({
         const id = event.queryStringParameters?.id
 
         if (!id) {
-          return { statusCode: 400, body: JSON.stringify({ error: 'ID is required for deletion' }) }
+          return errorResponse({
+            code: 'invalid_input',
+            message: 'A record must be selected for deletion.',
+          })
         }
 
         logger.info('crud', 'delete_member_activity', `Deleting member activity ${id}`, { metadata: { id } })
@@ -98,7 +104,10 @@ export const handler = createHandler({
 
         if (findError || !existing) {
           logger.warn('crud', 'delete_member_activity_not_found', `Member activity ${id} not found`, { metadata: { id } })
-          return { statusCode: 404, body: JSON.stringify({ error: 'Activity not found' }) }
+          return errorResponse({
+            code: 'not_found',
+            message: 'Activity not found.'.replace('..', '.'),
+          })
         }
 
         const { error } = await supabase
@@ -118,7 +127,7 @@ export const handler = createHandler({
       }
 
       default:
-        return { statusCode: 405, body: JSON.stringify({ error: 'Method not allowed' }) }
+        return errorResponse({ code: 'method_not_allowed' })
     }
   }
 })

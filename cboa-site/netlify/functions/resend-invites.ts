@@ -1,5 +1,6 @@
 import { Handler } from '@netlify/functions';
 import { SITE_URL as CONFIG_SITE_URL } from '../../lib/siteConfig';
+import { errorResponse } from './_shared/handler';
 
 /**
  * Netlify Function to resend invites to pending Identity users
@@ -117,18 +118,12 @@ export const handler: Handler = async (event, context) => {
   const { identity, user } = context.clientContext || {};
 
   if (!identity || !user) {
-    return {
-      statusCode: 401,
-      body: JSON.stringify({ error: 'Unauthorized - must be logged in' })
-    };
+    return errorResponse({ code: 'unauthorized' });
   }
 
   // Check admin role
   if (!isAdmin(user)) {
-    return {
-      statusCode: 403,
-      body: JSON.stringify({ error: 'Forbidden - admin role required' })
-    };
+    return errorResponse({ code: 'forbidden' });
   }
 
   const isDryRun = event.queryStringParameters?.['dry-run'] === 'true' || event.httpMethod === 'GET';
@@ -139,10 +134,10 @@ export const handler: Handler = async (event, context) => {
   const adminToken = event.headers['x-admin-token'] || (identity as any).token;
 
   if (!adminToken) {
-    return {
-      statusCode: 400,
-      body: JSON.stringify({ error: 'Admin token required in x-admin-token header' })
-    };
+    return errorResponse({
+      code: 'invalid_input',
+      message: 'Admin token required in x-admin-token header.',
+    });
   }
 
   try {
@@ -204,9 +199,7 @@ export const handler: Handler = async (event, context) => {
     };
 
   } catch (error) {
-    return {
-      statusCode: 500,
-      body: JSON.stringify({ error: 'Internal server error' })
-    };
+    console.error('[ResendInvites] Error:', error);
+    return errorResponse({ code: 'server_error' });
   }
 };

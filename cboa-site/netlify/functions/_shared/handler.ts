@@ -20,6 +20,9 @@ import { Handler, HandlerEvent, HandlerContext as NetlifyContext } from '@netlif
 import { createClient, SupabaseClient } from '@supabase/supabase-js'
 import { Logger } from '../../../lib/logger'
 import { SITE_URL } from '../../../lib/siteConfig'
+import { errorResponse } from './errorResponse'
+export { errorResponse } from './errorResponse'
+export type { ErrorCode } from './errorResponse'
 
 // ---------------------------------------------------------------------------
 // Shared Supabase admin client (service role — used by all functions)
@@ -231,11 +234,7 @@ export function createHandler(options: CreateHandlerOptions): Handler {
 
     // --- Method check ---
     if (!allowedMethods.includes(event.httpMethod as HttpMethod)) {
-      return {
-        statusCode: 405,
-        headers: corsHeaders,
-        body: JSON.stringify({ error: 'Method not allowed' })
-      }
+      return errorResponse({ code: 'method_not_allowed', headers: corsHeaders })
     }
 
     // --- Auth ---
@@ -245,22 +244,14 @@ export function createHandler(options: CreateHandlerOptions): Handler {
     if (authLevel !== 'public') {
       const authHeader = event.headers.authorization || event.headers.Authorization
       if (!authHeader?.startsWith('Bearer ')) {
-        return {
-          statusCode: 401,
-          headers: corsHeaders,
-          body: JSON.stringify({ error: 'Unauthorized' })
-        }
+        return errorResponse({ code: 'unauthorized', headers: corsHeaders })
       }
 
       const token = authHeader.replace('Bearer ', '')
       const { data: { user: authUser }, error: authError } = await supabase.auth.getUser(token)
 
       if (authError || !authUser) {
-        return {
-          statusCode: 401,
-          headers: corsHeaders,
-          body: JSON.stringify({ error: 'Unauthorized' })
-        }
+        return errorResponse({ code: 'unauthorized', headers: corsHeaders })
       }
 
       const role = getUserRole(authUser)
@@ -272,11 +263,7 @@ export function createHandler(options: CreateHandlerOptions): Handler {
       }
 
       if (!isAuthorized(role, authLevel)) {
-        return {
-          statusCode: 403,
-          headers: corsHeaders,
-          body: JSON.stringify({ error: 'Forbidden' })
-        }
+        return errorResponse({ code: 'forbidden', headers: corsHeaders })
       }
     }
 
@@ -295,11 +282,7 @@ export function createHandler(options: CreateHandlerOptions): Handler {
         `${name} API error`,
         error instanceof Error ? error : new Error(String(error))
       )
-      return {
-        statusCode: 500,
-        headers: corsHeaders,
-        body: JSON.stringify({ error: 'Internal server error' })
-      }
+      return errorResponse({ code: 'server_error', headers: corsHeaders })
     }
   }
 }

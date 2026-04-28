@@ -7,6 +7,7 @@ import { IconSend, IconUsers, IconMail, IconCheck, IconAlertCircle, IconEye, Ico
 import { useToast } from '@/contexts/ToastContext'
 import { TinyMCEEditor } from '@/components/TinyMCEEditor'
 import { generateCBOAEmailTemplate } from '@/lib/emailTemplate'
+import { readFriendlyError, friendlyErrorFromThrown } from '@/lib/userFacingError'
 
 export default function MailPage() {
   const { user, getAccessToken } = useAuth()
@@ -305,12 +306,12 @@ export default function MailPage() {
         })
       })
 
-      const data = await response.json()
-
       if (!response.ok) {
-        throw new Error(data.error || 'Failed to send email')
+        const friendly = await readFriendlyError(response)
+        throw new Error(friendly.message)
       }
 
+      const data = await response.json()
       addToast(`Email sent successfully to ${data.recipientCount} recipients!`, 'success')
 
       // Save as announcement if checkbox is selected
@@ -333,9 +334,9 @@ export default function MailPage() {
       setContent('')
       setRankFilter('')
       setSaveAsAnnouncement(false)
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error sending email:', error)
-      addToast(error.message || 'Failed to send email', 'error')
+      addToast(friendlyErrorFromThrown(error).message, 'error')
     } finally {
       setIsSending(false)
     }
@@ -360,7 +361,8 @@ export default function MailPage() {
     })
 
     if (!response.ok) {
-      throw new Error('Failed to save announcement')
+      const friendly = await readFriendlyError(response)
+      throw new Error(friendly.message)
     }
   }
 

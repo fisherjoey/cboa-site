@@ -3,6 +3,7 @@
 import { useState, useEffect, Suspense } from 'react'
 import { useRouter } from 'next/navigation'
 import { getSupabaseBrowserClient } from '@/lib/api/client'
+import { readFriendlyError, friendlyErrorFromThrown } from '@/lib/userFacingError'
 import { IconUser, IconLoader2, IconAlertCircle, IconCheck, IconPhone, IconHome, IconUserHeart } from '@tabler/icons-react'
 
 const PHONE_REGEX = /^\(?([0-9]{3})\)?[-. ]?([0-9]{3})[-. ]?([0-9]{4})$/
@@ -198,15 +199,15 @@ function CompleteProfileForm() {
       })
 
       if (!response.ok) {
-        const data = await response.json()
-        throw new Error(data.error || 'Failed to update profile')
+        const friendly = await readFriendlyError(response)
+        throw new Error(friendly.message)
       }
 
       // Success - redirect to portal
       router.push('/portal')
-    } catch (err: any) {
+    } catch (err) {
       console.error('Profile update error:', err)
-      setError(err.message || 'An unexpected error occurred. Please try again.')
+      setError(friendlyErrorFromThrown(err).message)
     } finally {
       setIsLoading(false)
     }

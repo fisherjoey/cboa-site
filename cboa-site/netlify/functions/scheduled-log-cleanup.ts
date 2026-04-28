@@ -16,7 +16,7 @@ export const handler = schedule('0 3 * * 0', async () => {
 
     if (error) {
       console.error('Log cleanup failed:', error)
-      return { statusCode: 500, body: JSON.stringify({ error: error.message }) }
+      return { statusCode: 500, body: JSON.stringify({ error: 'server_error', message: 'Log cleanup failed.' }) }
     }
 
     console.log('Log cleanup completed:', data)
@@ -29,6 +29,6 @@ export const handler = schedule('0 3 * * 0', async () => {
     }
   } catch (err) {
     console.error('Log cleanup error:', err)
-    return { statusCode: 500, body: JSON.stringify({ error: 'Cleanup failed' }) }
+    return { statusCode: 500, body: JSON.stringify({ error: 'server_error', message: 'Log cleanup failed.' }) }
   }
 })

@@ -8,6 +8,7 @@ import { useRouter } from 'next/navigation'
 import Card from '@/components/ui/Card'
 import Button from '@/components/ui/Button'
 import { IconCheck, IconAlertCircle, IconLoader2, IconArrowLeft, IconArrowRight } from '@tabler/icons-react'
+import { readFriendlyError, friendlyErrorFromThrown } from '@/lib/userFacingError'
 
 // Import wizard components
 import ProgressIndicator from './wizard/ProgressIndicator'
@@ -547,15 +548,20 @@ export default function OSARequestFormWizard() {
       })
 
       if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.error || 'Failed to submit form')
+        const friendly = await readFriendlyError(response)
+        setSubmitError(friendly.message)
+        setIsSubmitting(false)
+        // Jump to review step so the user sees the banner
+        if (currentStep !== 5) setCurrentStep(5)
+        return
       }
 
       clearStorage()
       router.push('/get-officials/success')
     } catch (error) {
       console.error('Form submission error:', error)
-      setSubmitError(error instanceof Error ? error.message : 'An unexpected error occurred. Please try again.')
+      setSubmitError(friendlyErrorFromThrown(error).message)
+      if (currentStep !== 5) setCurrentStep(5)
     } finally {
       setIsSubmitting(false)
     }

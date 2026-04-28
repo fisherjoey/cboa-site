@@ -1,4 +1,4 @@
-import { createHandler, supabase, type UserRole } from './_shared/handler'
+import { createHandler, supabase, type UserRole, errorResponse } from './_shared/handler'
 
 // Fine-grained role checks for evaluations
 function canViewAllEvaluations(role: UserRole): boolean {
@@ -45,7 +45,10 @@ export const handler = createHandler({
               .single()
 
             if (!memberData || data.member_id !== memberData.id) {
-              return { statusCode: 403, body: JSON.stringify({ error: 'Forbidden - You can only view your own evaluations' }) }
+              return errorResponse({
+            code: 'forbidden',
+            message: 'Forbidden - You can only view your own evaluations.'.replace('..', '.'),
+          })
             }
           }
 
@@ -61,7 +64,10 @@ export const handler = createHandler({
               .single()
 
             if (!memberData || member_id !== memberData.id) {
-              return { statusCode: 403, body: JSON.stringify({ error: 'Forbidden - You can only view your own evaluations' }) }
+              return errorResponse({
+            code: 'forbidden',
+            message: 'Forbidden - You can only view your own evaluations.'.replace('..', '.'),
+          })
             }
           }
 
@@ -77,7 +83,10 @@ export const handler = createHandler({
 
         if (evaluator_id) {
           if (!canViewAllEvaluations(userRole)) {
-            return { statusCode: 403, body: JSON.stringify({ error: 'Forbidden - Insufficient permissions' }) }
+            return errorResponse({
+            code: 'forbidden',
+            message: 'Forbidden - Insufficient permissions.'.replace('..', '.'),
+          })
           }
 
           const { data, error } = await supabase
@@ -91,7 +100,10 @@ export const handler = createHandler({
         }
 
         if (!canViewAllEvaluations(userRole)) {
-          return { statusCode: 403, body: JSON.stringify({ error: 'Forbidden - You can only view your own evaluations' }) }
+          return errorResponse({
+            code: 'forbidden',
+            message: 'Forbidden - You can only view your own evaluations.'.replace('..', '.'),
+          })
         }
 
         const { data, error } = await supabase
@@ -105,7 +117,10 @@ export const handler = createHandler({
 
       case 'POST': {
         if (!canCreateEvaluations(userRole)) {
-          return { statusCode: 403, body: JSON.stringify({ error: 'Forbidden - You do not have permission to create evaluations' }) }
+          return errorResponse({
+            code: 'forbidden',
+            message: 'Forbidden - You do not have permission to create evaluations.'.replace('..', '.'),
+          })
         }
 
         const body = JSON.parse(event.body || '{}')
@@ -114,7 +129,10 @@ export const handler = createHandler({
         })
 
         if (!body.member_id || !body.file_url || !body.file_name) {
-          return { statusCode: 400, body: JSON.stringify({ error: 'member_id, file_url, and file_name are required' }) }
+          return errorResponse({
+            code: 'invalid_input',
+            message: 'A member, file URL, and file name are all required.',
+          })
         }
 
         const { data, error } = await supabase
@@ -147,14 +165,20 @@ export const handler = createHandler({
 
       case 'PUT': {
         if (!canModifyEvaluations(userRole)) {
-          return { statusCode: 403, body: JSON.stringify({ error: 'Forbidden - Only administrators and executives can edit evaluations' }) }
+          return errorResponse({
+            code: 'forbidden',
+            message: 'Forbidden - Only administrators and executives can edit evaluations.'.replace('..', '.'),
+          })
         }
 
         const body = JSON.parse(event.body || '{}')
         const { id, ...updateData } = body
 
         if (!id) {
-          return { statusCode: 400, body: JSON.stringify({ error: 'ID is required for update' }) }
+          return errorResponse({
+            code: 'invalid_input',
+            message: 'A record must be selected for update.',
+          })
         }
 
         logger.info('crud', 'update_evaluation', `Updating evaluation ${id} by ${userEmail} (${userRole})`, {
@@ -182,13 +206,19 @@ export const handler = createHandler({
 
       case 'DELETE': {
         if (!canModifyEvaluations(userRole)) {
-          return { statusCode: 403, body: JSON.stringify({ error: 'Forbidden - Only administrators and executives can delete evaluations' }) }
+          return errorResponse({
+            code: 'forbidden',
+            message: 'Forbidden - Only administrators and executives can delete evaluations.'.replace('..', '.'),
+          })
         }
 
         const { id } = event.queryStringParameters || {}
 
         if (!id) {
-          return { statusCode: 400, body: JSON.stringify({ error: 'ID is required for deletion' }) }
+          return errorResponse({
+            code: 'invalid_input',
+            message: 'A record must be selected for deletion.',
+          })
         }
 
         logger.info('crud', 'delete_evaluation', `Deleting evaluation ${id} by ${userEmail} (${userRole})`, { metadata: { id, actor_role: userRole } })
@@ -210,7 +240,7 @@ export const handler = createHandler({
       }
 
       default:
-        return { statusCode: 405, body: JSON.stringify({ error: 'Method not allowed' }) }
+        return errorResponse({ code: 'method_not_allowed' })
     }
   }
 })
