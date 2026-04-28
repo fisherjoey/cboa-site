@@ -207,7 +207,7 @@ describe('newsletters', () => {
         body: { title: tag('NoIdPUT') },
       })
       expect(res.statusCode).toBe(400)
-      expect(res.body.error).toMatch(/ID is required/)
+      expect(res.body.message ?? res.body.error).toMatch(/(ID is required|must be selected)/i)
     })
 
     it('non-admin PUT → 403', async () => {
@@ -409,7 +409,7 @@ describe('scheduler-updates', () => {
         body: { title: tag('SchedNoIdPUT') },
       })
       expect(res.statusCode).toBe(400)
-      expect(res.body.error).toMatch(/ID is required/)
+      expect(res.body.message ?? res.body.error).toMatch(/(ID is required|must be selected)/i)
     })
 
     it('non-admin PUT → 403', async () => {
@@ -611,7 +611,7 @@ describe('rule-modifications', () => {
         body: { title: tag('RuleNoIdPUT') },
       })
       expect(res.statusCode).toBe(400)
-      expect(res.body.error).toMatch(/ID is required/)
+      expect(res.body.message ?? res.body.error).toMatch(/(ID is required|must be selected)/i)
     })
 
     it('non-admin PUT → 403', async () => {

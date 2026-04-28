@@ -1,4 +1,4 @@
-import { createHandler, supabase } from './_shared/handler'
+import { createHandler, supabase, errorResponse } from './_shared/handler'
 
 export const handler = createHandler({
   name: 'public-training',
@@ -18,7 +18,10 @@ export const handler = createHandler({
           if (error) throw error
 
           if (!data) {
-            return { statusCode: 404, body: JSON.stringify({ error: 'Training event not found' }) }
+            return errorResponse({
+            code: 'not_found',
+            message: 'Training event not found.'.replace('..', '.'),
+          })
           }
 
           return { statusCode: 200, body: JSON.stringify(data) }
@@ -42,10 +45,10 @@ export const handler = createHandler({
         })
 
         if (!body.title || !body.slug || !body.event_date || !body.start_time || !body.end_time || !body.location || !body.event_type || !body.description) {
-          return {
-            statusCode: 400,
-            body: JSON.stringify({ error: 'Missing required fields: title, slug, event_date, start_time, end_time, location, event_type, description' })
-          }
+          return errorResponse({
+            code: 'invalid_input',
+            message: 'Title, slug, event date, start time, end time, location, event type, and description are all required.',
+          })
         }
 
         const { data, error } = await supabase
@@ -71,7 +74,10 @@ export const handler = createHandler({
         const { id, ...updates } = body
 
         if (!id) {
-          return { statusCode: 400, body: JSON.stringify({ error: 'ID is required for updates' }) }
+          return errorResponse({
+            code: 'invalid_input',
+            message: 'A record must be selected for update.',
+          })
         }
 
         logger.info('crud', 'update_training_event', `Updating training event ${id}`, {
@@ -101,7 +107,10 @@ export const handler = createHandler({
         const id = event.queryStringParameters?.id
 
         if (!id) {
-          return { statusCode: 400, body: JSON.stringify({ error: 'ID is required for deletion' }) }
+          return errorResponse({
+            code: 'invalid_input',
+            message: 'A record must be selected for deletion.',
+          })
         }
 
         logger.info('crud', 'delete_training_event', `Deleting training event ${id}`, { metadata: { id } })
@@ -123,7 +132,7 @@ export const handler = createHandler({
       }
 
       default:
-        return { statusCode: 405, body: JSON.stringify({ error: 'Method not allowed' }) }
+        return errorResponse({ code: 'method_not_allowed' })
     }
   }
 })

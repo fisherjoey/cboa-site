@@ -235,7 +235,7 @@ describe('upload-file', () => {
         bearerToken: official.accessToken,
       })
       expect(res.statusCode).toBe(403)
-      expect(res.body.error).toMatch(/forbidden|insufficient/i)
+      expect(res.body.message ?? res.body.error).toMatch(/(forbidden|insufficient|permission)/i)
     }
   )
 
@@ -272,7 +272,7 @@ describe('upload-file', () => {
     ])
     const res = await postUpload(body, { bearerToken: official.accessToken })
     expect(res.statusCode).toBe(400)
-    expect(res.body.error).toMatch(/no file/i)
+    expect(res.body.message ?? res.body.error).toMatch(/no file/i)
   })
 
   it('over-size file is rejected with 413 and leaves NOTHING in storage', async () => {
@@ -296,7 +296,7 @@ describe('upload-file', () => {
 
     const res = await postUpload(body, { bearerToken: official.accessToken })
     expect(res.statusCode).toBe(413)
-    expect(res.body.error).toMatch(/too large/i)
+    expect(res.body.message ?? res.body.error).toMatch(/too large/i)
 
     // The big test: nothing was written. Sweep all buckets for any object
     // whose name contains our unique filename suffix.

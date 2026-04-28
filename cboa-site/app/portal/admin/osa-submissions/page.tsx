@@ -10,6 +10,7 @@ import {
   SortingState,
 } from '@tanstack/react-table'
 import { getSupabaseBrowserClient } from '@/lib/api/client'
+import { readFriendlyError, friendlyErrorFromThrown } from '@/lib/userFacingError'
 import { useAdminGuard } from '@/hooks/useAdminGuard'
 import {
   IconArrowUp,
@@ -463,15 +464,15 @@ export default function OSASubmissionsPage() {
       })
 
       if (!response.ok) {
-        const data = await response.json()
-        throw new Error(data.error || 'Failed to fetch submissions')
+        const friendly = await readFriendlyError(response)
+        throw new Error(friendly.message)
       }
 
       const data = await response.json()
       setSubmissions(data.submissions)
       setPagination(data.pagination)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to fetch submissions')
+      setError(friendlyErrorFromThrown(err).message)
     } finally {
       setLoading(false)
     }
@@ -491,7 +492,8 @@ export default function OSASubmissionsPage() {
     })
 
     if (!response.ok) {
-      throw new Error('Failed to update submission')
+      const friendly = await readFriendlyError(response)
+      throw new Error(friendly.message)
     }
 
     // Refresh the list

@@ -178,7 +178,7 @@ describe('public-news — admin writes', () => {
       body: { title: tag('NoFields') },
     })
     expect(res.statusCode).toBe(400)
-    expect(res.body.error).toMatch(/Missing required fields/)
+    expect(res.body.message ?? res.body.error).toMatch(/(Missing required|are all required|are required)/i)
   })
 
   it('admin PUT round-trip', async () => {
@@ -343,7 +343,7 @@ describe('public-pages — admin writes', () => {
       body: { page_name: tag('NoFields') },
     })
     expect(res.statusCode).toBe(400)
-    expect(res.body.error).toMatch(/Missing required fields/)
+    expect(res.body.message ?? res.body.error).toMatch(/(Missing required|are all required|are required)/i)
   })
 
   it('admin PUT round-trip', async () => {
@@ -496,7 +496,7 @@ describe('public-resources — admin writes', () => {
       body: { title: tag('NoFields') },
     })
     expect(res.statusCode).toBe(400)
-    expect(res.body.error).toMatch(/Missing required fields/)
+    expect(res.body.message ?? res.body.error).toMatch(/(Missing required|are all required|are required)/i)
   })
 
   it('admin PUT round-trip', async () => {
@@ -612,7 +612,7 @@ describe('public-training — admin writes', () => {
       body: { title: tag('NoFields') },
     })
     expect(res.statusCode).toBe(400)
-    expect(res.body.error).toMatch(/Missing required fields/)
+    expect(res.body.message ?? res.body.error).toMatch(/(Missing required|are all required|are required)/i)
   })
 
   it('admin PUT round-trip', async () => {

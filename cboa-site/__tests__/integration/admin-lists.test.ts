@@ -169,7 +169,7 @@ describe('officials — POST/PUT/DELETE', () => {
       body: { level: 3 } as unknown as OfficialCreatePayload,
     })
     expect(res.statusCode).toBe(400)
-    expect(res.body.error).toMatch(/name/i)
+    expect(res.body.message ?? res.body.error).toMatch(/name/i)
   })
 
   // FIXED: shared `mapPgError` in `_shared/handler` now turns the schema's
@@ -225,7 +225,7 @@ describe('officials — POST/PUT/DELETE', () => {
       body: { name: tag('NoIdOfficial') },
     })
     expect(res.statusCode).toBe(400)
-    expect(res.body.error).toMatch(/ID is required/)
+    expect(res.body.message ?? res.body.error).toMatch(/(ID is required|must be selected)/i)
   })
 
   it('admin DELETE → row gone', async () => {
@@ -255,7 +255,7 @@ describe('officials — POST/PUT/DELETE', () => {
       bearerToken: admin.accessToken,
     })
     expect(res.statusCode).toBe(400)
-    expect(res.body.error).toMatch(/ID is required/)
+    expect(res.body.message ?? res.body.error).toMatch(/(ID is required|must be selected)/i)
   })
 })
 
@@ -332,7 +332,7 @@ describe('executive-team — POST/PUT/DELETE', () => {
       body: { name: tag('Incomplete') } as unknown as ExecutiveTeamCreatePayload,
     })
     expect(res.statusCode).toBe(400)
-    expect(res.body.error).toMatch(/required/i)
+    expect(res.body.message ?? res.body.error).toMatch(/required/i)
   })
 
   it('admin PUT round-trip: insert → modify → read back', async () => {
@@ -396,7 +396,7 @@ describe('executive-team — POST/PUT/DELETE', () => {
       bearerToken: admin.accessToken,
     })
     expect(res.statusCode).toBe(400)
-    expect(res.body.error).toMatch(/ID is required/)
+    expect(res.body.message ?? res.body.error).toMatch(/(ID is required|must be selected)/i)
   })
 })
 
@@ -535,7 +535,7 @@ describe('member-activities — POST/PUT/DELETE', () => {
       body: { notes: tag('NoIdActivity') },
     })
     expect(res.statusCode).toBe(400)
-    expect(res.body.error).toMatch(/ID is required/)
+    expect(res.body.message ?? res.body.error).toMatch(/(ID is required|must be selected)/i)
   })
 
   it('admin DELETE → row gone', async () => {
@@ -691,7 +691,7 @@ describe('resources — POST/PUT/DELETE', () => {
       body: { title: tag('NoIdResource') },
     })
     expect(res.statusCode).toBe(400)
-    expect(res.body.error).toMatch(/ID is required/)
+    expect(res.body.message ?? res.body.error).toMatch(/(ID is required|must be selected)/i)
   })
 
   it('admin DELETE → row gone', async () => {
@@ -721,7 +721,7 @@ describe('resources — POST/PUT/DELETE', () => {
       bearerToken: admin.accessToken,
     })
     expect(res.statusCode).toBe(400)
-    expect(res.body.error).toMatch(/ID is required/)
+    expect(res.body.message ?? res.body.error).toMatch(/(ID is required|must be selected)/i)
   })
 
   // FIXED: `resources.active` column landed via migration; the GET

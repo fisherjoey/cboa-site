@@ -1,4 +1,4 @@
-import { createHandler, supabase } from './_shared/handler'
+import { createHandler, supabase, errorResponse } from './_shared/handler'
 import { generateCBOAEmailTemplate } from '../../lib/emailTemplate'
 import { recordBulkEmail } from '../../lib/emailHistory'
 import { EMAIL_ANNOUNCEMENTS } from '../../lib/siteConfig'
@@ -194,13 +194,24 @@ export const handler = createHandler({
 
     // Validation
     if (!subject?.trim()) {
-      return { statusCode: 400, body: JSON.stringify({ error: 'Subject is required' }) }
+      return errorResponse({
+        code: 'invalid_input',
+        message: 'Please add a subject for this email.',
+        fields: { subject: 'Subject is required' },
+      })
     }
     if (!htmlContent?.trim()) {
-      return { statusCode: 400, body: JSON.stringify({ error: 'Email content is required' }) }
+      return errorResponse({
+        code: 'invalid_input',
+        message: 'Please add some content to the email.',
+        fields: { htmlContent: 'Email content is required' },
+      })
     }
     if ((!recipientGroups || recipientGroups.length === 0) && (!customEmails || customEmails.length === 0)) {
-      return { statusCode: 400, body: JSON.stringify({ error: 'At least one recipient is required' }) }
+      return errorResponse({
+        code: 'invalid_input',
+        message: 'Please choose at least one recipient or recipient group.',
+      })
     }
     if (rankFilter !== undefined && rankFilter !== '') {
       const cleaned = String(rankFilter).replace('+', '')
@@ -211,7 +222,7 @@ export const handler = createHandler({
 
     if (!process.env.MICROSOFT_TENANT_ID || !process.env.MICROSOFT_CLIENT_ID || !process.env.MICROSOFT_CLIENT_SECRET) {
       logger.error('email', 'send_email_config_error', 'Microsoft Graph credentials not configured')
-      return { statusCode: 500, body: JSON.stringify({ error: 'Email service not configured' }) }
+      return errorResponse({ code: 'service_unavailable' })
     }
 
     try {
@@ -222,7 +233,10 @@ export const handler = createHandler({
       )
 
       if (recipientEmails.length === 0) {
-        return { statusCode: 400, body: JSON.stringify({ error: 'No valid recipients found' }) }
+        return errorResponse({
+          code: 'invalid_input',
+          message: 'None of the selected groups had any active members. Please pick a different set of recipients.',
+        })
       }
 
       logger.info('email', 'send_email_recipients', `Found ${recipientEmails.length} recipients`, {

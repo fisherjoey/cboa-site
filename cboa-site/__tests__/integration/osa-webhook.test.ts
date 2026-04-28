@@ -185,7 +185,7 @@ describe('osa-webhook', () => {
   it('rejects payloads with no events array and no eventType', async () => {
     const res = await invokeFunction(handler, { method: 'POST', body: { organizationName: 'x' } })
     expect(res.statusCode).toBe(400)
-    expect(res.body.error).toMatch(/Invalid form data format/)
+    expect(res.body.message ?? res.body.error).toMatch(/(Invalid form data|missing event)/i)
   })
 
   it('rejects payloads missing required fields', async () => {
@@ -194,6 +194,6 @@ describe('osa-webhook', () => {
       body: { events: [{ eventIndex: 1, eventType: 'League' }] },
     })
     expect(res.statusCode).toBe(400)
-    expect(res.body.error).toMatch(/Missing required fields/)
+    expect(res.body.message ?? res.body.error).toMatch(/(Missing required|are all required|are required|missing)/i)
   })
 })

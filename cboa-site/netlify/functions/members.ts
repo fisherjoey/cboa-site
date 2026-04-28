@@ -1,4 +1,4 @@
-import { createHandler, findAuthUserByEmail } from './_shared/handler'
+import { createHandler, findAuthUserByEmail, errorResponse } from './_shared/handler'
 import {
   EMAIL_ANNOUNCEMENTS,
   ORG_NAME,
@@ -151,9 +151,9 @@ function generateInviteEmailHtml(inviteUrl: string, name?: string): string {
   `.trim()
 }
 
-const FORBIDDEN = (msg = 'Forbidden') => ({
-  statusCode: 403,
-  body: JSON.stringify({ error: msg })
+const FORBIDDEN = (msg?: string) => errorResponse({
+  code: 'forbidden',
+  message: msg,
 })
 
 export const handler = createHandler({
@@ -264,7 +264,11 @@ export const handler = createHandler({
         const { email, name, role, skipInvite, ...memberData } = body
 
         if (!email) {
-          return { statusCode: 400, body: JSON.stringify({ error: 'Email is required' }) }
+          return errorResponse({
+            code: 'invalid_input',
+            message: 'Email is required.',
+            fields: { email: 'Email is required' },
+          })
         }
 
         // Non-admins can only create their own member row, and may not assign a role
@@ -295,10 +299,12 @@ export const handler = createHandler({
           logger.warn('crud', 'create_member_exists', `Member already exists with email: ${email}`, {
             metadata: { email }
           })
-          return {
+          return errorResponse({
+            code: 'invalid_input',
             statusCode: 409,
-            body: JSON.stringify({ error: 'Member with this email already exists' })
-          }
+            message: 'A member with that email address already exists.',
+            fields: { email: 'Already in use' },
+          })
         }
 
         // Check if auth user already exists
@@ -330,10 +336,10 @@ export const handler = createHandler({
 
             if (linkError) {
               logger.error('crud', 'create_member_invite_failed', `Failed to create auth user: ${linkError.message}`, new Error(linkError.message))
-              return {
-                statusCode: 400,
-                body: JSON.stringify({ error: 'Failed to create auth user' })
-              }
+              return errorResponse({
+                code: 'server_error',
+                message: 'We couldn’t set up an account for that member. Please try again.',
+              })
             }
 
             authUserId = linkData.user?.id || null
@@ -393,7 +399,10 @@ export const handler = createHandler({
         const { id, ...updates } = body
 
         if (!id) {
-          return { statusCode: 400, body: JSON.stringify({ error: 'ID is required for updates' }) }
+          return errorResponse({
+            code: 'invalid_input',
+            message: 'A member must be selected.',
+          })
         }
 
         const { data: existing } = await supabase
@@ -403,7 +412,7 @@ export const handler = createHandler({
           .single()
 
         if (!existing) {
-          return { statusCode: 404, body: JSON.stringify({ error: 'Member not found' }) }
+          return errorResponse({ code: 'not_found', message: 'That member couldn’t be found.' })
         }
 
         // Non-admins must own the row, either by user_id link or (for the
@@ -482,7 +491,10 @@ export const handler = createHandler({
         const id = event.queryStringParameters?.id
 
         if (!id) {
-          return { statusCode: 400, body: JSON.stringify({ error: 'ID is required for deletion' }) }
+          return errorResponse({
+            code: 'invalid_input',
+            message: 'A member must be selected for deletion.',
+          })
         }
 
         logger.info('crud', 'delete_member_start', `Deleting member ${id}`, {
@@ -546,6 +558,6 @@ export const handler = createHandler({
       }
     }
 
-    return { statusCode: 405, body: JSON.stringify({ error: 'Method not allowed' }) }
+    return errorResponse({ code: 'method_not_allowed' })
   }
 })

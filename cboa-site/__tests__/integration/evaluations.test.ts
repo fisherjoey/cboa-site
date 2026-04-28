@@ -350,7 +350,7 @@ describe('evaluations — POST', () => {
       body: { title: tag('BadPOST') },
     })
     expect(res.statusCode).toBe(400)
-    expect(res.body.error).toMatch(/required/i)
+    expect(res.body.message ?? res.body.error).toMatch(/required/i)
   })
 })
 
@@ -388,7 +388,7 @@ describe('evaluations — PUT', () => {
       body: { title: tag('NoIdPUT') },
     })
     expect(res.statusCode).toBe(400)
-    expect(res.body.error).toMatch(/ID is required/i)
+    expect(res.body.message ?? res.body.error).toMatch(/(ID is required|must be selected)/i)
   })
 
   it("evaluator PUT → 403 when the evaluation isn't theirs", async () => {
@@ -448,7 +448,7 @@ describe('evaluations — DELETE', () => {
       bearerToken: admin.accessToken,
     })
     expect(res.statusCode).toBe(400)
-    expect(res.body.error).toMatch(/ID is required/i)
+    expect(res.body.message ?? res.body.error).toMatch(/(ID is required|must be selected)/i)
   })
 
   it('evaluator DELETE → 403', async () => {

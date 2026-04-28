@@ -1,5 +1,5 @@
 import { Handler } from '@netlify/functions'
-import { getCorsHeaders, supabase } from './_shared/handler'
+import { getCorsHeaders, supabase, errorResponse } from './_shared/handler'
 import { checkRateLimit, getClientIp } from './_shared/rateLimit'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
@@ -37,22 +37,14 @@ export const handler: Handler = async (event) => {
 
   // Only accept POST requests
   if (event.httpMethod !== 'POST') {
-    return {
-      statusCode: 405,
-      headers,
-      body: JSON.stringify({ error: 'Method not allowed' }),
-    }
+    return errorResponse({ code: 'method_not_allowed', headers })
   }
 
   // Rate limit per IP. Without this, the public endpoint can be used to
   // flood app_logs (cost + storage) and inject fake admin identities.
   const clientIp = getClientIp(event.headers)
   if (checkRateLimit(clientIp, { maxRequests: 30, windowMs: 60_000, prefix: 'client-logs' })) {
-    return {
-      statusCode: 429,
-      headers,
-      body: JSON.stringify({ error: 'Too many requests' }),
-    }
+    return errorResponse({ code: 'rate_limited', headers })
   }
 
   // Resolve identity from a verified bearer token if present. user_id /
@@ -80,20 +72,20 @@ export const handler: Handler = async (event) => {
 
     // Validate input
     if (!Array.isArray(logs) || logs.length === 0) {
-      return {
-        statusCode: 400,
+      return errorResponse({
+        code: 'invalid_input',
         headers,
-        body: JSON.stringify({ error: 'No logs provided' }),
-      }
+        message: 'No logs provided.',
+      })
     }
 
     // Limit batch size to prevent abuse
     if (logs.length > 100) {
-      return {
-        statusCode: 400,
+      return errorResponse({
+        code: 'invalid_input',
         headers,
-        body: JSON.stringify({ error: 'Too many logs in batch (max 100)' }),
-      }
+        message: 'Too many logs in batch (max 100).',
+      })
     }
 
     // Extract request context
@@ -137,11 +129,7 @@ export const handler: Handler = async (event) => {
     if (!response.ok) {
       const errorText = await response.text()
       console.error('Failed to insert client logs:', errorText)
-      return {
-        statusCode: 500,
-        headers,
-        body: JSON.stringify({ error: 'Failed to store logs' }),
-      }
+      return errorResponse({ code: 'server_error', headers })
     }
 
     return {
@@ -151,10 +139,6 @@ export const handler: Handler = async (event) => {
     }
   } catch (error) {
     console.error('Client logs error:', error)
-    return {
-      statusCode: 500,
-      headers,
-      body: JSON.stringify({ error: 'Internal server error' }),
-    }
+    return errorResponse({ code: 'server_error', headers })
   }
 }

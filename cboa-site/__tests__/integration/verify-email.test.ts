@@ -32,7 +32,7 @@ describe('verify-email', () => {
   it('rejects body without an email field', async () => {
     const res = await invokeFunction(handler, { method: 'POST', body: {} })
     expect(res.statusCode).toBe(400)
-    expect(res.body.error).toMatch(/Email is required/)
+    expect(res.body.message ?? res.body.error).toMatch(/email/i)
   })
 
   it('issues a token, emails the code, and round-trips verification', async () => {

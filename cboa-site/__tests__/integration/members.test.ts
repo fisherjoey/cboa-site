@@ -109,7 +109,7 @@ describe('members PUT', () => {
       body: { phone: '403-555-0100' },
     })
     expect(res.statusCode).toBe(400)
-    expect(res.body.error).toMatch(/id/i)
+    expect(res.body.message ?? res.body.error).toMatch(/(id|member must be selected)/i)
   })
 
   it('returns 404 when the id does not exist', async () => {

@@ -1,6 +1,6 @@
 import { Handler } from '@netlify/functions'
 import busboy from 'busboy'
-import { supabase, getUserRole } from './_shared/handler'
+import { supabase, getUserRole, errorResponse } from './_shared/handler'
 import { Logger } from '../../lib/logger'
 import { SITE_URL } from '../../lib/siteConfig'
 
@@ -29,20 +29,20 @@ export const handler: Handler = async (event): Promise<{ statusCode: number; hea
   }
 
   if (event.httpMethod !== 'POST') {
-    return { statusCode: 405, headers, body: JSON.stringify({ error: 'Method not allowed' }) }
+    return errorResponse({ code: 'method_not_allowed', headers })
   }
 
   // Verify authentication — any logged-in user can upload
   const authHeader = event.headers.authorization || event.headers.Authorization
   if (!authHeader?.startsWith('Bearer ')) {
-    return { statusCode: 401, headers, body: JSON.stringify({ error: 'Unauthorized' }) }
+    return errorResponse({ code: 'unauthorized', headers })
   }
 
   const token = authHeader.replace('Bearer ', '')
   const { data: { user: authUser }, error: authError } = await supabase.auth.getUser(token)
 
   if (authError || !authUser) {
-    return { statusCode: 401, headers, body: JSON.stringify({ error: 'Unauthorized' }) }
+    return errorResponse({ code: 'unauthorized', headers })
   }
 
   const userRole = getUserRole(authUser)
@@ -144,7 +144,12 @@ export const handler: Handler = async (event): Promise<{ statusCode: number; hea
           logger.warn('file', 'file_too_large', `File too large: ${originalFileName}`, {
             metadata: { filename: originalFileName, size: fileSize }
           })
-          resolve({ statusCode: 413, headers, body: JSON.stringify({ error: 'File too large (max 10MB)' }) })
+          resolve(errorResponse({
+            code: 'invalid_input',
+            statusCode: 413,
+            headers,
+            message: 'That file is too large — please upload a file under 10 MB.',
+          }))
         }
       })
 
@@ -162,7 +167,11 @@ export const handler: Handler = async (event): Promise<{ statusCode: number; hea
     bb.on('finish', async () => {
       if (rejected) return
       if (!fileBuffer.length) {
-        resolve({ statusCode: 400, headers, body: JSON.stringify({ error: 'No file received' }) })
+        resolve(errorResponse({
+          code: 'invalid_input',
+          headers,
+          message: 'No file was received. Please pick a file and try again.',
+        }))
         return
       }
 
@@ -204,7 +213,11 @@ export const handler: Handler = async (event): Promise<{ statusCode: number; hea
           logger.warn('file', 'upload_forbidden', `Non-privileged user tried to upload to ${bucket}`, {
             metadata: { userEmail, role: userRole, bucket, filename: originalFileName }
           })
-          resolve({ statusCode: 403, headers, body: JSON.stringify({ error: 'Forbidden: insufficient role for this bucket' }) })
+          resolve(errorResponse({
+            code: 'forbidden',
+            headers,
+            message: 'You don’t have permission to upload to this location.',
+          }))
           return
         }
 
@@ -238,7 +251,11 @@ export const handler: Handler = async (event): Promise<{ statusCode: number; hea
           logger.error('file', 'upload_failed', `Upload failed: ${originalFileName}`, new Error(error.message), {
             metadata: { filename: originalFileName, bucket }
           })
-          resolve({ statusCode: 500, headers, body: JSON.stringify({ error: 'Upload failed' }) })
+          resolve(errorResponse({
+            code: 'server_error',
+            headers,
+            message: 'We couldn’t save that file. Please try again in a moment.',
+          }))
           return
         }
 
@@ -274,13 +291,21 @@ export const handler: Handler = async (event): Promise<{ statusCode: number; hea
         logger.error('file', 'upload_error', 'Error uploading file', error instanceof Error ? error : new Error(String(error)), {
           metadata: { filename: originalFileName }
         })
-        resolve({ statusCode: 500, headers, body: JSON.stringify({ error: 'Failed to upload file' }) })
+        resolve(errorResponse({
+          code: 'server_error',
+          headers,
+          message: 'We couldn’t save that file. Please try again in a moment.',
+        }))
       }
     })
 
     bb.on('error', (error) => {
       logger.error('file', 'busboy_error', 'File parsing error', error instanceof Error ? error : new Error(String(error)))
-      resolve({ statusCode: 500, headers, body: JSON.stringify({ error: 'File upload failed' }) })
+      resolve(errorResponse({
+        code: 'server_error',
+        headers,
+        message: 'We couldn’t save that file. Please try again in a moment.',
+      }))
     })
 
     if (event.body) {
@@ -289,7 +314,11 @@ export const handler: Handler = async (event): Promise<{ statusCode: number; hea
         : Buffer.from(event.body)
       bb.end(buffer)
     } else {
-      resolve({ statusCode: 400, headers, body: JSON.stringify({ error: 'No body received' }) })
+      resolve(errorResponse({
+        code: 'invalid_input',
+        headers,
+        message: 'No file was received. Please pick a file and try again.',
+      }))
     }
   })
 }

@@ -198,7 +198,7 @@ describe('calendar-events — PUT', () => {
       body: { title: tag('NoId') },
     })
     expect(res.statusCode).toBe(400)
-    expect(res.body.error).toMatch(/ID is required/i)
+    expect(res.body.message ?? res.body.error).toMatch(/(ID is required|must be selected)/i)
   })
 
   it('returns 401 without auth', async () => {
@@ -263,7 +263,7 @@ describe('calendar-events — DELETE', () => {
       bearerToken: admin.accessToken,
     })
     expect(res.statusCode).toBe(400)
-    expect(res.body.error).toMatch(/ID is required/i)
+    expect(res.body.message ?? res.body.error).toMatch(/(ID is required|must be selected)/i)
   })
 
   it('returns 403 for a non-admin official', async () => {

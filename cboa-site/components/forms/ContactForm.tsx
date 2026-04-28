@@ -9,6 +9,7 @@ import Link from 'next/link'
 import Button from '@/components/ui/Button'
 import { IconSend, IconCheck, IconAlertCircle, IconBulb, IconX, IconShieldCheck, IconMail, IconQuestionMark, IconLink, IconChevronDown, IconPlus, IconTrash } from '@tabler/icons-react'
 import { isDeviceFlagged } from '@/lib/deviceFlag'
+import { readFriendlyError, friendlyErrorFromThrown, toFriendlyMessage } from '@/lib/userFacingError'
 
 // Pattern detection for suggesting the right form
 type FormSuggestion = {
@@ -283,17 +284,19 @@ export default function ContactForm() {
         body: JSON.stringify({ email: watchedEmail }),
       })
 
-      const result = await response.json()
-
       if (!response.ok) {
-        throw new Error(result.error || 'Failed to send verification code')
+        const friendly = await readFriendlyError(response)
+        setVerificationStatus('error')
+        setVerificationError(friendly.message)
+        return
       }
 
+      const result = await response.json()
       setVerificationToken(result.token)
       setVerificationStatus('sent')
     } catch (error) {
       setVerificationStatus('error')
-      setVerificationError(error instanceof Error ? error.message : 'Failed to send verification code.')
+      setVerificationError(friendlyErrorFromThrown(error).message)
     }
   }
 
@@ -363,15 +366,24 @@ export default function ContactForm() {
         body: JSON.stringify(payload),
       })
 
-      const result = await response.json()
-
       if (!response.ok) {
-        // If server suggests a corrected email (typo detection), apply it and show message
-        if (result.suggestion) {
-          setValue('email', result.suggestion)
-          throw new Error(`${result.error} We've corrected it for you — please review and resubmit.`)
+        let body: { suggestion?: string; error?: string; message?: string; fields?: Record<string, string> } = {}
+        try {
+          body = await response.json()
+        } catch {
+          // Non-JSON body — leave empty.
         }
-        throw new Error(result.error || 'Failed to send message')
+        if (body.suggestion) {
+          setValue('email', body.suggestion)
+        }
+        const friendly = toFriendlyMessage(response, body)
+        setSubmitStatus('error')
+        setErrorMessage(
+          body.suggestion
+            ? `${friendly.message} We’ve filled in the corrected address — please review and resubmit.`
+            : friendly.message,
+        )
+        return
       }
 
       setSubmitStatus('success')
@@ -391,7 +403,7 @@ export default function ContactForm() {
       setVerificationCode('')
     } catch (error) {
       setSubmitStatus('error')
-      setErrorMessage(error instanceof Error ? error.message : 'Failed to send message. Please try again.')
+      setErrorMessage(friendlyErrorFromThrown(error).message)
     }
   }
 
@@ -715,15 +727,18 @@ export default function ContactForm() {
                                 code: val,
                               }),
                             })
-                            const result = await res.json()
-                            if (res.ok && result.valid) {
-                              setVerificationError('')
-                              setVerificationStatus('verified')
-                            } else {
-                              setVerificationError(result.error || 'Incorrect code. Please check the email and try again.')
+                            if (res.ok) {
+                              const result = await res.json()
+                              if (result.valid) {
+                                setVerificationError('')
+                                setVerificationStatus('verified')
+                                return
+                              }
                             }
-                          } catch {
-                            setVerificationError('Could not verify the code. Please try again.')
+                            const friendly = await readFriendlyError(res)
+                            setVerificationError(friendly.message)
+                          } catch (err) {
+                            setVerificationError(friendlyErrorFromThrown(err).message)
                           }
                         }
                       }}

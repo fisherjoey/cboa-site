@@ -1,5 +1,5 @@
 import { Handler } from '@netlify/functions'
-import { getCorsHeaders } from './_shared/handler'
+import { getCorsHeaders, errorResponse } from './_shared/handler'
 import * as fs from 'fs'
 import * as path from 'path'
 
@@ -13,11 +13,7 @@ export const handler: Handler = async (event) => {
   }
 
   if (event.httpMethod !== 'GET') {
-    return {
-      statusCode: 405,
-      headers,
-      body: JSON.stringify({ error: 'Method not allowed' })
-    }
+    return errorResponse({ code: 'method_not_allowed', headers })
   }
 
   try {
@@ -64,10 +60,6 @@ export const handler: Handler = async (event) => {
     }
   } catch (error) {
     console.error('Error listing files:', error)
-    return {
-      statusCode: 500,
-      headers,
-      body: JSON.stringify({ error: 'Failed to list files' })
-    }
+    return errorResponse({ code: 'server_error', headers })
   }
 }

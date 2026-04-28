@@ -158,7 +158,7 @@ describe('send-email — admin happy paths', () => {
       body: validBody({ recipientGroups: [], customEmails: [] }),
     })
     expect(res.statusCode).toBe(400)
-    expect(res.body.error).toMatch(/recipient/i)
+    expect(res.body.message ?? res.body.error).toMatch(/recipient/i)
     expect(graph.sends.length).toBe(0)
   })
 
@@ -169,7 +169,7 @@ describe('send-email — admin happy paths', () => {
       body: validBody({ subject: '' }),
     })
     expect(res.statusCode).toBe(400)
-    expect(res.body.error).toMatch(/subject/i)
+    expect(res.body.message ?? res.body.error).toMatch(/subject/i)
   })
 
   it('400 when htmlContent is missing', async () => {
@@ -179,7 +179,7 @@ describe('send-email — admin happy paths', () => {
       body: validBody({ htmlContent: '' }),
     })
     expect(res.statusCode).toBe(400)
-    expect(res.body.error).toMatch(/content/i)
+    expect(res.body.message ?? res.body.error).toMatch(/content/i)
   })
 
   it('routes a customEmails-only send through Graph with that recipient', async () => {

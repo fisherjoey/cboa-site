@@ -1,5 +1,5 @@
 import { Handler } from '@netlify/functions'
-import { supabase, getCorsHeaders } from './_shared/handler'
+import { supabase, getCorsHeaders, errorResponse } from './_shared/handler'
 import {
   EMAIL_ANNOUNCEMENTS,
   ORG_NAME,
@@ -110,25 +110,25 @@ export const handler: Handler = async (event) => {
   }
 
   if (event.httpMethod !== 'POST') {
-    return { statusCode: 405, headers, body: JSON.stringify({ error: 'Method not allowed' }) }
+    return errorResponse({ code: 'method_not_allowed', headers })
   }
 
   // Verify authorization - require admin JWT
   const authHeader = event.headers.authorization
   if (!authHeader?.startsWith('Bearer ')) {
-    return { statusCode: 401, headers, body: JSON.stringify({ error: 'Unauthorized' }) }
+    return errorResponse({ code: 'unauthorized', headers })
   }
 
   const token = authHeader.split(' ')[1]
   const { data: { user: callerUser }, error: authError } = await supabase.auth.getUser(token)
 
   if (authError || !callerUser) {
-    return { statusCode: 401, headers, body: JSON.stringify({ error: 'Invalid token' }) }
+    return errorResponse({ code: 'unauthorized', headers })
   }
 
   const callerRole = callerUser.app_metadata?.role || callerUser.user_metadata?.role
   if (callerRole !== 'admin' && callerRole !== 'Admin') {
-    return { statusCode: 403, headers, body: JSON.stringify({ error: 'Admin access required' }) }
+    return errorResponse({ code: 'forbidden', headers })
   }
 
   try {
@@ -302,12 +302,8 @@ export const handler: Handler = async (event) => {
       })
     }
 
-  } catch (error: any) {
+  } catch (error) {
     console.error('Sync error:', error)
-    return {
-      statusCode: 500,
-      headers,
-      body: JSON.stringify({ error: error.message })
-    }
+    return errorResponse({ code: 'server_error', headers })
   }
 }

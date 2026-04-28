@@ -1,4 +1,4 @@
-import { createHandler, supabase } from './_shared/handler'
+import { createHandler, supabase, errorResponse } from './_shared/handler'
 
 export const handler = createHandler({
   name: 'public-news',
@@ -18,7 +18,10 @@ export const handler = createHandler({
           if (error) throw error
 
           if (!data) {
-            return { statusCode: 404, body: JSON.stringify({ error: 'News article not found' }) }
+            return errorResponse({
+            code: 'not_found',
+            message: 'News article not found.'.replace('..', '.'),
+          })
           }
 
           return { statusCode: 200, body: JSON.stringify(data) }
@@ -42,10 +45,18 @@ export const handler = createHandler({
         })
 
         if (!body.title || !body.slug || !body.published_date || !body.author || !body.excerpt || !body.body) {
-          return {
-            statusCode: 400,
-            body: JSON.stringify({ error: 'Missing required fields: title, slug, published_date, author, excerpt, body' })
-          }
+          const fields: Record<string, string> = {}
+          if (!body.title) fields.title = 'Title is required'
+          if (!body.slug) fields.slug = 'Slug is required'
+          if (!body.published_date) fields.published_date = 'Published date is required'
+          if (!body.author) fields.author = 'Author is required'
+          if (!body.excerpt) fields.excerpt = 'Excerpt is required'
+          if (!body.body) fields.body = 'Body is required'
+          return errorResponse({
+            code: 'invalid_input',
+            message: 'Title, slug, published date, author, excerpt, and body are all required.',
+            fields,
+          })
         }
 
         // Postgres surfaces malformed timestamps as 22007, which mapPgError
@@ -81,7 +92,10 @@ export const handler = createHandler({
         const { id, ...updates } = body
 
         if (!id) {
-          return { statusCode: 400, body: JSON.stringify({ error: 'ID is required for updates' }) }
+          return errorResponse({
+            code: 'invalid_input',
+            message: 'A record must be selected for update.',
+          })
         }
 
         logger.info('crud', 'update_public_news', `Updating news article ${id}`, {
@@ -111,7 +125,10 @@ export const handler = createHandler({
         const id = event.queryStringParameters?.id
 
         if (!id) {
-          return { statusCode: 400, body: JSON.stringify({ error: 'ID is required for deletion' }) }
+          return errorResponse({
+            code: 'invalid_input',
+            message: 'A record must be selected for deletion.',
+          })
         }
 
         logger.info('crud', 'delete_public_news', `Deleting news article ${id}`, { metadata: { id } })
@@ -133,7 +150,7 @@ export const handler = createHandler({
       }
 
       default:
-        return { statusCode: 405, body: JSON.stringify({ error: 'Method not allowed' }) }
+        return errorResponse({ code: 'method_not_allowed' })
     }
   }
 })

@@ -1,4 +1,4 @@
-import { createHandler, supabase } from './_shared/handler'
+import { createHandler, supabase, errorResponse } from './_shared/handler'
 
 const VALID_STATUSES = new Set(['new', 'read', 'responded', 'archived'])
 
@@ -93,7 +93,7 @@ export const handler = createHandler({
     const { id, status, notes } = body
 
     if (!id) {
-      return { statusCode: 400, body: JSON.stringify({ error: 'Submission ID is required' }) }
+      return errorResponse({ code: 'invalid_input', message: 'A submission must be selected.' })
     }
 
     if (status !== undefined && !VALID_STATUSES.has(status)) {

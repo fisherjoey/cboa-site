@@ -484,7 +484,7 @@ describe('contact-submissions — PATCH', () => {
       body: { status: 'responded' },
     })
     expect(res.statusCode).toBe(400)
-    expect(res.body.error).toMatch(/id is required/i)
+    expect(res.body.message ?? res.body.error).toMatch(/(id is required|must be selected)/i)
   })
 
   it('PATCH as non-admin (official) → 403', async () => {

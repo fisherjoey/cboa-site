@@ -8,6 +8,7 @@ import { membersAPI } from '@/lib/api'
 import { IconUser, IconPhone, IconHome, IconAlertCircle, IconLogout } from '@tabler/icons-react'
 import { memberRegistrationSchema, type MemberRegistrationFormData } from '@/lib/schemas'
 import { PROVINCES } from '@/lib/constants'
+import { friendlyErrorFromThrown } from '@/lib/userFacingError'
 
 interface MemberRegistrationProps {
   onComplete: () => void
@@ -83,9 +84,9 @@ export default function MemberRegistration({ onComplete }: MemberRegistrationPro
       }
 
       onComplete()
-    } catch (err: any) {
+    } catch (err) {
       console.error('Registration error:', err)
-      setError(err.message || 'Failed to complete registration. Please try again.')
+      setError(friendlyErrorFromThrown(err).message)
     } finally {
       setIsSubmitting(false)
     }

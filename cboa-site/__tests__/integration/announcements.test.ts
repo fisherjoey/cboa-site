@@ -193,7 +193,7 @@ describe('announcements — PUT', () => {
       body: { title: tag('NoIdPUT') },
     })
     expect(res.statusCode).toBe(400)
-    expect(res.body.error).toMatch(/ID is required/)
+    expect(res.body.message ?? res.body.error).toMatch(/(ID is required|must be selected)/i)
   })
 
   it('non-admin PUT → 403', async () => {
@@ -244,7 +244,7 @@ describe('announcements — DELETE', () => {
       bearerToken: admin.accessToken,
     })
     expect(res.statusCode).toBe(400)
-    expect(res.body.error).toMatch(/ID is required/)
+    expect(res.body.message ?? res.body.error).toMatch(/(ID is required|must be selected)/i)
   })
 })
 

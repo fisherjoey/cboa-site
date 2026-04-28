@@ -118,13 +118,13 @@ describe('accept-invite', () => {
     it('returns 400 when no token is provided in body or query', async () => {
       const res = await invokeFunction(handler, { method: 'POST', body: {} })
       expect(res.statusCode).toBe(400)
-      expect(res.body.error).toMatch(/Missing invite token/i)
+      expect(res.body.message ?? res.body.error).toMatch(/invite token/i)
     })
 
     it('returns 400 when GET has no query token', async () => {
       const res = await invokeFunction(handler, { method: 'GET' })
       expect(res.statusCode).toBe(400)
-      expect(res.body.error).toMatch(/Missing invite token/i)
+      expect(res.body.message ?? res.body.error).toMatch(/invite token/i)
     })
 
     it('returns 200 for OPTIONS preflight', async () => {
@@ -140,7 +140,7 @@ describe('accept-invite', () => {
         body: { token: genToken() },
       })
       expect(res.statusCode).toBe(404)
-      expect(res.body.error).toMatch(/Invalid or already-used invite token/i)
+      expect(res.body.message ?? res.body.error).toMatch(/(invite|invalid|not valid)/i)
     })
 
     it('returns 404 for a non-existent token via GET query', async () => {
@@ -161,7 +161,7 @@ describe('accept-invite', () => {
       })
       expect(res.statusCode).toBe(400)
       expect(res.body.alreadyUsed).toBe(true)
-      expect(res.body.error).toMatch(/already used/i)
+      expect(res.body.message ?? res.body.error).toMatch(/already/i)
     })
 
     it('refuses to redeem the same token twice (state transition is durable)', async () => {
@@ -198,7 +198,7 @@ describe('accept-invite', () => {
       expect(res.statusCode).toBe(404)
       // Response body is intentionally identical to the "token not found"
       // branch — see the information-disclosure test below.
-      expect(res.body.error).toMatch(/Invalid or already-used invite token/i)
+      expect(res.body.message ?? res.body.error).toMatch(/(invite|invalid|not valid)/i)
     })
 
     it('returns 403 when the member exists but is inactive', async () => {
@@ -208,7 +208,7 @@ describe('accept-invite', () => {
         body: { token: invite.token },
       })
       expect(res.statusCode).toBe(403)
-      expect(res.body.error).toMatch(/inactive/i)
+      expect(res.body.message ?? res.body.error).toMatch(/(inactive|not.*active)/i)
     })
   })
 
