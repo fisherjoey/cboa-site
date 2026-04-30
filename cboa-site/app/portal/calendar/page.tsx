@@ -9,8 +9,9 @@ import listPlugin from '@fullcalendar/list'
 import interactionPlugin from '@fullcalendar/interaction'
 import { EventClickArg, DateSelectArg } from '@fullcalendar/core'
 import './calendar.css'
-import { IconPlus, IconEdit, IconTrash, IconCalendar, IconClock, IconMapPin, IconUsers, IconCalendarEvent, IconChartBar, IconX, IconFilter, IconFilterOff, IconTrophy, IconBuilding, IconMapPins, IconTag } from '@tabler/icons-react'
+import { IconPlus, IconEdit, IconTrash, IconCalendar, IconClock, IconMapPin, IconUsers, IconCalendarEvent, IconChartBar, IconX, IconFilter, IconFilterOff, IconTrophy, IconBuilding, IconMapPins, IconTag, IconUpload } from '@tabler/icons-react'
 import Modal from '@/components/ui/Modal'
+import BulkEventUploadModal from '@/components/portal/BulkEventUploadModal'
 import { calendarAPI } from '@/lib/api'
 import { useRole } from '@/contexts/RoleContext'
 import moment from 'moment'
@@ -93,6 +94,7 @@ export default function CalendarPage() {
   const [selectedStatDate, setSelectedStatDate] = useState<string | null>(null)
   const [activeTypes, setActiveTypes] = useState<Set<string>>(new Set(['training', 'meeting', 'league', 'tournament', 'social']))
   const [isMobile, setIsMobile] = useState(false)
+  const [showBulkUpload, setShowBulkUpload] = useState(false)
 
   // Track viewport width for responsive calendar settings
   useEffect(() => {
@@ -283,23 +285,33 @@ export default function CalendarPage() {
         <div className="flex items-center justify-between">
           <h1 className="text-xl sm:text-2xl font-bold font-heading tracking-tight text-gray-900 dark:text-white">Calendar</h1>
           {canEdit && calendarMode === 'events' && (
-            <button
-              onClick={() => {
-                setSelectedEvent({
-                  title: '',
-                  start: new Date(),
-                  end: new Date(),
-                  type: 'training'
-                })
-                setIsEditing(true)
-                setShowEventModal(true)
-              }}
-              className="bg-orange-500 text-white px-3 py-1.5 rounded-lg hover:bg-orange-600 flex items-center gap-1.5 text-sm"
-            >
-              <IconPlus className="h-4 w-4" />
-              <span className="hidden sm:inline">Add Event</span>
-              <span className="sm:hidden">Add</span>
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setShowBulkUpload(true)}
+                className="bg-white dark:bg-portal-surface text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-portal-border px-3 py-1.5 rounded-lg hover:bg-gray-50 dark:hover:bg-portal-hover flex items-center gap-1.5 text-sm"
+              >
+                <IconUpload className="h-4 w-4" />
+                <span className="hidden sm:inline">Bulk Upload</span>
+                <span className="sm:hidden">CSV</span>
+              </button>
+              <button
+                onClick={() => {
+                  setSelectedEvent({
+                    title: '',
+                    start: new Date(),
+                    end: new Date(),
+                    type: 'training'
+                  })
+                  setIsEditing(true)
+                  setShowEventModal(true)
+                }}
+                className="bg-orange-500 text-white px-3 py-1.5 rounded-lg hover:bg-orange-600 flex items-center gap-1.5 text-sm"
+              >
+                <IconPlus className="h-4 w-4" />
+                <span className="hidden sm:inline">Add Event</span>
+                <span className="sm:hidden">Add</span>
+              </button>
+            </div>
           )}
         </div>
 
@@ -481,6 +493,25 @@ export default function CalendarPage() {
             setIsEditing(false)
           }}
           onEdit={() => setIsEditing(true)}
+        />
+      )}
+
+      {/* Bulk CSV Upload Modal */}
+      {canEdit && (
+        <BulkEventUploadModal
+          isOpen={showBulkUpload}
+          onClose={() => setShowBulkUpload(false)}
+          onUploaded={(created) => {
+            setEvents(prev => [
+              ...prev,
+              ...created.map((e: any) => ({
+                ...e,
+                start: new Date(e.start_date),
+                end: new Date(e.end_date),
+                tournamentDetails: e.tournament_details || undefined,
+              })),
+            ])
+          }}
         />
       )}
     </div>
