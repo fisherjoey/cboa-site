@@ -23,6 +23,7 @@ import {
 import UpcomingEventsWidget from '@/components/dashboard/UpcomingEventsWidget';
 import LatestAnnouncementWidget from '@/components/dashboard/LatestAnnouncementWidget';
 import LatestNewsletterWidget from '@/components/dashboard/LatestNewsletterWidget';
+import SchedulerUpdatesWidget from '@/components/dashboard/SchedulerUpdatesWidget';
 
 export default function PortalDashboard() {
   const { user } = useRole();
@@ -144,8 +145,11 @@ export default function PortalDashboard() {
         {/* Latest Announcement */}
         <LatestAnnouncementWidget />
 
-        {/* Upcoming Events */}
-        <UpcomingEventsWidget />
+        {/* Upcoming Events stacked with Scheduler Updates beneath */}
+        <div className="space-y-4">
+          <UpcomingEventsWidget />
+          <SchedulerUpdatesWidget />
+        </div>
       </div>
 
       {/* Latest Newsletter - Full Width */}
