@@ -16,6 +16,7 @@ import {
 } from '@/lib/portalValidation'
 import { parseAPIError, sanitize, ValidationError } from '@/lib/errorHandling'
 import { TinyMCEEditor, HTMLViewer } from '@/components/TinyMCEEditor'
+import { Accordion, AccordionButton, AccordionPanel, AccordionChevron } from '@/components/ui/Accordion'
 import FileUpload from '@/components/FileUpload'
 import PortalFilterBar from '@/components/portal/PortalFilterBar'
 import {
@@ -692,6 +693,67 @@ export default function ResourcesClient() {
       } else if (resource.fileUrl || resource.externalLink) {
         setViewingResource(resource)
       }
+    }
+
+    // Text resources use the same Accordion as Rule Modifications so the
+    // body content actually renders when expanded. `key` includes the
+    // expanded-set membership so a featured-card click (which mutates the
+    // Set) forces a remount and applies defaultOpen.
+    if (isTextResource) {
+      return (
+        <Accordion
+          key={`${resource.id}-${isExpanded ? 'open' : 'closed'}`}
+          defaultOpen={isExpanded}
+        >
+          <div
+            id={`resource-${resource.id}`}
+            className={`border-b border-gray-100 dark:border-portal-border/60 ${
+              resource.featured ? 'bg-orange-50/50 dark:bg-orange-900/10' : ''
+            }`}
+          >
+            <div className="flex items-center gap-2 px-3 py-2.5">
+              <AccordionButton className="flex items-start gap-2.5 flex-1 min-w-0">
+                {({ open }) => (
+                  <>
+                    <AccordionChevron open={open} className="flex-shrink-0 mt-1.5" />
+                    <div className={`w-8 h-8 rounded-md flex items-center justify-center flex-shrink-0 mt-0.5 ${resourceIcon.bg}`}>
+                      <IconComponent className={`h-4 w-4 ${resourceIcon.color}`} />
+                    </div>
+                    <div className="flex-1 min-w-0 text-left">
+                      <h3 className="font-medium text-sm text-gray-900 dark:text-white leading-snug">
+                        {resource.title}
+                        {resource.featured && (
+                          <span className="ml-1.5 text-[9px] font-semibold uppercase tracking-wide text-orange-600 dark:text-orange-400">Featured</span>
+                        )}
+                      </h3>
+                      <div className="flex items-center gap-2 text-[11px] text-gray-500 dark:text-gray-400 mt-0.5">
+                        <span>{formatDate(resource.lastUpdated)}</span>
+                      </div>
+                    </div>
+                  </>
+                )}
+              </AccordionButton>
+
+              {canEdit && (
+                <div className="flex items-center gap-0.5 flex-shrink-0">
+                  <button onClick={() => startEditing(resource)} className="p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 rounded hidden sm:block" title="Edit">
+                    <IconEdit className="h-3.5 w-3.5" />
+                  </button>
+                  <button onClick={() => handleDelete(resource.id)} className="p-1.5 text-gray-400 hover:text-red-500 rounded hidden sm:block" title="Delete">
+                    <IconTrash className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              )}
+            </div>
+
+            <AccordionPanel className="border-t border-gray-100 dark:border-portal-border/60 bg-gray-50/50 dark:bg-portal-surface/40">
+              <div className="py-3 px-4">
+                <HTMLViewer content={resource.description} compact />
+              </div>
+            </AccordionPanel>
+          </div>
+        </Accordion>
+      )
     }
 
     // Flat row — title wraps, primary action prominent, admin actions subtle
