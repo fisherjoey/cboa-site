@@ -59,6 +59,8 @@ export type AuditEntityType =
   | 'news'
   | 'page'
   | 'training_event'
+  | 'stat_import'
+  | 'stat_mapping'
 
 export interface LogOptions {
   userId?: string

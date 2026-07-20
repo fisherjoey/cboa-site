@@ -29,3 +29,5 @@ export {
 
 // Evaluations
 export { evaluationsAPI, type Evaluation } from './evaluations'
+
+export { statsAPI, type SummaryResponse, type ImportResult, type OrgMappingRow } from './stats'
