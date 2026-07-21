@@ -65,6 +65,13 @@ function StatCard({ label, value, icon: Icon, subtext }: { label: string; value:
   )
 }
 
+/** The current basketball season string, e.g. "2025-2026" (rolls over in September). */
+function currentSeason(): string {
+  const now = new Date()
+  const y = now.getFullYear()
+  return now.getMonth() >= 8 ? `${y}-${y + 1}` : `${y - 1}-${y}`
+}
+
 /** Basketball-season months (Sep–Jun) as { label, value:'YYYY-MM' } for a "2025-2026" season. */
 function seasonMonths(season: string): { label: string; value: string }[] {
   const [y1] = season.split('-').map(Number)
@@ -106,7 +113,10 @@ export default function StatisticsClient() {
   useEffect(() => { load() }, [load])
 
   const data: Rollup | null = summary?.rollup ?? null
-  const months = useMemo(() => (season ? seasonMonths(season) : []), [season])
+  // Fall back to the current season so an admin can upload the FIRST file when the
+  // DB is still empty (no games yet -> summary.season is null).
+  const effectiveSeason = season ?? summary?.season ?? currentSeason()
+  const months = useMemo(() => seasonMonths(effectiveSeason), [effectiveSeason])
 
   // default a month when switching to monthly view
   useEffect(() => {
@@ -160,11 +170,11 @@ export default function StatisticsClient() {
 
           {/* Season selector */}
           <select
-            value={season ?? ''}
+            value={effectiveSeason}
             onChange={(e) => setSeason(e.target.value)}
             className="pl-3 pr-8 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-portal-surface text-gray-900 dark:text-white"
           >
-            {(seasons.length ? seasons : season ? [season] : []).map((s) => (
+            {(seasons.length ? seasons : [effectiveSeason]).map((s) => (
               <option key={s} value={s}>{s} Season</option>
             ))}
           </select>
@@ -224,8 +234,8 @@ export default function StatisticsClient() {
           )}
 
           {/* Admin: manual head-counts (only prompts when missing) */}
-          {canEdit && season && (data.officials.active == null || data.officials.ready == null) && (
-            <HeadCountEditor season={season} period={period} onSaved={load} />
+          {canEdit && (data.officials.active == null || data.officials.ready == null) && (
+            <HeadCountEditor season={effectiveSeason} period={period} onSaved={load} />
           )}
 
           {/* KPIs */}
@@ -310,11 +320,11 @@ export default function StatisticsClient() {
         </>
       )}
 
-      {season && (
+      {uploadOpen && (
         <StatsUploadModal
           isOpen={uploadOpen}
           onClose={() => setUploadOpen(false)}
-          season={season}
+          season={effectiveSeason}
           onImported={(r) => {
             toast.success(`Imported: ${r.insertedCount} new, ${r.updatedCount} updated${r.unmappedOrgs.length ? ` · ${r.unmappedOrgs.length} to classify` : ''}`)
             load()
