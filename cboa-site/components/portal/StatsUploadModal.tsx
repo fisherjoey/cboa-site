@@ -9,6 +9,7 @@ import {
   IconUpload,
   IconX,
   IconLoader2,
+  IconDownload,
 } from '@tabler/icons-react'
 import Modal from '@/components/ui/Modal'
 import Button from '@/components/ui/Button'
@@ -30,6 +31,30 @@ type Parsed = {
   errors: RowError[]
   duplicateCount: number
   orgs: string[]
+}
+
+// Column layout of the Arbiter "Game Info" export the parser expects.
+const TEMPLATE_HEADERS = [
+  'GameID', 'Date', 'Time', 'Status', 'SiteName', 'SubSiteName', 'BillToName',
+  'SportName', 'LevelName', 'HomeTeams', 'AwayTeams', 'Official 1', 'Official 2', 'Official 3',
+]
+const TEMPLATE_EXAMPLE = [
+  '74397', '2025-09-08', '18:35', 'Normal', 'MNP Community & Sport Center', 'Court 2',
+  'Calgary Senior Mens Basketball Association', 'Basketball', 'Mens Div 1', 'TBA', 'TBA',
+  'Jane Official', 'Sam Official', '',
+]
+
+function downloadTemplate() {
+  const esc = (v: string) => (/[",\n]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v)
+  const csv = [TEMPLATE_HEADERS, TEMPLATE_EXAMPLE].map((r) => r.map(esc).join(',')).join('\r\n') + '\r\n'
+  const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' }))
+  const a = document.createElement('a')
+  a.href = url
+  a.download = 'arbiter-game-info-template.csv'
+  document.body.appendChild(a)
+  a.click()
+  a.remove()
+  URL.revokeObjectURL(url)
 }
 
 export default function StatsUploadModal({ isOpen, onClose, season, onImported }: Props) {
@@ -123,6 +148,14 @@ export default function StatsUploadModal({ isOpen, onClose, season, onImported }
           Games are matched by their Arbiter <strong>GameID</strong>, so re-uploading an overlapping
           export updates existing games instead of duplicating them.
         </p>
+
+        <button
+          type="button"
+          onClick={downloadTemplate}
+          className="inline-flex items-center gap-1.5 text-sm font-medium text-cboa-orange hover:text-orange-700 dark:text-portal-accent"
+        >
+          <IconDownload className="h-4 w-4" /> Download template (.csv)
+        </button>
 
         {!parsed && (
           <div

@@ -99,4 +99,18 @@ describe('normalizeGameRows', () => {
     expect(games).toHaveLength(0)
     expect(errors[0].message).toMatch(/GameID/i)
   })
+
+  it('rejects a file that has GameID but is missing the Game Info columns (wrong report)', () => {
+    // e.g. a "Games with Slots" export: has GameID + slot columns, but no
+    // BillToName / LevelName / Officials.
+    const rows = [
+      ['GameID', 'Date', 'Slot', 'HomeTeam', 'AwayTeam'],
+      [65089, '2025-09-08', 'A', 'X', 'Y'],
+      [65176, '2025-09-09', 'B', 'X', 'Y'],
+    ]
+    const { games, errors } = normalizeGameRows(rows)
+    expect(games).toHaveLength(0)
+    expect(errors).toHaveLength(1)
+    expect(errors[0].message).toMatch(/BillToName|Officials|Game Info/i)
+  })
 })
