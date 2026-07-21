@@ -16,15 +16,27 @@ export async function hashFile(file: File): Promise<string> {
     .join('')
 }
 
-/** Read the first worksheet of a File into raw rows (array of arrays). */
+const isGameIdCell = (c: unknown) =>
+  String(c ?? '').trim().toLowerCase().replace(/[\s_]+/g, '') === 'gameid'
+
+/**
+ * Read the worksheet holding the Game Info rows into raw rows (array of arrays).
+ * Scans every sheet and picks the first one with a "GameID" header — so it works
+ * whether the user uploads the standalone Arbiter export OR the multi-sheet
+ * summary workbook (whose first sheet is "Instructions"). Falls back to the first
+ * non-empty sheet so the "no GameID header" error still surfaces meaningfully.
+ */
 export async function readSheetRows(file: File): Promise<unknown[][]> {
   const buf = await file.arrayBuffer()
   const wb = XLSX.read(buf, { type: 'array', cellDates: true })
-  const first = wb.SheetNames[0]
-  if (!first) return []
-  const ws = wb.Sheets[first]
-  // header:1 => array of arrays; raw values preserved (dates as Date via cellDates).
-  return XLSX.utils.sheet_to_json<unknown[]>(ws, { header: 1, blankrows: false, defval: '' })
+  let fallback: unknown[][] = []
+  for (const name of wb.SheetNames) {
+    // header:1 => array of arrays; raw values preserved (dates as Date via cellDates).
+    const rows = XLSX.utils.sheet_to_json<unknown[]>(wb.Sheets[name], { header: 1, blankrows: false, defval: '' })
+    if (rows.some((r) => Array.isArray(r) && r.some(isGameIdCell))) return rows
+    if (!fallback.length && rows.length) fallback = rows
+  }
+  return fallback
 }
 
 /** Full client-side pipeline: File -> normalized, validated games + file hash. */
