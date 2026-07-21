@@ -100,6 +100,34 @@ export function normalizeGameRows(rows: unknown[][]): ParseResult {
   }
 
   const { headerIndex, cols, officialsIdx } = header
+
+  // Guard against the wrong Arbiter report: a file can have a GameID column but
+  // lack the Game Info columns (e.g. the "Games with Slots" export). Without
+  // these, every row would import empty — so reject the file loudly instead.
+  const REQUIRED: [string, string][] = [
+    ['gameDate', 'Date'],
+    ['status', 'Status'],
+    ['billToName', 'BillToName'],
+    ['levelName', 'LevelName'],
+    ['officials', 'Officials'],
+  ]
+  const missing = REQUIRED.filter(([f]) => cols[f] === undefined).map(([, label]) => label)
+  if (missing.length) {
+    return {
+      games: [],
+      errors: [
+        {
+          row: 0,
+          message: `This has a GameID column but is missing required Game Info column(s): ${missing.join(
+            ', '
+          )}. It looks like a different Arbiter report — please upload the "Game Info" export.`,
+        },
+      ],
+      duplicateCount: 0,
+      orgs: [],
+    }
+  }
+
   const byId = new Map<number, NormalizedGame>()
   let duplicateCount = 0
   const orgs = new Set<string>()
